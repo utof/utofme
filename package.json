@@ -1,0 +1,12 @@
+{
+  "name": "utofme",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "bun": ">=1.2.0",
+    "node": ">=22.12.0"
+  }
+}

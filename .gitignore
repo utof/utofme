@@ -1,0 +1,31 @@
+# deps & build
+node_modules/
+dist/
+.astro/
+.wrangler/
+.output/
+.vercel/
+
+# env / secrets
+.dev.vars
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+*.swp
+
+# local-only research notes (personal reference, not for the repo)
+/docs/
+
+# Markdown — prose belongs in packages/specs/
+*.md
+!/README.md
+!/CLAUDE.md
+!/packages/specs/**/*.md

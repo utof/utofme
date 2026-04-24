@@ -1,0 +1,763 @@
+# Phased Implementation Plan: Personal Site + Portfolio on Astro + Svelte 5
+
+*Research report for Claude Code / Superpowers spec-driven workflow. April 2026.*
+
+---
+
+## 0. Executive Answers to the Critical Questions
+
+Before the phased plan, here are the verified, falsifiable answers to the 20 research questions. Everything below the line is grounded in these facts.
+
+- **Astro version.** The current stable line is **Astro 6.0**, released 10 March 2026, introducing a built-in Fonts API, stable Content Security Policy API, stable Live Content Collections, a Vite 7–powered dev server that runs the same runtime as production (including `workerd` for Cloudflare), and Zod 4 ([Astro 6.0 release notes](https://astro.build/blog/astro-6/)). Node 22.12+ is now required ([svelte integration changelog](https://github.com/withastro/astro/blob/main/packages/integrations/svelte/CHANGELOG.md)). **Use Astro 6.x.**
+- **Content Layer vs legacy collections.** Astro 5 replaced the legacy `type: 'content'` system with the **Content Layer API** (`src/content.config.ts`, `loader: glob()` / `file()` / custom), delivering ~5× faster Markdown and ~2× faster MDX builds with 25–50 % less memory; Astro 6 made Live Content Collections stable on top of that API ([Astro Content Collections docs](https://docs.astro.build/en/guides/content-collections/), [Astro 6.0](https://astro.build/blog/astro-6/)). Legacy collections are removed in v6 ([Southwell Media – Astro 6 upgrade notes](https://www.southwellmedia.com/blog/astro-6-whats-coming-2026)). **Use Content Layer with `glob()` loader.**
+- **Svelte 5 + Astro.** `@astrojs/svelte` v7+ supports **Svelte 5 with runes** (`$state`, `$derived`, `$effect`, `$props`). Svelte 5 shipped stable October 2024 and is now the default ([@astrojs/svelte docs](https://docs.astro.build/en/guides/integrations-guide/svelte/), [PkgPulse: Svelte 5 runes](https://www.pkgpulse.com/blog/svelte-5-runes-complete-guide-2026)). Fixes for type checking and `$props.id()` uniqueness across multiple islands are in recent releases ([svelte integration changelog](https://github.com/withastro/astro/blob/main/packages/integrations/svelte/CHANGELOG.md)).
+- **Cloudflare.** Cloudflare acquired the Astro company on 16 January 2026; Astro 6's dev server now runs `workerd` locally ([alexbobes – Astro 2026](https://alexbobes.com/programming/a-deep-dive-into-astro-build/)). **Important deprecation:** the `@astrojs/cloudflare` adapter **no longer supports Cloudflare Pages** and now targets **Cloudflare Workers** (with Assets) exclusively ([@astrojs/cloudflare docs](https://docs.astro.build/en/guides/integrations-guide/cloudflare/), [Astro Cloudflare deploy guide](https://docs.astro.build/en/guides/deploy/cloudflare/)). Workers Free tier: 100 k requests/day, 10 ms CPU on free / 30 s on paid, unlimited bandwidth ([Cloudflare Workers limits](https://developers.cloudflare.com/workers/platform/limits/), [DEV – Cloudflare vs Vercel 2026](https://dev.to/dataformathub/cloudflare-vs-vercel-vs-netlify-the-truth-about-edge-performance-2026-50h0)).
+- **Superpowers workflow.** Open-source plugin by Jesse Vincent (`obra/superpowers`) enforcing **brainstorm → spec → plan → subagent execute with TDD + two-stage review → finishing**. Plans break into 2–5-minute tasks; critical review findings block progress ([Builder.io – Superpowers](https://www.builder.io/blog/claude-code-superpowers-plugin), [fsck.com – Superpowers](https://blog.fsck.com/2025/10/09/superpowers/), [ClaudePluginHub listing](https://www.claudepluginhub.com/plugins/obra-superpowers-2)). A related "Superpowers SDD" variant explicitly adds spec-driven development with drift detection ([MCP Market – Superpowers SDD](https://mcpmarket.com/tools/skills/superpowers-sdd-workflow)).
+
+---
+
+## 1. Framework Decisions (with evidence)
+
+| Decision | Choice | Falsifiable claim |
+|---|---|---|
+| Meta-framework | **Astro 6.x** | Astro 6 is the current stable release (10 Mar 2026) and is corporately backed by Cloudflare since Jan 2026 ([Astro 6.0](https://astro.build/blog/astro-6/)). |
+| Island framework | **Svelte 5 (runes)** via `@astrojs/svelte` ≥ v7 | Svelte 5 compiles to smaller JS than React/Vue and has 91 % retention in State of JS 2025 ([PkgPulse – Astro vs SvelteKit](https://www.pkgpulse.com/blog/astro-vs-sveltekit-2026), [Programming Helper – Svelte 2026](https://www.programming-helper.com/tech/svelte-2026-91-retention-runes-dx-leader-python)). |
+| Games / interactive articles | **Svelte island inside Astro**, not a separate SvelteKit sub-app | The site is content-dominant; SvelteKit is justified "when interactivity dominates every screen" ([xergioalex – Astro + Svelte](https://xergioalex.com/blog/astro-and-svelte-the-future-of-web-development/)). Spin up a separate SvelteKit app only if one game grows into a full SaaS-style experience. |
+| Host | **Cloudflare Workers (with Assets)**, not Pages | The official Astro adapter dropped Pages support; Workers is the recommended path for new Astro projects ([@astrojs/cloudflare docs](https://docs.astro.build/en/guides/integrations-guide/cloudflare/)). |
+| Rendering | Static-first (`output: 'static'`), SSR only for `/stats` API endpoints | Most of this site doesn't need SSR; sticking to SSG avoids miniflare limitations and keeps free-tier consumption negligible ([Zenn – Astro 6 + Cloudflare case study](https://zenn.dev/miyabitti/articles/92a3e2e94356c1?locale=en)). |
+| Package manager | **pnpm** | Fast install, strict node_modules, first-class support from Astro starters and Cloudflare's C3. |
+| Linter/formatter | **Biome** (single tool, Rust speed) with **Prettier** only for `.astro`/`.svelte` that Biome doesn't format | Biome replaces ESLint+Prettier for JS/TS; but `.astro` and `.svelte` still need their own plugins. |
+| TypeScript | `strict: true`, plus Astro's `strictest` preset (`extends: "astro/tsconfigs/strictest"`). |
+
+---
+
+## 2. Dependency Graph Between Phases
+
+```
+Phase 0 (Foundations)
+   │
+   ├──► Phase 1 (Card grid MVP)  ────────► Phase 3 (Content pipeline / MDX)
+   │         │                                     │
+   │         └──► Phase 2 (Interactivity)          │
+   │                    │                          │
+   │                    ├──────────────────────────┤
+   │                    ▼                          ▼
+   │              Phase 4 (Slash pages) ◄── requires SSR endpoints
+   │                                               │
+   │                                               ▼
+   │                                         Phase 5 (Digital garden)
+   │                                               │
+   │                                               ▼
+   │                                         Phase 6 (IndieWeb polish)
+   │
+   └──► Phase 7 (Atmosphere polish) — strictly optional, depends on Phase 2+3
+```
+
+**Minimum shippable site** = Phases 0 + 1 + 6 (RSS + sitemap only).
+**"What to cut first" order (hardest to cheapest to kill):** Phase 7 → Phase 5 graph view → code execution (Phase 3) → cmd-K (Phase 2) → webmentions (keep sitemap + RSS).
+
+---
+
+# Phase 0 — Foundations
+
+**Goal:** A deployable, typed, tested Astro 6 skeleton with the design system wired up, on Cloudflare Workers.
+
+**Exit criteria:**
+1. `pnpm dev`, `pnpm build`, `pnpm test`, `pnpm e2e` all pass.
+2. `git push` deploys a live `*.workers.dev` page showing a single styled landing page using all three typefaces.
+3. Lighthouse score ≥ 95 on mobile for the empty landing page.
+4. Design tokens are CSS custom properties exported from one file; Biome + Prettier run clean.
+
+### Batch 0.1 — Repo, tooling, Astro 6 scaffold
+
+**Build:** Git repo, `pnpm init`, Astro 6 project via `npm create cloudflare@latest -- my-site --framework=astro` ([Cloudflare Workers Astro guide](https://developers.cloudflare.com/workers/framework-guides/web-apps/astro/)), then convert to pnpm workspace. Configure Biome + Prettier + `astro check` + strict TS.
+
+**Libraries / versions (verify via linked sources):**
+- `astro` ^6.0 ([astro.build/blog/astro-6](https://astro.build/blog/astro-6/))
+- `@astrojs/cloudflare` latest ([docs](https://docs.astro.build/en/guides/integrations-guide/cloudflare/))
+- `wrangler` latest (installed by C3)
+- `@biomejs/biome` latest — replaces ESLint + Prettier for JS/TS
+- `prettier` + `prettier-plugin-astro` + `prettier-plugin-svelte` — for what Biome can't format yet
+- Node 22.12+ (required by Astro 6; Node 20 EOL April 2026 — [Southwell Media](https://www.southwellmedia.com/blog/astro-6-whats-coming-2026))
+
+**Spec should contain:** project name, output mode (`static` initially), adapter (`@astrojs/cloudflare`), TypeScript config (`extends "astro/tsconfigs/strictest"`), Biome config with 100-char line length + double quotes + tab indent (or project preference), git hooks via `lefthook`.
+
+**Acceptance tests:**
+- `pnpm build` succeeds; `dist/` contains `index.html`.
+- `pnpm biome check .` reports zero errors.
+- `pnpm astro check` reports zero errors.
+- CI (GitHub Actions) runs the above three commands on PR.
+
+---
+
+### Batch 0.2 — Testing: Vitest + Playwright
+
+**Build:** Unit test harness with Vitest, component test for a trivial `.astro` page, e2e with Playwright that launches the built preview server on `localhost:4321`.
+
+**Libraries:**
+- `vitest` + `@vitest/coverage-v8`
+- `@playwright/test`
+- `happy-dom` (for DOM unit tests where needed)
+
+**Spec:** test directory layout (`src/**/*.test.ts`, `tests/e2e/*.spec.ts`), sample "hello world" unit test, Playwright config pointing at `pnpm preview`, GitHub Actions job running both.
+
+**Acceptance tests:** One green unit test + one green e2e test ("page loads, title is correct, no console errors").
+
+**Interdependency:** blocks Batch 0.4 (design token smoke tests) and every later batch's TDD.
+
+---
+
+### Batch 0.3 — Cloudflare Workers deploy pipeline
+
+**Build:** Configure `wrangler.jsonc` with `main` and `assets.directory`, create-cloudflare already generated these. Add `pnpm deploy` script. Wire GitHub Actions to deploy on push to `main`.
+
+**Important migration note:** `@astrojs/cloudflare` no longer supports Cloudflare Pages as of the current release — the team explicitly recommends Workers for new projects ([@astrojs/cloudflare docs](https://docs.astro.build/en/guides/integrations-guide/cloudflare/)). If the user already has a Pages project, follow [Cloudflare's Pages→Workers migration guide](https://developers.cloudflare.com/workers/static-assets/migration-guides/migrate-from-pages/).
+
+**Free-tier budget (verify against [Cloudflare Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/)):**
+- 100 k requests/day free; 10 ms CPU/request on free, 30 s on paid.
+- Unlimited static asset requests (don't count against Workers request count when served from Assets).
+- No bandwidth cap ([agentdeals – hosting free tiers 2026](https://agentdeals.dev/hosting-free-tier-comparison-2026)).
+
+**Vercel comparison:** Vercel Hobby = 100 GB bandwidth but **prohibits commercial use** ([agentdeals](https://agentdeals.dev/hosting-free-tier-comparison-2026)). For a personal portfolio, both are viable, but Cloudflare is lower-risk if the site ever gets monetized (e.g. affiliate links). Netlify moved to a credit-based free tier that's less predictable. **Keep Cloudflare Workers.**
+
+**Acceptance tests:** Push to `main` causes live URL to update within 2 min; `curl -I` returns 200 + HTTP/3.
+
+---
+
+### Batch 0.4 — Design tokens + fonts pipeline
+
+**Build:** CSS custom properties in `src/styles/tokens.css` (colors, spacing scale, type scale, radii, shadows, motion durations). Configure Astro 6 Fonts API for Fraunces and Geist. Self-host Berkeley Mono via `@font-face` in `public/fonts/`.
+
+**Astro 6 Fonts API ([docs](https://docs.astro.build/en/reference/font-provider-reference/)):** declare fonts in `astro.config.mjs`; Astro downloads, caches, generates fallback metrics using `capsize`, and emits preload links automatically ([Astro 6.0 announcement](https://astro.build/blog/astro-6/)). Providers built in: `google`, `fontsource`, `bunny`, plus local files.
+
+**Concrete config:**
+```ts
+// astro.config.mjs
+fonts: [
+  { provider: fontProviders.fontsource(),
+    name: "Fraunces", cssVariable: "--font-serif",
+    weights: ["400 900"], // variable
+    optical_sizing: "auto", subsets: ["latin"] },
+  { provider: fontProviders.fontsource(),
+    name: "Geist", cssVariable: "--font-sans",
+    weights: ["100 900"], subsets: ["latin"] },
+  { provider: fontProviders.local(),
+    name: "Berkeley Mono", cssVariable: "--font-mono",
+    variants: [{ src: ["./src/assets/fonts/berkeley-mono.woff2"],
+                 weight: 400, style: "normal" }] },
+]
+```
+
+Fraunces variable axes: opsz, wght, SOFT, WONK ([Self-Hosting Variable Fonts in Astro](https://mattbatman.com/self-hosting-variable-fonts-in-astro/)). Use axes via CSS `font-variation-settings`.
+
+**Berkeley Mono — commercial licensing. Do NOT commit the font files to a public repo.** Berkeley Mono v2 sells a Developer license (~$75 one-time for v1; v2 is now modularized — Web use, Print, etc., each billed separately) ([Berkeley Graphics product page](https://berkeleygraphics.com/typefaces/berkeley-mono/), [HN thread on Berkeley Mono licensing](https://brianlovin.com/hn/30557557)). Options:
+  1. Purchase the web license, store the `.woff2` in the repo but **gitignore it in a public mirror**, or keep the repo private.
+  2. Ship self-hosted from a private Cloudflare R2 bucket with a Referer-restricted binding.
+  3. **Fallback (recommended to ship first, swap later):** use **Commit Mono** (SIL OFL, free commercial use, [commitmono.com](https://commitmono.com/)), **JetBrains Mono** (OFL, closest free match to Berkeley at ~85 % similarity per [FontAlternatives](https://fontalternatives.com/alternatives/berkeley-mono/)), or **Ioskeley Mono** — an Iosevka build specifically tuned to mimic Berkeley Mono ([ahatem/IoskeleyMono](https://github.com/ahatem/IoskeleyMono)). This lets the site ship on Phase 0 without waiting on a license purchase.
+
+**Grain overlay (token batch, because it's a visual foundation):**
+- **Recommended: pre-rendered PNG/WebP noise** on a fixed-position full-viewport layer with `mix-blend-mode: overlay; pointer-events: none; opacity: 0.04`. Reason: inline `<feTurbulence>` SVG re-renders every paint and burns CPU on low-end devices; a 256×256 PNG tiled costs ~3 KB gzipped and is cached forever.
+- Alternative: SVG turbulence rendered once to an offscreen canvas → `toDataURL("image/png")` at build time. Ship the PNG. (Falsifiable: measure paint time in Chrome DevTools; PNG overlay should add <1 ms per frame vs 3–8 ms for live feTurbulence on a mid-tier laptop.)
+
+**Layout primitives:** `<Stack>`, `<Cluster>`, `<Grid>`, `<Frame>` as `.astro` components using CSS Grid / Flex with tokens. Hairline borders = `1px solid color-mix(in srgb, currentColor 15%, transparent)` so they adapt to any bg.
+
+**Acceptance tests:**
+- Visual regression snapshot (Playwright) of the typography specimen page showing all three families.
+- `document.fonts.ready` resolves within 200 ms on preview build.
+- No FOIT (font-display: swap active by default in Astro Fonts API).
+- `curl /fonts/…woff2` returns `Cache-Control: public, max-age=31536000, immutable`.
+
+---
+
+# Phase 1 — Card Grid MVP
+
+**Goal:** Home page renders a grid of heterogeneous cards (code / video / music / math / writing) sourced from MDX files, with per-type thumbnail shapes and uniform outer shell. No interactivity yet.
+
+**Exit criteria:** Adding a new `.mdx` file with correct frontmatter causes a new card to appear on the homepage; build fails on schema violation.
+
+### Batch 1.1 — Content schema: one collection, discriminated union
+
+**Build:** A single collection `works` (or `items`) using `z.discriminatedUnion("type", [...])` over the five types. **Recommendation: one collection, not five.** Reasoning:
+- The homepage is one heterogeneous grid; keeping items in one collection means `getCollection("works")` returns a sortable list without manual merging.
+- Discriminated unions give per-type TypeScript narrowing ([Astro content collections guide](https://docs.astro.build/en/guides/content-collections/)).
+- Per-type detail pages can still filter by `data.type === "video"`.
+
+Counter-argument: five collections give stricter per-directory file layout and decouple schemas. But that costs ergonomics at the grid level. Prefer one collection; if schemas diverge wildly later, refactor.
+
+**Libraries / versions:**
+- `zod` — **Astro 6 ships Zod 4 internally; import from `astro/zod`** to guarantee version alignment ([Southwell Media](https://www.southwellmedia.com/blog/astro-6-whats-coming-2026)).
+- `@astrojs/mdx` — current major matching Astro 6.
+
+**Example schema:**
+```ts
+// src/content.config.ts
+import { z, defineCollection } from "astro/zod";
+import { glob } from "astro/loaders";
+
+const base = {
+  title: z.string(),
+  slug: z.string().optional(),
+  date: z.coerce.date(),
+  updated: z.coerce.date().optional(),
+  tags: z.array(z.string()).default([]),
+  draft: z.boolean().default(false),
+  summary: z.string().max(240).optional(),
+  cover: z.object({ src: z.string(), alt: z.string() }).optional(),
+};
+
+const works = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/works" }),
+  schema: z.discriminatedUnion("type", [
+    z.object({ type: z.literal("code"),    ...base,
+               repo: z.string().url().optional(), stack: z.array(z.string()) }),
+    z.object({ type: z.literal("video"),   ...base,
+               duration: z.number(), youtube: z.string().optional() }),
+    z.object({ type: z.literal("music"),   ...base,
+               bpm: z.number().optional(), listen: z.string().url().optional() }),
+    z.object({ type: z.literal("math"),    ...base,
+               pdf: z.string().optional(), arxiv: z.string().optional() }),
+    z.object({ type: z.literal("writing"), ...base,
+               wordCount: z.number().optional(), readingTime: z.number().optional() }),
+  ]),
+});
+
+export const collections = { works };
+```
+
+**Spec should contain:** the five type variants, required vs optional fields per variant, slug derivation rule (filename stem if not overridden), draft handling (hidden in production only).
+
+**Acceptance tests:**
+- Seed 10 fixture `.mdx` files (two per type); `getCollection("works")` returns 10 items with correctly narrowed types.
+- Invalid frontmatter fails `astro check` with a Zod error pointing to the line.
+- Draft filtering: `import.meta.env.PROD` hides `draft: true`.
+
+---
+
+### Batch 1.2 — `<Card>` component + grid
+
+**Build:** One `Card.astro` whose outer shell is uniform (hairline border, radius, padding) and whose inner thumbnail slot varies by `data.type`. Use a switch on `type` to render a `CodeThumb`, `VideoThumb`, etc. Include a small type-indicator glyph (SVG) and metadata pills (date, tag count).
+
+**Libraries:**
+- `astro:assets` for image optimization (see Batch 3.4).
+- No third-party component libs. Handwrite.
+
+**Grid:** CSS Grid with `grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))`, `gap: var(--space-4)`.
+
+**Spec:** card visual contract (min-width, aspect-ratio per thumb, hover state = no interactive yet, hairline scales), keyboard focus style.
+
+**Acceptance tests:**
+- Snapshot of home page with 10 seeded items.
+- Tab-through focuses each card in source order; focus ring visible.
+- Axe-core accessibility pass (Playwright + `@axe-core/playwright`).
+
+---
+
+### Batch 1.3 — Home page route + pagination / "show all"
+
+**Build:** `src/pages/index.astro` queries `getCollection("works")`, sorts by `date desc`, shows top N. Add `/works` for the full archive. No filters yet.
+
+**Acceptance tests:** adding/removing an MDX file changes the grid on rebuild; sort is stable; pagination works.
+
+---
+
+# Phase 2 — Interactivity
+
+**Goal:** The grid supports URL-synced filters/sort, local search, and keyboard/cmd-K navigation. All powered by Svelte 5 islands, hydrating only what's necessary.
+
+**Exit criteria:** User can `?type=video&tag=synth&sort=title` and get the correct filtered grid on both first paint (SSG prerendered) and subsequent client interactions; cmd-K opens a search palette.
+
+### Batch 2.1 — URL-synced filter + sort state
+
+**Build:** A `<FilterBar client:load>` Svelte 5 island that reads `URLSearchParams` on mount via `$state` + `$derived`, writes back via `history.replaceState`, and dispatches an event consumed by `<Grid client:visible>`.
+
+**Library choice:** `nuqs` is **React-only** (as of April 2026); it has no Svelte port. **Recommendation: roll your own tiny helper.** ~30 lines of TS wrapping `URLSearchParams` + `history.replaceState` + a Svelte `$state` rune. Avoid `svelte-url` and similar abandoned packages.
+
+**Server-side parity:** For SEO and no-JS users, the Astro page reads `Astro.url.searchParams` during prerender if the filter is in the URL at request time (requires SSR pages or pre-generating common filter URLs via `getStaticPaths`). For pure SSG, the filter bar is a progressive enhancement that only works with JS. Document this as a known limitation in the spec.
+
+**Spec:** filter keys (`type`, `tag`, `sort`), allowed values, URL canonicalization (omit defaults), debounce (none — it's synchronous DOM filter).
+
+**Acceptance tests:**
+- E2E: click a type chip → URL updates without a navigation → grid updates → back button restores prior state.
+- With JS disabled (Playwright `javaScriptEnabled: false`), the full grid still renders (progressive enhancement).
+
+---
+
+### Batch 2.2 — Local search via Pagefind
+
+**Build:** Install `astro-pagefind` integration; add `<Search />` component on `/search` and a small hook in cmd-K.
+
+**Libraries:**
+- `astro-pagefind` ([shishkin/astro-pagefind](https://github.com/shishkin/astro-pagefind)) — wraps Pagefind v1.x as an Astro integration that runs after build against `dist/` and uses the last built index during dev ([scottwillsey.com](https://scottwillsey.com/astro-pagefind/)).
+- `pagefind` ^1.x — the underlying Rust-built static search tool ([pagefind.app](https://pagefind.app/)).
+
+**Why Pagefind over Fuse.js / MiniSearch:**
+- Pagefind is purpose-built for static sites; it lazily loads chunked index segments so the browser downloads <100 KB for a first search on a site of hundreds of pages ([pagefind.app](https://pagefind.app/)).
+- Fuse.js requires shipping the full searchable corpus as JSON; on ~500 pages that's multi-megabyte.
+- Pagefind is Starlight's default ([Starlight site search](https://starlight.astro.build/guides/site-search/)) — battle-tested in 2026 on doc sites with thousands of pages.
+- MiniSearch is faster than Fuse.js but still requires shipping the full corpus.
+
+**Spec:** what gets indexed (`<main>` only; exclude nav / footer with `data-pagefind-ignore`), what gets surfaced as metadata for per-type ranking, URL of search page, cmd-K integration hook.
+
+**Acceptance tests:**
+- Searching "synthesizer" on a fixture of 50 items returns the two music posts with that term.
+- Bundle size: first-load JS for `/search` < 100 KB (measured in Playwright with `page.route`).
+- Search works on built preview only — document the "no search in dev" gotcha in the spec.
+
+---
+
+### Batch 2.3 — Cmd-K palette (Svelte 5 island)
+
+**Build:** A Svelte 5 component triggered by ⌘K/Ctrl-K, rendering an overlay with fuzzy-matched list of: pages, recent writings, top tags, and Pagefind search results for typed queries. Use `cmdk-sv` for the base primitive.
+
+**Library options (evaluated April 2026):**
+
+| Option | Pros | Cons | Verdict |
+|---|---|---|---|
+| `cmdk-sv` ([cmdk-sv.com](https://www.cmdk-sv.com/), port of Paco Coursey's cmdk) | Closest API to the React original, unstyled primitives, accessible | Active maintenance status varies; check commits in repo before committing | **Primary choice** |
+| `svelte-command-palette` ([docs](https://svelte-command-palette.vercel.app/), [repo](https://github.com/rohitpotato/svelte-command-palette)) | Svelte 5 ready, Fuse.js fuzzy search built in, ~5 KB gzipped, action-based API | Higher-level / more opinionated | **Backup choice** if cmdk-sv lags |
+| `@mateothegreat/svelte5-command-palette` ([repo](https://github.com/mateothegreat/svelte5-command-palette)) | Explicitly Svelte 5 | Less proven | Fallback |
+| `kbar` (React) inside `client:only="react"` | Proven | Adds React runtime to a Svelte-primary site for one component | Rejected — framework bloat |
+| Roll your own | Full control | ~200 LOC + accessibility work | Do this if all libs ship fewer than 2 Svelte-5 commits/quarter |
+
+**Spec:** key bindings (⌘K / Ctrl-K to open, ⌘Enter to open in new tab, ↑↓ to nav, Esc to close), actions (Go to…, Search "…", Toggle theme, Copy URL, Share), hydration strategy (`client:idle` — not critical to load with the page).
+
+**Acceptance tests:**
+- ⌘K opens palette within 50 ms of first-load readiness.
+- Fuzzy match: typing "abot" highlights "About".
+- Trap focus inside palette; Esc returns focus to trigger.
+- Screen reader announces "Command menu open" (aria-live).
+
+---
+
+### Batch 2.4 — Hover preview on cards + staggered animation + keyboard nav
+
+**Build:** A `Preview.svelte` island that shows a floating card with summary + date on hover/focus. Use View Transitions API via Astro 6's `<ClientRouter />` (the renamed `<ViewTransitions />`; note the event-timing change — [Southwell Media](https://www.southwellmedia.com/blog/astro-6-whats-coming-2026)). Stagger via CSS `animation-delay: calc(var(--i) * 30ms)`.
+
+**Acceptance tests:** hover latency <50 ms, keyboard Tab focuses trigger same preview, respects `prefers-reduced-motion`.
+
+---
+
+# Phase 3 — Content Pipeline
+
+**Goal:** Writing long-form MDX with interactive islands, embedded code execution, and optimized images.
+
+**Exit criteria:** A single MDX file can: render a Svelte counter, run a live editable JS snippet, embed an optimized image, get syntax-highlighted code blocks with titles, and export to RSS with full content.
+
+### Batch 3.1 — MDX + Expressive Code
+
+**Build:** `@astrojs/mdx` integration + `astro-expressive-code` for code blocks. Enable titles, line highlighting, copy-to-clipboard, frame decoration.
+
+**Libraries:**
+- `@astrojs/mdx` ^ latest for Astro 6.
+- `astro-expressive-code` latest ([expressive-code.com](https://expressive-code.com/releases/)) — bundles Shiki 4 under the hood (Shiki 4 is the default highlighter in Astro 6 via `<Code />` and markdown — [Astro 6.0](https://astro.build/blog/astro-6/)).
+
+**Expressive Code vs plain Shiki vs Shiki Twoslash:**
+- Expressive Code is **Shiki with a plugin ecosystem**: since the Shikiji merge, EC uses Shiki again but adds titles, line-markers, copy buttons, terminal framing, word-wrap ([EC release notes](https://expressive-code.com/releases/)). It is how the Astro docs site itself is built.
+- Shiki Twoslash: best for TypeScript teaching blogs where you need inline type hovers. EC has a **community** Twoslash plugin but with caveats — EC's architecture is "not yet compatible with Shiki's transformers API," so most Shiki transformers silently break ([EC syntax highlighting docs](https://expressive-code.com/key-features/syntax-highlighting/)). The `expressive-code-twoslash` plugin exists ([withstudiocms repo](https://github.com/withstudiocms/expressive-code-twoslash)) but is niche. **Decision: skip Twoslash initially; add only if the user writes heavy-TS tutorials.**
+
+**Spec:** default theme (a dual light/dark pair, e.g. `github-light` + `github-dark`, or Night Owl), terminal languages, copy button enabled, word-wrap default=off, no Twoslash.
+
+**Acceptance tests:** a fixture `.mdx` with a JS code fence renders with title + copy button; `prefers-color-scheme` swaps theme live.
+
+---
+
+### Batch 3.2 — Embedded Svelte islands inside MDX
+
+**Build:** A convention: place interactive components in `src/components/mdx/` and import them at the top of each MDX file (or via MDX `components` prop globally).
+
+**Known compatibility notes:**
+- Svelte 5 islands in MDX work in Astro 6. Recent fixes have landed for type checking and `$props.id()` uniqueness when the same Svelte island appears multiple times on a page ([svelte integration changelog](https://github.com/withastro/astro/blob/main/packages/integrations/svelte/CHANGELOG.md)).
+- Use `client:visible` as default for heavy islands; `client:load` only when interactivity is needed pre-scroll.
+
+**Spec:** hydration directive policy, how to pass props from MDX frontmatter to an island, how to embed a named Svelte island via a custom MDX component map.
+
+**Acceptance tests:** two instances of the same Svelte island on one page have unique `$props.id()` values; state in one does not leak to the other.
+
+---
+
+### Batch 3.3 — Code execution in MDX
+
+**Build:** A reusable `<Sandbox />` MDX component that renders a live-editable, runnable code playground.
+
+**Recommendation: Sandpack for most cases; StackBlitz WebContainers only if full Node is needed.**
+
+| Option | Cost | Language support | Offline | When to use |
+|---|---|---|---|---|
+| **Sandpack** (`@codesandbox/sandpack-react` or lower-level `sandpack-client`) | Free, open-source | JS/TS/React/Vue, static HTML/CSS, Node via Nodebox for select templates | Service-Workers-based; blocked by strict privacy settings ([Josh Comeau on Sandpack](https://www.joshwcomeau.com/react/next-level-playground/)) | Default: single-file or small multi-file snippets in articles. Smallest footprint. |
+| **StackBlitz WebContainers** (`@webcontainer/api`) | Free for non-commercial / documented SDK | Full Node.js in browser, supports npm/pnpm/yarn ([WebContainers](https://sourceforge.net/software/product/StackBlitz-WebContainers/)) | Yes after initial load | Reach for only when an article needs a real npm install or multi-process Node demo. |
+| Pyodide / QuickJS self-hosted | Free | Python / JS only | Yes | For /math pages with live Python, load Pyodide lazily on user action. |
+| CodeSandbox iframe (legacy) | Free | Everything | No | Reject — ships a full third-party UI. |
+
+**Important caveat on Sandpack:** it's a **React** component toolkit. To use inside Astro without dragging in React as a UI framework, either:
+1. Use `<Sandpack client:only="react" />` as an island — adds React runtime (~40 KB gz) to pages that embed playgrounds.
+2. Use the lower-level framework-agnostic `sandpack-client` bundler and drive it from Svelte. More work; no React runtime.
+
+**Decision:** accept the React runtime for pages that include a sandbox (expected: <10 % of pages); use `client:only="react"` so it's isolated.
+
+**Libraries:**
+- `@codesandbox/sandpack-react` ([sandpack.codesandbox.io](https://sandpack.codesandbox.io/))
+- `react` + `react-dom` (island-only)
+- `@webcontainer/api` — optional, for dedicated tutorial pages
+
+**Spec:** props (`template`, `files`, `dependencies`, `readOnly`), theme tokens matching Expressive Code, lazy-load via `client:visible`.
+
+**Acceptance tests:** a sandbox renders and executes a React counter; typing re-runs within 500 ms; no console errors; page without a sandbox ships 0 bytes of React.
+
+---
+
+### Batch 3.4 — Image optimization
+
+**Build:** Use Astro's built-in `<Image />` + `sharp` for authored images. For card thumbnails and blog hero images, use `getImage()` at build time.
+
+**Libraries:** `astro:assets` built-in; `sharp` as peer dep (auto-installed).
+
+**Cloudflare Images vs built-in:** Astro 6's Cloudflare adapter defaults `imageService` to `cloudflare-binding`, which transforms images at runtime via Cloudflare Images ([@astrojs/cloudflare docs](https://docs.astro.build/en/guides/integrations-guide/cloudflare/)). For a primarily-static site, set `imageService: 'compile'` to keep image processing at build time — no runtime Cloudflare Images spend.
+
+**Spec:** allowed formats (avif + webp + png fallback), responsive sizes (`[320, 640, 960, 1280, 1920]`), `loading="lazy"` default, `fetchpriority="high"` for hero.
+
+**Acceptance tests:** built HTML has `srcset`; Lighthouse LCP image is AVIF on modern browsers.
+
+---
+
+# Phase 4 — Slash Pages
+
+**Goal:** `/now`, `/uses`, `/colophon`, `/tops` as static pages; `/stats` pulls live data from serverless endpoints.
+
+**Exit criteria:** all slash pages render; `/stats` fetches live data and degrades gracefully when an upstream API is down.
+
+### Batch 4.1 — Static slash pages
+
+**Build:** `src/pages/now.astro`, `uses.astro`, `colophon.astro`, `tops.astro`. Each sources content from an MDX file or a typed data file (`src/content/slash/`). Cross-link them; add to sitemap.
+
+**Spec:** page template shared across the four, headings convention for the IndieWeb community's `/now` page directory.
+
+**Acceptance tests:** all pages return 200; each is linked from the footer.
+
+---
+
+### Batch 4.2 — `/stats` live data
+
+**Build:** Convert to hybrid — `export const prerender = false` on `/stats.astro`. Inside, call Astro API routes under `/api/stats/*` that fetch GitHub, Strava, Last.fm, Literal, Wakatime. Cache with Cloudflare KV for 15 min.
+
+**Two architectural options:**
+1. **Live Content Collection** (Astro 6 stable) — build a custom live loader per source; gets cached by Astro's route cache ([Astro 6.0 docs](https://astro.build/blog/astro-6/)). Clean abstraction but still runtime per request.
+2. **Scheduled build trigger** — GitHub Action runs every 6 hours, fetches stats, commits to `src/content/stats/snapshot.json`, redeploys. Fully static; no runtime compute. Trade-off: stats are stale up to 6 h.
+
+**Recommendation:** Option 2 initially (zero runtime cost, survives API outages); migrate to Option 1 if the user wants sub-hour freshness. Source: the Zenn Astro 6 case study reached the same conclusion — "dynamic generation is not actually required" for stats-like pages ([Zenn – Quickly Deploying a Site with Astro 6](https://zenn.dev/miyabitti/articles/92a3e2e94356c1?locale=en)).
+
+**Libraries:** tiny per-API clients (`@octokit/core` for GitHub; direct `fetch` for others). Store secrets as Wrangler secrets.
+
+**Spec:** per-source fields, refresh cadence, stale-while-error fallback (show last-good JSON with a ⚠ indicator), rate-limit handling.
+
+**Acceptance tests:** stats render with fixture JSON; killing one API still renders the page with the other sources; Workers CPU per request < 10 ms (free-tier compatible).
+
+---
+
+# Phase 5 — Digital Garden (Obsidian Import)
+
+**Goal:** Publish a filtered subset of the Obsidian vault as an interconnected garden with wikilinks, backlinks, and a browsable graph view.
+
+**Exit criteria:** user marks a note `publish: true` in Obsidian frontmatter → it appears on site with working `[[wikilinks]]` and backlinks listing; the graph view renders all published notes.
+
+### Batch 5.1 — Vault import pipeline
+
+**Three options evaluated:**
+
+| Approach | Pros | Cons | Verdict |
+|---|---|---|---|
+| **(a) Symlink vault → `src/content/notes/`** | Live editing in Obsidian, zero copy step | Obsidian officially advises against symlinks (sync/corruption risk per [Obsidian docs](https://www.mandalivia.com/obsidian/obsidian-with-astro-for-personal-site/)); publishes everything by default | Too risky |
+| **(b) `astro-loader-obsidian` or `starlight-obsidian`** | Existing community tooling; handles wikilinks, embeds, backlinks ([starlight-obsidian in use](https://notes.caro.fyi/notes/using-obsidian-with-astro-starlight/)) | Starlight plugins sometimes assume the Starlight shell; pure Astro loaders vary in maintenance | **Primary: try `astro-loader-obsidian` via the Content Layer `loader` API** |
+| **(c) Hand-rolled Node script** (like [rachsmith.com's approach](https://rachsmith.com/automating-obsidian-to-astro/)) | Full control, filters on `publish: true`, rewrites wikilinks → markdown links, unpublished-target stripping | DIY maintenance | **Fallback: if loader plugin lacks a feature, ship a 150-LOC script that reads the vault, filters, transforms, writes `src/content/notes/**/*.md`** |
+
+**Recommendation: (b) first, (c) as escape hatch.** The Astro team has added Obsidian vaults to the example community loaders list ([Astro Content Collections docs](https://docs.astro.build/en/guides/content-collections/)), so `astro-loader-obsidian` is the canonical path. Verify it's active (commits within 3 months) before locking in; if stale, use (c).
+
+**Spec:** vault root path, filter rule (`publish: true` frontmatter), slug rule (filename slugified + folder path optional), wikilink target resolution (exact filename match → slug; if missing, render as plain text not broken link).
+
+**Acceptance tests:** a note with `publish: false` does not appear; a `[[foo]]` link to a published note becomes `<a href="/notes/foo">foo</a>`; a `[[bar]]` to unpublished note renders as bold plain text with a `data-unpublished` attribute.
+
+---
+
+### Batch 5.2 — Wikilink + embed transformation
+
+**Build:** Remark plugin chain during MDX processing.
+
+**Libraries:**
+- `remark-wiki-link` or `remark-obsidian` (verify most-recently-maintained in April 2026 — the [Astro roadmap discussion](https://github.com/withastro/roadmap/discussions/437) confirms wikilinks still aren't native, so a plugin is required).
+- `remark-obsidian-callout` for `> [!note]` blocks if used.
+- `remark-math` + `rehype-mathjax` or `rehype-katex` for LaTeX (KaTeX is smaller, MathJax is more complete; pick **KaTeX** for file-size).
+
+**Spec:** plugin order (wiki-link before math before highlight), Obsidian-style `![[image.png]]` embed → `<Image>` component, unresolved-link styling.
+
+**Acceptance tests:** note containing `[[Philosophy of Mind]]`, `![[graph.png]]`, and `$\int x^2$` renders correct links, an optimized image, and KaTeX output.
+
+---
+
+### Batch 5.3 — Backlinks at build time
+
+**Build:** An integration hook (`astro:build:done` or a custom step after collection sync) that walks every note, extracts outgoing links, inverts the map, and stores a JSON index in `src/data/backlinks.json`. Each note page reads its entry and renders a "Backlinks" footer.
+
+**Recommendation: build-time, not client-time.** Client-time would require shipping the full link graph as JSON; build-time means a single sorted list per page is inlined server-side — no runtime JS required. Follows the pattern used by `starlight-site-graph` (which [Caro vendors in directly](https://notes.caro.fyi/notes/using-obsidian-with-astro-starlight/)).
+
+**Spec:** canonical ID (slug), handling of orphan notes, alphabetical vs chronological sort of backlinks.
+
+**Acceptance tests:** if note A links to note B, B's rendered HTML contains a link back to A in a `<section class="backlinks">`.
+
+---
+
+### Batch 5.4 — Hover link previews
+
+**Build:** A Svelte island (`<LinkPreview>`) that on hover/focus of a `.wikilink` anchor, fetches the target page's summary + first paragraph from a small JSON index built alongside backlinks, shows a floating card.
+
+**Acceptance tests:** hover over a wikilink shows a preview within 100 ms; respects `prefers-reduced-motion` by disabling animation; works with keyboard focus.
+
+---
+
+### Batch 5.5 — Graph view page
+
+**Build:** `/garden/graph` with an interactive force-directed graph of all published notes.
+
+**Library shortlist (April 2026):**
+
+| Library | Renderer | Notes | Verdict |
+|---|---|---|---|
+| **Sigma.js 3 + graphology** ([sigmajs.org](https://www.sigmajs.org/)) | WebGL | Designed for thousands of nodes; framework-agnostic; used by Caro's note site via starlight-site-graph; MIT | **Primary** |
+| **Cosmograph** ([Neo4j overview](https://neo4j.com/blog/graph-visualization/neo4j-graph-visualization-tools/)) | WebGL | Renders 100 k+ nodes smoothly; CC-BY-NC for non-commercial, proprietary license for commercial | Good if the garden grows huge and is non-commercial |
+| **D3-force + Canvas/SVG** | Canvas/SVG | Most flexible; slower at 5 k+ nodes; ubiquitous | Best if the user wants highly customized node/edge design |
+| **Cytoscape.js** | DOM | Biological-graph origin; DOM-dependent so no multithreading ([Memgraph graph lib survey](https://memgraph.com/blog/you-want-a-fast-easy-to-use-and-popular-graph-visualization-tool)) | Reject — perf issue above ~2 k nodes |
+| **vis-network** | Canvas | Popular but slowest of the three in head-to-head benchmarks ([Memgraph survey](https://memgraph.com/blog/you-want-a-fast-easy-to-use-and-popular-graph-visualization-tool)) | Reject |
+| **react-force-graph** | WebGL | Great but drags React runtime in | Reject (framework mismatch) |
+
+**Recommendation: Sigma.js 3 with graphology as the data model.** Falsifiable criterion: renders 5 000 nodes at 60 fps in Chrome on a 2020 MacBook Air (per [Memgraph's benchmark](https://memgraph.com/blog/you-want-a-fast-easy-to-use-and-popular-graph-visualization-tool)); framework-agnostic so it drops into a Svelte island cleanly. If graph stays under ~500 nodes and the user wants custom node art, revisit D3-force.
+
+**Spec:** nodes = notes, edges = wikilinks; node size = log(backlink count); color by tag cluster (optional, via community detection from `graphology-communities-louvain`); zoom/pan/click→navigate; keyboard-accessible "list view" fallback.
+
+**Acceptance tests:** renders a 500-node fixture at 60 fps; clicking a node navigates; full list of notes is keyboard-reachable (graph view is progressive enhancement on top of an accessible list).
+
+---
+
+# Phase 6 — IndieWeb Polish
+
+**Goal:** The site is a first-class IndieWeb citizen: full-text RSS/JSON Feed, webmentions displayed, h-card/h-entry microformats, sitemap, custom 404.
+
+### Batch 6.1 — RSS + JSON Feed
+
+**Build:** `@astrojs/rss` for RSS 2.0 with full-content `<content:encoded>`; a second endpoint for JSON Feed 1.1 (hand-built JSON route).
+
+**Libraries:**
+- `@astrojs/rss` latest — ships helpers for full-content including MDX rendering via the `rssSchema` + `renderContent` utilities.
+
+**Spec:** which collections get fed, item fields, full vs summary (full), categories from tags.
+
+**Acceptance tests:** feeds validate against the W3C Feed Validator; full post body appears in `<content:encoded>`.
+
+---
+
+### Batch 6.2 — Sitemap + microformats
+
+**Build:** `@astrojs/sitemap` integration; hand-coded h-card in site footer; h-entry wrapping on each post.
+
+**Libraries:** `@astrojs/sitemap` — current major.
+
+**Spec:** sitemap exclusions (drafts, test pages), h-card fields (name, photo, url, note), h-entry fields (p-name, p-summary, e-content, dt-published, u-url, p-author referencing h-card).
+
+**Acceptance tests:** `indiewebify.me` validator passes; sitemap.xml contains all non-draft routes.
+
+---
+
+### Batch 6.3 — Webmentions (receive + display)
+
+**Build:**
+1. Sign up at [webmention.io](https://webmention.io) with the site URL; add `<link rel="webmention" href="https://webmention.io/yoursite.com/webmention" />` to `<head>`.
+2. At build time, fetch `https://webmention.io/api/mentions.jf2?target=https://yoursite.com/…` for each page into a JSON cache under `src/data/mentions/`.
+3. Render mentions on each post page.
+4. Optional POSSE: use [Bridgy Fed](https://fed.brid.gy/docs) to federate posts to Mastodon/Bluesky and receive replies back as webmentions.
+
+**Library options:**
+- **Manual fetch at build time** — recommended. Simple script that runs before `astro build`; caches to disk so builds work offline.
+- `astro-webmentions` community integration — verify active maintenance; fall back to manual if stale.
+
+**Webmention.io is still operational in 2026** ([IndieWeb Webmention page](https://indieweb.org/Webmention)); Bridgy (classic) for POSSE and Bridgy Fed for federation are both maintained by Ryan Barrett ([Bridgy About](https://brid.gy/about), [Bridgy Fed docs](https://fed.brid.gy/docs)).
+
+**Alternative: giscus** (GitHub Discussions as comments) if the user wants threaded comments and doesn't need IndieWeb interop. Ship both: giscus for long-form discussion, webmentions for IndieWeb interop.
+
+**Spec:** which mention types to display (replies, likes, reposts), moderation (blocklist in frontmatter), where to render (below post), whether to cache JSON in git (yes, for reproducible builds).
+
+**Acceptance tests:** a test target URL shows a seeded fixture mention; build works offline from cache.
+
+---
+
+### Batch 6.4 — Custom 404
+
+**Build:** `src/pages/404.astro` with suggestions (link to search, popular posts, sitemap). Configure Cloudflare Workers `not_found_handling: "404-page"` in `wrangler.jsonc` ([Astro Cloudflare deploy troubleshooting](https://docs.astro.build/en/guides/deploy/cloudflare/)).
+
+**Acceptance tests:** navigating to `/does-not-exist` returns a 404 status with the custom page body.
+
+---
+
+# Phase 7 — Atmosphere Polish (Optional)
+
+**Goal:** Taste-layer touches. Cut this entirely if scope tightens.
+
+### Batch 7.1 — Custom cursor
+
+**Build:** Hand-rolled (~50 LOC) Svelte component using `pointermove` + `requestAnimationFrame` + lerp; shows on `:hover` of `[data-cursor]` anchors. Respect `pointer: fine` media query (no cursor on touch) and `prefers-reduced-motion`.
+
+**Why hand-roll:** `kursor` and `custom-cursor-react` are small projects with sporadic updates; the code is genuinely ~50 lines. Same advice as several custom-cursor explainers: use raw pointer events.
+
+**Acceptance tests:** cursor follows pointer at 60 fps; disabled on touch devices; disabled when `prefers-reduced-motion`.
+
+---
+
+### Batch 7.2 — Micro-sound interactions
+
+**Build:** `howler.js` (or the Web Audio API directly) for a small library of UI sounds. Gate behind a persisted user opt-in toggle in the footer; **default off**.
+
+**Spec:** file formats (mp3 + webm), total bytes budget (<50 KB), events (cmd-K open, hover card flip).
+
+**Acceptance tests:** site is completely silent by default; toggling sound persists across reloads.
+
+---
+
+### Batch 7.3 — Time-of-day theming + easter eggs
+
+**Build:** A pure-CSS scheme that shifts accents based on user's local hour (morning=warmer off-white, night=cooler). Easter eggs: Konami code, click-counter on the / page.
+
+**Acceptance tests:** snapshot of home page at 09:00 and 22:00 differs in accent color.
+
+---
+
+## 3. Superpowers Workflow Templates (proposed, verified against plugin docs)
+
+Superpowers enforces `brainstorm → spec → plan → execute (subagent-driven, TDD) → review → finish` ([Builder.io](https://www.builder.io/blog/claude-code-superpowers-plugin), [ClaudePluginHub](https://www.claudepluginhub.com/plugins/obra-superpowers-2)). Each **batch above** maps to one "plan" with a spec.
+
+### `spec.md` template (per batch)
+
+```markdown
+# Spec: <batch name>
+## Goal
+One-paragraph description of the user-visible outcome.
+## Context / invariants
+- The site is Astro 6.x on Cloudflare Workers, Svelte 5 islands.
+- Output is `static` by default; SSR only where explicitly noted.
+- Zero third-party network calls at runtime unless listed.
+## Non-goals
+Explicitly out of scope for this batch.
+## Interfaces
+- File paths touched.
+- Component props / event shapes.
+- URL routes added or changed.
+## Success criteria (falsifiable)
+- [ ] Command X produces output Y.
+- [ ] Lighthouse score ≥ N on route Z.
+- [ ] Axe-core passes on route Z.
+- [ ] Fixture test F is green.
+## Dependencies
+Previous batch(es) that must be complete.
+## Open questions
+Items to resolve during brainstorm phase.
+```
+
+### `plan.md` template (per batch)
+
+```markdown
+# Plan: <batch name>
+## Task list (2–5 min each)
+1. Create file `src/…/X.astro` with stub and failing test.
+2. Implement behavior B; make test green.
+3. Add Playwright e2e for flow F.
+4. Update `README.md` with new env var.
+## Acceptance tests (RED → GREEN)
+- test 1 (path)
+- test 2 (path)
+## Rollback plan
+Commit per task; branch merges as single PR.
+## Review checklist
+- [ ] Biome clean
+- [ ] `astro check` clean
+- [ ] No new runtime deps > 10 KB gz without justification
+- [ ] Axe-core clean
+- [ ] Bundle-size delta < N KB (report it)
+```
+
+Superpowers' test-driven-development skill will delete code that precedes a failing test, so every task in the plan must start with a test stub ([ClaudePluginHub](https://www.claudepluginhub.com/plugins/obra-superpowers-2)). Install via: `/plugin install superpowers@claude-plugins-official` ([obra/superpowers](https://github.com/obra/superpowers)).
+
+---
+
+## 4. Known Risks & Deprecation Watch
+
+| Item | Risk | Mitigation |
+|---|---|---|
+| `@astrojs/cloudflare` dropped Pages support | Already happened; existing Pages docs on third-party blogs are stale | Use Workers with Assets, per [official docs](https://docs.astro.build/en/guides/integrations-guide/cloudflare/) |
+| `<ViewTransitions />` renamed to `<ClientRouter />`, event timing changed | Any JS hooking `astro:after-swap` needs retesting | Flag in Phase 2 spec ([GitHub #15191](https://github.com/withastro/astro/issues/15191) via [Southwell Media](https://www.southwellmedia.com/blog/astro-6-whats-coming-2026)) |
+| `Astro.glob()` removed in v6 | N/A for new projects | Use `import.meta.glob()` or `getCollection()` |
+| Zod 4 upgrade | Standalone `zod` must be replaced with `astro/zod` import | Enforce in lint rule |
+| Astro Rust compiler experimental | Don't auto-correct invalid HTML; missing dev-toolbar metadata | Leave on Go compiler (default) until v7 |
+| Berkeley Mono v2 licensing change | v2 modularized pricing; web use now an add-on ([Lobsters thread](https://lobste.rs/s/jrutdz/commit_mono)) | Ship with Commit Mono or Ioskeley Mono; swap when license purchased |
+| Sandpack requires React | +40 KB gz on playground pages | Island with `client:only="react"` |
+| `astro-loader-obsidian` maintenance unknown | May lag Astro major versions | Have hand-rolled import script as backup |
+| Cloudflare Workers free-tier 10 ms CPU | `/stats` could exceed on slow upstream | Pre-build snapshot approach (Batch 4.2 option 2) |
+
+---
+
+## 5. "What to Cut First" Under Scope Pressure
+
+Ordered from first-to-cut to last-to-cut:
+
+1. **Phase 7 entirely** — custom cursor, sounds, time-of-day. Zero impact on core value.
+2. **Batch 5.5 graph view** — keep the digital garden, drop the visualization. Notes still link.
+3. **Batch 3.3 code execution** — replace `<Sandbox>` with static code blocks + "Open in StackBlitz" link.
+4. **Batch 2.3 cmd-K palette** — URL filters + a visible search box cover 80 % of the value.
+5. **Batch 6.3 webmentions** — leave in `rel="webmention"` link (2 lines) and defer rendering.
+6. **Batch 4.2 live /stats** — ship a static "what I've been up to" page with manual updates.
+
+Do **not** cut: Phase 0 (foundations), Batches 1.1–1.3 (card grid), Batch 3.1 (Expressive Code), Batch 6.1 (RSS), Batch 6.2 (sitemap + microformats). These are the cheap, high-leverage essentials.
+
+---
+
+## 6. One-Page Library Manifest
+
+For Claude Code to pin in `package.json`. Versions resolve to "latest compatible with Astro 6" as of April 2026; verify with `pnpm outdated` before install.
+
+```
+dependencies:
+  astro                       ^6
+  @astrojs/mdx                latest-for-astro-6
+  @astrojs/svelte             ^7
+  @astrojs/sitemap            latest
+  @astrojs/rss                latest
+  @astrojs/cloudflare         latest
+  svelte                      ^5
+  astro-expressive-code       latest
+  astro-pagefind              latest
+  pagefind                    ^1
+  sharp                       latest
+  graphology                  latest
+  sigma                       ^3
+  cmdk-sv                     latest    # verify commits
+  @codesandbox/sandpack-react latest    # only if Phase 3.3
+  katex / rehype-katex        latest
+  remark-wiki-link            latest    # or remark-obsidian
+devDependencies:
+  typescript                  ^5
+  @biomejs/biome              latest
+  prettier                    latest
+  prettier-plugin-astro       latest
+  prettier-plugin-svelte      latest
+  vitest                      latest
+  @vitest/coverage-v8         latest
+  @playwright/test            latest
+  @axe-core/playwright        latest
+  wrangler                    latest
+  lefthook                    latest
+```
+
+---
+
+## 7. Final Notes for the Implementer
+
+- **Every batch above is scoped to fit one Superpowers `spec.md + plan.md` pair.** A plan with more than ~10 tasks should be split.
+- **Ship in phase order.** Phase 0 → 1 → 6 in the first week gets you a real, indexable, feedable site. Everything else is value-add.
+- **Every library claim in this report is linked to a source URL.** When Claude Code writes specs, cross-reference those URLs as the "source of truth" field. If a URL 404s or a library's last commit is >6 months old at the time of implementation, flag it in the spec's "Open questions" section and pick the named backup.
+- **Falsifiable criteria win.** Every acceptance test above is a concrete command or measurement — not "looks good." Keep that bias.
+
+*End of report.*
