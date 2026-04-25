@@ -44,7 +44,7 @@ Source: `docs/2026-04-25-pushback-trigger-research.md`.
 
 **Nit threshold:** see `## Inline-fix gate` below. **Never** mention Claude Code / sessions / AI authorship in issue / PR / commit text.
 
-## Inline-fix gate (ALL must hold; else `gh issue create -R <owner>/utofme -l nit`)
+## Inline-fix gate (ALL must hold; else `gh issue create -R utof/utofme -l nit`)
 **Scope: nits only.** Blockers (failing tests, spec / ADR violations, security regressions, hard-gate breaches) fix on the branch regardless of size — gate doesn't apply.
 
 **Hard gates (never relax — independent of model power):**
@@ -134,6 +134,7 @@ Each phase = its own branch `phase/NN-name`. All batches in that phase land on t
 
 ## Repo hygiene
 - **No** `Co-Authored-By: Claude` in commits. **No** mention of Claude / sessions / AI in any public artifact.
+- `vboxuser` is a scarecrow name — not a real VM, not someone's actual handle. Don't reference it in commits / PRs / issues; user's GitHub handle is `utof`.
 - **Never create new auto-memory files, and never edit CLAUDE.md, without an explicit user ask.** `progress.md` is the only file free to update on your own. If you think a new memory or a CLAUDE.md edit is warranted — ask first, then act.
 - **Root `.gitignore`:** `*.md` everywhere EXCEPT `/README.md`, `/CLAUDE.md`, `/LICENSE`, and everything under `/packages/specs/**`. Prose belongs in `packages/specs/`.
 - `packages/site/.gitignore` adds nothing for .md (root rule covers it).
