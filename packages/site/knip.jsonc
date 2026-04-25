@@ -29,6 +29,16 @@
 		// shim and the config is outside knip's CWD scope, so knip flags it as
 		// unused. CI failure on PR #1 confirmed. Spec § "Pinned dev deps" lists
 		// lefthook; usage is real, just CLI-only. See: lefthook.yml.
-		"lefthook"
+		"lefthook",
+		// Why: Wired in Task 4 (stryker.conf.json + vitest.mutation.config.ts) and
+		// Task 12 (unit tests + CI nightly mutation workflow), per plan
+		// 01-card-grid-mvp.md § Task 4 + Task 12. Not yet consumed in Task 1.
+		"@stryker-mutator/core",
+		"@stryker-mutator/vitest-runner",
+		"@stryker-mutator/typescript-checker",
+		// Why: Wired in Task 4 (fast-check property tests in tests/unit/), per plan
+		// 01-card-grid-mvp.md § Task 4. Not yet consumed in Task 1.
+		"fast-check",
+		"@fast-check/vitest"
 	]
 }

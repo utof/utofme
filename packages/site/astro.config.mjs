@@ -25,10 +25,12 @@
 //   - https://fonts.google.com/specimen/Fraunces (Google Fonts catalogue)
 //   - https://fonts.google.com/specimen/Geist (Google Fonts catalogue)
 //   - https://github.com/withastro/docs/blob/main/src/content/docs/en/reference/font-provider-reference.mdx
+import mdx from "@astrojs/mdx";
 import { defineConfig, fontProviders } from "astro/config";
 
 export default defineConfig({
 	output: "static",
+	integrations: [mdx()],
 	fonts: [
 		// Fraunces — variable serif (wght 100–900 + opsz + SOFT + WONK axes).
 		// Why: `weights: ["100 900"]` string-range is the correct form for variable
