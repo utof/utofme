@@ -67,23 +67,25 @@ jobs:
       - name: test (vitest)
         run: bun run --cwd packages/site test
 
-      # ── Playwright e2e ─────────────────────────────────────────────────────────
-      - name: Install Playwright browsers
-        run: cd packages/site && npx playwright install --with-deps chromium
-
-      - name: test:e2e (playwright)
-        run: bun run --cwd packages/site test:e2e
-
-      # ── Build ──────────────────────────────────────────────────────────────────
+      # ── Build (must precede e2e — Playwright's webServer runs `astro preview`
+      #    which fails fast if dist/ is missing) ─────────────────────────────────
       - name: build
         run: bun run --cwd packages/site build
 
-      # ── Post-build gates ───────────────────────────────────────────────────────
+      # ── Post-build static gates (run before e2e so a build / budget regression
+      #    aborts the run before browsers spin up) ────────────────────────────────
       - name: check:size (size-limit)
         run: bun run --cwd packages/site check:size
 
       - name: check:no-js (post-build glob)
         run: bun run --cwd packages/site check:no-js
+
+      # ── Playwright e2e (uses dist/ via `astro preview`) ────────────────────────
+      - name: Install Playwright browsers
+        run: cd packages/site && npx playwright install --with-deps chromium
+
+      - name: test:e2e (playwright)
+        run: bun run --cwd packages/site test:e2e
 
       # ── Lighthouse CI ──────────────────────────────────────────────────────────
       # Invoked via npx (Node host) not bunx — @lhci/cli requires Node internals.
