@@ -1,36 +1,9 @@
 {
 	"name": "@utofme/site",
-	"private": true,
-	"type": "module",
 	"version": "0.0.0",
-	"scripts": {
-		"dev": "astro dev",
-		"build": "astro build",
-		"preview": "astro preview --host 127.0.0.1",
-		"astro": "astro",
-		"check:biome": "biome check .",
-		"check:prettier": "prettier --check '**/*.{astro,svelte}'",
-		"check:astro": "astro check",
-		"check:type-coverage": "type-coverage --at-least 100 --strict",
-		"check:knip": "knip",
-		"check:depcruise": "depcruise --validate .dependency-cruiser.cjs src",
-		"check:docs": "bun run scripts/check-docs.ts",
-		"check:size": "size-limit",
-		"check:no-js": "bun run scripts/no-js-check.ts",
-		"check:lighthouse": "npx @lhci/cli autorun",
-		"test": "vitest run",
-		"test:unit": "vitest run --coverage",
-		"test:e2e": "node node_modules/@playwright/test/cli.js test"
-	},
-	"typeCoverage": {
-		"atLeast": 100,
-		"strict": true,
-		"ignoreFiles": [
-			".astro/**"
-		]
-	},
 	"devDependencies": {
 		"@astrojs/check": "^0.9.8",
+		"@astrojs/mdx": "^5",
 		"@astrojs/svelte": "^7",
 		"@axe-core/playwright": "^4.11.2",
 		"@biomejs/biome": "^2.4.13",
@@ -62,7 +35,32 @@
 		"vitest": "^4.1.5",
 		"wrangler": "^4.85.0"
 	},
-	"dependencies": {
-		"@astrojs/mdx": "^5"
+	"private": true,
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview --host 127.0.0.1",
+		"astro": "astro",
+		"check:biome": "biome check .",
+		"check:prettier": "prettier --check '**/*.{astro,svelte}'",
+		"check:astro": "astro check",
+		"check:type-coverage": "type-coverage --at-least 100 --strict",
+		"check:knip": "knip",
+		"check:depcruise": "depcruise --validate .dependency-cruiser.cjs src",
+		"check:docs": "bun run scripts/check-docs.ts",
+		"check:size": "size-limit",
+		"check:no-js": "bun run scripts/no-js-check.ts",
+		"check:lighthouse": "npx @lhci/cli autorun",
+		"test": "vitest run",
+		"test:unit": "vitest run --coverage",
+		"test:e2e": "node node_modules/@playwright/test/cli.js test"
+	},
+	"type": "module",
+	"typeCoverage": {
+		"atLeast": 100,
+		"strict": true,
+		"ignoreFiles": [
+			".astro/**"
+		]
 	}
 }

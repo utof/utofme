@@ -8,11 +8,9 @@
     "packages/site": {
       "name": "@utofme/site",
       "version": "0.0.0",
-      "dependencies": {
-        "@astrojs/mdx": "^5",
-      },
       "devDependencies": {
         "@astrojs/check": "^0.9.8",
+        "@astrojs/mdx": "^5",
         "@astrojs/svelte": "^7",
         "@axe-core/playwright": "^4.11.2",
         "@biomejs/biome": "^2.4.13",
