@@ -36,6 +36,14 @@ export default defineConfig({
 			// Why: build-invoking tests inflate unit-suite run-time unacceptably;
 			// the real gate runs as a discrete CI step. See plans/00-foundations.md § Task 6.
 			"tests/unit/no-js.test.ts",
+			// Task 10a wrangler.jsonc shape stub — activated in a future polish round.
+			// Why: comment-only stub; Vitest 4.x fails a run if a matched file has no suite.
+			// See: packages/specs/plans/00-foundations.md § Task 10a
+			"tests/unit/wrangler-config.test.ts",
+			// Task 10d ADR completeness stub — activated in a future polish round.
+			// Why: comment-only stub; no test() calls present until stub is activated.
+			// See: packages/specs/plans/00-foundations.md § Task 10d
+			"tests/unit/adr-completeness.test.ts",
 		],
 	},
 });

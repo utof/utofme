@@ -1,0 +1,25 @@
+// Why: static-only Workers Assets deployment — no @astrojs/cloudflare adapter needed for
+// `output: 'static'` (spec § "Context / invariants": "If you're using Astro as a static site
+// builder, you don't need an adapter"). Assets are served directly from Workers Assets;
+// the `binding: "ASSETS"` key is optional for static-only but included for Phase 4 upgrade
+// path when SSR /stats will call env.ASSETS.fetch(request).
+// not_found_handling: "404-page" serves dist/404.html on unmatched routes (Astro generates
+// it for output: 'static'). html_handling defaults to "auto-trailing-slash" (omitted).
+// No `main` key: omitting (not setting null) is required — presence of `main` with a missing
+// file fails wrangler schema validation; Phase 0 is assets-only.
+// Sources:
+//   developers.cloudflare.com/workers/wrangler/configuration (Static Assets Configuration)
+//   docs.astro.build/en/guides/integrations-guide/cloudflare/ (adapter not needed for static)
+//   packages/specs/specs/00-foundations.md § "External services / runtime deps"
+//   packages/specs/adrs/0002-cloudflare-workers-no-adapter-for-static.md
+//   packages/specs/adrs/0004-static-output-default.md
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "utofme",
+	"compatibility_date": "2026-04-01",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS",
+		"not_found_handling": "404-page"
+	}
+}
