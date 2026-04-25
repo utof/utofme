@@ -12,6 +12,24 @@
 #   Task 3: astro-check, type-coverage, knip, depcruise
 #   Task 4: check-docs
 #
+# Why (stage_fixed: true on biome-format + prettier-format): both jobs are
+#   format-only — their auto-fixes are deterministic and idempotent, so
+#   auto-staging the result is safe. The committer always sees the diff.
+#   Future read-only analyzer jobs (Task 3 knip/depcruise, Task 4 check-docs)
+#   MUST NOT set stage_fixed, as analysis-only steps have no safe output to stage.
+#   See: CLAUDE.md § "Documentation-for-trust".
+#
+# Why (CI Biome invocation): packages/site/biome.json uses CWD-relative includes
+#   globs (src/**, tests/**, scripts/**, *.json, etc.). The glob anchors resolve
+#   relative to the Biome process CWD, NOT relative to the config file's location.
+#   CI MUST invoke Biome as `bun x biome check packages/site` (or use
+#   `root: "packages/site"` in lefthook, as done here) — NOT `bun x biome check .`
+#   from the workspace root — to ensure root-level configs such as
+#   packages/site/biome.json and packages/site/.prettierrc.json are included.
+#   Note: biome.json is strict JSON (no // comments), so this rationale lives here.
+#   See: packages/specs/specs/00-foundations.md § "Lefthook ordering requirement".
+#   Task 10b CI step must use `bun x biome check packages/site`.
+#
 # Template variable {staged_files} documented at:
 #   https://github.com/evilmartians/lefthook/blob/master/docs/configuration/run.md
 # Piped group syntax documented at:

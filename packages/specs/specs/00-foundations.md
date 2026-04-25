@@ -36,7 +36,7 @@ A deployable, typed, tested Astro 6 skeleton with the design-system tokens and l
 - `packages/site/tsconfig.json` (`extends: "astro/tsconfigs/strictest"`)
 - `packages/site/biome.json`
 - `packages/site/wrangler.jsonc`
-- `packages/site/lefthook.yml`
+- `lefthook.yml`
 - `packages/site/package.json`
 - `packages/site/scripts/check-docs.ts` (ts-morph TSDoc enforcement)
 - `packages/site/src/styles/tokens.css`
