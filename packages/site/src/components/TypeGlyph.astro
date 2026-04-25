@@ -1,0 +1,66 @@
+---
+/**
+ * TypeGlyph.astro — small (≤24×24) SVG indicator for the work type.
+ *
+ * Why: visual rhythm across the heterogeneous grid; one glyph per type.
+ *
+ * @see packages/specs/specs/01-card-grid-mvp.md § Card visual contract
+ */
+import type { WorkEntry } from "../content.config";
+interface Props {
+	type: WorkEntry["type"];
+}
+const { type } = Astro.props;
+---
+
+<span class="glyph" aria-hidden="true" data-type={type}>
+	{
+		type === "code" && (
+			<svg viewBox="0 0 24 24" width="20" height="20">
+				<path
+					d="M8 6 L2 12 L8 18 M16 6 L22 12 L16 18"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				/>
+			</svg>
+		)
+	}
+	{
+		type === "video" && (
+			<svg viewBox="0 0 24 24" width="20" height="20">
+				<polygon points="6,4 6,20 20,12" fill="currentColor" />
+			</svg>
+		)
+	}
+	{
+		type === "music" && (
+			<svg viewBox="0 0 24 24" width="20" height="20">
+				<>
+					<path d="M9 18 V5 L20 3 V16" fill="none" stroke="currentColor" stroke-width="2" />
+					<circle cx="6" cy="18" r="3" fill="currentColor" />
+					<circle cx="17" cy="16" r="3" fill="currentColor" />
+				</>
+			</svg>
+		)
+	}
+	{
+		type === "math" && (
+			<svg viewBox="0 0 24 24" width="20" height="20">
+				<path d="M4 6 H20 M4 12 H14 M4 18 H20" fill="none" stroke="currentColor" stroke-width="2" />
+			</svg>
+		)
+	}
+	{
+		type === "writing" && (
+			<svg viewBox="0 0 24 24" width="20" height="20">
+				<path
+					d="M4 4 H20 V20 H4 Z M7 8 H17 M7 12 H17 M7 16 H13"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				/>
+			</svg>
+		)
+	}
+</span>

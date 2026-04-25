@@ -1,0 +1,34 @@
+---
+/**
+ * MetaPills.astro — date + tag-count pill cluster.
+ *
+ * Why: locale-stable date format (YYYY-MM-DD via toISOString slice) prevents
+ * CI snapshot drift across locale-default-changed runners.
+ *
+ * @see packages/specs/specs/01-card-grid-mvp.md § Card visual contract
+ */
+interface Props {
+	date: Date;
+	tagCount: number;
+}
+const { date, tagCount } = Astro.props;
+const ymd = date.toISOString().slice(0, 10);
+---
+
+<div class="pills">
+	<span class="pill" data-test="meta-date">{ymd}</span>
+	<span class="pill" data-test="meta-tags">{tagCount} {tagCount === 1 ? "tag" : "tags"}</span>
+</div>
+
+<style>
+	.pills {
+		display: flex;
+		gap: var(--space-1);
+		font-size: var(--font-size-1);
+	}
+	.pill {
+		padding: 0 var(--space-1);
+		border-radius: var(--radius-sm);
+		background: color-mix(in srgb, currentColor 8%, transparent);
+	}
+</style>
