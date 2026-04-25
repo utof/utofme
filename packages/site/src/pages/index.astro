@@ -1,18 +1,56 @@
 ---
 // Why: index.astro is the sole page in Phase 0. It demonstrates all three typefaces
-// (serif via Fraunces, sans via Geist, mono via Commit Mono) so the Task 8 typography
-// e2e test can assert computed font-family references on body / h1 / code.
-// Layout primitives (Stack, Cluster, Grid, Frame) and the [data-test="typography-specimen"]
-// container ship in Task 9, not here.
-// See: packages/specs/plans/00-foundations.md § Task 8 + § Task 9
+// (serif via Fraunces, sans via Geist, mono via Commit Mono) inside a
+// [data-test="typography-specimen"] wrapper (used as the visual-regression mask
+// region per Task 5c forward note). Layout primitives (Stack, Cluster, Grid, Frame)
+// are exercised here so every component's data-component attribute is testable in e2e.
+// See: packages/specs/plans/00-foundations.md § Task 9
 import BaseLayout from "../layouts/_BaseLayout.astro";
+import Cluster from "../components/Cluster.astro";
+import Frame from "../components/Frame.astro";
+import Grid from "../components/Grid.astro";
+import Stack from "../components/Stack.astro";
 ---
 
 <BaseLayout title="utofme">
 	<main>
-		<h1>utofme</h1>
-		<p>A personal site.</p>
-		<code>monospace specimen</code>
+		<Stack gap="6">
+			<!-- Typography specimen: all three typefaces demonstrated here.
+			     data-test="typography-specimen" used as visual-regression mask region.
+			     See: packages/specs/plans/00-foundations.md § Task 5c -->
+			<section data-test="typography-specimen">
+				<Stack gap="4">
+					<h1>utofme</h1>
+					<p>
+						A personal site built with Astro 6, Svelte 5, and Cloudflare Workers. This paragraph
+						renders in Geist, a variable sans-serif with clean geometry suited to body copy at all
+						weights.
+					</p>
+					<code>monospace specimen — Commit Mono 400</code>
+				</Stack>
+			</section>
+
+			<!-- Cluster: font-family label pills -->
+			<Cluster gap="2">
+				<span class="pill">Fraunces — serif</span>
+				<span class="pill">Geist — sans</span>
+				<span class="pill">Commit Mono — mono</span>
+			</Cluster>
+
+			<!-- Grid: sample layout blocks -->
+			<Grid min="200px" gap="4">
+				<div class="card">Stack</div>
+				<div class="card">Cluster</div>
+				<div class="card">Grid</div>
+				<div class="card">Frame</div>
+			</Grid>
+
+			<!-- Frame: 16/9 placeholder — decorative only; aria-hidden hides it from
+			     the accessibility tree so Axe does not flag a role-less aria-label. -->
+			<Frame ratio="16/9">
+				<div class="frame-placeholder" aria-hidden="true"></div>
+			</Frame>
+		</Stack>
 	</main>
 </BaseLayout>
 
@@ -28,17 +66,48 @@ import BaseLayout from "../layouts/_BaseLayout.astro";
 		font-size: var(--font-size-6);
 		font-weight: 600;
 		line-height: 1.1;
-		margin-block: 0 var(--space-4);
+		margin-block: 0;
 	}
 
 	p {
 		font-family: var(--font-sans);
 		font-size: var(--font-size-3);
-		margin-block: 0 var(--space-4);
+		margin-block: 0;
+		color: var(--color-text);
 	}
 
 	code {
 		font-family: var(--font-mono);
 		font-size: var(--font-size-2);
+		display: block;
+	}
+
+	.pill {
+		font-family: var(--font-mono);
+		font-size: var(--font-size-1);
+		padding: var(--space-1) var(--space-2);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		background: var(--color-surface);
+		color: var(--color-text);
+		white-space: nowrap;
+	}
+
+	.card {
+		font-family: var(--font-sans);
+		font-size: var(--font-size-2);
+		padding: var(--space-4);
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		color: var(--color-text);
+	}
+
+	.frame-placeholder {
+		width: 100%;
+		height: 100%;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
 	}
 </style>

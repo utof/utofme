@@ -1,0 +1,31 @@
+---
+/**
+ * Frame — fixed aspect-ratio wrapper using `aspect-ratio` CSS property.
+ *
+ * Why: encapsulates the "frame" layout pattern (Every Layout —
+ * https://every-layout.dev/layouts/frame/) to enforce a consistent aspect ratio
+ * on media containers (images, video embeds, placeholder blocks). Using
+ * `aspect-ratio` natively avoids the old padding-bottom hack and is supported in
+ * all modern browsers (Baseline 2022). The child is stretched to fill the frame
+ * via absolute positioning — callers control the content.
+ * @see packages/specs/plans/00-foundations.md
+ * @see packages/specs/specs/00-foundations.md
+ */
+
+interface Props {
+	/**
+	 * CSS `aspect-ratio` value, e.g. `"16/9"`, `"1/1"`, `"4/3"`.
+	 *
+	 * Why: passed directly to the CSS property so callers can use any ratio
+	 * without this component needing to enumerate valid values.
+	 * Defaults to "16/9".
+	 */
+	ratio?: string;
+}
+
+const { ratio = "16/9" } = Astro.props;
+---
+
+<div data-component="frame" style={`aspect-ratio:${ratio};overflow:hidden;position:relative`}>
+	<slot />
+</div>

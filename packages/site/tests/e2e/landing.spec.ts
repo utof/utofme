@@ -18,12 +18,12 @@ test("home page loads with no Axe violations", async ({ page }) => {
 
 test("visual regression baseline /", async ({ page }) => {
 	await page.goto("/");
-	// Mask h1 to absorb subpixel font-rendering drift across browser patches.
-	// Task 9 will swap this for [data-test="typography-specimen"] when the
-	// typography page lands.
+	// Mask the entire typography-specimen section to absorb subpixel font-rendering
+	// drift across browser patches. [data-test="typography-specimen"] is the outer
+	// wrapper added in Task 9 (forward note from Task 5c).
 	// See: https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2
 	await expect(page).toHaveScreenshot("landing.png", {
 		maxDiffPixelRatio: 0.001,
-		mask: [page.locator("h1")],
+		mask: [page.locator('[data-test="typography-specimen"]')],
 	});
 });

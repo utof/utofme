@@ -1,0 +1,44 @@
+---
+/**
+ * Grid — CSS Grid layout with `repeat(auto-fill, minmax(<min>, 1fr))`.
+ *
+ * Why: encapsulates the "auto-fill grid" pattern for responsive card/item grids
+ * without media queries. Items automatically reflow as the viewport narrows,
+ * meaning one primitive covers both mobile and desktop layouts. Using a token-
+ * based gap keeps column gutters in sync with the spacing scale (var(--space-*)).
+ * Pattern source: "RAM" (Repeat, Auto, Minmax) —
+ * https://css-tricks.com/an-auto-filling-css-grid-with-max-columns/
+ * @see packages/specs/plans/00-foundations.md
+ * @see packages/specs/specs/00-foundations.md
+ */
+
+/** Valid spacing token keys from tokens.css --space-* scale (1–12). */
+type SpaceToken = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+
+interface Props {
+	/**
+	 * Minimum track size for `minmax(<min>, 1fr)`.
+	 *
+	 * Why: controls the breakpoint at which items wrap to a new row. A value
+	 * like "280px" means each item is at least 280 px wide; the grid auto-fills
+	 * as many columns as fit. Defaults to "280px".
+	 */
+	min?: string;
+	/**
+	 * Gap between cells, mapped to `var(--space-<gap>)` from tokens.css.
+	 *
+	 * Why: token-based gaps keep layout in sync with the spacing scale.
+	 * Defaults to "4" (1 rem / 16 px).
+	 */
+	gap?: SpaceToken;
+}
+
+const { min = "280px", gap = "4" } = Astro.props;
+---
+
+<div
+	data-component="grid"
+	style={`display:grid;grid-template-columns:repeat(auto-fill,minmax(${min},1fr));gap:var(--space-${gap})`}
+>
+	<slot />
+</div>

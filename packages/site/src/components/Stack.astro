@@ -1,0 +1,33 @@
+---
+/**
+ * Stack — vertical flex container with configurable gap.
+ *
+ * Why: encapsulates the "stack" layout pattern (Every Layout, Heydon Pickering +
+ * Andy Bell — https://every-layout.dev/layouts/stack/) as a zero-JS Astro
+ * component. Using a component keeps gap values tied to the design-token spacing
+ * scale (var(--space-*) from tokens.css) rather than one-off inline values, which
+ * prevents drift as the spacing scale evolves. Phase 1+ components import Stack
+ * directly instead of hand-rolling flex columns.
+ * @see packages/specs/plans/00-foundations.md
+ * @see packages/specs/specs/00-foundations.md
+ */
+
+/** Valid spacing token keys from tokens.css --space-* scale (1–12). */
+type SpaceToken = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+
+interface Props {
+	/**
+	 * Gap between children, mapped to `var(--space-<gap>)` from tokens.css.
+	 *
+	 * Why: token-based gaps keep layout in sync with the spacing scale without
+	 * hard-coded pixel values. Defaults to "4" (1 rem / 16 px).
+	 */
+	gap?: SpaceToken;
+}
+
+const { gap = "4" } = Astro.props;
+---
+
+<div data-component="stack" style={`display:flex;flex-direction:column;gap:var(--space-${gap})`}>
+	<slot />
+</div>

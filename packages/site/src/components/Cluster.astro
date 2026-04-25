@@ -1,0 +1,54 @@
+---
+/**
+ * Cluster — horizontal flex container with wrapping and configurable gap/justify.
+ *
+ * Why: encapsulates the "cluster" layout pattern (Every Layout, Heydon Pickering +
+ * Andy Bell — https://every-layout.dev/layouts/cluster/). Groups small items
+ * (pills, tags, labels) horizontally with controlled wrapping, using the
+ * design-token spacing scale (var(--space-*)) so values stay consistent across
+ * the site. No client JS — static CSS only.
+ * @see packages/specs/plans/00-foundations.md
+ * @see packages/specs/specs/00-foundations.md
+ */
+
+/** Valid spacing token keys from tokens.css --space-* scale (1–12). */
+type SpaceToken = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
+
+/** Justify-content values supported by Cluster. */
+type JustifyValue = "start" | "center" | "end" | "between";
+
+interface Props {
+	/**
+	 * Gap between items, mapped to `var(--space-<gap>)` from tokens.css.
+	 *
+	 * Why: token-based gaps keep layout in sync with the spacing scale.
+	 * Defaults to "3" (0.75 rem / 12 px).
+	 */
+	gap?: SpaceToken;
+	/**
+	 * Horizontal alignment of items via justify-content.
+	 *
+	 * Why: "between" maps to space-between; the rest map directly.
+	 * Defaults to "start".
+	 */
+	justify?: JustifyValue;
+}
+
+const { gap = "3", justify = "start" } = Astro.props;
+
+/** Map the shorthand justify value to its CSS justify-content string. */
+const justifyMap: Record<JustifyValue, string> = {
+	start: "flex-start",
+	center: "center",
+	end: "flex-end",
+	between: "space-between",
+};
+const justifyValue = justifyMap[justify];
+---
+
+<div
+	data-component="cluster"
+	style={`display:flex;flex-wrap:wrap;gap:var(--space-${gap});justify-content:${justifyValue};align-items:center`}
+>
+	<slot />
+</div>
