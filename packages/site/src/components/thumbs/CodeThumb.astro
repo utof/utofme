@@ -1,0 +1,32 @@
+---
+/**
+ * CodeThumb.astro — CSS-only thumbnail abstract for code-type works.
+ *
+ * Why: Phase 1 ships no per-item imagery (ADR 0010); thumbs are uniform-aspect
+ * CSS abstractions to maintain visual rhythm without LCP risk.
+ *
+ * @see packages/specs/adrs/0010-cards-no-image-pipeline-yet.md
+ */
+---
+
+<div class="thumb" aria-hidden="true">
+	<span class="glyph">{"{ }"}</span>
+</div>
+
+<style>
+	.thumb {
+		aspect-ratio: 16 / 10;
+		display: grid;
+		place-items: center;
+		background: color-mix(in srgb, currentColor 5%, transparent);
+		border-radius: var(--radius-sm);
+		color: color-mix(in srgb, currentColor 60%, transparent);
+	}
+
+	.glyph {
+		font-family: var(--font-mono);
+		font-size: 3rem;
+		line-height: 1;
+		user-select: none;
+	}
+</style>
