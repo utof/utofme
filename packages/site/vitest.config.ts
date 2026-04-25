@@ -17,6 +17,21 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+	// Why: `astro:content` is a Vite virtual module generated at build time by
+	// Astro's content-plugin; it does not exist as a file on disk. Vitest resolves
+	// imports from disk, so without an alias the import fails with "Cannot find
+	// module 'astro:content'". Aliasing to `astro/content/config` (the real CJS/ESM
+	// file that Astro ships) provides `defineCollection` so `content.config.ts` can
+	// be imported in unit tests. Only `defineCollection` is used in the file; the
+	// alias does NOT affect `getCollection` or render helpers (those come from the
+	// full virtual module and are not needed in schema unit tests).
+	// @see packages/specs/plans/01-card-grid-mvp.md § Task 2
+	resolve: {
+		alias: {
+			"astro:content": new URL("./node_modules/astro/dist/content/config.js", import.meta.url)
+				.pathname,
+		},
+	},
 	test: {
 		environment: "happy-dom",
 		coverage: { provider: "v8", reporter: ["text", "lcov"] },
