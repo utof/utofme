@@ -144,13 +144,13 @@ Each task is one commit, RED→GREEN **within the same commit** (failing test st
   - `oven-sh/setup-bun@v2` with `cache: true`
   - `actions/setup-node@v4` with `node-version: '22'` (for LHCI + npx playwright)
   - `bun install --frozen-lockfile`
-  - `bun x biome check .`
-  - `bun x prettier --check '**/*.{astro,svelte}'`
-  - `bun x astro check`
-  - `bun x type-coverage --at-least 100 --strict` (or Node fallback per Task 3)
-  - `bun x knip`
-  - `bun x depcruise --validate .dependency-cruiser.cjs packages/site/src`
-  - `bun run check:docs`
+  - `bun run --cwd packages/site check:biome`
+  - `bun run --cwd packages/site check:prettier`
+  - `bun run --cwd packages/site check:astro`
+  - `bun run --cwd packages/site check:type-coverage`
+  - `bun run --cwd packages/site check:knip`
+  - `bun run --cwd packages/site check:depcruise`
+  - `bun run --cwd packages/site check:docs`
   - `bun x vitest run --coverage`
   - `npx playwright install --with-deps chromium`
   - `bun x playwright test`
@@ -179,18 +179,22 @@ Each task is one commit, RED→GREEN **within the same commit** (failing test st
 
 | Path | Type | Asserts |
 |---|---|---|
-| `tests/unit/scaffold.test.ts` | unit | Astro env wired |
-| `tests/unit/tooling.test.ts` | unit | biome+lefthook config shape |
-| `tests/unit/type-coverage.test.ts` | unit | type-coverage CLI exits 0 |
-| `tests/unit/knip.test.ts` | unit | knip CLI exits 0 |
-| `tests/unit/depcruise.test.ts` | unit | depcruise CLI exits 0 |
-| `tests/unit/check-docs.test.ts` | unit | ts-morph rejects undocumented exports (fixture-based) |
-| `tests/unit/smoke.test.ts` | unit | Vitest harness |
-| `tests/unit/no-js.test.ts` | unit | `dist/_astro/*.js` empty after build |
-| `tests/unit/wrangler-config.test.ts` | unit | wrangler.jsonc shape |
-| `tests/unit/adr-completeness.test.ts` | unit | six ADR files present |
+| `tests/unit/smoke.test.ts` | unit | Vitest harness wired (Phase 1 will be the first phase to add real Vitest tests) |
 | `tests/e2e/landing.spec.ts` | e2e | landing renders + Axe + status 200 + visual-regression |
-| `tests/e2e/typography.spec.ts` | e2e | three faces wired + fonts.ready < 200 ms + woff2 cache header |
+| `tests/e2e/typography.spec.ts` | e2e | three faces wired (font-family cascade includes Fraunces / Geist / Commit Mono) + fonts.ready < 200 ms + preload link present (woff2 immutable cache-header asserted in production only — see spec § Success criteria) |
+| `tests/e2e/primitives.spec.ts` | e2e | Stack / Cluster / Grid / Frame each render with `[data-component]` attribute |
+
+### Plan-amendment rationale (Task 10 final polish)
+
+The earlier draft of this table listed 10 unit-test files (scaffold, tooling, type-coverage, knip, depcruise, check-docs, no-js, wrangler-config, adr-completeness, smoke). All except smoke were comment-only RED stubs that, if activated, would only shell out via `child_process.execSync` to a CLI gate already wired into lefthook + CI:
+
+- `check:biome`, `check:prettier`, `check:astro`, `check:type-coverage`, `check:knip`, `check:depcruise`, `check:docs` — each runs in lefthook and on every CI commit.
+- `check:no-js`, `check:size`, `check:lighthouse` — post-build gates in CI.
+- The wrangler / ADR-completeness assertions are static config / file-list checks; `wrangler validate` (when wrangler is installed) and the existing ADR review process cover these.
+
+Wrapping each gate in a Vitest stub that asserts `execSync(cli).status === 0` adds no signal — when the CLI fails the stub fails, when the CLI passes the stub passes; the CLI is the source of truth in both cases. Phase 0 final polish therefore deletes the 9 stubs and trims `vitest.config.ts:exclude` to the e2e directory only. `smoke.test.ts` retains the harness so Phase 1 can land Vitest unit tests for actual application logic (content-collection loaders, URL filter, backlink builder, Zod schemas) without re-bootstrapping the runner.
+
+The `tests/e2e/primitives.spec.ts` row was added in Task 9 (layout primitives) and was missing from the original table.
 
 ## Property tests
 N/A (per spec + ADR 0006).

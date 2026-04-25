@@ -1,0 +1,94 @@
+# CI workflow — runs on every PR targeting main and every push to main.
+# Why: validates the full check:* chain + tests + build + size gates + Lighthouse
+#      before any merge to main. Matches the lefthook pre-commit order per
+#      packages/specs/specs/00-foundations.md § "Lefthook ordering requirement".
+#
+# setup-bun@v2 inputs verified via context7 /oven-sh/setup-bun (README, 2026-04-25):
+#   bun-version accepts semver prefix e.g. '1.3' (resolves to latest 1.3.x).
+#   No `cache:` input — the action handles caching internally via bun-version key.
+# setup-node@v4 is required because @lhci/cli spawns a Node host; running
+#   `npx lhci autorun` under Bun's npx shim can fail on Node-native modules.
+#   Source: packages/specs/specs/00-foundations.md § "Success criteria" (LHCI line).
+# wrangler (installed as a dev dep) is NOT invoked here; preview uses astro preview,
+#   not wrangler dev, to avoid needing CF credentials in CI.
+#
+# actionlint-clean: verified via `npx -y actionlint .github/workflows/ci.yml`.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3"
+
+      # Node is required for @lhci/cli (spawns Node) and `npx playwright install`.
+      # Source: packages/specs/specs/00-foundations.md § "Success criteria" LHCI note.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.12"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # ── Linting & static analysis ──────────────────────────────────────────────
+      - name: check:biome
+        run: bun run --cwd packages/site check:biome
+
+      - name: check:prettier
+        run: bun run --cwd packages/site check:prettier
+
+      - name: check:astro
+        run: bun run --cwd packages/site check:astro
+
+      - name: check:type-coverage
+        run: bun run --cwd packages/site check:type-coverage
+
+      - name: check:knip
+        run: bun run --cwd packages/site check:knip
+
+      - name: check:depcruise
+        run: bun run --cwd packages/site check:depcruise
+
+      - name: check:docs
+        run: bun run --cwd packages/site check:docs
+
+      # ── Unit tests ─────────────────────────────────────────────────────────────
+      - name: test (vitest)
+        run: bun run --cwd packages/site test
+
+      # ── Build (must precede e2e — Playwright's webServer runs `astro preview`
+      #    which fails fast if dist/ is missing) ─────────────────────────────────
+      - name: build
+        run: bun run --cwd packages/site build
+
+      # ── Post-build static gates (run before e2e so a build / budget regression
+      #    aborts the run before browsers spin up) ────────────────────────────────
+      - name: check:size (size-limit)
+        run: bun run --cwd packages/site check:size
+
+      - name: check:no-js (post-build glob)
+        run: bun run --cwd packages/site check:no-js
+
+      # ── Playwright e2e (uses dist/ via `astro preview`) ────────────────────────
+      - name: Install Playwright browsers
+        run: cd packages/site && npx playwright install --with-deps chromium
+
+      - name: test:e2e (playwright)
+        run: bun run --cwd packages/site test:e2e
+
+      # ── Lighthouse CI ──────────────────────────────────────────────────────────
+      # Invoked via npx (Node host) not bunx — @lhci/cli requires Node internals.
+      # Source: packages/specs/specs/00-foundations.md § "Success criteria" LHCI note.
+      - name: Lighthouse CI
+        run: cd packages/site && npx @lhci/cli autorun

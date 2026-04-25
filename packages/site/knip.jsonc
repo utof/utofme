@@ -1,0 +1,34 @@
+{
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+	// entry + project use explicit unit/e2e sub-dirs (not tests/**) so that
+	// Task 4's tests/fixtures/check-docs/ lives outside knip's view — that
+	// fixture exports a deliberately-undocumented `foo()` that would otherwise
+	// be flagged as an unused export and break the Task 4 GREEN gate.
+	// Why: see packages/specs/plans/00-foundations.md § Task 4 RED.
+	//
+	// scripts/**/*.ts is added to entry + project so that knip can trace
+	// imports within CLI scripts (e.g. scripts/check-docs.ts imports ts-morph)
+	// and correctly classify ts-morph as a used dependency.
+	// Why: CLI scripts are stand-alone entry points invoked via `bun run check:docs`;
+	// they are not reachable from src/pages/** so must be declared explicitly.
+	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
+	"project": ["src/**/*.{ts,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
+	"ignoreDependencies": [
+		// Why: Phase 2 island activation; cannot register in astro.config.mjs now
+		// per 0-KB-JS invariant (spec line 19 / packages/specs/specs/00-foundations.md).
+		"@astrojs/svelte",
+		// Why: wrangler is a CLI-only dev dep (no `import` from source). It powers
+		// the deploy step (cloudflare/wrangler-action@v3 in deploy.yml) and gives
+		// IDE-resolvable schema validation for wrangler.jsonc. Spec § "Pinned dev
+		// deps" (line 68) lists it explicitly. Knip can't see CLI usage, so the
+		// dep would otherwise be flagged as unused.
+		"wrangler",
+		// Why: lefthook is wired via the workspace-root /lefthook.yml (outside
+		// packages/site/). Locally knip detects it because `lefthook install`
+		// has been run and `.git/hooks/pre-commit` exists; in CI there's no hook
+		// shim and the config is outside knip's CWD scope, so knip flags it as
+		// unused. CI failure on PR #1 confirmed. Spec § "Pinned dev deps" lists
+		// lefthook; usage is real, just CLI-only. See: lefthook.yml.
+		"lefthook"
+	]
+}

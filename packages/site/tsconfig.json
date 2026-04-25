@@ -1,0 +1,25 @@
+// Why: explicit `compilerOptions` below are redundant — all four are already inherited via `astro/tsconfigs/strictest`
+//      → `astro/tsconfigs/strict` → `astro/tsconfigs/base`. They are kept as defense-in-depth so a future upstream
+//      preset weakening (or a "cleanup" PR removing them) cannot silently revert strict-type guarantees.
+//      See: packages/specs/specs/00-foundations.md § "Context / invariants" + § "Pinned dev deps".
+{
+	"extends": "astro/tsconfigs/strictest",
+	"compilerOptions": {
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"verbatimModuleSyntax": true,
+		// Why: scripts/check-docs.ts uses `process` and `node:path`; @types/node
+		// must be declared here because astro/tsconfigs/base does not include it,
+		// and TypeScript does not auto-include @types/node with moduleResolution=Bundler.
+		// See: packages/specs/plans/00-foundations.md § Task 4
+		//
+		// "bun" (@types/bun) is added for scripts/no-js-check.ts which uses
+		// Bun.Glob — a Bun-native glob API. @types/bun provides the Bun global
+		// namespace including Bun.Glob, Bun.file, etc.
+		// See: packages/specs/plans/00-foundations.md § Task 6
+		"types": ["node", "bun"]
+	},
+	"include": [".astro/types.d.ts", "src/**/*", "tests/**/*", "scripts/**/*"],
+	"exclude": ["dist"]
+}

@@ -1,0 +1,103 @@
+/*
+ * Design tokens for utofme.
+ *
+ * Why: central CSS custom-property definitions keep all sites primitives in one
+ * file; later phases import this once (in _BaseLayout.astro) and every component
+ * inherits via var(). No runtime JS involved — plain CSS cascade.
+ * See: packages/specs/specs/00-foundations.md § "Must-exist files"
+ * See: packages/specs/plans/00-foundations.md § Task 8
+ */
+
+/* ─── Light-mode tokens (default) ───────────────────────────────────────── */
+:root {
+	/* Why: --font-serif / --font-sans / --font-mono are deliberately NOT defined
+	 * here. The Astro Fonts API injects them via its own `:root { ... }` block
+	 * (with the hashed family name + metric-optimized fallback chain) at build
+	 * time. Repeating those custom-property names here with literal generic
+	 * fallback fonts (e.g. `"Courier New", monospace`) overrides the Fonts API
+	 * value because tokens.css is imported AFTER the Astro Fonts API block in
+	 * the bundled CSS, so the cascade favours whichever declaration comes last.
+	 * If the Fonts API ever fails to inject, the per-font `fallbacks: [...]`
+	 * arrays in astro.config.mjs (serif / sans-serif / monospace generics) still
+	 * keep text readable.
+	 * See: src/layouts/_BaseLayout.astro (Fonts API <Font /> components)
+	 * See: astro.config.mjs (per-font fallbacks)
+	 * See: https://docs.astro.build/en/guides/fonts/ */
+
+	/* Type scale (Major Third — 1.25 ratio, base 16 px)
+	 * Why: Major Third gives clear visual hierarchy without feeling too large on
+	 * small viewports. Steps are rounded to the nearest 0.5 rem for clean output.
+	 * See: https://typescale.com/ */
+	--font-size-1: 0.75rem; /* 12 px */
+	--font-size-2: 0.875rem; /* 14 px */
+	--font-size-3: 1rem; /* 16 px — body copy baseline */
+	--font-size-4: 1.25rem; /* 20 px */
+	--font-size-5: 1.5rem; /* 24 px */
+	--font-size-6: 2rem; /* 32 px — page headings */
+
+	/* Spacing scale (4 px base, geometric doubling after step 4)
+	 * Why: 4 px base aligns with the browser default sub-pixel grid; steps map
+	 * cleanly to common layout rhythms (8, 16, 32, 64…) used in Phase 9 layouts.
+	 * See: packages/specs/plans/00-foundations.md § Task 9 */
+	--space-1: 0.25rem; /* 4 px */
+	--space-2: 0.5rem; /* 8 px */
+	--space-3: 0.75rem; /* 12 px */
+	--space-4: 1rem; /* 16 px */
+	--space-5: 1.5rem; /* 24 px */
+	--space-6: 2rem; /* 32 px */
+	--space-7: 3rem; /* 48 px */
+	--space-8: 4rem; /* 64 px */
+	--space-9: 6rem; /* 96 px */
+	--space-10: 8rem; /* 128 px */
+	--space-11: 12rem; /* 192 px */
+	--space-12: 16rem; /* 256 px */
+
+	/* Border radii
+	 * Why: three steps (small/medium/large) cover cards, buttons, and full-pill
+	 * treatments without a sprawling scale. */
+	--radius-sm: 0.25rem; /* 4 px */
+	--radius-md: 0.5rem; /* 8 px */
+	--radius-lg: 1rem; /* 16 px */
+
+	/* Shadows (light-mode — subtle, referencing spec colour palette)
+	 * Why: single-layer shadows at low opacity remain legible on white backgrounds
+	 * and avoid the heavy multi-layer patterns that hurt Lighthouse contrast scores. */
+	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+
+	/* Motion durations
+	 * Why: three steps map to hover, transition, and page-level animations.
+	 * `prefers-reduced-motion` is handled at the component level; tokens set the
+	 * nominal values only. */
+	--motion-fast: 120ms;
+	--motion-base: 250ms;
+	--motion-slow: 400ms;
+
+	/* Colours — light mode */
+	--color-bg: #ffffff;
+	--color-surface: #f8f8f8;
+	--color-border: #e4e4e7;
+	--color-text: #18181b;
+	--color-text-muted: #71717a;
+	--color-accent: #18181b;
+	--color-accent-contrast: #ffffff;
+}
+
+/* ─── Dark-mode overrides ─────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-bg: #09090b;
+		--color-surface: #18181b;
+		--color-border: #27272a;
+		--color-text: #fafafa;
+		--color-text-muted: #a1a1aa;
+		--color-accent: #fafafa;
+		--color-accent-contrast: #09090b;
+
+		/* Shadows are near-invisible on dark backgrounds; use subtle glows instead. */
+		--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+		--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+		--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+	}
+}

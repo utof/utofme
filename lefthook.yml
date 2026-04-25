@@ -1,0 +1,99 @@
+# Pre-commit hook chain for the utofme monorepo.
+#
+# Uses a single piped group so each step runs only if the previous succeeded
+# (piped: true). Order is sequence-critical — Biome auto-fixes JS/TS/JSON before
+# Prettier reformats .astro/.svelte, then type checkers run on clean output.
+#
+# Steps added here in Task 2 (Biome + Prettier):
+#   1. biome-format  — formats/lints JS/TS/JSON/JSONC/CSS staged files
+#   2. prettier-format — formats .astro/.svelte staged files
+#
+# Steps added here in Task 3 (type-coverage + knip + dep-cruiser):
+#   3. astro-check     — TypeScript + Astro diagnostics
+#   4. type-coverage   — asserts 100% typed tokens, ignores .astro/ generated code
+#   5. knip            — dead code, unused deps, unused exports
+#   6. depcruise       — dependency graph rules (no-circular, no-orphans, etc.)
+#
+# Steps added here in Task 4 (check-docs):
+#   7. check-docs      — asserts every exported symbol carries @see / @issue / Why:
+#
+# Why (type-coverage invocation — bun x confirmed compatible):
+#   Empirical test on 2026-04-25: `bun x type-coverage --at-least 100 --strict`
+#   exits 0 under Bun 1.3.11. The only any-typed token was in .astro/content.d.ts
+#   (auto-generated Astro code); excluded via `ignoreFiles: [".astro/**"]` in
+#   package.json#typeCoverage. Bun x resolves the type-coverage bin from
+#   packages/site/node_modules/.bin/ correctly. No Node fallback needed.
+#   See: packages/specs/specs/00-foundations.md § "Open questions" #3.
+#
+# Why (stage_fixed: true on biome-format + prettier-format): both jobs are
+#   format-only — their auto-fixes are deterministic and idempotent, so
+#   auto-staging the result is safe. The committer always sees the diff.
+#   Future read-only analyzer jobs (Task 3 knip/depcruise, Task 4 check-docs)
+#   MUST NOT set stage_fixed, as analysis-only steps have no safe output to stage.
+#   See: CLAUDE.md § "Documentation-for-trust".
+#
+# Why (CI Biome invocation — CORRECTED):
+#   `bun x biome check packages/site` from the workspace root is BROKEN.
+#   `@biomejs/biome` lives only in packages/site/devDependencies, not at the
+#   workspace root. When bun x is invoked from the root CWD it finds no local
+#   bin and falls back to the bunx registry cache, resolving the unrelated
+#   `biome` package (v0.3.3) which silently exits 0 without linting anything.
+#   Empirical proof: `bun x biome --version` from workspace root → 0.3.3;
+#   from packages/site → 2.4.13 (the correct @biomejs/biome).
+#
+#   Task 10b CI MUST use one of the following (both verified exit 0):
+#     PREFERRED: `bun run --cwd packages/site check:biome`
+#       (uses packages/site/package.json#scripts.check:biome; bun run --cwd
+#       sets the working directory so the local bin resolves correctly)
+#     ALTERNATIVE: `(cd packages/site && bun x biome check .)`
+#       (subshell with cd so bun x resolves within the package)
+#   NEVER use: `bun x biome ...` from workspace root (silently broken).
+#
+#   Same logic applies to all other check:* scripts (prettier, astro, type-coverage,
+#   knip, depcruise): use `bun run --cwd packages/site check:<name>` in CI.
+#   This mirrors the lefthook `bun run check:*` jobs below — single source of truth.
+#   Note: biome.json is strict JSON (no // comments), so this rationale lives here.
+#   See: packages/specs/specs/00-foundations.md § "Lefthook ordering requirement".
+#
+# Template variable {staged_files} documented at:
+#   https://github.com/evilmartians/lefthook/blob/master/docs/configuration/run.md
+# Piped group syntax documented at:
+#   https://github.com/evilmartians/lefthook/blob/master/docs/configuration/jobs.md
+
+pre-commit:
+  jobs:
+    - name: format-and-check
+      group:
+        piped: true
+        jobs:
+          - name: biome-format
+            root: "packages/site"
+            run: bunx biome check --write {staged_files}
+            glob: "*.{ts,tsx,mts,cts,mjs,cjs,js,jsx,json,jsonc,css}"
+            stage_fixed: true
+
+          - name: prettier-format
+            root: "packages/site"
+            run: bunx prettier --write {staged_files}
+            glob: "*.{astro,svelte}"
+            stage_fixed: true
+
+          - name: astro-check
+            root: "packages/site"
+            run: bun run check:astro
+
+          - name: type-coverage
+            root: "packages/site"
+            run: bun run check:type-coverage
+
+          - name: knip
+            root: "packages/site"
+            run: bun run check:knip
+
+          - name: depcruise
+            root: "packages/site"
+            run: bun run check:depcruise
+
+          - name: check-docs
+            root: "packages/site"
+            run: bun run check:docs
