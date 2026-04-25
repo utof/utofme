@@ -48,10 +48,9 @@ The `.gitignore` rule `BerkeleyMono*` enforces this at the repo boundary.
 
 ## Consequences
 
-- `public/fonts/CommitMono-400.woff2` is committed to the repo (OFL allows redistribution).
-- `public/fonts/OFL.txt` is committed alongside the font.
-- Astro Fonts API local provider entry serves the font with `Cache-Control: public, max-age=31536000, immutable`
-  via Workers Assets (verified in `tests/e2e/typography.spec.ts` cache-header assertion).
+- `src/assets/fonts/CommitMono-400.woff2` is committed to the repo (OFL allows redistribution). The font lives under `src/assets/fonts/` rather than `public/fonts/` per Astro's Fonts API recommendation: "it is recommended to store font files in the `src/` directory rather than the `public/` directory to avoid file duplication during the build process". The local provider's `src` paths in `astro.config.mjs` reference this location.
+- `src/assets/fonts/OFL.txt` is committed alongside the font.
+- Astro Fonts API local provider entry serves the font with `Cache-Control: public, max-age=31536000, immutable` via Cloudflare Workers Assets in production. Verified by `curl -I` against the deployed `*.workers.dev` URL (the local Astro preview server does NOT emit this header, so the corresponding `tests/e2e/typography.spec.ts` assertion is an explicit `test.skip` deferred to production verification — see spec § "Success criteria").
 - A future phase (likely Phase 3 or Phase 4) revisits Berkeley Mono when a web licence is
   purchased and the font file is served from a private Cloudflare R2 bucket or equivalent,
   never from the public repo.

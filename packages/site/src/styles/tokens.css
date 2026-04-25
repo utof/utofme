@@ -10,14 +10,19 @@
 
 /* ─── Light-mode tokens (default) ───────────────────────────────────────── */
 :root {
-	/* Font-family placeholders — populated at build time by Astro Fonts API.
-	 * Why: the CSS variables are injected by Astro's font middleware as @font-face
-	 * declarations; setting a generic fallback here ensures text is still readable
-	 * if the build-time injection is somehow bypassed.
+	/* Why: --font-serif / --font-sans / --font-mono are deliberately NOT defined
+	 * here. The Astro Fonts API injects them via its own `:root { ... }` block
+	 * (with the hashed family name + metric-optimized fallback chain) at build
+	 * time. Repeating those custom-property names here with literal generic
+	 * fallback fonts (e.g. `"Courier New", monospace`) overrides the Fonts API
+	 * value because tokens.css is imported AFTER the Astro Fonts API block in
+	 * the bundled CSS, so the cascade favours whichever declaration comes last.
+	 * If the Fonts API ever fails to inject, the per-font `fallbacks: [...]`
+	 * arrays in astro.config.mjs (serif / sans-serif / monospace generics) still
+	 * keep text readable.
+	 * See: src/layouts/_BaseLayout.astro (Fonts API <Font /> components)
+	 * See: astro.config.mjs (per-font fallbacks)
 	 * See: https://docs.astro.build/en/guides/fonts/ */
-	--font-serif: Georgia, "Times New Roman", serif;
-	--font-sans: system-ui, -apple-system, sans-serif;
-	--font-mono: "Courier New", Courier, monospace;
 
 	/* Type scale (Major Third — 1.25 ratio, base 16 px)
 	 * Why: Major Third gives clear visual hierarchy without feeling too large on

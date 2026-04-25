@@ -42,6 +42,15 @@ export default defineConfig({
 			weights: ["100 900"],
 			styles: ["normal"],
 			subsets: ["latin"],
+			// Why: `display: "optional"` tells the browser to use the metric-optimized
+			// fallback if the web font isn't ready within ~100ms, and to never swap.
+			// This eliminates the late-stage repaint that drags Lighthouse Speed Index
+			// (visual-progress metric) below the 0.95 mobile threshold while still
+			// giving most visitors the real face on warm-cache reloads.
+			// See: https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display
+			// See: packages/specs/specs/00-foundations.md § "Success criteria" (Lighthouse mobile ≥ 95)
+			display: "optional",
+			fallbacks: ["serif"],
 		},
 		// Geist — variable sans-serif (wght 100–900).
 		// Why: string-range weight matches the variable-font pattern above.
@@ -52,6 +61,11 @@ export default defineConfig({
 			weights: ["100 900"],
 			styles: ["normal"],
 			subsets: ["latin"],
+			// Why: same Speed-Index reasoning as Fraunces — optional + serif/sans/mono
+			// fallback keeps the metric-adjusted fallback rendering until the variable
+			// woff2 lands, with no swap-induced repaint counted against Speed Index.
+			display: "optional",
+			fallbacks: ["sans-serif"],
 		},
 		// Commit Mono — static monospace weight 400, OFL-1.1.
 		// Why: local provider used instead of a remote provider because the woff2
@@ -70,6 +84,14 @@ export default defineConfig({
 			provider: fontProviders.local(),
 			name: "Commit Mono",
 			cssVariable: "--font-mono",
+			// Why: mono is used in pills + inline `<code>`. `display: "optional"` keeps
+			// the metric-optimized monospace fallback rendering if the woff2 isn't
+			// ready in ~100ms, which avoids the swap-repaint that hurts Speed Index.
+			// `fallbacks: ["monospace"]` overrides the default `["sans-serif"]`,
+			// so the fallback chain in --font-mono ends with `monospace` (correct
+			// generic family for code blocks).
+			display: "optional",
+			fallbacks: ["monospace"],
 			options: {
 				variants: [
 					{
