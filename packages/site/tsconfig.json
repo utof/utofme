@@ -1,11 +1,15 @@
+// Why: explicit `compilerOptions` below are redundant — all four are already inherited via `astro/tsconfigs/strictest`
+//      → `astro/tsconfigs/strict` → `astro/tsconfigs/base`. They are kept as defense-in-depth so a future upstream
+//      preset weakening (or a "cleanup" PR removing them) cannot silently revert strict-type guarantees.
+//      See: packages/specs/specs/00-foundations.md § "Context / invariants" + § "Pinned dev deps".
 {
-	"extends": "astro/tsconfigs/strictest",
-	"compilerOptions": {
-		"strict": true,
-		"noUncheckedIndexedAccess": true,
-		"exactOptionalPropertyTypes": true,
-		"verbatimModuleSyntax": true
-	},
-	"include": [".astro/types.d.ts", "src/**/*", "tests/**/*"],
-	"exclude": ["dist"]
+  "extends": "astro/tsconfigs/strictest",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": [".astro/types.d.ts", "src/**/*", "tests/**/*"],
+  "exclude": ["dist"]
 }
