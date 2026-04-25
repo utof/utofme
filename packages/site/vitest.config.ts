@@ -32,6 +32,10 @@ export default defineConfig({
 			"tests/unit/knip.test.ts",
 			"tests/unit/depcruise.test.ts",
 			"tests/unit/check-docs.test.ts",
+			// Task 6 gate is scripts/no-js-check.ts (post-build CI step), not Vitest.
+			// Why: build-invoking tests inflate unit-suite run-time unacceptably;
+			// the real gate runs as a discrete CI step. See plans/00-foundations.md § Task 6.
+			"tests/unit/no-js.test.ts",
 		],
 	},
 });
