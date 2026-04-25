@@ -93,3 +93,7 @@ pre-commit:
           - name: depcruise
             root: "packages/site"
             run: bun run check:depcruise
+
+          - name: check-docs
+            root: "packages/site"
+            run: bun run check:docs

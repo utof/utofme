@@ -5,8 +5,14 @@
 	// fixture exports a deliberately-undocumented `foo()` that would otherwise
 	// be flagged as an unused export and break the Task 4 GREEN gate.
 	// Why: see packages/specs/plans/00-foundations.md § Task 4 RED.
-	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/{unit,e2e}/**/*.ts"],
-	"project": ["src/**/*.{ts,astro,svelte}", "tests/{unit,e2e}/**/*.ts"],
+	//
+	// scripts/**/*.ts is added to entry + project so that knip can trace
+	// imports within CLI scripts (e.g. scripts/check-docs.ts imports ts-morph)
+	// and correctly classify ts-morph as a used dependency.
+	// Why: CLI scripts are stand-alone entry points invoked via `bun run check:docs`;
+	// they are not reachable from src/pages/** so must be declared explicitly.
+	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
+	"project": ["src/**/*.{ts,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
 	"ignoreDependencies": [
 		// Why: invoked as CLI by `astro check`; not importable from user code.
 		"@astrojs/check",
