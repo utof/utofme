@@ -7,7 +7,9 @@
 		"dev": "astro dev",
 		"build": "astro build",
 		"preview": "astro preview",
-		"astro": "astro"
+		"astro": "astro",
+		"check:biome": "biome check .",
+		"check:prettier": "prettier --check '**/*.{astro,svelte}'"
 	},
 	"devDependencies": {
 		"@astrojs/check": "^0.9.8",

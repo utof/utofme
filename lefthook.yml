@@ -19,16 +19,27 @@
 #   MUST NOT set stage_fixed, as analysis-only steps have no safe output to stage.
 #   See: CLAUDE.md § "Documentation-for-trust".
 #
-# Why (CI Biome invocation): packages/site/biome.json uses CWD-relative includes
-#   globs (src/**, tests/**, scripts/**, *.json, etc.). The glob anchors resolve
-#   relative to the Biome process CWD, NOT relative to the config file's location.
-#   CI MUST invoke Biome as `bun x biome check packages/site` (or use
-#   `root: "packages/site"` in lefthook, as done here) — NOT `bun x biome check .`
-#   from the workspace root — to ensure root-level configs such as
-#   packages/site/biome.json and packages/site/.prettierrc.json are included.
+# Why (CI Biome invocation — CORRECTED):
+#   `bun x biome check packages/site` from the workspace root is BROKEN.
+#   `@biomejs/biome` lives only in packages/site/devDependencies, not at the
+#   workspace root. When bun x is invoked from the root CWD it finds no local
+#   bin and falls back to the bunx registry cache, resolving the unrelated
+#   `biome` package (v0.3.3) which silently exits 0 without linting anything.
+#   Empirical proof: `bun x biome --version` from workspace root → 0.3.3;
+#   from packages/site → 2.4.13 (the correct @biomejs/biome).
+#
+#   Task 10b CI MUST use one of the following (both verified exit 0):
+#     PREFERRED: `bun run --cwd packages/site check:biome`
+#       (uses packages/site/package.json#scripts.check:biome; bun run --cwd
+#       sets the working directory so the local bin resolves correctly)
+#     ALTERNATIVE: `(cd packages/site && bun x biome check .)`
+#       (subshell with cd so bun x resolves within the package)
+#   NEVER use: `bun x biome ...` from workspace root (silently broken).
+#
+#   Same logic applies to Prettier: use `bun run --cwd packages/site check:prettier`
+#   or `(cd packages/site && bun x prettier --check '**/*.{astro,svelte}')`.
 #   Note: biome.json is strict JSON (no // comments), so this rationale lives here.
 #   See: packages/specs/specs/00-foundations.md § "Lefthook ordering requirement".
-#   Task 10b CI step must use `bun x biome check packages/site`.
 #
 # Template variable {staged_files} documented at:
 #   https://github.com/evilmartians/lefthook/blob/master/docs/configuration/run.md
