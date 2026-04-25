@@ -8,9 +8,22 @@
 #   1. biome-format  — formats/lints JS/TS/JSON/JSONC/CSS staged files
 #   2. prettier-format — formats .astro/.svelte staged files
 #
+# Steps added here in Task 3 (type-coverage + knip + dep-cruiser):
+#   3. astro-check     — TypeScript + Astro diagnostics
+#   4. type-coverage   — asserts 100% typed tokens, ignores .astro/ generated code
+#   5. knip            — dead code, unused deps, unused exports
+#   6. depcruise       — dependency graph rules (no-circular, no-orphans, etc.)
+#
 # Further steps land in later tasks per packages/specs/plans/00-foundations.md:
-#   Task 3: astro-check, type-coverage, knip, depcruise
 #   Task 4: check-docs
+#
+# Why (type-coverage invocation — bun x confirmed compatible):
+#   Empirical test on 2026-04-25: `bun x type-coverage --at-least 100 --strict`
+#   exits 0 under Bun 1.3.11. The only any-typed token was in .astro/content.d.ts
+#   (auto-generated Astro code); excluded via `ignoreFiles: [".astro/**"]` in
+#   package.json#typeCoverage. Bun x resolves the type-coverage bin from
+#   packages/site/node_modules/.bin/ correctly. No Node fallback needed.
+#   See: packages/specs/specs/00-foundations.md § "Open questions" #3.
 #
 # Why (stage_fixed: true on biome-format + prettier-format): both jobs are
 #   format-only — their auto-fixes are deterministic and idempotent, so
@@ -63,3 +76,19 @@ pre-commit:
             run: bunx prettier --write {staged_files}
             glob: "*.{astro,svelte}"
             stage_fixed: true
+
+          - name: astro-check
+            root: "packages/site"
+            run: bunx astro check
+
+          - name: type-coverage
+            root: "packages/site"
+            run: bunx type-coverage --at-least 100 --strict
+
+          - name: knip
+            root: "packages/site"
+            run: bunx knip
+
+          - name: depcruise
+            root: "packages/site"
+            run: bunx depcruise --validate .dependency-cruiser.cjs src

@@ -9,7 +9,17 @@
 		"preview": "astro preview",
 		"astro": "astro",
 		"check:biome": "biome check .",
-		"check:prettier": "prettier --check '**/*.{astro,svelte}'"
+		"check:prettier": "prettier --check '**/*.{astro,svelte}'",
+		"check:types": "type-coverage --at-least 100 --strict",
+		"check:knip": "knip",
+		"check:depcruise": "depcruise --validate .dependency-cruiser.cjs src"
+	},
+	"typeCoverage": {
+		"atLeast": 100,
+		"strict": true,
+		"ignoreFiles": [
+			".astro/**"
+		]
 	},
 	"devDependencies": {
 		"@astrojs/check": "^0.9.8",
@@ -17,12 +27,15 @@
 		"@biomejs/biome": "^2.4.13",
 		"@types/js-yaml": "^4.0.9",
 		"astro": "^6",
+		"dependency-cruiser": "^17.3.10",
 		"js-yaml": "^4.1.1",
+		"knip": "^6.6.3",
 		"lefthook": "^2.1.6",
 		"prettier": "^3.8.3",
 		"prettier-plugin-astro": "^0.14.1",
 		"prettier-plugin-svelte": "^3.5.1",
 		"svelte": "^5",
+		"type-coverage": "^2.29.7",
 		"typescript": "^6.0.3"
 	}
 }
