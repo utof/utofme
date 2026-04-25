@@ -1,15 +1,44 @@
 ---
-
+// Why: index.astro is the sole page in Phase 0. It demonstrates all three typefaces
+// (serif via Fraunces, sans via Geist, mono via Commit Mono) so the Task 8 typography
+// e2e test can assert computed font-family references on body / h1 / code.
+// Layout primitives (Stack, Cluster, Grid, Frame) and the [data-test="typography-specimen"]
+// container ship in Task 9, not here.
+// See: packages/specs/plans/00-foundations.md § Task 8 + § Task 9
+import BaseLayout from "../layouts/_BaseLayout.astro";
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<title>utofme</title>
-	</head>
-	<body>
-		<main>
-			<h1>utofme</h1>
-		</main>
-	</body>
-</html>
+<BaseLayout title="utofme">
+	<main>
+		<h1>utofme</h1>
+		<p>A personal site.</p>
+		<code>monospace specimen</code>
+	</main>
+</BaseLayout>
+
+<style>
+	main {
+		padding: var(--space-6);
+		max-width: 64ch;
+		margin-inline: auto;
+	}
+
+	h1 {
+		font-family: var(--font-serif);
+		font-size: var(--font-size-6);
+		font-weight: 600;
+		line-height: 1.1;
+		margin-block: 0 var(--space-4);
+	}
+
+	p {
+		font-family: var(--font-sans);
+		font-size: var(--font-size-3);
+		margin-block: 0 var(--space-4);
+	}
+
+	code {
+		font-family: var(--font-mono);
+		font-size: var(--font-size-2);
+	}
+</style>

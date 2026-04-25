@@ -1,0 +1,70 @@
+---
+/**
+ * _BaseLayout.astro — shared shell for all pages.
+ *
+ * Why: centralises <head> boilerplate (charset, viewport, title, token import,
+ * font CSS variables) so individual pages do not repeat it. Leading underscore
+ * signals "layout, not a routable page" — consistent with Astro convention.
+ * The <Font> component is required to inject @font-face rules + preload <link>
+ * tags for each font registered in astro.config.mjs under `fonts:`. Without it
+ * the Fonts API does not emit any CSS — the CSS variable only contains the
+ * fallback value from tokens.css.
+ * See: packages/specs/plans/00-foundations.md § Task 8
+ * See: https://docs.astro.build/en/guides/fonts/ (Font component usage)
+ * See: https://github.com/withastro/docs/blob/main/src/content/docs/en/reference/modules/astro-assets.mdx
+ */
+
+import { Font } from "astro:assets";
+
+interface Props {
+	/** Document <title> content. */
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{title}</title>
+		<!-- Astro Fonts API: emits @font-face CSS + optional preload <link> for each
+		     registered font family. The `preload` prop is set on the first variant of
+		     each family to give the browser an early hint. Only one woff2 subset per
+		     face is preloaded (Astro picks the correct subset automatically based on
+		     the subsets configured in astro.config.mjs).
+		     See: https://docs.astro.build/en/guides/fonts/ -->
+		<Font cssVariable="--font-serif" preload />
+		<Font cssVariable="--font-sans" preload />
+		<Font cssVariable="--font-mono" preload />
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
+
+<style is:global>
+	/* Import design tokens globally so every page / component can use var(--space-*) etc. */
+	@import "../styles/tokens.css";
+
+	/* Apply font variables from the Astro Fonts API to the document root.
+	 * Why: the API injects --font-serif / --font-sans / --font-mono as CSS custom
+	 * properties (populated by the generated @font-face blocks + <Font> component);
+	 * applying them here to html/body ensures the cascade reaches every element
+	 * without per-component repetition.
+	 * See: packages/specs/plans/00-foundations.md § Task 8 "Wire tokens.css" */
+	html {
+		font-family: var(--font-sans);
+		font-size: var(--font-size-3);
+		background-color: var(--color-bg);
+		color: var(--color-text);
+	}
+
+	body {
+		margin: 0;
+		padding: 0;
+		min-height: 100vh;
+	}
+</style>
