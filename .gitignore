@@ -11,6 +11,11 @@ coverage/
 test-results/
 playwright-report/
 
+# Stryker mutation artifacts
+**/.stryker-tmp/
+**/stryker.log
+**/reports/mutation/
+
 # Lighthouse CI cache + reports
 .lighthouseci/
 

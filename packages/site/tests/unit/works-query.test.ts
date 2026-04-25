@@ -1,5 +1,5 @@
 import { fc, test } from "@fast-check/vitest";
-import { describe, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { WorkEntry } from "../../src/content.config";
 import { type EntryLike, listWorks, sortByDateDesc } from "../../src/lib/works";
 
@@ -66,5 +66,89 @@ describe("listWorks draft filter", () => {
 		expect(listWorks(xs, { isProd: true }).length).toBeLessThanOrEqual(
 			listWorks(xs, { isProd: false }).length,
 		);
+	});
+
+	// Why: Deterministic mutation-kill tests for draft-filter logic survivors.
+	// Property tests above use random seeds and may generate edge cases (e.g. no
+	// draft entries, empty arrays) that leave filter-predicate mutants alive.
+	// These fixtures guarantee at least one draft + one non-draft entry, and assert
+	// both inclusion (non-draft preserved) and exclusion (draft removed) in PROD mode.
+	// Source: packages/specs/adrs/0008-stryker-and-fast-check-targets.md § Consequences
+	const draftEntry: EntryLike<TestData> = {
+		id: "draft-1",
+		data: {
+			type: "code",
+			title: "WIP",
+			date: new Date("2026-01-01"),
+			tags: [],
+			draft: true,
+		},
+	};
+	const publishedEntry: EntryLike<TestData> = {
+		id: "pub-1",
+		data: {
+			type: "code",
+			title: "Published",
+			date: new Date("2026-04-01"),
+			tags: [],
+			draft: false,
+		},
+	};
+
+	it("PROD: draft entry is excluded", () => {
+		const result = listWorks([draftEntry, publishedEntry], { isProd: true });
+		expect(result.some((e) => e.id === "draft-1")).toBe(false);
+	});
+	it("PROD: non-draft entry is preserved", () => {
+		const result = listWorks([draftEntry, publishedEntry], { isProd: true });
+		expect(result.some((e) => e.id === "pub-1")).toBe(true);
+	});
+	it("PROD: exactly the non-draft count is returned", () => {
+		const result = listWorks([draftEntry, publishedEntry], { isProd: true });
+		expect(result.length).toBe(1);
+	});
+	it("dev: all entries including drafts are returned", () => {
+		const result = listWorks([draftEntry, publishedEntry], { isProd: false });
+		expect(result.length).toBe(2);
+	});
+});
+
+// Why: Deterministic sort tests to kill comparator/method-expression mutants.
+// fast-check monotone test uses random arrays; the sort-removal mutant
+// ([...entries] with no sort) survives if every random sample is already
+// monotone or has only one element. A fixed reverse-order fixture guarantees
+// the comparator direction is exercised on every run.
+// Source: packages/specs/adrs/0008-stryker-and-fast-check-targets.md § Consequences
+describe("sortByDateDesc (deterministic)", () => {
+	const older: EntryLike<TestData> = {
+		id: "older",
+		data: {
+			type: "code",
+			title: "Older",
+			date: new Date("2024-01-01"),
+			tags: [],
+			draft: false,
+		},
+	};
+	const newer: EntryLike<TestData> = {
+		id: "newer",
+		data: {
+			type: "code",
+			title: "Newer",
+			date: new Date("2026-01-01"),
+			tags: [],
+			draft: false,
+		},
+	};
+
+	it("sorts oldest-first input to newest-first", () => {
+		const result = sortByDateDesc([older, newer]);
+		expect(result[0]?.id).toBe("newer");
+		expect(result[1]?.id).toBe("older");
+	});
+	it("preserves newest-first input", () => {
+		const result = sortByDateDesc([newer, older]);
+		expect(result[0]?.id).toBe("newer");
+		expect(result[1]?.id).toBe("older");
 	});
 });

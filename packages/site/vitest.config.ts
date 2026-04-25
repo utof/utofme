@@ -47,6 +47,11 @@ export default defineConfig({
 			// causes "Playwright Test did not expect test() to be called here" error.
 			// See: packages/specs/plans/00-foundations.md § Task 5b
 			"tests/e2e/**",
+			// Why: Stryker creates sandboxes under .stryker-tmp/ for instrumented
+			// test runs. Without this exclusion, `vitest run` (outside Stryker) picks
+			// up the sandboxed copies of e2e specs and fails with Playwright errors.
+			// @see packages/specs/adrs/0008-stryker-and-fast-check-targets.md
+			".stryker-tmp/**",
 		],
 	},
 });

@@ -30,12 +30,6 @@
 		// deps" (line 68) lists it explicitly. Knip can't see CLI usage, so the
 		// dep would otherwise be flagged as unused.
 		"wrangler",
-		// Why: Wired in Task 4 (stryker.conf.json + vitest.mutation.config.ts) and
-		// Task 12 (unit tests + CI nightly mutation workflow), per plan
-		// 01-card-grid-mvp.md § Task 4 + Task 12. Not yet consumed in Task 1.
-		"@stryker-mutator/core",
-		"@stryker-mutator/vitest-runner",
-		"@stryker-mutator/typescript-checker",
 		// Why: fast-check is the direct fast-check package; @fast-check/vitest wraps
 		// it and is imported in tests/unit/works-query.test.ts (Task 4). fast-check
 		// itself is not directly imported but is a peer of @fast-check/vitest and
