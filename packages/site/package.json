@@ -16,7 +16,8 @@
 		"check:depcruise": "depcruise --validate .dependency-cruiser.cjs src",
 		"check:docs": "bun run scripts/check-docs.ts",
 		"test": "vitest run",
-		"test:unit": "vitest run --coverage"
+		"test:unit": "vitest run --coverage",
+		"test:e2e": "node node_modules/@playwright/test/cli.js test"
 	},
 	"typeCoverage": {
 		"atLeast": 100,
@@ -28,7 +29,9 @@
 	"devDependencies": {
 		"@astrojs/check": "^0.9.8",
 		"@astrojs/svelte": "^7",
+		"@axe-core/playwright": "^4.11.2",
 		"@biomejs/biome": "^2.4.13",
+		"@playwright/test": "^1.59.1",
 		"@types/js-yaml": "^4.0.9",
 		"@types/node": "^25.6.0",
 		"@vitest/coverage-v8": "^4.1.5",

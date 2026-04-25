@@ -19,6 +19,12 @@ export default defineConfig({
 		exclude: [
 			"**/node_modules/**",
 			"**/dist/**",
+			// Playwright e2e specs live in tests/e2e/ and use .spec.ts extension;
+			// Vitest 4.x default include catches **/*.spec.ts so we must exclude them.
+			// Why: Vitest and Playwright have incompatible test() APIs — mixing them
+			// causes "Playwright Test did not expect test() to be called here" error.
+			// See: packages/specs/plans/00-foundations.md § Task 5b
+			"tests/e2e/**",
 			// Comment-only RED stubs — activated progressively in Tasks 5b–10d:
 			"tests/unit/scaffold.test.ts",
 			"tests/unit/tooling.test.ts",
