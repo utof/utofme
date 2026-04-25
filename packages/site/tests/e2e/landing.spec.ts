@@ -18,12 +18,15 @@ test("home page loads with no Axe violations", async ({ page }) => {
 
 test("visual regression baseline /", async ({ page }) => {
 	await page.goto("/");
-	// Mask the entire typography-specimen section to absorb subpixel font-rendering
-	// drift across browser patches. [data-test="typography-specimen"] is the outer
-	// wrapper added in Task 9 (forward note from Task 5c).
+	// Mask [data-test="works-grid"] h2 to absorb subpixel font-rendering drift in
+	// card titles across browser patches. Phase 1 cards replaced the full-page
+	// typography specimen as the primary source of variable-text rendering variance.
+	// The typography-specimen sentinel block is still present on the page (Phase 0
+	// B4 invariant) but no longer the dominant drift source.
 	// See: https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2
+	// See: packages/specs/plans/01-card-grid-mvp.md § Task 10 Step 2
 	await expect(page).toHaveScreenshot("landing.png", {
 		maxDiffPixelRatio: 0.001,
-		mask: [page.locator('[data-test="typography-specimen"]')],
+		mask: [page.locator('[data-test="works-grid"] h2')],
 	});
 });
