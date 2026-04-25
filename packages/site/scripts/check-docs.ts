@@ -10,7 +10,7 @@
  * Why: CLAUDE.md § "Documentation-for-trust" mandates every exported symbol
  * carries a TSDoc with `@see`, `@issue`, or `Why:` — this script enforces it
  * at precommit time (lefthook job 7) and in CI.
- * @see /media/vboxuser/G-samsung1/0utoffiles/code/utofme/CLAUDE.md
+ * @see CLAUDE.md
  */
 
 import { join, resolve } from "node:path";
@@ -25,7 +25,7 @@ const WHY_RE = /^\s*\*?\s*Why:/m;
  * Why: the check-docs script must be runnable on arbitrary sub-trees so that
  * Task 5a's fixture-based RED test can point at `tests/fixtures/check-docs`
  * without re-scanning the whole project.
- * @see /media/vboxuser/G-samsung1/0utoffiles/code/utofme/packages/specs/plans/00-foundations.md
+ * @see packages/specs/plans/00-foundations.md
  */
 function parseRootArg(): string {
 	const idx = process.argv.indexOf("--root");
@@ -43,7 +43,7 @@ function parseRootArg(): string {
  *
  * Why: centralises the three-branch rule so both the variable-statement path
  * and the direct-declaration path share the same logic without duplication.
- * @see /media/vboxuser/G-samsung1/0utoffiles/code/utofme/CLAUDE.md
+ * @see CLAUDE.md
  */
 function isDocumented(jsDocs: JSDoc[]): boolean {
 	for (const doc of jsDocs) {
@@ -65,7 +65,7 @@ function isDocumented(jsDocs: JSDoc[]): boolean {
  * Why: invoked by `bun run check:docs` (package.json script) and lefthook
  * precommit job 7. Bun executes this file directly via TS transpilation —
  * no compile step needed.
- * @see /media/vboxuser/G-samsung1/0utoffiles/code/utofme/packages/specs/plans/00-foundations.md
+ * @see packages/specs/plans/00-foundations.md
  */
 function main(): void {
 	const rootArg = parseRootArg();
@@ -128,7 +128,7 @@ function main(): void {
 	}
 
 	for (const { file, line, name } of offenders) {
-		process.stderr.write(`❌ ${file}:${line} exported '${name}' lacks @see / @issue / Why:\n`);
+		process.stderr.write(`ERROR ${file}:${line} exported '${name}' lacks @see / @issue / Why:\n`);
 	}
 	process.exit(1);
 }

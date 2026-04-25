@@ -14,8 +14,8 @@
 #   5. knip            — dead code, unused deps, unused exports
 #   6. depcruise       — dependency graph rules (no-circular, no-orphans, etc.)
 #
-# Further steps land in later tasks per packages/specs/plans/00-foundations.md:
-#   Task 4: check-docs
+# Steps added here in Task 4 (check-docs):
+#   7. check-docs      — asserts every exported symbol carries @see / @issue / Why:
 #
 # Why (type-coverage invocation — bun x confirmed compatible):
 #   Empirical test on 2026-04-25: `bun x type-coverage --at-least 100 --strict`
