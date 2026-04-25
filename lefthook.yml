@@ -1,0 +1,36 @@
+# Pre-commit hook chain for the utofme monorepo.
+#
+# Uses a single piped group so each step runs only if the previous succeeded
+# (piped: true). Order is sequence-critical — Biome auto-fixes JS/TS/JSON before
+# Prettier reformats .astro/.svelte, then type checkers run on clean output.
+#
+# Steps added here in Task 2 (Biome + Prettier):
+#   1. biome-format  — formats/lints JS/TS/JSON/JSONC/CSS staged files
+#   2. prettier-format — formats .astro/.svelte staged files
+#
+# Further steps land in later tasks per packages/specs/plans/00-foundations.md:
+#   Task 3: astro-check, type-coverage, knip, depcruise
+#   Task 4: check-docs
+#
+# Template variable {staged_files} documented at:
+#   https://github.com/evilmartians/lefthook/blob/master/docs/configuration/run.md
+# Piped group syntax documented at:
+#   https://github.com/evilmartians/lefthook/blob/master/docs/configuration/jobs.md
+
+pre-commit:
+  jobs:
+    - name: format-and-check
+      group:
+        piped: true
+        jobs:
+          - name: biome-format
+            root: "packages/site"
+            run: bunx biome check --write {staged_files}
+            glob: "*.{ts,tsx,mts,cts,mjs,cjs,js,jsx,json,jsonc,css}"
+            stage_fixed: true
+
+          - name: prettier-format
+            root: "packages/site"
+            run: bunx prettier --write {staged_files}
+            glob: "*.{astro,svelte}"
+            stage_fixed: true

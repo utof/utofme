@@ -1,19 +1,26 @@
 {
-  "name": "@utofme/site",
-  "private": true,
-  "type": "module",
-  "version": "0.0.0",
-  "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
-  },
-  "devDependencies": {
-    "@astrojs/check": "^0.9.8",
-    "@astrojs/svelte": "^7",
-    "astro": "^6",
-    "svelte": "^5",
-    "typescript": "^6.0.3"
-  }
+	"name": "@utofme/site",
+	"private": true,
+	"type": "module",
+	"version": "0.0.0",
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"astro": "astro"
+	},
+	"devDependencies": {
+		"@astrojs/check": "^0.9.8",
+		"@astrojs/svelte": "^7",
+		"@biomejs/biome": "^2.4.13",
+		"@types/js-yaml": "^4.0.9",
+		"astro": "^6",
+		"js-yaml": "^4.1.1",
+		"lefthook": "^2.1.6",
+		"prettier": "^3.8.3",
+		"prettier-plugin-astro": "^0.14.1",
+		"prettier-plugin-svelte": "^3.5.1",
+		"svelte": "^5",
+		"typescript": "^6.0.3"
+	}
 }
