@@ -22,6 +22,13 @@
 		// IDE-resolvable schema validation for wrangler.jsonc. Spec § "Pinned dev
 		// deps" (line 68) lists it explicitly. Knip can't see CLI usage, so the
 		// dep would otherwise be flagged as unused.
-		"wrangler"
+		"wrangler",
+		// Why: lefthook is wired via the workspace-root /lefthook.yml (outside
+		// packages/site/). Locally knip detects it because `lefthook install`
+		// has been run and `.git/hooks/pre-commit` exists; in CI there's no hook
+		// shim and the config is outside knip's CWD scope, so knip flags it as
+		// unused. CI failure on PR #1 confirmed. Spec § "Pinned dev deps" lists
+		// lefthook; usage is real, just CLI-only. See: lefthook.yml.
+		"lefthook"
 	]
 }
