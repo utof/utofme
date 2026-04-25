@@ -14,8 +14,6 @@
 	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
 	"project": ["src/**/*.{ts,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
 	"ignoreDependencies": [
-		// Why: invoked as CLI by `astro check`; not importable from user code.
-		"@astrojs/check",
 		// Why: Phase 2 island activation; cannot register in astro.config.mjs now
 		// per 0-KB-JS invariant (spec line 19 / packages/specs/specs/00-foundations.md).
 		"@astrojs/svelte",

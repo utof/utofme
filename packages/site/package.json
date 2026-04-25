@@ -17,6 +17,7 @@
 		"check:docs": "bun run scripts/check-docs.ts",
 		"check:size": "size-limit",
 		"check:no-js": "bun run scripts/no-js-check.ts",
+		"check:lighthouse": "npx @lhci/cli autorun",
 		"test": "vitest run",
 		"test:unit": "vitest run --coverage",
 		"test:e2e": "node node_modules/@playwright/test/cli.js test"
@@ -33,6 +34,7 @@
 		"@astrojs/svelte": "^7",
 		"@axe-core/playwright": "^4.11.2",
 		"@biomejs/biome": "^2.4.13",
+		"@lhci/cli": "^0.15.1",
 		"@playwright/test": "^1.59.1",
 		"@size-limit/file": "12.1.0",
 		"@size-limit/preset-app": "12.1.0",
