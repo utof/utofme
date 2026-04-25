@@ -78,7 +78,7 @@ None. Layout primitives are `.astro` components consumed inside `packages/site/s
 - `dependency-cruiser`
 - `ts-morph`
 - `@lhci/cli` (Lighthouse CI; spawns Node)
-- `typescript` ^5
+- `typescript` ^6 — bumped from ^5 in spec revision (Task 1 round 2). Latest stable major; verified compatible with `@astrojs/check@^0.9` despite the latter's stale `^5` peer declaration. See ADR 0001 amendment + Task 1 commit `125d07f` for the bump rationale.
 
 ### Cloudflare bindings
 - None in Phase 0. Workers serves static assets via the Assets feature.

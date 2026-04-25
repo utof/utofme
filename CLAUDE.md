@@ -69,6 +69,8 @@ Source: `docs/2026-04-25-file-vs-fix-research.md`.
 ## Subagent briefing (paste verbatim into every Task prompt)
 > **Tools (in priority order):** `mcp__codebase-memory-mcp__*` before Grep/Glob/find; `context7` MCP (`mcp__plugin_context7_context7__*`) for any library/framework/SDK doc — training data is stale, verify even well-known APIs. **deepwiki is NOT installed** — use `gh` CLI or WebFetch for GitHub repos. WebSearch / WebFetch for anything else uncertain. Do not guess API shapes. **Read `CLAUDE.md` first.** Outputs must be falsifiable: cite file:line, link sources. The plan doc `2026-04-25-general-plan` uses `pnpm` — substitute `bun`.
 
+> **Subagent output verbosity:** the conciseness rule in this file applies only to Claude→user chat. Implementer + reviewer subagent reports are read solely by Claude (the controller) and are ephemeral — be **thorough**: cite freely, list every file touched with SHAs, quote relevant context7 results, surface every doubt. Do not compress.
+
 ## Verify-or-not (context7 / WebSearch / WebFetch)
 Cover both library choice AND named-API correctness. Don't reflex-audit.
 
@@ -102,6 +104,7 @@ Source: `docs/2026-04-25-verify-trigger-research.md`.
     CLAUDE.md  README.md  LICENSE  .gitignore
   ```
 - **TS:** `strict: true` + `extends: "astro/tsconfigs/strictest"`. CI: `type-coverage --at-least 100 --strict`. No `any`, no `@ts-ignore` without linked issue. `@ts-expect-error` must cite issue.
+- **Library version policy:** latest stable major is the default — "latest is coolest". Fall back only when a verified, cited incompatibility forces it (peer-dep break, ecosystem lag, security advisory). Spec amendments to a pinned version must cite the reason.
 - **Format/lint:** **Biome** for JS/TS/JSON/JSONC/CSS. **Prettier** only via lefthook for `.astro`/`.svelte`. No ESLint, no broader Prettier.
 
 ## Precommit (lefthook · order matters)
