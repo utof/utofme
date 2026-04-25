@@ -20,21 +20,6 @@
 	"ignoreExportsUsedInFile": {
 		"interface": true
 	},
-	// Why: Card.astro, TypeGlyph.astro, MetaPills.astro, and the five thumb
-	// components are wired in Task 8 (src/pages/index.astro) and Task 9
-	// (src/pages/works/index.astro). Tasks 5–7 create the components before
-	// their page consumers exist; ignore until Task 8 lands.
-	// Wired in Task 8 — packages/specs/plans/01-card-grid-mvp.md § Task 8
-	"ignoreFiles": [
-		"src/components/Card.astro",
-		"src/components/TypeGlyph.astro",
-		"src/components/MetaPills.astro",
-		"src/components/thumbs/CodeThumb.astro",
-		"src/components/thumbs/VideoThumb.astro",
-		"src/components/thumbs/MusicThumb.astro",
-		"src/components/thumbs/MathThumb.astro",
-		"src/components/thumbs/WritingThumb.astro"
-	],
 	"ignoreDependencies": [
 		// Why: Phase 2 island activation; cannot register in astro.config.mjs now
 		// per 0-KB-JS invariant (spec line 19 / packages/specs/specs/00-foundations.md).
