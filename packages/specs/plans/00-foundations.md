@@ -144,13 +144,13 @@ Each task is one commit, RED→GREEN **within the same commit** (failing test st
   - `oven-sh/setup-bun@v2` with `cache: true`
   - `actions/setup-node@v4` with `node-version: '22'` (for LHCI + npx playwright)
   - `bun install --frozen-lockfile`
-  - `bun x biome check .`
-  - `bun x prettier --check '**/*.{astro,svelte}'`
-  - `bun x astro check`
-  - `bun x type-coverage --at-least 100 --strict` (or Node fallback per Task 3)
-  - `bun x knip`
-  - `bun x depcruise --validate .dependency-cruiser.cjs packages/site/src`
-  - `bun run check:docs`
+  - `bun run --cwd packages/site check:biome`
+  - `bun run --cwd packages/site check:prettier`
+  - `bun run --cwd packages/site check:astro`
+  - `bun run --cwd packages/site check:type-coverage`
+  - `bun run --cwd packages/site check:knip`
+  - `bun run --cwd packages/site check:depcruise`
+  - `bun run --cwd packages/site check:docs`
   - `bun x vitest run --coverage`
   - `npx playwright install --with-deps chromium`
   - `bun x playwright test`

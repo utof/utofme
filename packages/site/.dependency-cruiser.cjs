@@ -42,6 +42,8 @@ module.exports = {
 			from: { orphan: true, pathNot: "^src/env\\.d\\.ts$" },
 			to: {},
 		},
+		// Why: warn (not error) — Node deprecates these on a slow timeline; warning
+		// lets us catch use without blocking unrelated work.
 		{
 			name: "no-deprecated-core",
 			severity: "warn",
@@ -67,7 +69,7 @@ module.exports = {
 		combinedDependencies: true,
 		/* instruct depcruise to look into node_modules for type resolution only */
 		exclude: {
-			path: "^(node_modules|\\.astro)",
+			path: "^(node_modules|\\.astro)/",
 		},
 	},
 };

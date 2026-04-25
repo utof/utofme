@@ -10,7 +10,8 @@
 		"astro": "astro",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check '**/*.{astro,svelte}'",
-		"check:types": "type-coverage --at-least 100 --strict",
+		"check:astro": "astro check",
+		"check:type-coverage": "type-coverage --at-least 100 --strict",
 		"check:knip": "knip",
 		"check:depcruise": "depcruise --validate .dependency-cruiser.cjs src"
 	},

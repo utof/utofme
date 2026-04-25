@@ -49,8 +49,9 @@
 #       (subshell with cd so bun x resolves within the package)
 #   NEVER use: `bun x biome ...` from workspace root (silently broken).
 #
-#   Same logic applies to Prettier: use `bun run --cwd packages/site check:prettier`
-#   or `(cd packages/site && bun x prettier --check '**/*.{astro,svelte}')`.
+#   Same logic applies to all other check:* scripts (prettier, astro, type-coverage,
+#   knip, depcruise): use `bun run --cwd packages/site check:<name>` in CI.
+#   This mirrors the lefthook `bun run check:*` jobs below — single source of truth.
 #   Note: biome.json is strict JSON (no // comments), so this rationale lives here.
 #   See: packages/specs/specs/00-foundations.md § "Lefthook ordering requirement".
 #
@@ -79,16 +80,16 @@ pre-commit:
 
           - name: astro-check
             root: "packages/site"
-            run: bunx astro check
+            run: bun run check:astro
 
           - name: type-coverage
             root: "packages/site"
-            run: bunx type-coverage --at-least 100 --strict
+            run: bun run check:type-coverage
 
           - name: knip
             root: "packages/site"
-            run: bunx knip
+            run: bun run check:knip
 
           - name: depcruise
             root: "packages/site"
-            run: bunx depcruise --validate .dependency-cruiser.cjs src
+            run: bun run check:depcruise

@@ -1,6 +1,0 @@
-{
-	"$schema": "https://unpkg.com/knip@6/schema.json",
-	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/**/*.ts"],
-	"project": ["src/**/*.{ts,astro,svelte}", "tests/**/*.ts"],
-	"ignoreDependencies": ["@astrojs/check", "@astrojs/svelte", "@types/js-yaml", "js-yaml"]
-}
