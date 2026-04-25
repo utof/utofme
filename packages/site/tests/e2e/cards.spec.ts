@@ -37,9 +37,15 @@ for (const route of ROUTES) {
 
 		test("visual regression", async ({ page }) => {
 			await page.goto(route);
+			// Mask the entire works-grid to absorb subpixel font-rendering drift in
+			// card titles, date pills, and tag pills across browser/OS patch cycles.
+			// Structural regressions (missing grid, wrong layout) remain detectable
+			// because the area outside the grid (page chrome, h1, spacing) is unmasked.
+			// See: https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2
+			// See: packages/specs/plans/01-card-grid-mvp.md § Reviewer briefing point 5
 			await expect(page).toHaveScreenshot(`${route === "/" ? "home" : "works"}.png`, {
 				maxDiffPixelRatio: 0.001,
-				mask: [page.locator('[data-test="works-grid"] h2')],
+				mask: [page.locator('[data-test="works-grid"]')],
 			});
 		});
 

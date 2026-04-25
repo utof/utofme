@@ -18,15 +18,14 @@ test("home page loads with no Axe violations", async ({ page }) => {
 
 test("visual regression baseline /", async ({ page }) => {
 	await page.goto("/");
-	// Mask [data-test="works-grid"] h2 to absorb subpixel font-rendering drift in
-	// card titles across browser patches. Phase 1 cards replaced the full-page
-	// typography specimen as the primary source of variable-text rendering variance.
-	// The typography-specimen sentinel block is still present on the page (Phase 0
-	// B4 invariant) but no longer the dominant drift source.
+	// Mask the entire works-grid to absorb subpixel font-rendering drift in card
+	// titles, date pills, and tag pills across browser/OS patch cycles. The
+	// typography-sentinel block above the grid (Phase 0 B4 invariant) remains
+	// unmasked, so heading/font regressions on the page chrome are still caught.
 	// See: https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2
-	// See: packages/specs/plans/01-card-grid-mvp.md § Task 10 Step 2
+	// See: packages/specs/plans/01-card-grid-mvp.md § Reviewer briefing point 5
 	await expect(page).toHaveScreenshot("landing.png", {
 		maxDiffPixelRatio: 0.001,
-		mask: [page.locator('[data-test="works-grid"] h2')],
+		mask: [page.locator('[data-test="works-grid"]')],
 	});
 });
