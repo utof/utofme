@@ -1,0 +1,57 @@
+---
+/**
+ * Card.astro — uniform outer shell for a work card.
+ *
+ * Why: ADR 0011 — `<a href={externalUrl}>` when an external URL is present
+ * (priority repo→youtube→listen→arxiv→pdf), else `<article>` (no link).
+ * Avoids `href="#"` Axe violations and keeps Phase 1 0-KB-JS.
+ *
+ * @see packages/specs/adrs/0011-card-click-target-strategy.md
+ */
+import type { WorkEntry } from "../content.config";
+
+interface Props {
+	data: WorkEntry;
+}
+const { data } = Astro.props;
+
+function externalUrlFor(d: WorkEntry): string | undefined {
+	if (d.type === "code" && d.repo) return d.repo;
+	if (d.type === "video" && d.youtube) return d.youtube;
+	if (d.type === "music" && d.listen) return d.listen;
+	if (d.type === "math") return d.arxiv ?? d.pdf;
+	return undefined;
+}
+
+const href = externalUrlFor(data);
+const Tag = href ? "a" : "article";
+---
+
+<Tag class="card" href={href} data-draft={data.draft ? "true" : undefined}>
+	<slot name="header" />
+	<slot name="thumb" />
+	<slot name="meta" />
+</Tag>
+
+<style>
+	.card {
+		display: grid;
+		grid-template-rows: auto 1fr auto;
+		gap: var(--space-2);
+		padding: var(--space-3);
+		border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+		border-radius: var(--radius-md);
+		background: transparent;
+		text-decoration: none;
+		color: inherit;
+	}
+	a.card:hover,
+	a.card:focus-visible {
+		outline: 1px solid currentColor;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.card {
+			transition: outline 100ms ease;
+		}
+	}
+</style>

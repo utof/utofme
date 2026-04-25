@@ -20,6 +20,11 @@
 	"ignoreExportsUsedInFile": {
 		"interface": true
 	},
+	// Why: Card.astro is wired in Task 8 (src/pages/index.astro) and Task 9
+	// (src/pages/works/index.astro). Tasks 5–7 create the component before its
+	// page consumers exist; ignore until Task 8 lands.
+	// Wired in Task 8 — packages/specs/plans/01-card-grid-mvp.md § Task 8
+	"ignoreFiles": ["src/components/Card.astro"],
 	"ignoreDependencies": [
 		// Why: Phase 2 island activation; cannot register in astro.config.mjs now
 		// per 0-KB-JS invariant (spec line 19 / packages/specs/specs/00-foundations.md).
