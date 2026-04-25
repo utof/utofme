@@ -33,7 +33,11 @@ Thumbs.db
 /docs/
 
 # Markdown — prose belongs in packages/specs/
+# Exception: content-collection files under src/content/works/ are tracked (they are
+# data fixtures, not prose docs — the schema loader requires both .md and .mdx).
 *.md
 !/README.md
 !/CLAUDE.md
 !/packages/specs/**/*.md
+!/packages/site/src/content/works/**/*.md
+!/packages/site/tests/fixtures/**/*.md
