@@ -114,7 +114,7 @@
   on the client). On the server the attribute stays, hiding the bar when JS is
   off without requiring a <noscript> style rule.
 -->
-<div data-filter-bar hidden={!mounted || undefined}>
+<div data-filter-bar role="toolbar" aria-label="filter" hidden={!mounted || undefined}>
 	<div class="type-chips" role="group" aria-label="Filter by type">
 		{#each ALL_TYPES as type}
 			<button
