@@ -15,6 +15,7 @@
  */
 
 import { Font } from "astro:assets";
+import CommandPalette from "../components/CommandPalette.svelte";
 
 interface Props {
 	/** Document <title> content. */
@@ -58,6 +59,16 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 	</head>
 	<body>
 		<slot />
+		<!-- Why: CommandPalette mounted here (not per-page) so it is available on
+		     every route without re-mounting. transition:persist retains the Svelte
+		     island (DOM + state) across Astro ClientRouter SPA navigations once
+		     Task 12 wires <ClientRouter />. Bare transition:persist is correct here:
+		     the named-value form pairs two *different* DOM elements across pages,
+		     but this element lives at the same position in _BaseLayout on every
+		     route, so bare form suffices.
+		     See: https://docs.astro.build/en/guides/view-transitions/#maintaining-state
+		     @see packages/specs/plans/02-interactivity.md § Task 10 -->
+		<CommandPalette client:idle transition:persist />
 	</body>
 </html>
 

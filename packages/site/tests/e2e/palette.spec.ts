@@ -212,4 +212,38 @@ test.describe("CommandPalette — /", () => {
 		const animationName = await dialog.evaluate((el) => getComputedStyle(el).animationName);
 		expect(animationName).toBe("none");
 	});
+
+	// unskip in Task 12 once <ClientRouter /> ships
+	// Why: transition:persist only takes effect when Astro's ClientRouter handles
+	// navigation. Without ClientRouter, page.goto() is a full HTML navigation and
+	// the Svelte island is torn down + re-mounted, so state is always lost.
+	// Task 12 wires <ClientRouter /> and converts this to a SPA nav test that
+	// asserts palette state IS preserved across routes.
+	// @see packages/specs/plans/02-interactivity.md § Task 10
+	test.skip("9. palette persists across route navigation (requires ClientRouter)", async ({
+		page,
+	}) => {
+		await page.goto("/");
+		await waitForPalette(page);
+		await openPalette(page);
+
+		const dialog = page.locator('[role="dialog"][data-palette]');
+		await expect(dialog).toBeVisible({ timeout: 100 });
+
+		// Type a query so we can verify state is preserved after nav
+		await page.keyboard.type("wor");
+		const input = dialog.locator("input");
+		await expect(input).toHaveValue("wor", { timeout: 300 });
+
+		// Navigate to /works — with ClientRouter this is a SPA swap, not a full reload.
+		// transition:persist on CommandPalette retains the Svelte island (DOM + state).
+		await page.goto("/works");
+		await waitForPalette(page);
+
+		// Palette should still be open and query preserved
+		const dialogAfterNav = page.locator('[role="dialog"][data-palette]');
+		await expect(dialogAfterNav).toBeVisible({ timeout: 500 });
+		const inputAfterNav = dialogAfterNav.locator("input");
+		await expect(inputAfterNav).toHaveValue("wor", { timeout: 300 });
+	});
 });
