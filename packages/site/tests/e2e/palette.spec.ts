@@ -77,7 +77,7 @@ test.describe("CommandPalette — /", () => {
 		await expect(dialog).toBeHidden({ timeout: 300 });
 	});
 
-	test("3. typing 'wor' filters list to match 'Go to /works'", async ({ page }) => {
+	test("3. typing 'wor' filters list to match 'Go to /works/'", async ({ page }) => {
 		await page.goto("/");
 		await waitForPalette(page);
 		await openPalette(page);
@@ -88,8 +88,8 @@ test.describe("CommandPalette — /", () => {
 		// Type into the search input
 		await page.keyboard.type("wor");
 
-		// "Go to /works" action should be visible
-		const item = dialog.locator("[data-palette-item]").filter({ hasText: "Go to /works" });
+		// "Go to /works/" action should be visible
+		const item = dialog.locator("[data-palette-item]").filter({ hasText: "Go to /works/" });
 		await expect(item).toBeVisible({ timeout: 300 });
 
 		// Other actions should be hidden (not rendered when filtered out)
@@ -148,9 +148,9 @@ test.describe("CommandPalette — /", () => {
 		// Press ⌘+Enter (ControlOrMeta+Enter) to open in new tab
 		await page.keyboard.press("ControlOrMeta+Enter");
 
-		// Assert window.open was called with target="/works" and name="_blank"
+		// Assert window.open was called with target="/works/" and name="_blank"
 		const call = await page.evaluate(() => window.__lastOpenCall);
-		expect(call).toMatchObject({ target: "/works", name: "_blank" });
+		expect(call).toMatchObject({ target: "/works/", name: "_blank" });
 	});
 
 	test("6. outside click closes palette", async ({ page }) => {
@@ -229,13 +229,13 @@ test.describe("CommandPalette — /", () => {
 		const input = dialog.locator("input");
 		await expect(input).toHaveValue("wor", { timeout: 300 });
 
-		// Navigate to /works via in-page anchor click so ClientRouter intercepts it.
+		// Navigate to /works/ via in-page anchor click so ClientRouter intercepts it.
 		// Why: page.goto() is a full browser navigation and bypasses ClientRouter;
 		// transition:persist only works when ClientRouter handles the swap.
 		// Clicking a synthetic same-origin anchor triggers the SPA swap path.
 		await page.evaluate(() => {
 			const a = document.createElement("a");
-			a.href = "/works";
+			a.href = "/works/";
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);

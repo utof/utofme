@@ -1,4 +1,4 @@
-// Why: e2e tests for the works-grid on `/` and `/works`.
+// Why: e2e tests for the works-grid on `/` and `/works/`.
 // AxeBuilder API verified via context7 /microsoft/playwright.dev:
 // https://playwright.dev/docs/accessibility-testing
 // toHaveScreenshot API (mask, maxDiffPixelRatio) verified via context7 /microsoft/playwright.dev:
@@ -8,7 +8,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-const ROUTES = ["/", "/works"] as const;
+const ROUTES = ["/", "/works/"] as const;
 
 for (const route of ROUTES) {
 	test.describe(`route ${route}`, () => {

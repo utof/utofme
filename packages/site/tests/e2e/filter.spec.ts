@@ -1,4 +1,4 @@
-// Why: e2e tests for FilterBar.svelte island on `/` and `/works`.
+// Why: e2e tests for FilterBar.svelte island on `/` and `/works/`.
 // Covers URL-driven filter state, chip interactions, reset, back-button,
 // no-JS fallback, and hard-refresh pre-interaction rendering.
 //
@@ -38,10 +38,10 @@ async function visibleCardCount(page: import("@playwright/test").Page): Promise<
 }
 
 // ---------------------------------------------------------------------------
-// Parameterised tests — run identical filter scenarios on / and /works
+// Parameterised tests — run identical filter scenarios on / and /works/
 // ---------------------------------------------------------------------------
 
-for (const route of ["/", "/works"] as const) {
+for (const route of ["/", "/works/"] as const) {
 	test.describe(`FilterBar — JS enabled (${route})`, () => {
 		test(`1. type=video chip → URL + only video cards visible`, async ({ page }) => {
 			await page.goto(route);
@@ -107,7 +107,7 @@ for (const route of ["/", "/works"] as const) {
 			expect(filteredCount).toBe(1);
 
 			// Navigate to a different page and come back
-			await page.goto(route === "/" ? "/works" : "/");
+			await page.goto(route === "/" ? "/works/" : "/");
 			await page.goBack();
 
 			await page.waitForSelector("[data-filter-bar]");
