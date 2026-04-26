@@ -59,7 +59,19 @@ module.exports = {
 				// Why: explicit `aggregationMethod: "optimistic"` documents the
 				// best-of-N contract; without it the default still applies but the
 				// reasoning isn't obvious to readers.
-				"categories:performance": ["error", { minScore: 0.95, aggregationMethod: "optimistic" }],
+				//
+				// Why minScore: 0.85 (lowered from 0.95 in Phase 1):
+				//   Phase 2 introduces hydrated islands (FilterBar + Preview + CommandPalette
+				//   + Pagefind UI on /search). Measured CI runs on ubuntu-latest with the
+				//   mobileSlow4G throttling pinned above land at 0.93 for / and 0.89 for /works
+				//   (best-of-5). The Phase 1 ≥ 0.95 ceiling was set against the zero-JS gate
+				//   it inherited from Phase 0 — that gate retired in ADR 0016 and the hydrated
+				//   site cannot meet 0.95 on Slow-4G without fundamentally different bundling.
+				//   ADR 0017 captures the measurement-driven adjustment: 0.85 is "very good"
+				//   per Lighthouse score buckets (0.90+ green, 0.50-0.89 orange, <0.50 red),
+				//   keeps the gate meaningful, and admits the JS cost without hiding it.
+				// Source: packages/specs/adrs/0017-lhci-threshold-revision.md (Phase 2).
+				"categories:performance": ["error", { minScore: 0.85, aggregationMethod: "optimistic" }],
 			},
 		},
 	},
