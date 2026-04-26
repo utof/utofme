@@ -2,16 +2,19 @@
  * Why: Phase 3 Task 4 — e2e tests for per-work detail pages at /works/<id>/.
  *      Nine cases covering route generation, draft exclusion, content, external
  *      links, accessibility, view-transition anchor, and body visibility.
+ *      Task 8 adds cases 10–12: Expressive Code rendering, copy button, dual-theme.
  * @see packages/specs/plans/03-content-pipeline.md § Task 4
+ * @see packages/specs/plans/03-content-pipeline.md § Task 8
  */
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-// Production fixtures (non-draft): Phase 1 + Phase 2.
+// Production fixtures (non-draft): Phase 1 + Phase 2 + Task 8 (code-1 promoted).
 // IDs are the file stems as resolved by Astro glob loader.
 const PROD_IDS = [
+	"code-1",
 	"code-2",
 	"math-2",
 	"music-2",
@@ -21,7 +24,8 @@ const PROD_IDS = [
 ] as const;
 
 // Draft fixture IDs (draft: true in frontmatter).
-const DRAFT_IDS = ["code-1", "math-1", "music-1", "video-1", "writing-1"] as const;
+// code-1 was promoted in Task 8; removed from DRAFT_IDS.
+const DRAFT_IDS = ["math-1", "music-1", "video-1", "writing-1"] as const;
 
 // ---------------------------------------------------------------------------
 // Case 1 — every non-draft fixture has a page at /works/<id>/ (returns 200)
@@ -135,3 +139,50 @@ for (const id of ["code-2", "writing-2", "music-2"] as const) {
 		await expect(firstPara).not.toBeEmpty();
 	});
 }
+
+// ---------------------------------------------------------------------------
+// Cases 10–12 — Expressive Code rendering on /works/code-1/ (Task 8)
+// code-1.mdx was promoted from draft in Task 8 and has a JS code fence.
+// ---------------------------------------------------------------------------
+
+// Case 10 — .expressive-code container is present and visible
+test("10. /works/code-1/ has a visible .expressive-code block", async ({ page }) => {
+	await page.goto("/works/code-1/");
+	// Why: astro-expressive-code wraps every code fence in <div class="expressive-code">.
+	// @see https://expressive-code.com/key-features/code-component/
+	const ecBlock = page.locator(".expressive-code");
+	await expect(ecBlock).toBeVisible();
+});
+
+// Case 11 — copy-to-clipboard button is present inside the EC frame
+test("11. /works/code-1/ EC frame has a copy-to-clipboard button", async ({ page }) => {
+	await page.goto("/works/code-1/");
+	// Why: ec.config.mjs sets frames.showCopyToClipboardButton: true.
+	// EC renders a <button> inside the frame header for copying.
+	// @see https://expressive-code.com/key-features/code-component/
+	const copyBtn = page.locator(".expressive-code button").first();
+	await expect(copyBtn).toBeVisible();
+});
+
+// Case 12 — background colour differs between light and dark media preference
+test("12. /works/code-1/ EC code-block background changes between light and dark", async ({
+	page,
+}) => {
+	// Why: ec.config.mjs uses themes ["github-light","github-dark"] with
+	// useDarkModeMediaQuery: true — EC emits separate CSS for each colour scheme
+	// keyed on prefers-color-scheme. Emulating the media feature forces the
+	// browser to load the correct theme stylesheet, so the computed background
+	// of the <pre> element changes between emulations.
+	// @see https://expressive-code.com/reference/configuration/ (fetched 2026-04-26)
+	await page.goto("/works/code-1/");
+	const preLocator = page.locator(".expressive-code pre");
+
+	await page.emulateMedia({ colorScheme: "light" });
+	const lightBg = await preLocator.evaluate((el) => getComputedStyle(el).backgroundColor);
+
+	await page.emulateMedia({ colorScheme: "dark" });
+	const darkBg = await preLocator.evaluate((el) => getComputedStyle(el).backgroundColor);
+
+	// The two backgrounds must not be identical — the dual-theme swap is working.
+	expect(lightBg).not.toBe(darkBg);
+});

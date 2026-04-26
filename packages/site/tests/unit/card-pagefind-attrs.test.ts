@@ -102,6 +102,15 @@ beforeAll(() => {
 // ---------------------------------------------------------------------------
 const PROD_FIXTURES = [
 	{
+		id: "code-1",
+		title: "Demo project alpha",
+		date: "2026-04-01",
+		type: "code",
+		tags: ["demo", "expressive-code"],
+		summary:
+			"A demo code work showcasing Expressive Code rendering with title, copy button, and dual-theme support.",
+	},
+	{
 		id: "code-2",
 		title: "Hello world utility",
 		date: "2026-03-15",
@@ -186,7 +195,7 @@ function containsFilter(block: string, filterValue: string): boolean {
 }
 
 describe("Card.astro — per-card block extraction", () => {
-	it("all 9 production cards are present in the build output", () => {
+	it("all 10 production cards are present in the build output", () => {
 		expect(cardBlocks.size).toBe(PROD_FIXTURES.length);
 		for (const f of PROD_FIXTURES) {
 			expect(cardBlocks.has(f.id), `card block missing for id "${f.id}"`).toBe(true);
@@ -277,7 +286,7 @@ describe("Card.astro — transition:name / data-astro-transition-scope (per-vari
 		}
 	});
 
-	it("exactly 9 card elements have data-astro-transition-scope (one per production fixture)", () => {
+	it("exactly 10 card elements have data-astro-transition-scope (one per production fixture)", () => {
 		// Count opening card tags that carry the transition scope attr.
 		const matches =
 			html.match(/<(?:a|article)\s[^>]*class="card"[^>]*data-astro-transition-scope=/g) ?? [];
