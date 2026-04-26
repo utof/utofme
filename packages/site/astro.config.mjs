@@ -1,8 +1,10 @@
 // Why: Phase 0 ships static-only output (no SSR routes); keeps the build free-tier-cheap on Cloudflare Workers Assets and avoids miniflare runtime quirks.
 // See: packages/specs/specs/00-foundations.md § "Context / invariants" + § "Non-goals" — ADR 0004 will land in Task 10a and supersede this pointer.
 //
-// Why: Svelte integration is registered in Phase 2, not Phase 0. Phase 0 ships zero hydrated islands; registering svelte() here would emit a Svelte client runtime chunk and violate the 0-KB-JS first-load invariant.
-// See: packages/specs/specs/00-foundations.md § "Non-goals" + § "Success criteria".
+// Why: Phase 2 activates @astrojs/svelte and astro-pagefind (registered below in `integrations`).
+//   The Svelte runtime chunk is only emitted into HTML when at least one `client:*` directive is used; current pages have none in Task 1, so the per-route 30 KB JS budget (ADR 0016) holds.
+//   astro-pagefind is order-sensitive: its build hook runs after Astro emits HTML, so it must remain LAST in `integrations` (before any future post-build emitter). Docs verified at https://github.com/shishkin/astro-pagefind#readme (fetched 2026-04-26).
+// See: packages/specs/plans/02-interactivity.md Task 1.
 //
 // Fonts API shapes verified via context7 /withastro/docs 2026-04-25:
 //   https://github.com/withastro/docs/blob/main/src/content/docs/en/reference/font-provider-reference.mdx
