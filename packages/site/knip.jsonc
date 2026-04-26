@@ -13,6 +13,13 @@
 	// they are not reachable from src/pages/** so must be declared explicitly.
 	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
 	"project": ["src/**/*.{ts,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
+	// Why: ignoreExportsUsedInFile for interfaces lets knip skip exported interfaces
+	// that are referenced within the same file (e.g. ListWorksOptions used as the
+	// opts parameter type in listWorks). These are public API types for external
+	// callers added in Task 4; they have no external consumer yet within this phase.
+	"ignoreExportsUsedInFile": {
+		"interface": true
+	},
 	"ignoreDependencies": [
 		// Why: Phase 2 island activation; cannot register in astro.config.mjs now
 		// per 0-KB-JS invariant (spec line 19 / packages/specs/specs/00-foundations.md).
@@ -23,12 +30,17 @@
 		// deps" (line 68) lists it explicitly. Knip can't see CLI usage, so the
 		// dep would otherwise be flagged as unused.
 		"wrangler",
-		// Why: lefthook is wired via the workspace-root /lefthook.yml (outside
-		// packages/site/). Locally knip detects it because `lefthook install`
-		// has been run and `.git/hooks/pre-commit` exists; in CI there's no hook
-		// shim and the config is outside knip's CWD scope, so knip flags it as
-		// unused. CI failure on PR #1 confirmed. Spec § "Pinned dev deps" lists
-		// lefthook; usage is real, just CLI-only. See: lefthook.yml.
+		// Why: fast-check is the direct fast-check package; @fast-check/vitest wraps
+		// it and is imported in tests/unit/works-query.test.ts (Task 4). fast-check
+		// itself is not directly imported but is a peer of @fast-check/vitest and
+		// needed at runtime.
+		"fast-check",
+		// Why: lefthook config lives at /lefthook.yml (repo root) but the dep is
+		// declared in packages/site/package.json. knip running with cwd=packages/site
+		// can't see the root config, so it flags the dep as unused. Locally knip's
+		// plugin-walk finds it; on CI (frozen-lockfile install) it doesn't. CI fix
+		// from Phase 0 commit 59c4588 — re-applied here after Task 4 inadvertently
+		// removed it.
 		"lefthook"
 	]
 }

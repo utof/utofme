@@ -1,0 +1,91 @@
+---
+/**
+ * /works — archive of all work entries.
+ *
+ * Why: Phase 1 mirrors `/` content (no truncation yet); Phase 2 introduces
+ * "latest 6 on /, full list on /works" filtering.
+ *
+ * @see packages/specs/specs/01-card-grid-mvp.md § URL routes added or changed
+ */
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/_BaseLayout.astro";
+import Grid from "../../components/Grid.astro";
+import Card from "../../components/Card.astro";
+import TypeGlyph from "../../components/TypeGlyph.astro";
+import MetaPills from "../../components/MetaPills.astro";
+import CodeThumb from "../../components/thumbs/CodeThumb.astro";
+import VideoThumb from "../../components/thumbs/VideoThumb.astro";
+import MusicThumb from "../../components/thumbs/MusicThumb.astro";
+import MathThumb from "../../components/thumbs/MathThumb.astro";
+import WritingThumb from "../../components/thumbs/WritingThumb.astro";
+import { listWorks } from "../../lib/works";
+
+const all = await getCollection("works", ({ data }) =>
+	import.meta.env.PROD ? data.draft !== true : true,
+);
+const works = listWorks(all);
+
+const ThumbFor = {
+	code: CodeThumb,
+	video: VideoThumb,
+	music: MusicThumb,
+	math: MathThumb,
+	writing: WritingThumb,
+} as const;
+---
+
+<BaseLayout title="works · utofme">
+	<main>
+		<h1>Works</h1>
+		<Grid as="ul" class="works-grid" data-test="works-grid">
+			{
+				works.map((entry) => {
+					const Thumb = ThumbFor[entry.data.type];
+					return (
+						<li>
+							<Card data={entry.data}>
+								<header slot="header">
+									<TypeGlyph type={entry.data.type} />
+									<h2>{entry.data.title}</h2>
+								</header>
+								<Thumb slot="thumb" />
+								<MetaPills slot="meta" date={entry.data.date} tagCount={entry.data.tags.length} />
+							</Card>
+						</li>
+					);
+				})
+			}
+		</Grid>
+	</main>
+</BaseLayout>
+
+<style>
+	main {
+		padding: var(--space-6);
+		max-width: 80ch;
+		margin-inline: auto;
+	}
+
+	h1 {
+		font-family: var(--font-serif);
+		font-size: var(--font-size-6);
+		font-weight: 600;
+		line-height: 1.1;
+		margin-block: 0 var(--space-4);
+	}
+
+	.works-grid {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: var(--space-4);
+		max-width: min(1280px, 100%);
+	}
+
+	@media (max-width: 480px) {
+		.works-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

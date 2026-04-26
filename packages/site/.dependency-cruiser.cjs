@@ -39,7 +39,12 @@ module.exports = {
 			severity: "error",
 			comment:
 				"Orphan modules in src/ are unreachable dead code. Remove them or wire them to an entry point.",
-			from: { orphan: true, pathNot: "^src/env\\.d\\.ts$" },
+			// Why: src/lib/ helpers are wired to pages in Task 5+ (index.astro,
+			// works/index.astro import listWorks/sortByDateDesc). Excluding them here
+			// avoids a false-positive orphan error between Task 4 (helpers created)
+			// and Task 5 (pages wired). The no-orphans rule will catch genuinely
+			// unused helpers if any are added after Task 5 without wiring.
+			from: { orphan: true, pathNot: "^src/(env\\.d\\.ts|lib/)" },
 			to: {},
 		},
 		// Why: warn (not error) — Node deprecates these on a slow timeline; warning

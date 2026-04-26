@@ -1,0 +1,41 @@
+---
+/**
+ * VideoThumb.astro — CSS-only thumbnail abstract for video-type works.
+ *
+ * Why: Phase 1 ships no per-item imagery (ADR 0010); thumbs are uniform-aspect
+ * CSS abstractions to maintain visual rhythm without LCP risk.
+ * Uses an inline SVG play triangle rather than a CSS clip-path because SVG
+ * currentColor inheritance is unconditional whereas clip-path shapes do not
+ * accept fill values — the SVG approach is simpler and more accessible.
+ *
+ * @see packages/specs/adrs/0010-cards-no-image-pipeline-yet.md
+ */
+---
+
+<div class="thumb" aria-hidden="true">
+	<svg
+		class="play"
+		viewBox="0 0 24 24"
+		width="48"
+		height="48"
+		role="presentation"
+		focusable="false"
+	>
+		<polygon points="6,4 6,20 20,12" fill="currentColor"></polygon>
+	</svg>
+</div>
+
+<style>
+	.thumb {
+		aspect-ratio: 16 / 10;
+		display: grid;
+		place-items: center;
+		background: color-mix(in srgb, currentColor 5%, transparent);
+		border-radius: var(--radius-sm);
+		color: color-mix(in srgb, currentColor 60%, transparent);
+	}
+
+	.play {
+		display: block;
+	}
+</style>

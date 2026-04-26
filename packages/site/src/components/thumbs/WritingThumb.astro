@@ -1,0 +1,54 @@
+---
+/**
+ * WritingThumb.astro — CSS-only thumbnail abstract for writing-type works.
+ *
+ * Why: Phase 1 ships no per-item imagery (ADR 0010); thumbs are uniform-aspect
+ * CSS abstractions to maintain visual rhythm without LCP risk.
+ * Three horizontal lines of varying widths mimic a text excerpt, giving an
+ * immediately legible "document" metaphor without any imagery.
+ *
+ * @see packages/specs/adrs/0010-cards-no-image-pipeline-yet.md
+ */
+---
+
+<div class="thumb" aria-hidden="true">
+	<div class="lines">
+		<div class="line line-a"></div>
+		<div class="line line-b"></div>
+		<div class="line line-c"></div>
+	</div>
+</div>
+
+<style>
+	.thumb {
+		aspect-ratio: 16 / 10;
+		display: grid;
+		place-items: center;
+		background: color-mix(in srgb, currentColor 5%, transparent);
+		border-radius: var(--radius-sm);
+		color: color-mix(in srgb, currentColor 60%, transparent);
+	}
+
+	.lines {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		width: 6rem;
+	}
+
+	.line {
+		height: 0.3125rem;
+		border-radius: var(--radius-sm);
+		background: currentColor;
+	}
+
+	.line-a {
+		width: 100%;
+	}
+	.line-b {
+		width: 85%;
+	}
+	.line-c {
+		width: 65%;
+	}
+</style>

@@ -17,9 +17,27 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+	// Why: `astro:content` is a Vite virtual module generated at build time by
+	// Astro's content-plugin; it does not exist as a file on disk. Vitest resolves
+	// imports from disk, so without an alias the import fails with "Cannot find
+	// module 'astro:content'". Aliasing to `astro/content/config` (the public
+	// package export declared in astro/package.json) provides `defineCollection` so
+	// `content.config.ts` can be imported in unit tests. Only `defineCollection` is
+	// used in the file; the alias does NOT affect `getCollection` or render helpers
+	// (those come from the full virtual module and are not needed in schema unit tests).
+	// @see packages/specs/plans/01-card-grid-mvp.md § Task 2
+	resolve: {
+		alias: {
+			"astro:content": "astro/content/config",
+		},
+	},
 	test: {
 		environment: "happy-dom",
 		coverage: { provider: "v8", reporter: ["text", "lcov"] },
+		typecheck: {
+			enabled: true,
+			include: ["**/*.test-d.ts"],
+		},
 		exclude: [
 			"**/node_modules/**",
 			"**/dist/**",
@@ -29,6 +47,11 @@ export default defineConfig({
 			// causes "Playwright Test did not expect test() to be called here" error.
 			// See: packages/specs/plans/00-foundations.md § Task 5b
 			"tests/e2e/**",
+			// Why: Stryker creates sandboxes under .stryker-tmp/ for instrumented
+			// test runs. Without this exclusion, `vitest run` (outside Stryker) picks
+			// up the sandboxed copies of e2e specs and fails with Playwright errors.
+			// @see packages/specs/adrs/0008-stryker-and-fast-check-targets.md
+			".stryker-tmp/**",
 		],
 	},
 });

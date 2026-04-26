@@ -1,0 +1,54 @@
+---
+/**
+ * MusicThumb.astro — CSS-only thumbnail abstract for music-type works.
+ *
+ * Why: Phase 1 ships no per-item imagery (ADR 0010); thumbs are uniform-aspect
+ * CSS abstractions to maintain visual rhythm without LCP risk.
+ * Three vertical bars of varying heights evoke an audio visualiser/equaliser;
+ * no animation is added in Phase 1 per spec non-goals.
+ *
+ * @see packages/specs/adrs/0010-cards-no-image-pipeline-yet.md
+ */
+---
+
+<div class="thumb" aria-hidden="true">
+	<div class="bars">
+		<div class="bar bar-a"></div>
+		<div class="bar bar-b"></div>
+		<div class="bar bar-c"></div>
+	</div>
+</div>
+
+<style>
+	.thumb {
+		aspect-ratio: 16 / 10;
+		display: grid;
+		place-items: center;
+		background: color-mix(in srgb, currentColor 5%, transparent);
+		border-radius: var(--radius-sm);
+		color: color-mix(in srgb, currentColor 60%, transparent);
+	}
+
+	.bars {
+		display: flex;
+		align-items: flex-end;
+		gap: 0.5rem;
+		height: 3rem;
+	}
+
+	.bar {
+		width: 0.625rem;
+		border-radius: var(--radius-sm);
+		background: currentColor;
+	}
+
+	.bar-a {
+		height: 40%;
+	}
+	.bar-b {
+		height: 70%;
+	}
+	.bar-c {
+		height: 55%;
+	}
+</style>

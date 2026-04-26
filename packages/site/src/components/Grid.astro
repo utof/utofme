@@ -8,9 +8,24 @@
  * based gap keeps column gutters in sync with the spacing scale (var(--space-*)).
  * Pattern source: "RAM" (Repeat, Auto, Minmax) —
  * https://css-tricks.com/an-auto-filling-css-grid-with-max-columns/
+ *
+ * Why (polymorphic `as`): Phase 1 needs `<Grid as="ul">` for the works grid
+ * (semantic list wrapper); the polymorphic prop keeps the data-component marker
+ * intact for Phase 0 e2e (primitives.spec.ts:8–30).
+ *
+ * Why (interface Props instead of Polymorphic<{as:Tag}>): the idiomatic Astro
+ * Polymorphic helper with a generic type alias (`type Props<Tag extends HTMLTag>`)
+ * triggers a buffer-overflow panic in `@astrojs/compiler` v0.38.x GetPropsType
+ * when the frontmatter exceeds ~2 KB — open upstream issue withastro/compiler#1159.
+ * Using `interface Props` avoids the crash; `...rest` spread on `<Tag>` still
+ * forwards all HTML attrs including `data-*` locators at runtime.
+ *
+ * @see packages/specs/plans/01-card-grid-mvp.md § Task 1 Step 5
  * @see packages/specs/plans/00-foundations.md
  * @see packages/specs/specs/00-foundations.md
+ * @see https://docs.astro.build/en/guides/typescript/#polymorphic-type
  */
+import type { HTMLTag } from "astro/types";
 
 /** Valid spacing token keys from tokens.css --space-* scale (1–12). */
 type SpaceToken = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12";
@@ -31,14 +46,38 @@ interface Props {
 	 * Defaults to "4" (1 rem / 16 px).
 	 */
 	gap?: SpaceToken;
+	/**
+	 * HTML element to render as the grid container.
+	 *
+	 * Why: allows semantic elements (e.g. `<ul>`) while preserving the Grid
+	 * visual behaviour. Defaults to "div" so all Phase 0 callers remain unchanged.
+	 */
+	as?: HTMLTag;
+	/**
+	 * CSS class(es) forwarded to the grid container element.
+	 *
+	 * Why: Astro does not merge `class` automatically when using dynamic tags;
+	 * accepting it explicitly ensures callers can apply scoped or utility classes
+	 * without the value being silently dropped.
+	 */
+	class?: string;
+	/** Arbitrary HTML attributes forwarded verbatim to the container element.
+	 *
+	 * Why: `data-test`, ARIA overrides, and any other per-callsite attribute
+	 * must reach the rendered DOM element; without this index signature the
+	 * TypeScript compiler would reject `<Grid data-test="works-grid">`.
+	 */
+	[key: string]: unknown;
 }
 
-const { min = "280px", gap = "4" } = Astro.props;
+const { min = "280px", gap = "4", as: Tag = "div", class: className, ...rest } = Astro.props;
 ---
 
-<div
+<Tag
+	{...rest}
 	data-component="grid"
+	class={className}
 	style={`display:grid;grid-template-columns:repeat(auto-fill,minmax(${min},1fr));gap:var(--space-${gap})`}
 >
 	<slot />
-</div>
+</Tag>
