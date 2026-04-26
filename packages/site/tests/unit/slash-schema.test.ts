@@ -25,4 +25,10 @@ describe("slashSchema", () => {
 		const parsed = slashSchema.parse({ title: "x", updated: new Date() });
 		expect(parsed.tags).toEqual([]);
 	});
+
+	it("coerces an ISO date string into a Date", () => {
+		const parsed = slashSchema.parse({ title: "x", updated: "2026-04-27" });
+		expect(parsed.updated).toBeInstanceOf(Date);
+		expect(parsed.updated.toISOString().slice(0, 10)).toBe("2026-04-27");
+	});
 });
