@@ -13,8 +13,9 @@
 //   cover-fixture:           type=writing, tags=["cover-image","phase-3"]  (Task 5 fixture)
 //   external-only:           type=code,    tags=["external-only"]          (Task 6 fixture)
 //   no-link:                 type=writing, tags=["no-link"]                (Task 6 fixture)
+//   writing-mdx-island:      type=writing, tags=["mdx","svelte"]           (Task 9 fixture)
 //
-// Total production cards: 10
+// Total production cards: 11
 //
 // @see packages/specs/plans/02-interactivity.md § Task 5, § Task 6, § Task 7
 import AxeBuilder from "@axe-core/playwright";
@@ -98,8 +99,8 @@ for (const route of ["/", "/works/"] as const) {
 			expect(url.searchParams.getAll("tag")).toHaveLength(0);
 
 			const count = await visibleCardCount(page);
-			// Why: code-1 (Task 8) added the 10th production entry.
-			expect(count).toBe(10);
+			// Why: writing-mdx-island (Task 9) added the 11th production entry.
+			expect(count).toBe(11);
 		});
 
 		test(`4. back button restores prior filter`, async ({ page }) => {
@@ -161,13 +162,14 @@ for (const route of ["/", "/works/"] as const) {
 			const isVisible = await filterBar.isVisible().catch(() => false);
 			expect(isVisible).toBe(false);
 
-			// All 10 production cards should be visible (full grid, no filtering)
+			// All 11 production cards should be visible (full grid, no filtering)
 			// writing-3-no-summary (Task 7 fixture) is the 6th card; cover-fixture
 			// (Task 5 fixture) is the 7th; external-only and no-link (Task 6 fixtures)
-			// are the 8th and 9th; code-1 (Task 8 fixture) is the 10th.
+			// are the 8th and 9th; code-1 (Task 8 fixture) is the 10th;
+			// writing-mdx-island (Task 9 fixture) is the 11th.
 			const grid = page.locator('[data-test="works-grid"] > li');
 			const count = await grid.count();
-			expect(count).toBe(10);
+			expect(count).toBe(11);
 
 			// No JS console errors (can't run anyway, but ensure no inline script errors)
 			expect(consoleErrors).toHaveLength(0);

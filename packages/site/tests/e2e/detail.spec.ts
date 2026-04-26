@@ -3,15 +3,18 @@
  *      Nine cases covering route generation, draft exclusion, content, external
  *      links, accessibility, view-transition anchor, and body visibility.
  *      Task 8 adds cases 10–12: Expressive Code rendering, copy button, dual-theme.
+ *      Task 9 adds cases 13–15: Svelte 5 Counter island embedded in MDX, state isolation.
  * @see packages/specs/plans/03-content-pipeline.md § Task 4
  * @see packages/specs/plans/03-content-pipeline.md § Task 8
+ * @see packages/specs/plans/03-content-pipeline.md § Task 9
  */
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-// Production fixtures (non-draft): Phase 1 + Phase 2 + Task 8 (code-1 promoted).
+// Production fixtures (non-draft): Phase 1 + Phase 2 + Task 8 (code-1 promoted)
+// + Task 9 (writing-mdx-island).
 // IDs are the file stems as resolved by Astro glob loader.
 const PROD_IDS = [
 	"code-1",
@@ -21,6 +24,7 @@ const PROD_IDS = [
 	"video-2",
 	"writing-2",
 	"writing-3-no-summary",
+	"writing-mdx-island",
 ] as const;
 
 // Draft fixture IDs (draft: true in frontmatter).
@@ -185,4 +189,72 @@ test("12. /works/code-1/ EC code-block background changes between light and dark
 
 	// The two backgrounds must not be identical — the dual-theme swap is working.
 	expect(lightBg).not.toBe(darkBg);
+});
+
+// ---------------------------------------------------------------------------
+// Cases 13–15 — Svelte 5 Counter island in MDX on /works/writing-mdx-island/
+// (Task 9) Two Counter instances demonstrate per-island state isolation.
+// ---------------------------------------------------------------------------
+
+// Case 13 — two distinct counter instances render with different data-counter-id values
+test("13. /works/writing-mdx-island/ has two counter instances with distinct ids", async ({
+	page,
+}) => {
+	await page.goto("/works/writing-mdx-island/");
+	// Why: Counter.svelte renders with client:visible; wait for hydration.
+	const counters = page.locator("button[data-counter-id]");
+	await expect(counters).toHaveCount(2);
+
+	const id0 = await counters.nth(0).getAttribute("data-counter-id");
+	const id1 = await counters.nth(1).getAttribute("data-counter-id");
+	// Each island must produce a distinct id — $props.id() guarantees this.
+	expect(id0).toBeTruthy();
+	expect(id1).toBeTruthy();
+	expect(id0).not.toBe(id1);
+});
+
+// Case 14 — click counter A 3× → A shows 3, B shows 0 (no state sharing)
+test("14. clicking counter A 3× shows A=3, B=0", async ({ page }) => {
+	await page.goto("/works/writing-mdx-island/");
+	const counters = page.locator("button[data-counter-id]");
+	await expect(counters).toHaveCount(2);
+
+	const counterA = counters.nth(0);
+	// Click counter A three times.
+	await counterA.click();
+	await counterA.click();
+	await counterA.click();
+
+	// Counter A text should contain "3", counter B text should contain "0".
+	const textA = await counterA.textContent();
+	const textB = await counters.nth(1).textContent();
+	expect(textA).toMatch(/:\s*3\b/);
+	expect(textB).toMatch(/:\s*0\b/);
+});
+
+// Case 15 — click counter B 2× → B shows 2, A remains at 3 (no state leak)
+test("15. clicking counter B 2× shows B=2, A still 3 (no state leak)", async ({ page }) => {
+	// Why: state test must start from a fresh navigation so A is back at 0,
+	// then we replicate the A=3 state before asserting B isolation.
+	await page.goto("/works/writing-mdx-island/");
+	const counters = page.locator("button[data-counter-id]");
+	await expect(counters).toHaveCount(2);
+
+	const counterA = counters.nth(0);
+	const counterB = counters.nth(1);
+
+	// Bring A to 3.
+	await counterA.click();
+	await counterA.click();
+	await counterA.click();
+
+	// Now click B twice.
+	await counterB.click();
+	await counterB.click();
+
+	// B must show 2, A must still show 3.
+	const textA = await counterA.textContent();
+	const textB = await counterB.textContent();
+	expect(textA).toMatch(/:\s*3\b/);
+	expect(textB).toMatch(/:\s*2\b/);
 });

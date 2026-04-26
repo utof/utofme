@@ -182,6 +182,14 @@ const PROD_FIXTURES = [
 		tags: ["no-link"],
 		summary: "Fixture with no body and no external URL, for card article-branch testing.",
 	},
+	{
+		id: "writing-mdx-island",
+		title: "MDX Svelte island demo",
+		date: "2026-04-26",
+		type: "writing",
+		tags: ["mdx", "svelte"],
+		summary: "Demonstrates Svelte 5 islands embedded inside MDX with state isolation.",
+	},
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -195,7 +203,7 @@ function containsFilter(block: string, filterValue: string): boolean {
 }
 
 describe("Card.astro — per-card block extraction", () => {
-	it("all 10 production cards are present in the build output", () => {
+	it("all 11 production cards are present in the build output", () => {
 		expect(cardBlocks.size).toBe(PROD_FIXTURES.length);
 		for (const f of PROD_FIXTURES) {
 			expect(cardBlocks.has(f.id), `card block missing for id "${f.id}"`).toBe(true);
@@ -286,7 +294,7 @@ describe("Card.astro — transition:name / data-astro-transition-scope (per-vari
 		}
 	});
 
-	it("exactly 10 card elements have data-astro-transition-scope (one per production fixture)", () => {
+	it("exactly 11 card elements have data-astro-transition-scope (one per production fixture)", () => {
 		// Count opening card tags that carry the transition scope attr.
 		const matches =
 			html.match(/<(?:a|article)\s[^>]*class="card"[^>]*data-astro-transition-scope=/g) ?? [];
