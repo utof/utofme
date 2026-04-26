@@ -6,7 +6,10 @@ import { describe, expect, it } from "vitest";
 // Why: `bunx astro check` spawns a full Astro type-check pass; on this machine
 // that takes ~12 s. Vitest default testTimeout is 5000 ms, so we raise it here.
 // @see https://vitest.dev/config/#testtimeout
-const ASTRO_CHECK_TIMEOUT_MS = 30_000;
+// Why: bumped from 30s to 60s in Phase 3 — function-form schema + new deps
+//      (astro-expressive-code, @astrojs/react, sandpack-react, sharp) made
+//      `astro check` cold-start slower on CI. Local runs land in ~30-40s.
+const ASTRO_CHECK_TIMEOUT_MS = 60_000;
 
 describe("astro check fails on schema violation", () => {
 	it(
