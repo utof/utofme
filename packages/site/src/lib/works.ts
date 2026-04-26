@@ -77,12 +77,13 @@ export function listWorks<E extends EntryLike<{ date: Date; draft?: boolean }>>(
  *
  * Why: using a structural type (not `CollectionEntry<"works">`) keeps these
  * helpers testable with plain objects and avoids binding test files to Astro's
- * virtual module. `body?: string` matches `CollectionEntry`'s own shape under
- * `exactOptionalPropertyTypes: true`.
+ * virtual module. `body?: string | undefined` (not `body?: string`) for
+ * `exactOptionalPropertyTypes: true` compatibility — callers that pass
+ * `entry.body` supply `string | undefined`, not just `string`.
  *
  * @see packages/specs/plans/03-content-pipeline.md § Task 3
  */
-export type BodyEntry = { readonly body?: string };
+export type BodyEntry = { readonly body?: string | undefined };
 
 /**
  * Minimal structural type accepted by {@link detailUrl} and {@link cardHref}.
@@ -91,7 +92,12 @@ export type BodyEntry = { readonly body?: string };
  *
  * @see packages/specs/plans/03-content-pipeline.md § Task 3
  */
-export type IdDataEntry = { readonly id: string; readonly body?: string; readonly data: WorkEntry };
+export type IdDataEntry = {
+	readonly id: string;
+	/** `string | undefined` (not `string?`) for `exactOptionalPropertyTypes` compatibility. */
+	readonly body?: string | undefined;
+	readonly data: WorkEntry;
+};
 
 /**
  * Returns `true` when the entry has a non-empty body (rendered Markdown/MDX).
