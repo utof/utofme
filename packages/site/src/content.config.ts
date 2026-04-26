@@ -93,11 +93,31 @@ const works = defineCollection({
 });
 
 /**
+ * Slash-page collection schema (frontmatter shape for /now, /uses,
+ * /colophon, /tops). `updated` is required so each page surfaces a
+ * trustworthy "last touched" date — the IndieWeb /now-page convention.
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Architecture (Static slash pages)
+ * @see packages/specs/adrs/0022-slash-collection.md
+ */
+export const slashSchema = z.object({
+	title: z.string(),
+	description: z.string().max(240).optional(),
+	updated: z.coerce.date(),
+	tags: z.array(z.string()).default([]),
+});
+
+const slash = defineCollection({
+	loader: glob({ pattern: "*.mdx", base: "./src/content/slash" }),
+	schema: slashSchema,
+});
+
+/**
  * Astro Content Collections registry.
  *
  * Why: Astro 6 requires this exact named export at `src/content.config.ts`
- * to wire the `works` collection.
+ * to wire the `works` and `slash` collections.
  *
  * @see https://docs.astro.build/en/guides/content-collections/
  */
-export const collections = { works };
+export const collections = { works, slash };
