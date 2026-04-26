@@ -21,9 +21,6 @@
 		"interface": true
 	},
 	"ignoreDependencies": [
-		// Why: Phase 2 island activation; cannot register in astro.config.mjs now
-		// per 0-KB-JS invariant (spec line 19 / packages/specs/specs/00-foundations.md).
-		"@astrojs/svelte",
 		// Why: wrangler is a CLI-only dev dep (no `import` from source). It powers
 		// the deploy step (cloudflare/wrangler-action@v3 in deploy.yml) and gives
 		// IDE-resolvable schema validation for wrangler.jsonc. Spec § "Pinned dev

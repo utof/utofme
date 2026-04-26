@@ -26,11 +26,13 @@
 //   - https://fonts.google.com/specimen/Geist (Google Fonts catalogue)
 //   - https://github.com/withastro/docs/blob/main/src/content/docs/en/reference/font-provider-reference.mdx
 import mdx from "@astrojs/mdx";
+import svelte from "@astrojs/svelte";
 import { defineConfig, fontProviders } from "astro/config";
+import pagefind from "astro-pagefind";
 
 export default defineConfig({
 	output: "static",
-	integrations: [mdx()],
+	integrations: [mdx(), svelte(), pagefind()],
 	fonts: [
 		// Fraunces — variable serif (wght 100–900 + opsz + SOFT + WONK axes).
 		// Why: `weights: ["100 900"]` string-range is the correct form for variable
