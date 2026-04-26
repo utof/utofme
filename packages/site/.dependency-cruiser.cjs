@@ -73,8 +73,14 @@ module.exports = {
 		},
 		combinedDependencies: true,
 		/* instruct depcruise to look into node_modules for type resolution only */
+		// Why: also excludes Bun's content-addressed package store
+		// (../../node_modules/.bun/) which dependency-cruiser tries to follow
+		// through Svelte component imports. The `^` anchor alone does not
+		// match paths that start with `../../`. Using a substring match instead
+		// covers both the local node_modules and the Bun store path.
+		// See: packages/specs/plans/02-interactivity.md § Task 5
 		exclude: {
-			path: "^(node_modules|\\.astro)/",
+			path: "node_modules|\\.astro/",
 		},
 	},
 };

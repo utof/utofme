@@ -27,7 +27,13 @@ const href = externalUrlFor(data);
 const Tag = href ? "a" : "article";
 ---
 
-<Tag class="card" href={href} data-draft={data.draft ? "true" : undefined}>
+<Tag
+	class="card"
+	href={href}
+	data-draft={data.draft ? "true" : undefined}
+	data-type={data.type}
+	data-tags={data.tags.join(",")}
+>
 	<slot name="header" />
 	<slot name="thumb" />
 	<slot name="meta" />
