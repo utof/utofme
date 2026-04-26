@@ -2,11 +2,26 @@
 type: code
 title: "Demo project alpha"
 date: 2026-04-01
-draft: true
-tags: ["demo", "draft"]
+tags: ["demo", "expressive-code"]
 stack: ["typescript", "astro"]
 repo: "https://github.com/utof/demo-alpha"
-summary: "A demo code work used for fixture coverage."
+summary: "A demo code work showcasing Expressive Code rendering with title, copy button, and dual-theme support."
 ---
 
-Demo body. _Drafts are visible in dev._
+This project demonstrates how Expressive Code renders syntax-highlighted code blocks
+on the site. The integration runs at build time via `astro-expressive-code`, producing
+static HTML with embedded CSS for both light and dark themes — no client JS required
+for the highlight itself.
+
+The following snippet shows a minimal usage pattern. The `title="example.js"` directive
+in the fence's meta-string drives EC's frame-title rendering; the copy button is enabled
+globally via `ec.config.mjs`.
+
+```js title="example.js"
+// Why: demonstrate Expressive Code rendering with title and copy button
+console.log("hello");
+```
+
+Each code block ships two theme variants (`github-light` and `github-dark`), toggled by
+a `prefers-color-scheme` media query injected by EC. No JavaScript is needed to switch
+themes — the browser applies the correct CSS block automatically.

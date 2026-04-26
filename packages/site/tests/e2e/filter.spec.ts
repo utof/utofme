@@ -1,16 +1,22 @@
-// Why: e2e tests for FilterBar.svelte island on `/` and `/works`.
+// Why: e2e tests for FilterBar.svelte island on `/` and `/works/`.
 // Covers URL-driven filter state, chip interactions, reset, back-button,
 // no-JS fallback, and hard-refresh pre-interaction rendering.
 //
 // Fixture data (PROD — non-drafts only):
 //   video-2:                 type=video,   tags=["overview","video"]
 //   music-2:                 type=music,   tags=["beat","study"]
+//   code-1:                  type=code,    tags=["demo","expressive-code"] (Task 8 fixture)
 //   code-2:                  type=code,    tags=["utility"]
 //   math-2:                  type=math,    tags=["number-theory"]
 //   writing-2:               type=writing, tags=["post","iteration"]
 //   writing-3-no-summary:    type=writing, tags=["no-summary"]   (Task 7 fixture)
+//   cover-fixture:           type=writing, tags=["cover-image","phase-3"]  (Task 5 fixture)
+//   external-only:           type=code,    tags=["external-only"]          (Task 6 fixture)
+//   no-link:                 type=writing, tags=["no-link"]                (Task 6 fixture)
+//   writing-mdx-island:      type=writing, tags=["mdx","svelte"]           (Task 9 fixture)
+//   code-sandbox:            type=code,    tags=["sandpack","react","phase-3"] (Task 10 fixture)
 //
-// Total production cards: 6
+// Total production cards: 12
 //
 // @see packages/specs/plans/02-interactivity.md § Task 5, § Task 6, § Task 7
 import AxeBuilder from "@axe-core/playwright";
@@ -38,10 +44,10 @@ async function visibleCardCount(page: import("@playwright/test").Page): Promise<
 }
 
 // ---------------------------------------------------------------------------
-// Parameterised tests — run identical filter scenarios on / and /works
+// Parameterised tests — run identical filter scenarios on / and /works/
 // ---------------------------------------------------------------------------
 
-for (const route of ["/", "/works"] as const) {
+for (const route of ["/", "/works/"] as const) {
 	test.describe(`FilterBar — JS enabled (${route})`, () => {
 		test(`1. type=video chip → URL + only video cards visible`, async ({ page }) => {
 			await page.goto(route);
@@ -76,7 +82,7 @@ for (const route of ["/", "/works"] as const) {
 			expect(count).toBe(1);
 		});
 
-		test(`3. reset button → URL strips params, all 6 cards visible`, async ({ page }) => {
+		test(`3. reset button → URL strips params, all 9 cards visible`, async ({ page }) => {
 			await page.goto(route);
 			await page.waitForSelector("[data-filter-bar]");
 
@@ -94,7 +100,8 @@ for (const route of ["/", "/works"] as const) {
 			expect(url.searchParams.getAll("tag")).toHaveLength(0);
 
 			const count = await visibleCardCount(page);
-			expect(count).toBe(6);
+			// Why: code-sandbox (Task 10) added the 12th production entry.
+			expect(count).toBe(12);
 		});
 
 		test(`4. back button restores prior filter`, async ({ page }) => {
@@ -107,7 +114,7 @@ for (const route of ["/", "/works"] as const) {
 			expect(filteredCount).toBe(1);
 
 			// Navigate to a different page and come back
-			await page.goto(route === "/" ? "/works" : "/");
+			await page.goto(route === "/" ? "/works/" : "/");
 			await page.goBack();
 
 			await page.waitForSelector("[data-filter-bar]");
@@ -156,11 +163,15 @@ for (const route of ["/", "/works"] as const) {
 			const isVisible = await filterBar.isVisible().catch(() => false);
 			expect(isVisible).toBe(false);
 
-			// All 6 production cards should be visible (full grid, no filtering)
-			// writing-3-no-summary (Task 7 fixture) is a non-draft, adding a 6th card.
+			// All 12 production cards should be visible (full grid, no filtering)
+			// writing-3-no-summary (Task 7 fixture) is the 6th card; cover-fixture
+			// (Task 5 fixture) is the 7th; external-only and no-link (Task 6 fixtures)
+			// are the 8th and 9th; code-1 (Task 8 fixture) is the 10th;
+			// writing-mdx-island (Task 9 fixture) is the 11th;
+			// code-sandbox (Task 10 fixture) is the 12th.
 			const grid = page.locator('[data-test="works-grid"] > li');
 			const count = await grid.count();
-			expect(count).toBe(6);
+			expect(count).toBe(12);
 
 			// No JS console errors (can't run anyway, but ensure no inline script errors)
 			expect(consoleErrors).toHaveLength(0);

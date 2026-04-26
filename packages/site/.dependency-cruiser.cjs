@@ -44,7 +44,14 @@ module.exports = {
 			// avoids a false-positive orphan error between Task 4 (helpers created)
 			// and Task 5 (pages wired). The no-orphans rule will catch genuinely
 			// unused helpers if any are added after Task 5 without wiring.
-			from: { orphan: true, pathNot: "^src/(env\\.d\\.ts|lib/)" },
+			//
+			// Why: .tsx React island files (e.g. SandboxIsland.tsx) appear as orphans
+			// because depcruise excludes node_modules (stripping @codesandbox/sandpack-react
+			// deps) and cannot parse .astro files to trace the import chain that wires
+			// them in. Svelte islands avoid false-positives by importing svelte/internal/*
+			// (not excluded), so they're non-orphan by graph structure. TSX islands must
+			// be exempted explicitly. See packages/specs/plans/03-content-pipeline.md § Task 10.
+			from: { orphan: true, pathNot: "^src/(env\\.d\\.ts|lib/)|\\.(tsx)$" },
 			to: {},
 		},
 		// Why: warn (not error) — Node deprecates these on a slow timeline; warning

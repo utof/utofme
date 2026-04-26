@@ -67,7 +67,7 @@ const ThumbFor = {
 						const Thumb = ThumbFor[entry.data.type];
 						return (
 							<li style={`--i: ${i}`}>
-								<Card data={entry.data} id={entry.id}>
+								<Card data={entry.data} id={entry.id} body={entry.body}>
 									<header slot="header">
 										<TypeGlyph type={entry.data.type} />
 										<h2>{entry.data.title}</h2>

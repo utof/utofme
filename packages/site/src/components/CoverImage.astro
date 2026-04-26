@@ -1,0 +1,39 @@
+---
+/**
+ * Why: Phase 3 cover-image render with AVIF/WebP responsive variants.
+ *      <Picture> is required (not <Image>) for multi-format fallback chain:
+ *      <Image> with formats emits only ONE format; <Picture> emits a <picture>
+ *      with one <source> per format plus an <img> fallback.
+ *      sizes prop drives srcset width selection per Astro docs.
+ * @see packages/specs/plans/03-content-pipeline.md § Task 5
+ * @see https://docs.astro.build/en/reference/modules/astro-assets/#picture- (verified 2026-04-26 via context7)
+ */
+import { Picture } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+/**
+ * Props for CoverImage.
+ *
+ * Why: src is typed as ImageMetadata (not string) because the schema uses
+ * Astro's image() helper, which resolves the path at collection-load time and
+ * returns an ImageMetadata object. Passing it directly to <Picture> lets the
+ * asset pipeline emit responsive AVIF + WebP variants at build time via Sharp.
+ * @see packages/site/src/content.config.ts § cover field
+ */
+export interface Props {
+	src: ImageMetadata;
+	alt: string;
+}
+
+const { src, alt } = Astro.props;
+---
+
+<Picture
+	src={src}
+	formats={["avif", "webp"]}
+	widths={[320, 640, 960, 1280]}
+	sizes="(min-width: 800px) 800px, 100vw"
+	alt={alt}
+	loading="lazy"
+	decoding="async"
+/>

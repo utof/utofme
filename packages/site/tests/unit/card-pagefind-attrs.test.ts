@@ -102,6 +102,15 @@ beforeAll(() => {
 // ---------------------------------------------------------------------------
 const PROD_FIXTURES = [
 	{
+		id: "code-1",
+		title: "Demo project alpha",
+		date: "2026-04-01",
+		type: "code",
+		tags: ["demo", "expressive-code"],
+		summary:
+			"A demo code work showcasing Expressive Code rendering with title, copy button, and dual-theme support.",
+	},
+	{
 		id: "code-2",
 		title: "Hello world utility",
 		date: "2026-03-15",
@@ -149,6 +158,46 @@ const PROD_FIXTURES = [
 		tags: ["no-summary"],
 		summary: undefined, // intentionally absent — key test case
 	},
+	{
+		id: "cover-fixture",
+		title: "Cover image fixture",
+		date: "2026-04-26",
+		type: "writing",
+		tags: ["cover-image", "phase-3"],
+		summary: "Demonstrates the Phase 3 image pipeline.",
+	},
+	{
+		id: "external-only",
+		title: "External-only code fixture",
+		date: "2026-01-05",
+		type: "code",
+		tags: ["external-only"],
+		summary: "Fixture with external URL but no body, for card-href branch testing.",
+	},
+	{
+		id: "no-link",
+		title: "No-link writing fixture",
+		date: "2026-01-04",
+		type: "writing",
+		tags: ["no-link"],
+		summary: "Fixture with no body and no external URL, for card article-branch testing.",
+	},
+	{
+		id: "writing-mdx-island",
+		title: "MDX Svelte island demo",
+		date: "2026-04-26",
+		type: "writing",
+		tags: ["mdx", "svelte"],
+		summary: "Demonstrates Svelte 5 islands embedded inside MDX with state isolation.",
+	},
+	{
+		id: "code-sandbox",
+		title: "Live Sandpack demo",
+		date: "2026-04-26",
+		type: "code",
+		tags: ["sandpack", "react", "phase-3"],
+		summary: "Demonstrates a live React playground via Sandpack.",
+	},
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -162,7 +211,7 @@ function containsFilter(block: string, filterValue: string): boolean {
 }
 
 describe("Card.astro — per-card block extraction", () => {
-	it("all 6 production cards are present in the build output", () => {
+	it("all 12 production cards are present in the build output", () => {
 		expect(cardBlocks.size).toBe(PROD_FIXTURES.length);
 		for (const f of PROD_FIXTURES) {
 			expect(cardBlocks.has(f.id), `card block missing for id "${f.id}"`).toBe(true);
@@ -253,7 +302,7 @@ describe("Card.astro — transition:name / data-astro-transition-scope (per-vari
 		}
 	});
 
-	it("exactly 6 card elements have data-astro-transition-scope (one per production fixture)", () => {
+	it("exactly 12 card elements have data-astro-transition-scope (one per production fixture)", () => {
 		// Count opening card tags that carry the transition scope attr.
 		const matches =
 			html.match(/<(?:a|article)\s[^>]*class="card"[^>]*data-astro-transition-scope=/g) ?? [];

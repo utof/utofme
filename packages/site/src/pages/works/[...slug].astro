@@ -1,0 +1,35 @@
+---
+/**
+ * Why: Phase 3 ships per-work detail pages so content can be read in-site.
+ *      Uses Astro 6's render(entry) (entry.render() was deprecated in v6).
+ * @see packages/specs/plans/03-content-pipeline.md § Task 4
+ * @see https://docs.astro.build/en/guides/content-collections/#rendering-body-content
+ */
+import { getCollection, render } from "astro:content";
+import WorkLayout from "../../layouts/_WorkLayout.astro";
+
+/**
+ * Generates one static route per non-draft work entry.
+ *
+ * Why: in PROD only non-draft entries are included; in dev all entries are
+ * visible so drafts can be previewed. Matches the filter used on index.astro
+ * and works/index.astro.
+ * @see packages/specs/plans/03-content-pipeline.md § Task 4
+ */
+export async function getStaticPaths() {
+	const entries = await getCollection("works", (e) =>
+		import.meta.env.PROD ? !e.data.draft : true,
+	);
+	return entries.map((entry) => ({
+		params: { slug: entry.id },
+		props: { entry },
+	}));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<WorkLayout entry={entry}>
+	<Content />
+</WorkLayout>

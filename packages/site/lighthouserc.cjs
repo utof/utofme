@@ -22,6 +22,11 @@ module.exports = {
 				"http://localhost:4321/",
 				"http://localhost:4321/works/",
 				"http://localhost:4321/search/",
+				// Why: representative no-island detail page added in Phase 3 Task 11
+				// to exercise the detail-page LHCI gate. /works/code-2/ has body text
+				// but no Svelte or Sandpack island — keeps the performance gate
+				// meaningful without the Sandpack JS cost. Threshold ≥ 0.85 per ADR 0017.
+				"http://localhost:4321/works/code-2/",
 			],
 			// Why: 5 runs absorbs Lighthouse-simulation variance inherent to the
 			// Lantern model on localhost. With `aggregationMethod: "optimistic"` the

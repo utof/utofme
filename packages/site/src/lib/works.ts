@@ -71,3 +71,78 @@ export function listWorks<E extends EntryLike<{ date: Date; draft?: boolean }>>(
 	const filtered = isProd ? entries.filter((e) => e.data.draft !== true) : [...entries];
 	return sortByDateDesc(filtered);
 }
+
+/**
+ * Minimal structural type accepted by {@link hasBody} and {@link cardHref}.
+ *
+ * Why: using a structural type (not `CollectionEntry<"works">`) keeps these
+ * helpers testable with plain objects and avoids binding test files to Astro's
+ * virtual module. `body?: string | undefined` (not `body?: string`) for
+ * `exactOptionalPropertyTypes: true` compatibility — callers that pass
+ * `entry.body` supply `string | undefined`, not just `string`.
+ *
+ * @see packages/specs/plans/03-content-pipeline.md § Task 3
+ */
+export type BodyEntry = { readonly body?: string | undefined };
+
+/**
+ * Minimal structural type accepted by {@link detailUrl} and {@link cardHref}.
+ *
+ * Why: same rationale as {@link BodyEntry} — structural decoupling from Astro.
+ *
+ * @see packages/specs/plans/03-content-pipeline.md § Task 3
+ */
+export type IdDataEntry = {
+	readonly id: string;
+	/** `string | undefined` (not `string?`) for `exactOptionalPropertyTypes` compatibility. */
+	readonly body?: string | undefined;
+	readonly data: WorkEntry;
+};
+
+/**
+ * Returns `true` when the entry has a non-empty body (rendered Markdown/MDX).
+ *
+ * Why: used by `cardHref` to decide whether a detail page exists for this
+ * entry; kept as a named predicate so Stryker can mutation-test the trim check
+ * independently of the URL routing logic.
+ *
+ * @see packages/specs/plans/03-content-pipeline.md § Task 3
+ */
+export function hasBody(entry: BodyEntry): boolean {
+	return typeof entry.body === "string" && entry.body.trim().length > 0;
+}
+
+/**
+ * Returns the canonical detail-page URL for an entry: `/works/<id>/`.
+ *
+ * Why: centralising the URL shape here means a future slug migration only
+ * touches one file; all callers (Card.astro, sitemap, breadcrumbs) stay stable.
+ *
+ * @see packages/specs/plans/03-content-pipeline.md § Task 3
+ */
+export function detailUrl(entry: Pick<IdDataEntry, "id">): string {
+	return `/works/${entry.id}/`;
+}
+
+/**
+ * Returns the primary navigation href for a work card.
+ *
+ * Priority: detail page (if body exists) → external URL (repo → youtube →
+ * listen → arxiv → pdf) → `""` (no link).
+ *
+ * Why: mirrors the `externalUrlFor` logic in `Card.astro` (ADR 0011) so that
+ * this chain is Stryker-targetable. Card.astro retains its own copy until
+ * Task 6 removes the duplication.
+ *
+ * @see packages/specs/adrs/0011-card-click-target-strategy.md
+ * @see packages/specs/plans/03-content-pipeline.md § Task 3
+ */
+export function cardHref(entry: IdDataEntry): string {
+	if (hasBody(entry)) return detailUrl(entry);
+	const d = entry.data;
+	if (d.type === "code" && d.repo) return d.repo;
+	if (d.type === "video" && d.youtube) return d.youtube;
+	if (d.type === "music" && d.listen) return d.listen;
+	if (d.type === "math") return d.arxiv ?? d.pdf ?? "";
+	return "";
+}

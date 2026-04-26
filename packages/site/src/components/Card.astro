@@ -2,9 +2,15 @@
 /**
  * Card.astro — uniform outer shell for a work card.
  *
- * Why: ADR 0011 — `<a href={externalUrl}>` when an external URL is present
+ * Why: ADR 0011 — detail page when body exists, external URL when present
  * (priority repo→youtube→listen→arxiv→pdf), else `<article>` (no link).
  * Avoids `href="#"` Axe violations and keeps Phase 1 0-KB-JS.
+ * Task 6 delegates href-decision to `cardHref()` from `lib/works.ts` so the
+ * branch logic is Stryker-targetable from one place.
+ *
+ * data-test="card-link-detail" | "card-link-external": present when the outer
+ * element is `<a>`, absent (no href) when the outer element is `<article>`.
+ * Used by e2e tests to assert which branch was taken.
  *
  * data-preview-target / data-title / data-date / data-summary: read by
  * Preview.svelte for the hover popover. Pure-DOM approach — no extra data
@@ -24,27 +30,40 @@
  * @see packages/specs/adrs/0011-card-click-target-strategy.md
  * @see packages/specs/plans/02-interactivity.md § Task 7
  * @see packages/specs/plans/02-interactivity.md § Task 8
+ * @see packages/specs/plans/03-content-pipeline.md § Task 6
  * @see https://pagefind.app/docs/metadata/
  */
 import type { WorkEntry } from "../content.config";
+import { cardHref } from "../lib/works";
 
 interface Props {
 	data: WorkEntry;
 	/** Content-collection entry id used as the preview popover lookup key. */
 	id?: string;
+	/**
+	 * Raw Markdown/MDX body string from the collection entry.
+	 *
+	 * Why: `cardHref` checks `hasBody()` to decide whether a detail page
+	 * exists. Passing `entry.body` here keeps Card.astro decoupled from Astro's
+	 * virtual module while allowing the body-check to work correctly.
+	 * `string | undefined` (not `string?`) because callers pass `entry.body`
+	 * which is `string | undefined`; `exactOptionalPropertyTypes: true` requires
+	 * the explicit union form when the caller may supply `undefined`.
+	 *
+	 * @see packages/specs/plans/03-content-pipeline.md § Task 6
+	 */
+	body?: string | undefined;
 }
-const { data, id } = Astro.props;
+const { data, id, body } = Astro.props;
 
-function externalUrlFor(d: WorkEntry): string | undefined {
-	if (d.type === "code" && d.repo) return d.repo;
-	if (d.type === "video" && d.youtube) return d.youtube;
-	if (d.type === "music" && d.listen) return d.listen;
-	if (d.type === "math") return d.arxiv ?? d.pdf;
-	return undefined;
-}
-
-const href = externalUrlFor(data);
+const href = cardHref({ id: id ?? "", body, data });
 const Tag = href ? "a" : "article";
+/** data-test attribute value for linked cards; undefined for <article> (no link). */
+const linkTest = href
+	? href.startsWith("/works/")
+		? "card-link-detail"
+		: "card-link-external"
+	: undefined;
 
 /** ISO date string (YYYY-MM-DD) for data-date and the Pagefind meta span. */
 const dateStr = data.date.toISOString().split("T")[0];
@@ -52,7 +71,8 @@ const dateStr = data.date.toISOString().split("T")[0];
 
 <Tag
 	class="card"
-	href={href}
+	href={href || undefined}
+	data-test={linkTest}
 	data-draft={data.draft ? "true" : undefined}
 	data-type={data.type}
 	data-tags={data.tags.join(",")}

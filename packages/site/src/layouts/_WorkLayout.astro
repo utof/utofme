@@ -1,0 +1,94 @@
+---
+/**
+ * _WorkLayout.astro — detail-page shell for a single work entry.
+ *
+ * Why: Phase 3 ships per-work detail pages; this layout provides the
+ * <article> wrapper, <header> with breadcrumb, <h1>, <time>, MetaPills,
+ * and optional secondary external-URL link. Leading underscore signals
+ * "layout, not a routable page" — consistent with Astro convention.
+ * CoverImage slot is reserved for Task 5.
+ *
+ * @see packages/specs/plans/03-content-pipeline.md § Task 4
+ */
+import BaseLayout from "./_BaseLayout.astro";
+import CoverImage from "../components/CoverImage.astro";
+import MetaPills from "../components/MetaPills.astro";
+import type { CollectionEntry } from "astro:content";
+
+/**
+ * Props for _WorkLayout.
+ *
+ * Why: typed as CollectionEntry<"works"> so the layout has access to both
+ * entry.id (for transition:name) and entry.data (all frontmatter fields).
+ * @see packages/specs/plans/03-content-pipeline.md § Task 4
+ */
+export interface Props {
+	entry: CollectionEntry<"works">;
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+
+// Why: secondary external-URL chain mirrors ADR 0011 priority order.
+//      Phase 3 makes the detail-page link the primary card href (ADR landing in
+//      Task 12, will be 0021-detail-page-as-default-card-link); this layout's
+//      external link is the secondary "open external" action visible only on the
+//      detail page itself.
+const externalUrl =
+	data.type === "code"
+		? data.repo
+		: data.type === "video"
+			? data.youtube
+			: data.type === "music"
+				? data.listen
+				: data.type === "math"
+					? (data.arxiv ?? data.pdf)
+					: undefined;
+---
+
+<BaseLayout title={`${data.title} · utofme`}>
+	<main>
+		<article>
+			<header>
+				<a href="/works/" data-test="breadcrumb">← All works</a>
+				<h1 transition:name={`card-${entry.id}`}>{data.title}</h1>
+				<time datetime={data.date.toISOString()}>{data.date.toISOString().slice(0, 10)}</time>
+				<MetaPills date={data.date} tagCount={data.tags.length} />
+				{
+					externalUrl && (
+						<a href={externalUrl} data-test="detail-external" rel="external noopener">
+							Open external →
+						</a>
+					)
+				}
+			</header>
+			{data.cover && <CoverImage src={data.cover.src} alt={data.cover.alt} />}
+			<slot />
+		</article>
+	</main>
+</BaseLayout>
+
+<style>
+	main {
+		padding: var(--space-6);
+		max-width: 80ch;
+		margin-inline: auto;
+	}
+
+	header {
+		margin-block-end: var(--space-4);
+	}
+
+	h1 {
+		font-family: var(--font-serif);
+		font-size: var(--font-size-6);
+		font-weight: 600;
+		line-height: 1.1;
+		margin-block: var(--space-2) 0;
+	}
+
+	time {
+		font-size: var(--font-size-1);
+		opacity: 0.7;
+	}
+</style>

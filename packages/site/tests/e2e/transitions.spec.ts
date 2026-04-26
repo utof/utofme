@@ -28,7 +28,7 @@ declare global {
 // Case 1 — SPA navigation does not produce a new PerformanceNavigationTiming
 // ---------------------------------------------------------------------------
 
-test("1. / → /works SPA nav: no new PerformanceNavigationTiming entry", async ({ page }) => {
+test("1. / → /works/ SPA nav: no new PerformanceNavigationTiming entry", async ({ page }) => {
 	// Inject counter before page load so it is available during nav
 	await page.addInitScript(() => {
 		window.__navEntryCount = 0;
@@ -43,7 +43,7 @@ test("1. / → /works SPA nav: no new PerformanceNavigationTiming entry", async 
 	// Why: ClientRouter intercepts same-origin <a> clicks; page.goto() bypasses it.
 	await page.evaluate(() => {
 		const a = document.createElement("a");
-		a.href = "/works";
+		a.href = "/works/";
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
@@ -83,7 +83,7 @@ test("2. astro:page-load fires once per SPA nav", async ({ page }) => {
 	// Navigate via anchor click (ClientRouter SPA swap)
 	await page.evaluate(() => {
 		const a = document.createElement("a");
-		a.href = "/works";
+		a.href = "/works/";
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
@@ -167,7 +167,7 @@ test("5. view-transition CSS injected after SPA navigation (best-effort)", async
 	// Trigger SPA nav to /works
 	await page.evaluate(() => {
 		const a = document.createElement("a");
-		a.href = "/works";
+		a.href = "/works/";
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
@@ -211,8 +211,8 @@ test("6a. visual regression / (post-ClientRouter baseline)", async ({ page }) =>
 	});
 });
 
-test("6b. visual regression /works (post-ClientRouter baseline)", async ({ page }) => {
-	await page.goto("/works");
+test("6b. visual regression /works/ (post-ClientRouter baseline)", async ({ page }) => {
+	await page.goto("/works/");
 	await expect(page).toHaveScreenshot("transitions-works.png", {
 		maxDiffPixelRatio: 0.02,
 		mask: [page.locator('[data-test="works-grid"]')],
@@ -266,7 +266,7 @@ test("7. FilterBar event-listener count bounded after 5 round-trip navs", async 
 	for (let i = 0; i < 5; i++) {
 		await page.evaluate(() => {
 			const a = document.createElement("a");
-			a.href = "/works";
+			a.href = "/works/";
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);

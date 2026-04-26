@@ -12,7 +12,7 @@
 	// Why: CLI scripts are stand-alone entry points invoked via `bun run check:docs`;
 	// they are not reachable from src/pages/** so must be declared explicitly.
 	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
-	"project": ["src/**/*.{ts,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
+	"project": ["src/**/*.{ts,tsx,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
 	// Why: ignoreExportsUsedInFile for interfaces lets knip skip exported interfaces
 	// that are referenced within the same file (e.g. ListWorksOptions used as the
 	// opts parameter type in listWorks). These are public API types for external
@@ -44,5 +44,9 @@
 		// binary via its Node API internally during `astro build`. Knip can't trace
 		// this indirect usage, so it flags pagefind as unused. Verified 2026-04-26.
 		"pagefind"
+		// Why: react and react-dom are now used via SandboxIsland.tsx (Task 10)
+		// and knip detects them through the tsx import chain. No longer in
+		// ignoreDependencies — removed after knip confirmed auto-detection.
+		// @types/react / @types/react-dom similarly auto-detected. Entries removed.
 	]
 }

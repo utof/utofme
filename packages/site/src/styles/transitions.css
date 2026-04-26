@@ -20,11 +20,14 @@
 
 @keyframes card-in {
 	from {
-		opacity: 0;
+		/* Why: opacity removed — opacity:0 in the from keyframe with fill-mode:backwards
+		 * caused axe-core to compute near-zero effective opacity during the animation
+		 * delay, producing false color-contrast violations (WCAG 2.1 §1.4.3).
+		 * The translate entrance still provides the stagger visual without hiding text.
+		 * See: packages/specs/adrs/ (contrast fixup, Task 8 follow-up) */
 		transform: translateY(4px);
 	}
 	to {
-		opacity: 1;
 		transform: none;
 	}
 }

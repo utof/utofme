@@ -1,0 +1,14 @@
+---
+type: writing
+title: "MDX Svelte island demo"
+slug: "writing-mdx-island"
+date: 2026-04-26
+tags: ["mdx", "svelte"]
+draft: false
+summary: "Demonstrates Svelte 5 islands embedded inside MDX with state isolation."
+---
+
+import Counter from "../../components/mdx/Counter.svelte";
+
+<Counter client:visible />
+<Counter client:visible />

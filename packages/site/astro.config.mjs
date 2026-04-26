@@ -6,6 +6,16 @@
 //   astro-pagefind is order-sensitive: its build hook runs after Astro emits HTML, so it must remain LAST in `integrations` (before any future post-build emitter). Docs verified at https://github.com/shishkin/astro-pagefind#readme (fetched 2026-04-26).
 // See: packages/specs/plans/02-interactivity.md Task 1.
 //
+// Why: Phase 3 activates astro-expressive-code (EC) and @astrojs/react.
+//   EC must precede @astrojs/mdx in `integrations` so its remark/rehype plugins are
+//   registered before MDX processes code fences — empirically verified with ordering (a)
+//   [expressiveCode(), mdx(), svelte(), pagefind(), react()] on 2026-04-26: build succeeded
+//   and dist/works/ec-probe/index.html contained EC class names (expressive-code, ec-line).
+//   react() is placed last since it only provides the React renderer for client:only="react"
+//   islands (Task 10) and has no interaction with MDX rendering.
+//   trailingSlash: "always" locks detail-page URL canonical form.
+// See: packages/specs/plans/03-content-pipeline.md § Task 1.
+//
 // Fonts API shapes verified via context7 /withastro/docs 2026-04-25:
 //   https://github.com/withastro/docs/blob/main/src/content/docs/en/reference/font-provider-reference.mdx
 //   - fontProviders imported from "astro/config" (same import as defineConfig)
@@ -28,13 +38,16 @@
 //   - https://fonts.google.com/specimen/Geist (Google Fonts catalogue)
 //   - https://github.com/withastro/docs/blob/main/src/content/docs/en/reference/font-provider-reference.mdx
 import mdx from "@astrojs/mdx";
+import react from "@astrojs/react";
 import svelte from "@astrojs/svelte";
 import { defineConfig, fontProviders } from "astro/config";
+import expressiveCode from "astro-expressive-code";
 import pagefind from "astro-pagefind";
 
 export default defineConfig({
 	output: "static",
-	integrations: [mdx(), svelte(), pagefind()],
+	trailingSlash: "always",
+	integrations: [expressiveCode(), mdx(), svelte(), pagefind(), react()],
 	fonts: [
 		// Fraunces — variable serif (wght 100–900 + opsz + SOFT + WONK axes).
 		// Why: `weights: ["100 900"]` string-range is the correct form for variable
