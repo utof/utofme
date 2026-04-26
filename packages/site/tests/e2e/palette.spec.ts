@@ -31,7 +31,7 @@ declare global {
  * @see packages/specs/plans/02-interactivity.md § Task 9
  */
 async function waitForPalette(page: import("@playwright/test").Page): Promise<void> {
-	await page.waitForFunction(() => document.documentElement.dataset["paletteReady"] === "true", {
+	await page.waitForFunction(() => document.documentElement.dataset.paletteReady === "true", {
 		timeout: 5000,
 	});
 }
@@ -213,16 +213,10 @@ test.describe("CommandPalette — /", () => {
 		expect(animationName).toBe("none");
 	});
 
-	// unskip in Task 12 once <ClientRouter /> ships
 	// Why: transition:persist only takes effect when Astro's ClientRouter handles
-	// navigation. Without ClientRouter, page.goto() is a full HTML navigation and
-	// the Svelte island is torn down + re-mounted, so state is always lost.
-	// Task 12 wires <ClientRouter /> and converts this to a SPA nav test that
-	// asserts palette state IS preserved across routes.
+	// navigation. ClientRouter wired in Task 12 — this test now exercises SPA nav.
 	// @see packages/specs/plans/02-interactivity.md § Task 10
-	test.skip("9. palette persists across route navigation (requires ClientRouter)", async ({
-		page,
-	}) => {
+	test("9. palette persists across route navigation (ClientRouter wired)", async ({ page }) => {
 		await page.goto("/");
 		await waitForPalette(page);
 		await openPalette(page);
@@ -235,15 +229,27 @@ test.describe("CommandPalette — /", () => {
 		const input = dialog.locator("input");
 		await expect(input).toHaveValue("wor", { timeout: 300 });
 
-		// Navigate to /works — with ClientRouter this is a SPA swap, not a full reload.
-		// transition:persist on CommandPalette retains the Svelte island (DOM + state).
-		await page.goto("/works");
-		await waitForPalette(page);
+		// Navigate to /works via in-page anchor click so ClientRouter intercepts it.
+		// Why: page.goto() is a full browser navigation and bypasses ClientRouter;
+		// transition:persist only works when ClientRouter handles the swap.
+		// Clicking a synthetic same-origin anchor triggers the SPA swap path.
+		await page.evaluate(() => {
+			const a = document.createElement("a");
+			a.href = "/works";
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+		});
+		await page.waitForURL(/\/works/, { timeout: 5000 });
+		// Why: paletteReady flag is already set before nav; transition:persist keeps
+		// the CommandPalette island alive — onMount does not re-fire. We wait a beat
+		// for the SPA swap to settle then assert directly on the existing DOM.
+		await page.waitForTimeout(300);
 
 		// Palette should still be open and query preserved
 		const dialogAfterNav = page.locator('[role="dialog"][data-palette]');
-		await expect(dialogAfterNav).toBeVisible({ timeout: 500 });
+		await expect(dialogAfterNav).toBeVisible({ timeout: 1000 });
 		const inputAfterNav = dialogAfterNav.locator("input");
-		await expect(inputAfterNav).toHaveValue("wor", { timeout: 300 });
+		await expect(inputAfterNav).toHaveValue("wor", { timeout: 500 });
 	});
 });

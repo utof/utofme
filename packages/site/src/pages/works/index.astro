@@ -51,10 +51,10 @@ const ThumbFor = {
 
 			<Grid as="ul" class="works-grid" data-test="works-grid">
 				{
-					works.map((entry) => {
+					works.map((entry, i) => {
 						const Thumb = ThumbFor[entry.data.type];
 						return (
-							<li>
+							<li style={`--i: ${i}`}>
 								<Card data={entry.data} id={entry.id}>
 									<header slot="header">
 										<TypeGlyph type={entry.data.type} />

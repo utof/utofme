@@ -1,0 +1,36 @@
+/**
+ * transitions.css — CSS stagger animation for grid cards.
+ *
+ * Why: staggered card-in animation (30 ms per card) provides perceived
+ * performance by revealing cards sequentially rather than all at once.
+ * The animation is applied to direct children of any [data-component="grid"]
+ * element, driven by the CSS custom property `--i` (set inline per card).
+ *
+ * prefers-reduced-motion: respects the user's motion preference by disabling
+ * the animation entirely when reduced-motion is requested.
+ *
+ * @see packages/specs/plans/02-interactivity.md § Task 12
+ * @see https://web.dev/prefers-reduced-motion/ (motion accessibility)
+ */
+
+[data-component="grid"] > * {
+	animation: card-in 200ms ease-out backwards;
+	animation-delay: calc(var(--i) * 30ms);
+}
+
+@keyframes card-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-component="grid"] > * {
+		animation: none;
+	}
+}

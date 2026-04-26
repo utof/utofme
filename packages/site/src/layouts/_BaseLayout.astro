@@ -15,6 +15,7 @@
  */
 
 import { Font } from "astro:assets";
+import { ClientRouter } from "astro:transitions";
 import CommandPalette from "../components/CommandPalette.svelte";
 
 interface Props {
@@ -56,6 +57,12 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		<Font cssVariable="--font-serif" />
 		<Font cssVariable="--font-sans" />
 		<Font cssVariable="--font-mono" preload />
+		<!-- Why: ClientRouter enables site-wide SPA navigation (view transitions).
+		     transition:persist on CommandPalette retains the Svelte island across
+		     route swaps. Verified API: import { ClientRouter } from "astro:transitions".
+		     See: https://docs.astro.build/en/guides/view-transitions/
+		     @see packages/specs/plans/02-interactivity.md § Task 12 -->
+		<ClientRouter />
 	</head>
 	<body>
 		<slot />
@@ -75,6 +82,9 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 <style is:global>
 	/* Import design tokens globally so every page / component can use var(--space-*) etc. */
 	@import "../styles/tokens.css";
+
+	/* Import stagger animation for grid cards (Task 12: ClientRouter + transitions). */
+	@import "../styles/transitions.css";
 
 	/* Apply font variables from the Astro Fonts API to the document root.
 	 * Why: the API injects --font-serif / --font-sans / --font-mono as CSS custom
