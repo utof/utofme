@@ -10,7 +10,7 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { SLASH_PAGES, slashSiblings } from "../../src/lib/slash";
 
-const ids = ["now", "uses", "colophon", "tops"] as const;
+const ids = ["now", "uses", "colophon", "tops", "stats"] as const;
 
 describe("slashSiblings", () => {
 	it("returns 4 entries when given a known slash id", () => {
