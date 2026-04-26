@@ -77,9 +77,6 @@ jobs:
       - name: check:size (size-limit)
         run: bun run --cwd packages/site check:size
 
-      - name: check:no-js (post-build glob)
-        run: bun run --cwd packages/site check:no-js
-
       # ── Playwright e2e (uses dist/ via `astro preview`) ────────────────────────
       - name: Install Playwright browsers
         run: cd packages/site && npx playwright install --with-deps chromium

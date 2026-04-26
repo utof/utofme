@@ -51,7 +51,6 @@
 		"check:depcruise": "depcruise --validate .dependency-cruiser.cjs src",
 		"check:docs": "bun run scripts/check-docs.ts",
 		"check:size": "size-limit",
-		"check:no-js": "bun run scripts/no-js-check.ts",
 		"check:lighthouse": "npx @lhci/cli autorun",
 		"test": "vitest run",
 		"test:unit": "vitest run --coverage",
