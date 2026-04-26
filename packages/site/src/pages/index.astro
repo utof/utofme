@@ -23,6 +23,8 @@ import VideoThumb from "../components/thumbs/VideoThumb.astro";
 import MusicThumb from "../components/thumbs/MusicThumb.astro";
 import MathThumb from "../components/thumbs/MathThumb.astro";
 import WritingThumb from "../components/thumbs/WritingThumb.astro";
+import FilterBar from "../components/FilterBar.svelte";
+import Preview from "../components/Preview.svelte";
 import { listWorks } from "../lib/works";
 
 const all = await getCollection("works", ({ data }) =>
@@ -40,6 +42,11 @@ const ThumbFor = {
 ---
 
 <BaseLayout title="utofme">
+	<!-- Why: Preview mounted at page level (not in BaseLayout) so /search can
+	     exclude it without prop drilling. client:visible loads only when the
+	     island enters the viewport.
+	     @see packages/specs/plans/02-interactivity.md § Task 7 -->
+	<Preview client:visible />
 	<main>
 		<Stack gap="6">
 			<!-- Typography sentinels: kept so Phase 0 e2e (typography.spec.ts, primitives.spec.ts) continues to pass without modification. -->
@@ -52,13 +59,15 @@ const ThumbFor = {
 				</Frame>
 			</div>
 
+			<FilterBar client:load />
+
 			<Grid as="ul" class="works-grid" data-test="works-grid">
 				{
-					works.map((entry) => {
+					works.map((entry, i) => {
 						const Thumb = ThumbFor[entry.data.type];
 						return (
-							<li>
-								<Card data={entry.data}>
+							<li style={`--i: ${i}`}>
+								<Card data={entry.data} id={entry.id}>
 									<header slot="header">
 										<TypeGlyph type={entry.data.type} />
 										<h2>{entry.data.title}</h2>
@@ -74,6 +83,60 @@ const ThumbFor = {
 		</Stack>
 	</main>
 </BaseLayout>
+
+<!--
+  Inline filter script — applies URL params to the DOM grid on initial load
+  and on every works:filter event dispatched by FilterBar.
+
+  Why: `is:inline` skips Astro bundling so this runs synchronously before paint,
+  preventing CLS from a late filter application. The script reads data-type and
+  data-tags attrs on each card, then toggles hidden on the parent <li>.
+  See: https://docs.astro.build/en/guides/client-side-scripts/#opting-out-of-processing
+
+  Why hidden on <li>: display:grid on .card overrides the UA hidden style;
+  hiding the <li> wrapper removes the item from grid flow entirely.
+
+  @see packages/specs/plans/02-interactivity.md § Task 5
+-->
+<script is:inline>
+	function applyFilter() {
+		var params = new URLSearchParams(window.location.search);
+		var activeType = params.get("type");
+		var activeTags = params.getAll("tag");
+		var grid = document.querySelector('[data-test="works-grid"]');
+		if (!grid) return;
+		var items = grid.querySelectorAll("li");
+		for (var i = 0; i < items.length; i++) {
+			var li = items[i];
+			var card = li.querySelector("[data-type]");
+			if (!card) continue;
+			var cardType = card.getAttribute("data-type");
+			var cardTagsRaw = card.getAttribute("data-tags") || "";
+			var cardTags = cardTagsRaw ? cardTagsRaw.split(",") : [];
+			var typeMatch = !activeType || cardType === activeType;
+			var tagMatch =
+				activeTags.length === 0 ||
+				activeTags.every(function (t) {
+					return cardTags.indexOf(t) !== -1;
+				});
+			li.hidden = !(typeMatch && tagMatch);
+		}
+	}
+
+	// Apply on initial load (handles hard-refresh with URL params)
+	applyFilter();
+
+	// Re-apply whenever FilterBar dispatches a filter event
+	document.addEventListener("works:filter", applyFilter);
+
+	// Re-apply on popstate (back/forward navigation)
+	window.addEventListener("popstate", applyFilter);
+
+	// Re-apply on Astro view-transition page-load (Task 12 wires ClientRouter site-wide).
+	// Why: ClientRouter swaps <body> on nav and re-runs inline scripts; the filter must
+	// re-apply against the new DOM. astro:page-load fires once per nav (initial + swaps).
+	document.addEventListener("astro:page-load", applyFilter);
+</script>
 
 <style>
 	main {

@@ -16,6 +16,15 @@ test("home page loads with no Axe violations", async ({ page }) => {
 	expect(results.violations).toEqual([]);
 });
 
+// Why: Phase 2 sentinel — verifies FilterBar hydrates and is visible on cold
+// load; queries by accessible role so the assertion doubles as an a11y check.
+// RED until FilterBar is mounted with role="toolbar" aria-label="filter".
+// @see packages/specs/plans/02-interactivity.md § Task 6
+test("FilterBar toolbar is visible on cold load", async ({ page }) => {
+	await page.goto("/");
+	await expect(page.getByRole("toolbar", { name: "filter" })).toBeVisible();
+});
+
 test("visual regression baseline /", async ({ page }) => {
 	await page.goto("/");
 	// Mask the entire works-grid to absorb subpixel font-rendering drift in card

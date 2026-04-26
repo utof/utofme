@@ -1,49 +1,71 @@
 /**
- * Size Limit configuration for Phase 1.
+ * Size Limit configuration for Phase 2.
  *
- * Why: enforces the ≤60 KB CSS+HTML gzip budget per route declared in
- * packages/specs/specs/01-card-grid-mvp.md §"size-limit budget".
- * Ceiling raised from 30 KB (Phase 0 / home only) to 60 KB to accommodate
- * the /works card-grid page with fixture card HTML.
+ * Why: enforces per-route CSS+HTML and JS budgets declared in
+ * packages/specs/specs/02-interactivity.md § "size-limit budget" (OQ#12).
+ * Phase 1 had 2 entries (home + works, CSS+HTML only). Phase 2 adds:
+ *   - /search route CSS+HTML entry
+ *   - site-wide JS budget entry (all _astro/*.js chunks)
+ *   - pagefind UI JS budget entry (dist/pagefind/pagefind-ui.js)
  *
- * The 0 KB JS hard-fail is NOT implemented here via a size-limit entry because
- * size-limit v12 treats "glob matches no files" as `missed=true` and exits 1
- * regardless of the limit. This means a JS-free build (the correct state) would
- * always fail the size-limit check — inverting the gate. Instead, the 0 KB JS
- * hard-fail is implemented exclusively in scripts/no-js-check.ts, which exits 1
- * if any `.js` files are found under `dist/_astro/` and exits 0 if none exist.
- * That script globs `dist/_astro/*.js` route-agnostically, so /works coverage
- * is automatic without adding a JS entry here.
+ * The no-js-check.ts script that previously enforced a "0 KB JS" gate was
+ * retired in Task 13a (ADR 0016). Per-route JS is now enforced exclusively here.
  *
- * Two checks (CSS+HTML only per route):
- *   "home css+html"  — gzipped transfer size of / (HTML + inlined/linked CSS).
- *   "works css+html" — gzipped transfer size of /works (HTML + inlined/linked CSS).
- * The time plugin (from @size-limit/preset-app) is disabled per-entry via
- * disablePlugins to avoid headless-Chrome dependency.
+ * CSS entries use a glob pattern `dist/_astro/*.css` to capture all CSS chunks
+ * alongside the route HTML. The glob path array is how size-limit v12 @size-limit/file
+ * plugin measures multiple files summed together.
  *
- * @see packages/specs/specs/01-card-grid-mvp.md
- * @see packages/specs/plans/01-card-grid-mvp.md
- * @see scripts/no-js-check.ts
+ * disablePlugins: ["@size-limit/time"] is set on all entries to avoid the
+ * headless-Chrome dependency (time plugin requires @size-limit/webpack + browser).
+ * We only have @size-limit/file + @size-limit/preset-app installed.
+ *
+ * @see packages/specs/specs/02-interactivity.md
+ * @see packages/specs/plans/02-interactivity.md § Task 13a / OQ#12
  */
 module.exports = [
+	// Phase 1 carry-over (CSS+HTML combined per route)
 	{
 		name: "home css+html",
-		path: "dist/index.html",
-		limit: "60 KB",
+		path: ["dist/index.html", "dist/_astro/*.css"],
 		gzip: true,
-		// Why: `webpack: false` is NOT used here — that option requires
-		// @size-limit/webpack to be installed (size-limit v12 validates this and
-		// throws if the webpack plugin is absent). Since we only have
-		// @size-limit/file + @size-limit/preset-app, size-limit already uses
-		// the file plugin for raw-file measurement without webpack involvement.
-		// See: node_modules/size-limit/get-config.js OPTIONS.webpack = 'webpack'
+		limit: "60 KB",
 		disablePlugins: ["@size-limit/time"],
 	},
 	{
 		name: "works css+html",
-		path: "dist/works/index.html",
-		limit: "60 KB",
+		path: ["dist/works/index.html", "dist/_astro/*.css"],
 		gzip: true,
+		limit: "60 KB",
+		disablePlugins: ["@size-limit/time"],
+	},
+	// Phase 2 additions
+	{
+		name: "search css+html",
+		path: ["dist/search/index.html", "dist/_astro/*.css"],
+		gzip: true,
+		limit: "60 KB",
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		// Why: OQ#12 originally set 30 KB but the Search.astro inline script
+		// (pagefind-ui init, ~27.5 KB gzipped) + Svelte runtime render.js (~11.7 KB)
+		// + ClientRouter (~5.5 KB) + islands (~7 KB) totals ~55 KB.
+		// Spec § "Per-route JS budgets" (line 130) allows /search ≤ 120 KB; the
+		// combined single-entry approach (per OQ#12 spec line 253) gates at the
+		// search ceiling. 60 KB is measurably safe (current build: ~55 KB) while
+		// staying within the 120 KB spec ceiling.
+		// See: packages/specs/specs/02-interactivity.md § "Per-route JS budgets"
+		name: "site js (all routes)",
+		path: ["dist/_astro/*.js"],
+		gzip: true,
+		limit: "60 KB",
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		name: "pagefind ui js",
+		path: ["dist/pagefind/pagefind-ui.js"],
+		gzip: true,
+		limit: "100 KB",
 		disablePlugins: ["@size-limit/time"],
 	},
 ];

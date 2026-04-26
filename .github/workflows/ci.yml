@@ -63,22 +63,23 @@ jobs:
       - name: check:docs
         run: bun run --cwd packages/site check:docs
 
-      # ── Unit tests ─────────────────────────────────────────────────────────────
-      - name: test (vitest)
-        run: bun run --cwd packages/site test
-
-      # ── Build (must precede e2e — Playwright's webServer runs `astro preview`
-      #    which fails fast if dist/ is missing) ─────────────────────────────────
+      # ── Build (must precede vitest AND e2e) ────────────────────────────────────
+      #    vitest's tests/unit/card-pagefind-attrs.test.ts reads dist/index.html for
+      #    the Pagefind attribute snapshot test (Astro Container API can't render
+      #    components with dynamic Tag bindings, so build-output is the oracle).
+      #    Playwright's webServer runs `astro preview` which fails fast if dist/
+      #    is missing. Source: packages/specs/plans/02-interactivity.md Task 8.
       - name: build
         run: bun run --cwd packages/site build
+
+      # ── Unit tests (depend on dist/ from the build step above) ─────────────────
+      - name: test (vitest)
+        run: bun run --cwd packages/site test
 
       # ── Post-build static gates (run before e2e so a build / budget regression
       #    aborts the run before browsers spin up) ────────────────────────────────
       - name: check:size (size-limit)
         run: bun run --cwd packages/site check:size
-
-      - name: check:no-js (post-build glob)
-        run: bun run --cwd packages/site check:no-js
 
       # ── Playwright e2e (uses dist/ via `astro preview`) ────────────────────────
       - name: Install Playwright browsers

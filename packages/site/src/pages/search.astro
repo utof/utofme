@@ -1,0 +1,38 @@
+---
+/**
+ * /search — Pagefind-powered full-text search page.
+ *
+ * Why: static route that mounts the Pagefind UI widget (astro-pagefind
+ * integration builds the index into dist/pagefind/ at build time).
+ * Preview is intentionally NOT mounted here — Preview stays page-level on
+ * / and /works only per Task 7 decision.
+ *
+ * @see packages/specs/plans/02-interactivity.md § Task 11
+ * @see packages/specs/plans/02-interactivity.md § Task 7 (Preview stays page-level)
+ */
+import BaseLayout from "../layouts/_BaseLayout.astro";
+import SearchBox from "../components/SearchBox.astro";
+---
+
+<BaseLayout title="search · utofme" description="Search all works and posts on utofme.">
+	<main>
+		<h1>Search</h1>
+		<SearchBox />
+	</main>
+</BaseLayout>
+
+<style>
+	main {
+		padding: var(--space-6);
+		max-width: 80ch;
+		margin-inline: auto;
+	}
+
+	h1 {
+		font-family: var(--font-serif);
+		font-size: var(--font-size-6);
+		font-weight: 600;
+		line-height: 1.1;
+		margin-block: 0 var(--space-4);
+	}
+</style>
