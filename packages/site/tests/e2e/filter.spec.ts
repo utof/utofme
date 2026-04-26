@@ -9,8 +9,9 @@
 //   math-2:                  type=math,    tags=["number-theory"]
 //   writing-2:               type=writing, tags=["post","iteration"]
 //   writing-3-no-summary:    type=writing, tags=["no-summary"]   (Task 7 fixture)
+//   cover-fixture:           type=writing, tags=["cover-image","phase-3"]  (Task 5 fixture)
 //
-// Total production cards: 6
+// Total production cards: 7
 //
 // @see packages/specs/plans/02-interactivity.md § Task 5, § Task 6, § Task 7
 import AxeBuilder from "@axe-core/playwright";
@@ -76,7 +77,7 @@ for (const route of ["/", "/works/"] as const) {
 			expect(count).toBe(1);
 		});
 
-		test(`3. reset button → URL strips params, all 6 cards visible`, async ({ page }) => {
+		test(`3. reset button → URL strips params, all 7 cards visible`, async ({ page }) => {
 			await page.goto(route);
 			await page.waitForSelector("[data-filter-bar]");
 
@@ -94,7 +95,8 @@ for (const route of ["/", "/works/"] as const) {
 			expect(url.searchParams.getAll("tag")).toHaveLength(0);
 
 			const count = await visibleCardCount(page);
-			expect(count).toBe(6);
+			// Why: cover-fixture (Task 5) added the 7th production entry.
+			expect(count).toBe(7);
 		});
 
 		test(`4. back button restores prior filter`, async ({ page }) => {
@@ -156,11 +158,12 @@ for (const route of ["/", "/works/"] as const) {
 			const isVisible = await filterBar.isVisible().catch(() => false);
 			expect(isVisible).toBe(false);
 
-			// All 6 production cards should be visible (full grid, no filtering)
-			// writing-3-no-summary (Task 7 fixture) is a non-draft, adding a 6th card.
+			// All 7 production cards should be visible (full grid, no filtering)
+			// writing-3-no-summary (Task 7 fixture) is the 6th card; cover-fixture
+			// (Task 5 fixture) is the 7th.
 			const grid = page.locator('[data-test="works-grid"] > li');
 			const count = await grid.count();
-			expect(count).toBe(6);
+			expect(count).toBe(7);
 
 			// No JS console errors (can't run anyway, but ensure no inline script errors)
 			expect(consoleErrors).toHaveLength(0);

@@ -11,6 +11,7 @@
  * @see packages/specs/plans/03-content-pipeline.md § Task 4
  */
 import BaseLayout from "./_BaseLayout.astro";
+import CoverImage from "../components/CoverImage.astro";
 import MetaPills from "../components/MetaPills.astro";
 import type { CollectionEntry } from "astro:content";
 
@@ -61,6 +62,7 @@ const externalUrl =
 					)
 				}
 			</header>
+			{data.cover && <CoverImage src={data.cover.src} alt={data.cover.alt} />}
 			<slot />
 		</article>
 	</main>
