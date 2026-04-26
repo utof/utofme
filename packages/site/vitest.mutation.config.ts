@@ -15,7 +15,11 @@ export default mergeConfig(
 	defineConfig({
 		test: {
 			environment: "node",
-			include: ["tests/unit/content-schema.test.ts", "tests/unit/works-query.test.ts"],
+			include: [
+				"tests/unit/content-schema.test.ts",
+				"tests/unit/works-query.test.ts",
+				"tests/unit/url-state.test.ts",
+			],
 			typecheck: { enabled: false },
 		},
 	}),

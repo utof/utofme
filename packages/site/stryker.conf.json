@@ -7,7 +7,7 @@
 	"vitest": { "configFile": "vitest.mutation.config.ts" },
 	"checkers": ["typescript"],
 	"tsconfigFile": "tsconfig.json",
-	"mutate": ["src/content.config.ts", "src/lib/works.ts"],
+	"mutate": ["src/content.config.ts", "src/lib/works.ts", "src/lib/url-state.ts"],
 	"thresholds": { "high": 90, "low": 80, "break": 80 },
 	"reporters": ["clear-text", "html", "progress"],
 	"concurrency": 2,
