@@ -20,6 +20,7 @@ export default mergeConfig(
 				"tests/unit/works-query.test.ts",
 				"tests/unit/url-state.test.ts",
 				"tests/unit/filter.test.ts",
+				"tests/unit/keymap.test.ts",
 			],
 			typecheck: { enabled: false },
 		},
