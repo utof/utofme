@@ -38,6 +38,11 @@
 		// plugin-walk finds it; on CI (frozen-lockfile install) it doesn't. CI fix
 		// from Phase 0 commit 59c4588 — re-applied here after Task 4 inadvertently
 		// removed it.
-		"lefthook"
+		"lefthook",
+		// Why: pagefind is invoked at build time by astro-pagefind integration, not
+		// imported directly by any source file. The integration calls the pagefind
+		// binary via its Node API internally during `astro build`. Knip can't trace
+		// this indirect usage, so it flags pagefind as unused. Verified 2026-04-26.
+		"pagefind"
 	]
 }

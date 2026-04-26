@@ -1,0 +1,69 @@
+---
+/**
+ * SearchBox.astro — Pagefind UI search widget for the /search route.
+ *
+ * Why: wraps the astro-pagefind <Search> component and the dev-fallback panel
+ * in a single composable unit. The Search component renders the Pagefind UI
+ * shell (input + result list) which hydrates client-side via client:load.
+ * The dev-fallback panel is shown (after 2 s) only when pagefind is not
+ * available — i.e. when running `bun run dev` without a prior build.
+ *
+ * Astro static routes do NOT have Astro.url.searchParams populated at build
+ * time — Pagefind UI reads `q` from window.location.search client-side.
+ * We therefore pass no `query` prop and let the Pagefind UI handle it.
+ *
+ * @see https://github.com/shishkin/astro-pagefind#readme
+ * @see packages/specs/plans/02-interactivity.md § Task 11
+ */
+import Search from "astro-pagefind/components/Search";
+---
+
+<div class="search-box">
+	<Search id="search" uiOptions={{ showImages: false }} />
+
+	<noscript><p>Search requires JavaScript.</p></noscript>
+
+	<!--
+	  Why: dev-fallback is hidden by default and revealed only when:
+	    1. There are no URL search params (bare /search page, not a direct link with ?q=)
+	    2. window.pagefind is still undefined after 2000 ms (pagefind UI did not load)
+	  This gives a clear signal to developers that they need to run `bun run build`
+	  first before the search index becomes available.
+	  @see packages/specs/plans/02-interactivity.md § Task 11 (OQ#3 resolution)
+	-->
+	<div data-pagefind-dev-fallback hidden>
+		Search becomes available after the first <code>bun run build</code>.
+	</div>
+</div>
+
+<!--
+  Why: is:inline skips Astro's TypeScript processing of this script block.
+  window.pagefind is set by the astro-pagefind integration at runtime — it is
+  not declared in any @types package, so a processed <script> would error on
+  ts(2339). is:inline preserves the exact markup from the spec while avoiding
+  the type-coverage violation. The script is tiny (no imports needed).
+  See: https://docs.astro.build/en/guides/client-side-scripts/#opting-out-of-processing
+  @see packages/specs/plans/02-interactivity.md § Task 11 (OQ#3 resolution)
+-->
+<script is:inline>
+	// Why: show the dev-fallback panel only when the Pagefind UI component has NOT
+	// rendered its search input after 2 s. This happens in `bun run dev` when no
+	// prior `bun run build` has produced dist/pagefind/. We detect failure by the
+	// absence of .pagefind-ui__search-input — the Pagefind UI injects this element
+	// when it hydrates; if it's missing the index files weren't served.
+	// Note: the spec prescribed `window.pagefind === "undefined"` but the Pagefind
+	// UI component does not set window.pagefind (it uses its own internal instance).
+	// This selector-based check is equivalent and doesn't require a global variable.
+	// @see packages/specs/plans/02-interactivity.md § Task 11 (OQ#3 resolution)
+	setTimeout(function () {
+		if (!document.querySelector(".pagefind-ui__search-input")) {
+			document.querySelector("[data-pagefind-dev-fallback]")?.removeAttribute("hidden");
+		}
+	}, 2000);
+</script>
+
+<style>
+	.search-box {
+		width: 100%;
+	}
+</style>

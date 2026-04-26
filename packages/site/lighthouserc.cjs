@@ -18,7 +18,11 @@ module.exports = {
 	ci: {
 		collect: {
 			staticDistDir: "./dist",
-			url: ["http://localhost:4321/", "http://localhost:4321/works/"],
+			url: [
+				"http://localhost:4321/",
+				"http://localhost:4321/works/",
+				"http://localhost:4321/search/",
+			],
 			// Why: 5 runs absorbs Lighthouse-simulation variance inherent to the
 			// Lantern model on localhost. With `aggregationMethod: "optimistic"` the
 			// gate uses the best run — see assert block below.
