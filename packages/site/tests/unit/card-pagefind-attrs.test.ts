@@ -123,7 +123,7 @@ const PROD_FIXTURES = [
 		date: "2026-03-25",
 		type: "music",
 		tags: ["beat", "study"],
-		summary: "Production-visible music fixture showcasing a beat study.",
+		summary: "Production-visible music fixture: synthesizer melody over a live drum loop.",
 	},
 	{
 		id: "video-2",
@@ -215,14 +215,19 @@ describe("Card.astro — per-card data-pagefind-filter spans (per-variant)", () 
 				const block = cardBlocks.get(fixture.id) ?? "";
 				expect(containsFilter(block, "type")).toBe(true);
 				// Verify the type value textContent appears in the block.
-				expect(block).toMatch(new RegExp(`data-pagefind-filter="type"[^>]*>${fixture.type}<`));
+				// Why: tolerate whitespace between `>` and the value — Astro can emit
+				// indented children inside spans depending on the surrounding template.
+				expect(block).toMatch(
+					new RegExp(`data-pagefind-filter="type"[^>]*>\\s*${fixture.type}\\s*<`),
+				);
 			});
 
 			for (const tag of fixture.tags) {
 				it(`card block contains data-pagefind-filter=tag with value "${tag}"`, () => {
 					const block = cardBlocks.get(fixture.id) ?? "";
 					// At least one tag span with this exact tag value must be inside the block.
-					expect(block).toMatch(new RegExp(`data-pagefind-filter="tag"[^>]*>${tag}<`));
+					// Whitespace tolerance: see comment above on the type filter.
+					expect(block).toMatch(new RegExp(`data-pagefind-filter="tag"[^>]*>\\s*${tag}\\s*<`));
 				});
 			}
 		});
