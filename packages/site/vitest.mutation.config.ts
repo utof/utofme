@@ -19,6 +19,7 @@ export default mergeConfig(
 				"tests/unit/content-schema.test.ts",
 				"tests/unit/works-query.test.ts",
 				"tests/unit/url-state.test.ts",
+				"tests/unit/filter.test.ts",
 			],
 			typecheck: { enabled: false },
 		},
