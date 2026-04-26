@@ -10,12 +10,12 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { SLASH_PAGES, slashSiblings } from "../../src/lib/slash";
 
-const ids = ["now", "uses", "colophon", "tops", "stats"] as const;
+const ids = SLASH_PAGES.map((p) => p.id);
 
 describe("slashSiblings", () => {
 	it("returns 4 entries when given a known slash id", () => {
 		const out = slashSiblings("now");
-		expect(out).toHaveLength(4); // 4 static pages, exclude self
+		expect(out).toHaveLength(4); // 5 total, exclude self → 4 siblings
 	});
 
 	it("returns SLASH_PAGES unchanged when given an unknown id", () => {
