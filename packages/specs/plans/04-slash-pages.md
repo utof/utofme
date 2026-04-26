@@ -714,32 +714,37 @@ import SlashFooter from "../components/SlashFooter.astro";
 `cd packages/site && bun x playwright test tests/e2e/footer.spec.ts`
 Expected: PASS (4 tests).
 
-- [ ] **Step 6: Re-baseline visual-regression snapshots — implementer-safety check.**
+- [ ] **Step 6: Visual-regression — prefer clip-region screenshots over blanket re-baselining.**
 
-Per spec § OQ#5 (line 301): the visual-regression snapshots for `/`, `/works`, `/search`, every `/works/<slug>/` will diff because the footer adds new pixels at the bottom. Before re-baselining, **inspect each diff** to confirm the only changed region is the footer band.
+Per plan review nit #12: subagent execution can't reliably eyeball pixel diffs in `playwright-report/`. Use a clip-region strategy instead — visual snapshots target `<main>` only (excluding the footer), so the existing routes' baselines remain valid after the footer add.
 
-```bash
-cd packages/site && bun x playwright test --reporter=html
+Read each existing visual-regression spec (e.g. anything under `tests/e2e/` that calls `toHaveScreenshot()`) and update the screenshot call from full-page to main-region:
+
+```ts
+// before
+await expect(page).toHaveScreenshot("home.png");
+
+// after
+await expect(page.locator("main")).toHaveScreenshot("home.png");
 ```
 
-Open `playwright-report/index.html`. For each visual-regression failure:
-1. View the side-by-side diff.
-2. Confirm the only red-marked pixels are within the bottom region of the page (where the footer renders).
-3. If any pixel difference is *above* the footer's bounding box, **stop** — diagnose the regression before proceeding.
-
-If all diffs are footer-only, re-baseline:
+If the existing baselines were captured full-page, this will reduce captured area on the next run — re-baselining is required ONCE for the existing routes (clip change is a baseline change, but only for `<main>`):
 
 ```bash
 cd packages/site && bun x playwright test --update-snapshots
 ```
 
-Then re-run to confirm clean:
+Run a second time to confirm clean:
 
 ```bash
 cd packages/site && bun x playwright test
 ```
 
-Expected: all pass; snapshot files under `tests/e2e/*-snapshots/` are updated.
+Expected: all pass.
+
+If any existing visual spec already uses a clip-region or `<main>`-locator screenshot, leave it alone — the footer is outside its bounds and the baseline stays valid.
+
+For the **new** slash-page baselines added in Task 3 / Task 7, the snapshots are fresh and capture `<main>`-only.
 
 - [ ] **Step 7: Run Axe across all routes (footer must be axe-clean).**
 
@@ -766,52 +771,55 @@ git commit -m "Phase 4 Task 4: SlashFooter mounted in _BaseLayout + e2e + visual
 - Modify: `packages/site/src/components/CommandPalette.svelte`
 - Modify: `packages/site/tests/e2e/palette.spec.ts`
 
-- [ ] **Step 1: Read existing palette nav array.**
+- [ ] **Step 1: Read existing palette nav array first (do NOT skip).**
 
 ```bash
-cd packages/site && grep -n "/works\|/search" src/components/CommandPalette.svelte | head -20
+cd packages/site && grep -n "kind: \"navigate\"" src/components/CommandPalette.svelte | head -10
 ```
 
-Note the exact path constant or array name (likely `NAV_LINKS` or similar).
+Verified at plan-write: the nav array uses shape `{ id, label, kind: "navigate", target }` — for example `{ id: "goto-works", label: "Go to /works/", kind: "navigate", target: "/works/" }`. Confirm the same shape in your read; if it has changed, update the entries below to match.
+
+Also read the existing `palette.spec.ts` to confirm the trigger key combo and how palette items are queried (selector, role, or text-based locator).
 
 - [ ] **Step 2: Write failing assertion in palette.spec.ts.**
 
-Add a new test inside the existing palette.spec.ts file:
+Append to the existing `tests/e2e/palette.spec.ts`. Use the same trigger + selector style as the existing tests in that file (read them first — your assertion shape must match what the existing tests already use):
 
 ```ts
-// packages/site/tests/e2e/palette.spec.ts (append)
+// packages/site/tests/e2e/palette.spec.ts (append a new test)
 test("palette nav lists 5 slash routes", async ({ page }) => {
 	await page.goto("/");
-	await page.keyboard.press("Meta+K"); // or whatever the existing palette trigger is
-	const items = page.locator('[data-test="palette-item"]'); // or whatever the existing item selector is
-	await expect(items.filter({ hasText: "Now" })).toBeVisible();
-	await expect(items.filter({ hasText: "Uses" })).toBeVisible();
-	await expect(items.filter({ hasText: "Colophon" })).toBeVisible();
-	await expect(items.filter({ hasText: "Tops" })).toBeVisible();
-	await expect(items.filter({ hasText: "Stats" })).toBeVisible();
+	// Trigger key combo: copy from existing tests in this file. Common: "Meta+K" / "Control+K".
+	// Item selector: copy from existing tests. Common: page.getByRole("option") or page.locator("[data-cmdk-item]").
+	// Replace TRIGGER_KEY and ITEM_LOCATOR with whatever the existing tests use.
+	await page.keyboard.press(/* TRIGGER_KEY from existing tests */);
+	const items = page.locator(/* ITEM_LOCATOR from existing tests */);
+	for (const slug of ["Go to /now/", "Go to /uses/", "Go to /colophon/", "Go to /tops/", "Go to /stats/"]) {
+		await expect(items.filter({ hasText: slug })).toBeVisible();
+	}
 });
 ```
 
-**Implementer note:** read the existing palette.spec.ts first to confirm the trigger key combo and item selector. The above is a placeholder shape — adjust to match Phase 2's existing pattern. The existing tests are the API to extend.
+The label format `"Go to /<slug>/"` mirrors the existing entries (`"Go to /works/"`).
 
 - [ ] **Step 3: Run → fail.**
 
 `cd packages/site && bun x playwright test tests/e2e/palette.spec.ts -g "5 slash routes"`
 Expected: FAIL — items don't exist yet.
 
-- [ ] **Step 4: Extend palette nav array.**
+- [ ] **Step 4: Extend palette nav array — match the verified `{ id, label, kind, target }` shape.**
 
-Inside `CommandPalette.svelte`, find the existing nav-routes array (likely a `const` near the top). Append the 5 slash entries:
+Inside `CommandPalette.svelte`, find the existing nav-routes array. Append:
 
 ```ts
-{ label: "Now", href: "/now/" },
-{ label: "Uses", href: "/uses/" },
-{ label: "Colophon", href: "/colophon/" },
-{ label: "Tops", href: "/tops/" },
-{ label: "Stats", href: "/stats/" },
+{ id: "goto-now",      label: "Go to /now/",      kind: "navigate", target: "/now/" },
+{ id: "goto-uses",     label: "Go to /uses/",     kind: "navigate", target: "/uses/" },
+{ id: "goto-colophon", label: "Go to /colophon/", kind: "navigate", target: "/colophon/" },
+{ id: "goto-tops",     label: "Go to /tops/",     kind: "navigate", target: "/tops/" },
+{ id: "goto-stats",    label: "Go to /stats/",    kind: "navigate", target: "/stats/" },
 ```
 
-Match the *existing* shape and field names — do not introduce a new shape.
+If the existing shape differs (e.g. uses `href` not `target`, or omits `kind`), match what's there. The shape verified at plan-write is `{ id, label, kind: "navigate", target }`.
 
 - [ ] **Step 5: Re-run → pass.**
 
@@ -835,6 +843,8 @@ git commit -m "Phase 4 Task 5: extend CommandPalette nav with 5 slash routes"
 - Create: `packages/site/src/content/stats/snapshot.fixture.json`
 - Create: `packages/site/src/lib/stats.ts`
 - Create: `packages/site/tests/unit/stats-snapshot.test.ts`
+
+**Schema location decision (per plan review nit #3):** `snapshotSchema` and `StatsSourceSchema` are defined **inside `content.config.ts`** (where the collection is registered) and **re-exported from `lib/stats.ts`** for use by helpers/scripts. This inverts the dep direction (`lib/stats.ts` imports from `content.config.ts`, not the other way) — natural Astro pattern, no dep-cruise risk.
 
 - [ ] **Step 1: Write failing tests for the snapshot schema + helpers.**
 
@@ -964,43 +974,22 @@ The committed fixture deliberately has Literal as `error: true` so e2e tests for
 ```ts
 // packages/site/src/lib/stats.ts
 /**
- * Stats snapshot helpers.
+ * Stats snapshot helpers — re-exports the schema (defined in
+ * content.config.ts), implements loadSnapshot fallback, and the
+ * per-source render formatter.
  *
- * Why: single source of truth for the snapshot Zod schema, the fixture
- * fallback, and the per-source render formatter. Used by stats.astro,
- * StatsSection.astro, and (via re-export of the schema) the snapshot
- * fetcher script.
+ * Why: schema lives next to the collection registration (one source
+ * of truth); helpers consume it from there.
  *
  * @see packages/specs/specs/04-slash-pages.md § Snapshot shape
  * @see packages/specs/adrs/0024-stats-failure-ux.md
  */
 import { getEntry } from "astro:content";
-import { z } from "astro/zod";
+import { snapshotSchema, StatsSourceSchema } from "../content.config";
+import type { z } from "astro/zod";
 import fixture from "../content/stats/snapshot.fixture.json";
 
-/**
- * One stats source's record. `value` is `null` and `lastSuccessAt` is
- * `null` when `error: true` — see ADR 0024 (no last-good retention).
- */
-export const StatsSourceSchema = z.object({
-	id: z.string(),
-	label: z.string(),
-	value: z.unknown().nullable(),
-	lastSuccessAt: z.string().datetime().nullable(),
-	error: z.boolean().default(false),
-});
-
-export const snapshotSchema = z.object({
-	generatedAt: z.string().datetime(),
-	sources: z.object({
-		github: StatsSourceSchema,
-		strava: StatsSourceSchema,
-		lastfm: StatsSourceSchema,
-		literal: StatsSourceSchema,
-		wakatime: StatsSourceSchema,
-	}),
-});
-
+export { snapshotSchema, StatsSourceSchema };
 export type StatsSource = z.infer<typeof StatsSourceSchema>;
 export type Snapshot = z.infer<typeof snapshotSchema>;
 
@@ -1010,6 +999,11 @@ export type Snapshot = z.infer<typeof snapshotSchema>;
  *
  * Why: production builds (with secrets) have a fresh snapshot.json on
  * disk; CI / dev does not. Both paths must surface the same shape.
+ *
+ * In dev/CI the absence of snapshot.json causes Astro's file() loader
+ * to log a `File not found` line and skip the entry — the loader does
+ * not throw (verified via the loader source 2026-04-27). This is
+ * cosmetic; the build remains green.
  */
 export async function loadSnapshot(): Promise<Snapshot> {
 	const entry = await getEntry("stats", "snapshot");
@@ -1041,24 +1035,60 @@ export function formatStatValue(source: StatsSource): string {
 }
 ```
 
-- [ ] **Step 5: Register the `stats` collection in `content.config.ts`.**
+- [ ] **Step 5: Register the `stats` collection + define schema inline in `content.config.ts`.**
 
-Append to the imports at the top:
+Schema lives here (re-exported from `lib/stats.ts` for callers — see Step 4 above).
+
+Update the existing `astro/loaders` import to add `file`:
 
 ```ts
 import { glob, file } from "astro/loaders";
 ```
 
-(`file` joins the existing `glob` import — keep on the same import line.)
-
-Append the collection registration:
+Append schema definitions and collection registration to the bottom of `content.config.ts`, just above the existing `collections` export:
 
 ```ts
+/**
+ * One stats source's record. `value` is `null` and `lastSuccessAt` is
+ * `null` when `error: true` — see ADR 0024 (no last-good retention).
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Snapshot shape
+ */
+export const StatsSourceSchema = z.object({
+	id: z.string(),
+	label: z.string(),
+	value: z.unknown().nullable(),
+	lastSuccessAt: z.string().datetime().nullable(),
+	error: z.boolean().default(false),
+});
+
+/**
+ * Schema applied to the single `stats/snapshot` entry — the inner value
+ * of the top-level wrapping object in `snapshot.json` / `snapshot.fixture.json`.
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Snapshot shape
+ * @see packages/specs/adrs/0023-stats-build-time-snapshot.md
+ */
+export const snapshotSchema = z.object({
+	generatedAt: z.string().datetime(),
+	sources: z.object({
+		github: StatsSourceSchema,
+		strava: StatsSourceSchema,
+		lastfm: StatsSourceSchema,
+		literal: StatsSourceSchema,
+		wakatime: StatsSourceSchema,
+	}),
+});
+
 /**
  * Stats snapshot collection. Single-entry; the JSON file's top-level key
  * `snapshot` becomes the entry id consumed by getEntry("stats", "snapshot").
  *
- * @see packages/specs/specs/04-slash-pages.md § Snapshot shape
+ * In dev / CI, `snapshot.json` does not exist (gitignored). Astro's
+ * file() loader logs `File not found:` and returns without throwing
+ * (verified via withastro/astro source 2026-04-27 — packages/astro/src/content/loaders/file.ts).
+ * The build stays green; `loadSnapshot` falls back to fixture.
+ *
  * @see packages/specs/adrs/0023-stats-build-time-snapshot.md
  */
 const stats = defineCollection({
@@ -1067,25 +1097,13 @@ const stats = defineCollection({
 });
 ```
 
-But — at runtime, `snapshot.json` is .gitignored and absent in dev/CI. Astro's `file()` loader logs a warning and `getEntry("stats", "snapshot")` returns `undefined`. **`loadSnapshot` falls back to fixture in that case.** This is by design (spec § Architecture).
-
-To ensure dev works without the file, the collection registration must remain registered even if the file is absent. Astro 6 `file()` loader handles missing files gracefully (returns no entries; collection is empty). **Verify** during implementation: `bun x astro check` should not fail.
-
-If Astro errors on missing file (some loader versions do), wrap with conditional registration — implementer decides at red→green time. Fallback: leave `stats` collection registration commented-out and rely entirely on fixture import for `loadSnapshot`. **Implementer must report which path they took** to the code-reviewer.
-
-Also — `snapshotSchema` is now imported from `lib/stats.ts`. Add at the top of `content.config.ts`:
-
-```ts
-import { snapshotSchema } from "./lib/stats";
-```
-
-(Watch dep-cruiser — `content.config.ts` importing from `lib` may need a rule update. Implementer flags if so.)
-
-Update `collections` export:
+Update the `collections` export:
 
 ```ts
 export const collections = { works, slash, stats };
 ```
+
+**No conditional registration, no commented-out fallback.** The plan-review's `file()`-missing-file investigation (2026-04-27) confirmed the loader does not throw; the dev/CI build will print one `File not found` log line per build — accepted as cosmetic noise.
 
 - [ ] **Step 6: Run unit + property tests → pass.**
 
@@ -1286,8 +1304,12 @@ git commit -m "Phase 4 Task 7: /stats page + StatsSection + e2e (fixture-driven)
 // packages/site/tests/unit/snapshot-fetcher.test.ts
 /**
  * Why: per-source failure handling is the trickiest behaviour in Phase 4.
- * Each branch of the merge rule (per spec table) needs an explicit test
- * because the fetcher is the single writer of snapshot.json.
+ * Each branch of the merge rule needs an explicit test because the
+ * fetcher is the single writer of snapshot.json.
+ *
+ * Mocks fetch by URL pattern (NOT by call-index) so the test survives
+ * future changes in per-source fetch counts (e.g. Strava OAuth refresh
+ * adding a second fetch). Per plan review nit #6 + blocker #2(b).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { promises as fs } from "node:fs";
@@ -1300,11 +1322,11 @@ const SNAPSHOT_PATH = path.join(TMP, "snapshot.json");
 
 beforeEach(async () => {
 	await fs.mkdir(TMP, { recursive: true });
-	vi.restoreAllMocks();
 });
 
 afterEach(async () => {
 	await fs.rm(TMP, { recursive: true, force: true });
+	vi.unstubAllGlobals();
 });
 
 const SECRETS = {
@@ -1317,10 +1339,26 @@ const SECRETS = {
 	WAKATIME_API_KEY: "x",
 };
 
+/**
+ * URL-pattern fetch mock. Per-source post-processed shapes returned
+ * directly (each fetcher's downstream of the network call). When an
+ * upstream URL matches `failingPatterns`, throw — emulating outage.
+ */
+function makeFetchMock(failingPatterns: RegExp[] = []) {
+	return async (input: RequestInfo | URL): Promise<Response> => {
+		const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+		for (const p of failingPatterns) if (p.test(url)) throw new Error(`mock fail: ${url}`);
+		// Return a benign object — each fetcher's post-process step shapes it.
+		return new Response(JSON.stringify({ stub: true, total_count: 5, items: [], recenttracks: { track: [{ name: "x", artist: { "#text": "x" } }] }, data: { me: { booksReading: [{ title: "x" }] } }, languages: [{ name: "TS" }], total_seconds: 60 * 60 * 5, distance: 1000 }), {
+			status: 200,
+			headers: { "Content-Type": "application/json" },
+		});
+	};
+}
+
 describe("snapshot fetcher", () => {
 	it("(a) all-succeed → all sources error: false, value populated", async () => {
-		const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ commits30d: 5, km30d: 1, scrobbles7d: 1, currentBook: "x", hours7d: 1, topRepo: "x", activities30d: 1, topArtist: "x", topLanguage: "x" }) });
-		global.fetch = mockFetch as never;
+		vi.stubGlobal("fetch", makeFetchMock([]));
 		await runFetcher({ secrets: SECRETS, outputPath: SNAPSHOT_PATH });
 		const written = JSON.parse(await fs.readFile(SNAPSHOT_PATH, "utf8"));
 		const sources = Object.values(written.snapshot.sources) as Array<{ error: boolean; value: unknown }>;
@@ -1328,41 +1366,43 @@ describe("snapshot fetcher", () => {
 		expect(sources.every((s) => s.value !== null)).toBe(true);
 	});
 
-	it("(b) one rejects → that source value: null + error: true; others normal", async () => {
-		let n = 0;
-		const mockFetch = vi.fn().mockImplementation(async () => {
-			n++;
-			if (n === 3) throw new Error("strava down");
-			return { ok: true, json: async () => ({ commits30d: 5, km30d: 1, scrobbles7d: 1, currentBook: "x", hours7d: 1, topRepo: "x", activities30d: 1, topArtist: "x", topLanguage: "x" }) };
-		});
-		global.fetch = mockFetch as never;
+	it("(b) Strava down → strava errored; the other 4 normal", async () => {
+		vi.stubGlobal("fetch", makeFetchMock([/strava\.com/]));
 		await runFetcher({ secrets: SECRETS, outputPath: SNAPSHOT_PATH });
-		const written = JSON.parse(await fs.readFile(SNAPSHOT_PATH, "utf8"));
-		const sources = written.snapshot.sources;
-		// At least one source is errored, others are not
-		const erroredSources = Object.values(sources).filter((s: any) => s.error === true);
-		expect(erroredSources.length).toBe(1);
+		const sources = JSON.parse(await fs.readFile(SNAPSHOT_PATH, "utf8")).snapshot.sources;
+		expect(sources.strava.error).toBe(true);
+		expect(sources.strava.value).toBeNull();
+		for (const id of ["github", "lastfm", "literal", "wakatime"]) {
+			expect(sources[id].error).toBe(false);
+			expect(sources[id].value).not.toBeNull();
+		}
 	});
 
-	it("(c) all reject → all sources value: null + error: true; file still written", async () => {
-		global.fetch = vi.fn().mockRejectedValue(new Error("net down")) as never;
+	it("(c) all upstreams down → all 5 errored; file still written", async () => {
+		vi.stubGlobal("fetch", makeFetchMock([/.*/]));
 		await runFetcher({ secrets: SECRETS, outputPath: SNAPSHOT_PATH });
-		const written = JSON.parse(await fs.readFile(SNAPSHOT_PATH, "utf8"));
-		const sources = Object.values(written.snapshot.sources) as Array<{ error: boolean; value: unknown }>;
+		const sources = Object.values(JSON.parse(await fs.readFile(SNAPSHOT_PATH, "utf8")).snapshot.sources) as Array<{ error: boolean; value: unknown }>;
 		expect(sources.every((s) => s.error === true)).toBe(true);
 		expect(sources.every((s) => s.value === null)).toBe(true);
 	});
 
-	it("(d) malformed live JSON → that source flagged error: true (Zod parse fails)", async () => {
-		// Return shape that will fail per-source schema validation
-		global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => "not an object" }) as never;
+	it("(d) one source returns malformed (non-object) → that source errored", async () => {
+		// Override only github with a bad-shape response
+		vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+			const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+			if (/api\.github\.com/.test(url)) {
+				return new Response(JSON.stringify("not an object"), { status: 200, headers: { "Content-Type": "application/json" } });
+			}
+			return makeFetchMock([])(input);
+		});
 		await runFetcher({ secrets: SECRETS, outputPath: SNAPSHOT_PATH });
-		const written = JSON.parse(await fs.readFile(SNAPSHOT_PATH, "utf8"));
-		const sources = Object.values(written.snapshot.sources) as Array<{ error: boolean }>;
-		expect(sources.every((s) => s.error === true)).toBe(true);
+		const sources = JSON.parse(await fs.readFile(SNAPSHOT_PATH, "utf8")).snapshot.sources;
+		expect(sources.github.error).toBe(true);
+		expect(sources.strava.error).toBe(false);
 	});
 
 	it("(e) all secrets absent → no-op (file not created)", async () => {
+		vi.stubGlobal("fetch", makeFetchMock([]));
 		await runFetcher({ secrets: {}, outputPath: SNAPSHOT_PATH });
 		await expect(fs.access(SNAPSHOT_PATH)).rejects.toThrow();
 	});
@@ -1446,15 +1486,22 @@ export async function runFetcher({ secrets, outputPath }: RunOpts): Promise<void
 	]);
 
 	const ids = ["github", "strava", "lastfm", "literal", "wakatime"] as const;
-	const labels = { github: "GitHub", strava: "Strava", lastfm: "Last.fm", literal: "Literal", wakatime: "Wakatime" };
+	type SourceId = (typeof ids)[number];
+	const labels: Record<SourceId, string> = {
+		github: "GitHub",
+		strava: "Strava",
+		lastfm: "Last.fm",
+		literal: "Literal",
+		wakatime: "Wakatime",
+	};
 
-	const sources: Record<string, SourceResult> = {};
+	const sources: Record<SourceId, SourceResult> = {} as Record<SourceId, SourceResult>;
 	settled.forEach((r, i) => {
-		const id = ids[i] as string;
+		const id = ids[i]!;
 		if (r.status === "fulfilled" && r.value !== null) {
-			sources[id] = { id, label: (labels as Record<string, string>)[id]!, value: r.value, lastSuccessAt: now, error: false };
+			sources[id] = { id, label: labels[id], value: r.value, lastSuccessAt: now, error: false };
 		} else {
-			sources[id] = { id, label: (labels as Record<string, string>)[id]!, value: null, lastSuccessAt: null, error: true };
+			sources[id] = { id, label: labels[id], value: null, lastSuccessAt: null, error: true };
 		}
 	});
 
@@ -1467,35 +1514,65 @@ export async function runFetcher({ secrets, outputPath }: RunOpts): Promise<void
 
 /* ----- per-source fetchers ----- */
 
-async function fetchGithub(s: Secrets): Promise<unknown> {
+/**
+ * Each fetcher hits its upstream then post-processes into the SHAPE
+ * `formatStatValue` expects (e.g. `{ commits30d, topRepo }` for github).
+ * The integration test mocks the upstream URL, lets the post-process
+ * run, and asserts on the post-processed shape — so production drift
+ * (e.g. GitHub Search API renaming `total_count`) surfaces as a
+ * post-process failure rather than an undefined-render bug.
+ *
+ * Per-source URL/auth shapes are best-effort and may need adjustment
+ * during implementation (WebFetch verify each at red→green). The shape
+ * returned by the fetcher is the contract — that is locked.
+ */
+
+async function fetchGithub(s: Secrets): Promise<{ commits30d: number; topRepo: string }> {
 	if (!s.GITHUB_TOKEN) throw new Error("GITHUB_TOKEN missing");
-	// 30-day commit count — TODO: replace with actual GitHub commit-search API call
-	// using `Authorization: Bearer ${s.GITHUB_TOKEN}` against
-	// https://api.github.com/search/commits?q=author:utof+committer-date:>YYYY-MM-DD
-	const r = await fetch("https://api.github.com/users/utof", {
-		headers: { Authorization: `Bearer ${s.GITHUB_TOKEN}`, Accept: "application/vnd.github+json" },
-	});
+	const since = new Date(Date.now() - 30 * 86400_000).toISOString().slice(0, 10);
+	const r = await fetch(
+		`https://api.github.com/search/commits?q=author:utof+committer-date:>${since}`,
+		{
+			headers: {
+				Authorization: `Bearer ${s.GITHUB_TOKEN}`,
+				Accept: "application/vnd.github+json",
+				"X-GitHub-Api-Version": "2022-11-28",
+			},
+		},
+	);
 	if (!r.ok) throw new Error(`github ${r.status}`);
-	const data = await r.json();
-	return validateNonEmpty(data, "github");
+	const data = (await r.json()) as { total_count?: number };
+	if (typeof data !== "object" || data === null || typeof data.total_count !== "number") {
+		throw new Error("github: bad shape");
+	}
+	return { commits30d: data.total_count, topRepo: "utofme" };
 }
 
-async function fetchStrava(s: Secrets): Promise<unknown> {
+async function fetchStrava(s: Secrets): Promise<{ km30d: number; activities30d: number }> {
 	if (!s.STRAVA_REFRESH_TOKEN || !s.STRAVA_CLIENT_ID || !s.STRAVA_CLIENT_SECRET) throw new Error("strava secrets missing");
-	// TODO at implementation: refresh-token → access-token, then GET /athlete/activities
+	// Implementer: refresh-token → access-token via POST https://www.strava.com/oauth/token
+	// then GET /athlete/activities?after=<unix-30d-ago>. WebFetch verify shape at red→green.
+	// For now, the structure below documents the contract; the post-process is what tests assert.
 	const r = await fetch("https://www.strava.com/api/v3/athlete/activities");
 	if (!r.ok) throw new Error(`strava ${r.status}`);
-	return validateNonEmpty(await r.json(), "strava");
+	const data = (await r.json()) as unknown;
+	if (typeof data !== "object" || data === null) throw new Error("strava: bad shape");
+	// stub: production fetcher sums distance, counts entries
+	return { km30d: 1, activities30d: 1 };
 }
 
-async function fetchLastfm(s: Secrets): Promise<unknown> {
+async function fetchLastfm(s: Secrets): Promise<{ topArtist: string; scrobbles7d: number }> {
 	if (!s.LASTFM_API_KEY) throw new Error("LASTFM_API_KEY missing");
-	const r = await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=utof&api_key=${s.LASTFM_API_KEY}&format=json`);
+	const r = await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=utof&api_key=${s.LASTFM_API_KEY}&format=json&limit=200`);
 	if (!r.ok) throw new Error(`lastfm ${r.status}`);
-	return validateNonEmpty(await r.json(), "lastfm");
+	const data = (await r.json()) as { recenttracks?: { track?: Array<{ artist?: { "#text"?: string } }> } };
+	if (typeof data !== "object" || data === null) throw new Error("lastfm: bad shape");
+	const tracks = data.recenttracks?.track ?? [];
+	const top = tracks[0]?.artist?.["#text"] ?? "—";
+	return { topArtist: top, scrobbles7d: tracks.length };
 }
 
-async function fetchLiteral(s: Secrets): Promise<unknown> {
+async function fetchLiteral(s: Secrets): Promise<{ currentBook: string }> {
 	if (!s.LITERAL_TOKEN) throw new Error("LITERAL_TOKEN missing");
 	const r = await fetch("https://literal.club/graphql", {
 		method: "POST",
@@ -1503,21 +1580,22 @@ async function fetchLiteral(s: Secrets): Promise<unknown> {
 		body: JSON.stringify({ query: "{ me { booksReading { title } } }" }),
 	});
 	if (!r.ok) throw new Error(`literal ${r.status}`);
-	return validateNonEmpty(await r.json(), "literal");
+	const data = (await r.json()) as { data?: { me?: { booksReading?: Array<{ title?: string }> } } };
+	if (typeof data !== "object" || data === null) throw new Error("literal: bad shape");
+	const book = data.data?.me?.booksReading?.[0]?.title ?? "—";
+	return { currentBook: book };
 }
 
-async function fetchWakatime(s: Secrets): Promise<unknown> {
+async function fetchWakatime(s: Secrets): Promise<{ topLanguage: string; hours7d: number }> {
 	if (!s.WAKATIME_API_KEY) throw new Error("WAKATIME_API_KEY missing");
 	const r = await fetch(`https://wakatime.com/api/v1/users/current/stats/last_7_days?api_key=${s.WAKATIME_API_KEY}`);
 	if (!r.ok) throw new Error(`wakatime ${r.status}`);
-	return validateNonEmpty(await r.json(), "wakatime");
-}
-
-function validateNonEmpty(data: unknown, source: string): unknown {
-	if (data === null || typeof data !== "object") {
-		throw new Error(`${source} returned non-object: ${JSON.stringify(data).slice(0, 50)}`);
-	}
-	return data;
+	const data = (await r.json()) as { languages?: Array<{ name?: string }>; total_seconds?: number };
+	if (typeof data !== "object" || data === null) throw new Error("wakatime: bad shape");
+	return {
+		topLanguage: data.languages?.[0]?.name ?? "—",
+		hours7d: Math.round(((data.total_seconds ?? 0) / 3600) * 10) / 10,
+	};
 }
 
 /* ----- CLI invocation ----- */
@@ -1591,44 +1669,47 @@ git commit -m "Phase 4 Task 8: snapshot fetcher script + integration tests + pre
 cd packages/site && cat .size-limit.cjs lighthouserc.cjs knip.jsonc .dependency-cruiser.cjs | head -200
 ```
 
-- [ ] **Step 2: Append 5 new size-limit entries.**
+- [ ] **Step 2: Append 5 new size-limit entries — match existing-entry shape verified at plan-write.**
 
-In `.size-limit.cjs`, add to the entries array:
+Existing entries use `path: ["dist/<route>/index.html", "dist/_astro/*.css"]` (array form so CSS is included in the gzip measurement) and carry `disablePlugins: ["@size-limit/time"]` (the time plugin is not installed). Per plan review nits #8 + #9, copy that exact shape:
 
 ```js
 {
   name: "now page css+html",
-  path: "dist/now/index.html",
+  path: ["dist/now/index.html", "dist/_astro/*.css"],
   limit: "60 KB",
   gzip: true,
+  disablePlugins: ["@size-limit/time"],
 },
 {
   name: "uses page css+html",
-  path: "dist/uses/index.html",
+  path: ["dist/uses/index.html", "dist/_astro/*.css"],
   limit: "60 KB",
   gzip: true,
+  disablePlugins: ["@size-limit/time"],
 },
 {
   name: "colophon page css+html",
-  path: "dist/colophon/index.html",
+  path: ["dist/colophon/index.html", "dist/_astro/*.css"],
   limit: "60 KB",
   gzip: true,
+  disablePlugins: ["@size-limit/time"],
 },
 {
   name: "tops page css+html",
-  path: "dist/tops/index.html",
+  path: ["dist/tops/index.html", "dist/_astro/*.css"],
   limit: "60 KB",
   gzip: true,
+  disablePlugins: ["@size-limit/time"],
 },
 {
   name: "stats page css+html",
-  path: "dist/stats/index.html",
+  path: ["dist/stats/index.html", "dist/_astro/*.css"],
   limit: "60 KB",
   gzip: true,
+  disablePlugins: ["@size-limit/time"],
 },
 ```
-
-(Match the existing entries' exact shape — naming convention, gzip key, path style. Read existing entries first.)
 
 - [ ] **Step 3: Add 4 LHCI URLs.**
 
