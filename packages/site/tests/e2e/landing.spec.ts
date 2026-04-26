@@ -33,7 +33,10 @@ test("visual regression baseline /", async ({ page }) => {
 	// unmasked, so heading/font regressions on the page chrome are still caught.
 	// See: https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2
 	// See: packages/specs/plans/01-card-grid-mvp.md § Reviewer briefing point 5
-	await expect(page).toHaveScreenshot("landing.png", {
+	// Clip to <main> so the footer (added in Task 4) does not affect
+	// this baseline — full-page snapshots would require re-baselining on
+	// every footer style change. Footer has its own footer.spec.ts coverage.
+	await expect(page.locator("main")).toHaveScreenshot("landing.png", {
 		// Why: CI ubuntu-latest renderer (Chromium, system fonts) produces ~0.01 pixel
 		// ratio drift vs local baseline in the header area. 0.02 headroom still catches
 		// real layout/font regressions (those affect >>2% of pixels) while absorbing
