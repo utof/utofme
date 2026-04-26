@@ -29,7 +29,10 @@ const { entry } = Astro.props;
 const { data } = entry;
 
 // Why: secondary external-URL chain mirrors ADR 0011 priority order.
-//      ADR 0021 (Phase 3) makes detail-page link the primary; this is secondary.
+//      Phase 3 makes the detail-page link the primary card href (ADR landing in
+//      Task 12, will be 0021-detail-page-as-default-card-link); this layout's
+//      external link is the secondary "open external" action visible only on the
+//      detail page itself.
 const externalUrl =
 	data.type === "code"
 		? data.repo
