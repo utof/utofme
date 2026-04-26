@@ -12,7 +12,7 @@
 	// Why: CLI scripts are stand-alone entry points invoked via `bun run check:docs`;
 	// they are not reachable from src/pages/** so must be declared explicitly.
 	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
-	"project": ["src/**/*.{ts,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
+	"project": ["src/**/*.{ts,tsx,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
 	// Why: ignoreExportsUsedInFile for interfaces lets knip skip exported interfaces
 	// that are referenced within the same file (e.g. ListWorksOptions used as the
 	// opts parameter type in listWorks). These are public API types for external
@@ -43,19 +43,10 @@
 		// imported directly by any source file. The integration calls the pagefind
 		// binary via its Node API internally during `astro build`. Knip can't trace
 		// this indirect usage, so it flags pagefind as unused. Verified 2026-04-26.
-		"pagefind",
-		// Why: @codesandbox/sandpack-react is used in Phase 3 Task 10 (interactive
-		// code playground). It is installed in Task 1 to consolidate lockfile churn
-		// into a single commit, but has no import in source yet. Knip flags it as
-		// unused until Task 10 wires it up.
-		"@codesandbox/sandpack-react",
-		// Why: react and react-dom are peer deps consumed by @astrojs/react at build
-		// time — they are not directly imported by source files in this phase.
-		// @types/react and @types/react-dom provide types for the React renderer;
-		// they are referenced transitively through @astrojs/react's type exports.
-		"react",
-		"react-dom",
-		"@types/react",
-		"@types/react-dom"
+		"pagefind"
+		// Why: react and react-dom are now used via SandboxIsland.tsx (Task 10)
+		// and knip detects them through the tsx import chain. No longer in
+		// ignoreDependencies — removed after knip confirmed auto-detection.
+		// @types/react / @types/react-dom similarly auto-detected. Entries removed.
 	]
 }

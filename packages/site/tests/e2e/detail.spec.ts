@@ -4,9 +4,11 @@
  *      links, accessibility, view-transition anchor, and body visibility.
  *      Task 8 adds cases 10–12: Expressive Code rendering, copy button, dual-theme.
  *      Task 9 adds cases 13–15: Svelte 5 Counter island embedded in MDX, state isolation.
+ *      Task 10 adds code-sandbox to PROD_IDS (Sandpack fixture).
  * @see packages/specs/plans/03-content-pipeline.md § Task 4
  * @see packages/specs/plans/03-content-pipeline.md § Task 8
  * @see packages/specs/plans/03-content-pipeline.md § Task 9
+ * @see packages/specs/plans/03-content-pipeline.md § Task 10
  */
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -14,7 +16,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 // Production fixtures (non-draft): Phase 1 + Phase 2 + Task 8 (code-1 promoted)
-// + Task 9 (writing-mdx-island).
+// + Task 9 (writing-mdx-island) + Task 10 (code-sandbox).
 // IDs are the file stems as resolved by Astro glob loader.
 const PROD_IDS = [
 	"code-1",
@@ -25,6 +27,7 @@ const PROD_IDS = [
 	"writing-2",
 	"writing-3-no-summary",
 	"writing-mdx-island",
+	"code-sandbox",
 ] as const;
 
 // Draft fixture IDs (draft: true in frontmatter).

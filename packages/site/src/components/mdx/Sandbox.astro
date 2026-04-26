@@ -1,0 +1,21 @@
+---
+/**
+ * Why: Phase 3 ships live React playgrounds via Sandpack. This Astro shell
+ *      forwards props to a React island isolated via client:only="react"
+ *      so the React runtime is loaded only on pages with a <Sandbox>.
+ * @see packages/specs/plans/03-content-pipeline.md § Task 10
+ * @see packages/specs/adrs/0019-sandpack-react-island-budget.md (pending Task 12)
+ */
+import SandboxIsland from "../SandboxIsland";
+
+export interface Props {
+	template?: "react" | "react-ts" | "vanilla" | "vanilla-ts";
+	files?: Record<string, string>;
+	dependencies?: Record<string, string>;
+	readOnly?: boolean;
+}
+
+const props = Astro.props;
+---
+
+<SandboxIsland client:only="react" {...props} />
