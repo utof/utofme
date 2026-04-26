@@ -27,18 +27,6 @@
 		// deps" (line 68) lists it explicitly. Knip can't see CLI usage, so the
 		// dep would otherwise be flagged as unused.
 		"wrangler",
-		// Why: fast-check is the direct fast-check package; @fast-check/vitest wraps
-		// it and is imported in tests/unit/works-query.test.ts (Task 4). fast-check
-		// itself is not directly imported but is a peer of @fast-check/vitest and
-		// needed at runtime.
-		"fast-check",
-		// Why: lefthook config lives at /lefthook.yml (repo root) but the dep is
-		// declared in packages/site/package.json. knip running with cwd=packages/site
-		// can't see the root config, so it flags the dep as unused. Locally knip's
-		// plugin-walk finds it; on CI (frozen-lockfile install) it doesn't. CI fix
-		// from Phase 0 commit 59c4588 — re-applied here after Task 4 inadvertently
-		// removed it.
-		"lefthook",
 		// Why: pagefind is invoked at build time by astro-pagefind integration, not
 		// imported directly by any source file. The integration calls the pagefind
 		// binary via its Node API internally during `astro build`. Knip can't trace
