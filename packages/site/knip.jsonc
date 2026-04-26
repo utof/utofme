@@ -34,6 +34,13 @@
 		// it and is imported in tests/unit/works-query.test.ts (Task 4). fast-check
 		// itself is not directly imported but is a peer of @fast-check/vitest and
 		// needed at runtime.
-		"fast-check"
+		"fast-check",
+		// Why: lefthook config lives at /lefthook.yml (repo root) but the dep is
+		// declared in packages/site/package.json. knip running with cwd=packages/site
+		// can't see the root config, so it flags the dep as unused. Locally knip's
+		// plugin-walk finds it; on CI (frozen-lockfile install) it doesn't. CI fix
+		// from Phase 0 commit 59c4588 — re-applied here after Task 4 inadvertently
+		// removed it.
+		"lefthook"
 	]
 }
