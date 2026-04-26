@@ -224,7 +224,7 @@ export function applyFilters<E extends EntryLike>(entries: readonly E[], state: 
   4. Esc closes popover.
   5. Card without `summary` (the new fixture variant) → popover renders without summary cleanly.
 
-**Mount:** `<Preview client:visible />` in `BaseLayout` (so it's available on `/` and `/works`; not on `/search`).
+**Mount:** `<Preview client:visible />` page-level in `index.astro` and `works/index.astro` (NOT in `_BaseLayout.astro` — page-level mount is what naturally excludes `/search` without prop drilling). Earlier plan text said "in BaseLayout"; that was a copy-paste from the spec and would have included `/search`. Page-level mount is the correct implementation.
 
 **Pointer-events:** popover wrapper has `pointer-events: none` always — interaction never blocks the underlying card.
 
