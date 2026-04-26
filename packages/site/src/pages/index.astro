@@ -24,6 +24,7 @@ import MusicThumb from "../components/thumbs/MusicThumb.astro";
 import MathThumb from "../components/thumbs/MathThumb.astro";
 import WritingThumb from "../components/thumbs/WritingThumb.astro";
 import FilterBar from "../components/FilterBar.svelte";
+import Preview from "../components/Preview.svelte";
 import { listWorks } from "../lib/works";
 
 const all = await getCollection("works", ({ data }) =>
@@ -41,6 +42,11 @@ const ThumbFor = {
 ---
 
 <BaseLayout title="utofme">
+	<!-- Why: Preview mounted at page level (not in BaseLayout) so /search can
+	     exclude it without prop drilling. client:visible loads only when the
+	     island enters the viewport.
+	     @see packages/specs/plans/02-interactivity.md § Task 7 -->
+	<Preview client:visible />
 	<main>
 		<Stack gap="6">
 			<!-- Typography sentinels: kept so Phase 0 e2e (typography.spec.ts, primitives.spec.ts) continues to pass without modification. -->
@@ -61,7 +67,7 @@ const ThumbFor = {
 						const Thumb = ThumbFor[entry.data.type];
 						return (
 							<li>
-								<Card data={entry.data}>
+								<Card data={entry.data} id={entry.id}>
 									<header slot="header">
 										<TypeGlyph type={entry.data.type} />
 										<h2>{entry.data.title}</h2>

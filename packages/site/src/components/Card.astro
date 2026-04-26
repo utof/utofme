@@ -6,14 +6,22 @@
  * (priority repo→youtube→listen→arxiv→pdf), else `<article>` (no link).
  * Avoids `href="#"` Axe violations and keeps Phase 1 0-KB-JS.
  *
+ * data-preview-target / data-title / data-date / data-summary: read by
+ * Preview.svelte for the hover popover. Pure-DOM approach — no extra data
+ * prop or JSON blob needed. summary omitted when undefined to keep the DOM
+ * clean and let Preview detect absence via `dataset.summary === undefined`.
+ *
  * @see packages/specs/adrs/0011-card-click-target-strategy.md
+ * @see packages/specs/plans/02-interactivity.md § Task 7
  */
 import type { WorkEntry } from "../content.config";
 
 interface Props {
 	data: WorkEntry;
+	/** Content-collection entry id used as the preview popover lookup key. */
+	id?: string;
 }
-const { data } = Astro.props;
+const { data, id } = Astro.props;
 
 function externalUrlFor(d: WorkEntry): string | undefined {
 	if (d.type === "code" && d.repo) return d.repo;
@@ -25,6 +33,9 @@ function externalUrlFor(d: WorkEntry): string | undefined {
 
 const href = externalUrlFor(data);
 const Tag = href ? "a" : "article";
+
+/** ISO date string for the data-date attribute. */
+const dateStr = data.date.toISOString().split("T")[0];
 ---
 
 <Tag
@@ -33,6 +44,10 @@ const Tag = href ? "a" : "article";
 	data-draft={data.draft ? "true" : undefined}
 	data-type={data.type}
 	data-tags={data.tags.join(",")}
+	data-preview-target={id}
+	data-title={data.title}
+	data-date={dateStr}
+	data-summary={data.summary}
 >
 	<slot name="header" />
 	<slot name="thumb" />
