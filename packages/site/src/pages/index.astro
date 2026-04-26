@@ -125,6 +125,11 @@ const ThumbFor = {
 
 	// Re-apply on popstate (back/forward navigation)
 	window.addEventListener("popstate", applyFilter);
+
+	// Re-apply on Astro view-transition page-load (Task 12 wires ClientRouter site-wide).
+	// Why: ClientRouter swaps <body> on nav and re-runs inline scripts; the filter must
+	// re-apply against the new DOM. astro:page-load fires once per nav (initial + swaps).
+	document.addEventListener("astro:page-load", applyFilter);
 </script>
 
 <style>
