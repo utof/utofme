@@ -4,6 +4,7 @@
 // toHaveScreenshot API (mask, maxDiffPixelRatio) verified via context7 /microsoft/playwright.dev:
 // https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2
 // See: packages/specs/plans/01-card-grid-mvp.md § Task 10
+// Pagefind filter span assertion: see packages/specs/plans/02-interactivity.md § Task 8
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -60,6 +61,23 @@ for (const route of ROUTES) {
 				.first()
 				.evaluate((el) => getComputedStyle(el).transitionDuration);
 			expect(["0s", "0s, 0s", ""]).toContain(transition);
+		});
+
+		test("card with type=code exposes a data-pagefind-filter=type child element with textContent 'code'", async ({
+			page,
+		}) => {
+			// Why: Pagefind reads filter values from element textContent, not the
+			// attribute value. This test asserts the hidden span for the 'code' type
+			// card is present in the DOM and has the correct text.
+			// See: https://pagefind.app/docs/metadata/ (fetched 2026-04-26)
+			// See: packages/specs/plans/02-interactivity.md § Task 8 TDD
+			await page.goto(route);
+			// Find a card element that has data-type="code" and look for its
+			// child span with data-pagefind-filter="type" whose textContent is "code".
+			const filterSpan = page
+				.locator('.card[data-type="code"] [data-pagefind-filter="type"]')
+				.first();
+			await expect(filterSpan).toHaveText("code");
 		});
 	});
 }
