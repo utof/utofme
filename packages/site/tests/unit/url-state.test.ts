@@ -277,9 +277,8 @@ describe("Property 4: subscribe-fires-on-change", () => {
 		const listener = vi.fn();
 		const unsub = subscribe(listener);
 		try {
-			// Start with default state, write a different state
+			// writeState dispatches urlstate:change — listener fires without manual popstate
 			writeState({ type: "code" });
-			window.dispatchEvent(new PopStateEvent("popstate"));
 			expect(listener).toHaveBeenCalledOnce();
 		} finally {
 			unsub();
@@ -295,6 +294,21 @@ describe("Property 4: subscribe-fires-on-change", () => {
 		expect(listener).not.toHaveBeenCalled();
 	});
 
+	it("writeState alone (no manual popstate) fires subscriber exactly once via urlstate:change", () => {
+		// Why: history.replaceState does not fire popstate per HTML spec.
+		// writeState must dispatch the synthetic urlstate:change event so that
+		// FilterBar can react to in-page writes without a manual popstate dispatch.
+		const listener = vi.fn();
+		const unsub = subscribe(listener);
+		try {
+			writeState({ sort: "title" });
+			// No manual popstate dispatch — the CustomEvent from writeState is enough
+			expect(listener).toHaveBeenCalledTimes(1);
+		} finally {
+			unsub();
+		}
+	});
+
 	it("listener receives a FilterState object with tags array", () => {
 		// Why: vi.fn<(s: FilterState) => void>() — Vitest 4.x `fn` takes the full
 		// function type as a single type parameter so that `lastCall[0]` is typed
@@ -302,8 +316,8 @@ describe("Property 4: subscribe-fires-on-change", () => {
 		const listener = vi.fn<(s: FilterState) => void>();
 		const unsub = subscribe(listener);
 		try {
+			// writeState dispatches urlstate:change — listener fires without manual popstate
 			writeState({ tags: ["foo", "bar"] });
-			window.dispatchEvent(new PopStateEvent("popstate"));
 			expect(listener).toHaveBeenCalledOnce();
 			const firstCall = listener.mock.lastCall;
 			expect(firstCall).toBeDefined();

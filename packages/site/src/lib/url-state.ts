@@ -6,7 +6,7 @@
  * schema — changes to encoding (e.g. repeated-key tag encoding per ADR 0012)
  * flow through one module and are Stryker-targetable.
  *
- * @see packages/specs/plans/02-interactivity.md § Task 2
+ * @see packages/specs/plans/02-interactivity.md § Task 2 + ADR 0012 (pending Task 13b)
  */
 
 // ---------------------------------------------------------------------------
@@ -80,7 +80,7 @@ function isValidSort(v: string): v is FilterState["sort"] {
  * - `sort` omitted when equal to the default `"date"`.
  * - `q` omitted when `search` is `undefined`.
  *
- * @see packages/specs/adrs/0012-url-state-roll-your-own.md
+ * @see packages/specs/plans/02-interactivity.md § Task 2 + ADR 0012 (pending Task 13b)
  */
 export function canonicalize(state: FilterState): URLSearchParams {
 	const params = new URLSearchParams();
@@ -136,7 +136,7 @@ export function readState(url?: URL | string): FilterState {
 	const rawSort = params.get("sort");
 	const sort: FilterState["sort"] = rawSort !== null && isValidSort(rawSort) ? rawSort : "date";
 
-	const tags = params.getAll("tag");
+	const tags = params.getAll("tag").filter((t) => t.length > 0);
 
 	const rawSearch = params.get("q");
 	const resolvedSearch = rawSearch !== null && rawSearch.length > 0 ? rawSearch : undefined;
@@ -159,16 +159,28 @@ export function readState(url?: URL | string): FilterState {
  * Serialises a partial `FilterState` into the current URL via
  * `history.replaceState`, merging with the existing state.
  *
- * Why: uses `replaceState` (not `pushState`) so filter changes do not pollute
- * the browser's back-stack — a back-button should return to the previous
- * *page*, not to a prior filter combination on the same page.
+ * **Client-only.** Throws if called from SSR or build-time code paths.
+ * Why: `history.replaceState` and `location.pathname` are browser-only APIs;
+ * calling them server-side throws a `ReferenceError` that is hard to diagnose.
+ * Fail fast with a clear message instead.
+ *
+ * After updating the URL, dispatches a `urlstate:change` CustomEvent so that
+ * `subscribe` listeners fire immediately — `history.replaceState` does NOT
+ * natively fire `popstate` (per HTML spec).
  *
  * Internally uses `canonicalize` so default values are always omitted and
  * tags are always sorted — no duplication of encoding logic.
  *
- * @see packages/specs/plans/02-interactivity.md § Task 2
+ * Why: uses `replaceState` (not `pushState`) so filter changes do not pollute
+ * the browser's back-stack — a back-button should return to the previous
+ * *page*, not to a prior filter combination on the same page.
+ *
+ * @see packages/specs/plans/02-interactivity.md § Task 2 + ADR 0012 (pending Task 13b)
  */
 export function writeState(state: Partial<FilterState>): void {
+	if (typeof window === "undefined") {
+		throw new Error("writeState is client-only; do not call from SSR/build-time code paths.");
+	}
 	// Merge with current state so partial writes don't erase unrelated params.
 	const current = readState();
 	// Why: use imperative assignment to avoid explicitly setting optional properties
@@ -187,6 +199,9 @@ export function writeState(state: Partial<FilterState>): void {
 	const qs = canonicalize(merged).toString();
 	const url = qs ? `?${qs}` : location.pathname;
 	history.replaceState(null, "", url);
+	// Why: `history.replaceState` does not fire `popstate` per HTML spec.
+	// Dispatch a synthetic event so `subscribe` listeners fire for in-page writes.
+	window.dispatchEvent(new CustomEvent("urlstate:change"));
 }
 
 // ---------------------------------------------------------------------------
@@ -194,22 +209,31 @@ export function writeState(state: Partial<FilterState>): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Subscribes `listener` to URL changes driven by `popstate` events.
+ * Subscribes `listener` to URL changes from two sources:
+ * - `popstate` — fired by the browser on back/forward navigation.
+ * - `urlstate:change` — a synthetic CustomEvent dispatched by `writeState`
+ *   after every in-page `history.replaceState` call (because `replaceState`
+ *   does NOT natively fire `popstate` per the HTML spec).
  *
  * Why: a single `subscribe` call site means FilterBar and any future consumer
  * get teardown-safe subscriptions without each rolling their own
- * `addEventListener` / `removeEventListener` pairing.
+ * `addEventListener` / `removeEventListener` pairing. Listening to both
+ * event sources ensures the listener fires for both navigation directions
+ * (back/forward) and in-page writes.
  *
- * Returns an unsubscribe function — call it to detach the listener.
+ * Returns an unsubscribe function — call it to detach the listener from both
+ * event sources.
  *
- * @see packages/specs/plans/02-interactivity.md § Task 2
+ * @see packages/specs/plans/02-interactivity.md § Task 2 + ADR 0012 (pending Task 13b)
  */
 export function subscribe(listener: (s: FilterState) => void): () => void {
 	const handler = () => {
 		listener(readState());
 	};
 	window.addEventListener("popstate", handler);
+	window.addEventListener("urlstate:change", handler);
 	return () => {
 		window.removeEventListener("popstate", handler);
+		window.removeEventListener("urlstate:change", handler);
 	};
 }
