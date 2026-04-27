@@ -161,12 +161,11 @@ test.describe("CommandPalette — /", () => {
 		const dialog = page.locator('[role="dialog"][data-palette]');
 		await expect(dialog).toBeVisible({ timeout: 100 });
 
-		// Click outside the dialog on the backdrop. Use the bottom-left corner of
-		// the viewport to avoid the dialog, which may be tall on small viewports
-		// (Pixel 5: 393×727) when the nav list has many items.
-		// Why: the dialog sits at top:20% and can be ~350px tall with 8 items;
-		// clicking near y:700 guarantees we land on the backdrop, not a list item.
-		await page.locator("[data-palette-backdrop]").click({ position: { x: 20, y: 700 } });
+		// Click outside the dialog on the backdrop.
+		// Why: backdrop is position:fixed; inset:0, so (20,20) from its top-left always
+		// lands on the backdrop itself — viewport-independent. Center-click would land
+		// on the centered dialog when the list is tall enough to reach center.
+		await page.locator("[data-palette-backdrop]").click({ position: { x: 20, y: 20 } });
 		await expect(dialog).toBeHidden({ timeout: 300 });
 	});
 
