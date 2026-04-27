@@ -188,11 +188,28 @@ async function fetchGithub(s: Secrets): Promise<{ commits30d: number; topRepo: s
 		},
 	);
 	if (!r.ok) throw new Error(`github ${r.status}`);
-	const data = (await r.json()) as { total_count?: unknown };
+	const data = (await r.json()) as {
+		total_count?: number;
+		items?: Array<{ repository?: { full_name?: string } }>;
+	};
 	if (typeof data !== "object" || data === null || typeof data.total_count !== "number") {
 		throw new Error("github: bad shape");
 	}
-	return { commits30d: data.total_count, topRepo: "utofme" };
+	const items = data.items ?? [];
+	const counts = new Map<string, number>();
+	for (const item of items) {
+		const repo = item.repository?.full_name;
+		if (typeof repo === "string") counts.set(repo, (counts.get(repo) ?? 0) + 1);
+	}
+	let topRepo = "—";
+	let topCount = 0;
+	for (const [repo, count] of counts) {
+		if (count > topCount) {
+			topRepo = repo;
+			topCount = count;
+		}
+	}
+	return { commits30d: data.total_count, topRepo };
 }
 
 /**
@@ -223,10 +240,11 @@ async function fetchStrava(s: Secrets): Promise<{ km30d: number; activities30d: 
 	// For now, call stub endpoint so URL-pattern mock fires in test (b).
 	const r = await fetch("https://www.strava.com/api/v3/athlete/activities");
 	if (!r.ok) throw new Error(`strava ${r.status}`);
-	const data = (await r.json()) as unknown;
-	if (typeof data !== "object" || data === null) throw new Error("strava: bad shape");
-	// Production: sum `distance` fields (metres → km), count entries after filter.
-	return { km30d: 1, activities30d: 1 };
+	// Strava OAuth refresh + per-activity sum is not yet implemented.
+	// Throwing here lets the per-source merge flag this source error: true,
+	// honoring ADR 0024 (honest UX > stale-as-fresh). Replace once OAuth
+	// refresh is wired in a follow-up issue.
+	throw new Error("strava: live aggregation not yet implemented");
 }
 
 /**

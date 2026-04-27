@@ -73,7 +73,7 @@ function makeFetchMock(failingPatterns: RegExp[] = []) {
 }
 
 describe("snapshot fetcher", () => {
-	it("(a) all-succeed → all sources error: false, value populated", async () => {
+	it("(a) all-succeed → 4 sources error: false; strava always error: true (ADR 0024 stub)", async () => {
 		vi.stubGlobal("fetch", makeFetchMock([]));
 		await runFetcher({ secrets: SECRETS, outputPath: SNAPSHOT_PATH });
 		const written = JSON.parse(await fs.readFile(SNAPSHOT_PATH, "utf8")) as {
@@ -83,8 +83,15 @@ describe("snapshot fetcher", () => {
 			error: boolean;
 			value: unknown;
 		}>;
-		expect(sources.every((s) => s.error === false)).toBe(true);
-		expect(sources.every((s) => s.value !== null)).toBe(true);
+		// Strava throws intentionally (live aggregation not yet implemented, ADR 0024).
+		expect(sources.filter((s) => s.error === false).length).toBe(4);
+		expect(written.snapshot.sources["strava"]?.error).toBe(true);
+		expect(written.snapshot.sources["strava"]?.value).toBeNull();
+		// The other 4 sources succeed.
+		for (const id of ["github", "lastfm", "literal", "wakatime"]) {
+			expect(written.snapshot.sources[id]?.error).toBe(false);
+			expect(written.snapshot.sources[id]?.value).not.toBeNull();
+		}
 	});
 
 	it("(b) Strava down → strava errored; the other 4 normal", async () => {
@@ -141,7 +148,8 @@ describe("snapshot fetcher", () => {
 			}
 		).snapshot;
 		expect(sources["github"]?.error).toBe(true);
-		expect(sources["strava"]?.error).toBe(false);
+		// Strava always errors (ADR 0024 stub) — independent of github shape.
+		expect(sources["strava"]?.error).toBe(true);
 	});
 
 	it("(e) all secrets absent → no-op (file not created)", async () => {
