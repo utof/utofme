@@ -1,0 +1,75 @@
+---
+/**
+ * /stats — renders the 5-source snapshot at build time.
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Acceptance criteria 4
+ */
+import BaseLayout from "../layouts/_BaseLayout.astro";
+import { loadSnapshot } from "../lib/stats";
+import StatsSection from "../components/StatsSection.astro";
+import { slashSiblings } from "../lib/slash";
+
+const snapshot = await loadSnapshot();
+const sources = Object.values(snapshot.sources);
+const siblings = slashSiblings("stats");
+---
+
+<BaseLayout title="Stats" description="Public-data dashboard.">
+	<main>
+		<article>
+			<header>
+				<h1 transition:name="slash-stats">Stats</h1>
+				<p class="updated">
+					snapshot generated <time datetime={snapshot.generatedAt}
+						>{snapshot.generatedAt.slice(0, 10)}</time
+					>
+				</p>
+			</header>
+			{sources.map((s) => <StatsSection source={s} />)}
+			<nav class="cross-link" aria-label="Other slash pages">
+				<h2>more about me</h2>
+				<ul>
+					{
+						siblings.map((s) => (
+							<li>
+								<a href={s.href}>{s.title}</a>
+							</li>
+						))
+					}
+				</ul>
+			</nav>
+		</article>
+	</main>
+</BaseLayout>
+
+<style>
+	main {
+		max-width: 70ch;
+		margin: 0 auto;
+		padding: var(--space-4) var(--space-3);
+	}
+	header h1 {
+		margin-bottom: var(--space-1);
+	}
+	header .updated {
+		color: var(--color-text-muted);
+		font-size: var(--font-size-2);
+		margin: 0 0 var(--space-3);
+	}
+	nav.cross-link {
+		margin-top: var(--space-5);
+		padding-top: var(--space-3);
+		border-top: 1px solid var(--color-border);
+	}
+	nav.cross-link h2 {
+		font-size: var(--font-size-3);
+		margin-bottom: var(--space-2);
+	}
+	nav.cross-link ul {
+		list-style: none;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-3);
+	}
+</style>

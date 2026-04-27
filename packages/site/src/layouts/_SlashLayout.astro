@@ -1,0 +1,88 @@
+---
+/**
+ * Shared shell for /now, /uses, /colophon, /tops. /stats wraps this layout
+ * via its own data path but renders the same header + cross-link.
+ *
+ * Why: one layout = one source of truth for the slash-page header
+ * convention (h1 + updated time + optional description + cross-link footer).
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Architecture (Static slash pages)
+ * @see packages/specs/adrs/0022-slash-collection.md
+ */
+import BaseLayout from "./_BaseLayout.astro";
+import { slashSiblings, type SlashPageId } from "../lib/slash";
+
+interface Props {
+	id: SlashPageId;
+	title: string;
+	description?: string | undefined;
+	updated: Date;
+}
+
+const { id, title, description, updated } = Astro.props;
+const siblings = slashSiblings(id);
+const updatedISO = updated.toISOString();
+const updatedHuman = updated.toISOString().slice(0, 10);
+---
+
+<BaseLayout title={title} {...description !== undefined ? { description } : {}}>
+	<main>
+		<article>
+			<header>
+				<h1 transition:name={`slash-${id}`}>{title}</h1>
+				<p class="updated">
+					updated <time datetime={updatedISO}>{updatedHuman}</time>
+				</p>
+				{description && <p class="description">{description}</p>}
+			</header>
+			<slot />
+			<nav class="cross-link" aria-label="Other slash pages">
+				<h2>more about me</h2>
+				<ul>
+					{
+						siblings.map((s) => (
+							<li>
+								<a href={s.href}>{s.title}</a>
+							</li>
+						))
+					}
+				</ul>
+			</nav>
+		</article>
+	</main>
+</BaseLayout>
+
+<style>
+	main {
+		max-width: 70ch;
+		margin: 0 auto;
+		padding: var(--space-4) var(--space-3);
+	}
+	article header h1 {
+		margin-bottom: var(--space-1);
+	}
+	article header .updated {
+		color: var(--color-text-muted);
+		font-size: var(--font-size-2);
+		margin: 0;
+	}
+	article header .description {
+		margin-top: var(--space-2);
+	}
+	nav.cross-link {
+		margin-top: var(--space-5);
+		padding-top: var(--space-3);
+		border-top: 1px solid var(--color-border);
+	}
+	nav.cross-link h2 {
+		font-size: var(--font-size-3);
+		margin-bottom: var(--space-2);
+	}
+	nav.cross-link ul {
+		list-style: none;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-3);
+	}
+</style>

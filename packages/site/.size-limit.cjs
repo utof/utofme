@@ -105,4 +105,40 @@ module.exports = [
 		limit: "60 KB",
 		disablePlugins: ["@size-limit/time"],
 	},
+	// Phase 4 slash-page budgets
+	{
+		name: "now page css+html",
+		path: ["dist/now/index.html", "dist/_astro/*.css"],
+		limit: "60 KB",
+		gzip: true,
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		name: "uses page css+html",
+		path: ["dist/uses/index.html", "dist/_astro/*.css"],
+		limit: "60 KB",
+		gzip: true,
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		name: "colophon page css+html",
+		path: ["dist/colophon/index.html", "dist/_astro/*.css"],
+		limit: "60 KB",
+		gzip: true,
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		name: "tops page css+html",
+		path: ["dist/tops/index.html", "dist/_astro/*.css"],
+		limit: "60 KB",
+		gzip: true,
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		name: "stats page css+html",
+		path: ["dist/stats/index.html", "dist/_astro/*.css"],
+		limit: "60 KB",
+		gzip: true,
+		disablePlugins: ["@size-limit/time"],
+	},
 ];

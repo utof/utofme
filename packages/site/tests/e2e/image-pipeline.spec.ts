@@ -105,7 +105,9 @@ test("6. <img> inside <picture> has loading='lazy'", async ({ page }) => {
 
 test("7. visual regression baseline for /works/cover-fixture/", async ({ page }) => {
 	await page.goto("/works/cover-fixture/");
-	await expect(page).toHaveScreenshot("cover-fixture.png", {
+	// Clip to <main> so the footer (added in Task 4) does not affect
+	// this baseline. Footer has its own footer.spec.ts coverage.
+	await expect(page.locator("main")).toHaveScreenshot("cover-fixture.png", {
 		maxDiffPixelRatio: 0.02,
 		// Mask the picture element to absorb per-build hash changes in image URLs
 		mask: [page.locator("picture")],

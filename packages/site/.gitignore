@@ -1,0 +1,2 @@
+# Production-only build artifact — fetched at prebuild time. Fixture is committed.
+src/content/stats/snapshot.json

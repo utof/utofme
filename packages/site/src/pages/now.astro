@@ -1,0 +1,23 @@
+---
+/**
+ * /now — IndieWeb /now-page convention. Sources content from the `slash`
+ * MDX collection entry id `now`.
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Acceptance criteria 1
+ */
+import { getEntry, render } from "astro:content";
+import SlashLayout from "../layouts/_SlashLayout.astro";
+
+const entry = await getEntry("slash", "now");
+if (!entry) throw new Error("Missing slash/now MDX entry — required at build time.");
+const { Content } = await render(entry);
+---
+
+<SlashLayout
+	id="now"
+	title={entry.data.title}
+	description={entry.data.description}
+	updated={entry.data.updated}
+>
+	<Content />
+</SlashLayout>

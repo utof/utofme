@@ -15,7 +15,7 @@
  * @see packages/specs/specs/03-content-pipeline.md § cover image migration
  */
 import { defineCollection, type SchemaContext } from "astro:content";
-import { glob } from "astro/loaders";
+import { file, glob } from "astro/loaders";
 import { z } from "astro/zod";
 
 /**
@@ -93,11 +93,79 @@ const works = defineCollection({
 });
 
 /**
+ * Slash-page collection schema (frontmatter shape for /now, /uses,
+ * /colophon, /tops). `updated` is required so each page surfaces a
+ * trustworthy "last touched" date — the IndieWeb /now-page convention.
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Architecture (Static slash pages)
+ * @see packages/specs/adrs/0022-slash-collection.md
+ */
+export const slashSchema = z.object({
+	title: z.string(),
+	description: z.string().max(240).optional(),
+	updated: z.coerce.date(),
+	tags: z.array(z.string()).default([]),
+});
+
+const slash = defineCollection({
+	loader: glob({ pattern: "*.mdx", base: "./src/content/slash" }),
+	schema: slashSchema,
+});
+
+/**
+ * One stats source's record. `value` is `null` and `lastSuccessAt` is
+ * `null` when `error: true` — see ADR 0024 (no last-good retention).
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Snapshot shape
+ */
+export const StatsSourceSchema = z.object({
+	id: z.string(),
+	label: z.string(),
+	value: z.unknown().nullable(),
+	lastSuccessAt: z.string().datetime().nullable(),
+	error: z.boolean().default(false),
+});
+
+/**
+ * Schema applied to the single `stats/snapshot` entry — the inner value
+ * of the top-level wrapping object in `snapshot.json` / `snapshot.fixture.json`.
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Snapshot shape
+ * @see packages/specs/adrs/0023-stats-build-time-snapshot.md
+ */
+export const snapshotSchema = z.object({
+	generatedAt: z.string().datetime(),
+	sources: z.object({
+		github: StatsSourceSchema,
+		strava: StatsSourceSchema,
+		lastfm: StatsSourceSchema,
+		literal: StatsSourceSchema,
+		wakatime: StatsSourceSchema,
+	}),
+});
+
+/**
+ * Stats snapshot collection. Single-entry; the JSON file's top-level key
+ * `snapshot` becomes the entry id consumed by getEntry("stats", "snapshot").
+ *
+ * In dev / CI, `snapshot.json` does not exist (gitignored). Astro's
+ * file() loader logs `File not found:` and returns without throwing
+ * (verified via withastro/astro source 2026-04-27 — packages/astro/src/content/loaders/file.ts).
+ * The build stays green; `loadSnapshot` falls back to fixture.
+ *
+ * @see packages/specs/adrs/0023-stats-build-time-snapshot.md
+ */
+const stats = defineCollection({
+	loader: file("./src/content/stats/snapshot.json"),
+	schema: snapshotSchema,
+});
+
+/**
  * Astro Content Collections registry.
  *
  * Why: Astro 6 requires this exact named export at `src/content.config.ts`
- * to wire the `works` collection.
+ * to wire the `works`, `slash`, and `stats` collections.
  *
  * @see https://docs.astro.build/en/guides/content-collections/
  */
-export const collections = { works };
+export const collections = { works, slash, stats };

@@ -1,0 +1,29 @@
+---
+title: Colophon
+description: How this site is built.
+updated: 2026-04-27
+tags: [colophon, meta]
+---
+
+## Stack
+
+- **Astro 6** (static output).
+- **Svelte 5** (runes) for interactive islands.
+- **Bun ≥ 1.2** as runtime + package manager.
+- **Cloudflare Workers (Assets)** for hosting; no SSR adapter — every route is a static file.
+
+## Build pipeline
+
+- **Sharp** for AVIF + WebP responsive images via `astro:assets`.
+- **Expressive Code** for syntax highlighting (dual `github-light` / `github-dark` themes via `prefers-color-scheme`).
+- **Sandpack (React 19 island)** for in-page code execution where MDX articles need it.
+
+## Fonts
+
+- Variable serif + sans + mono. Mono is preloaded; serif/sans use
+  `display: optional` to avoid Slow-4G layout thrash.
+
+## License
+
+- Source MIT — see <a href="https://github.com/utof/utofme">github.com/utof/utofme</a>.
+- Architectural decisions live under `packages/specs/adrs/`.

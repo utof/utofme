@@ -27,6 +27,13 @@ module.exports = {
 				// but no Svelte or Sandpack island — keeps the performance gate
 				// meaningful without the Sandpack JS cost. Threshold ≥ 0.85 per ADR 0017.
 				"http://localhost:4321/works/code-2/",
+				// Phase 4 slash pages. /tops/ is intentionally omitted — see spec line 17:
+				// /tops/ is a static list page with no external data dependencies, so its
+				// performance profile is equivalent to /works/ (already gated above).
+				"http://localhost:4321/now/",
+				"http://localhost:4321/uses/",
+				"http://localhost:4321/colophon/",
+				"http://localhost:4321/stats/",
 			],
 			// Why: 5 runs absorbs Lighthouse-simulation variance inherent to the
 			// Lantern model on localhost. With `aggregationMethod: "optimistic"` the

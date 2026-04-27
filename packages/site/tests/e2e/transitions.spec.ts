@@ -205,7 +205,9 @@ test("5. view-transition CSS injected after SPA navigation (best-effort)", async
 
 test("6a. visual regression / (post-ClientRouter baseline)", async ({ page }) => {
 	await page.goto("/");
-	await expect(page).toHaveScreenshot("transitions-home.png", {
+	// Clip to <main> so the footer (added in Task 4) does not affect
+	// this baseline. Footer has its own footer.spec.ts coverage.
+	await expect(page.locator("main")).toHaveScreenshot("transitions-home.png", {
 		maxDiffPixelRatio: 0.02,
 		mask: [page.locator('[data-test="works-grid"]')],
 	});
@@ -213,7 +215,9 @@ test("6a. visual regression / (post-ClientRouter baseline)", async ({ page }) =>
 
 test("6b. visual regression /works/ (post-ClientRouter baseline)", async ({ page }) => {
 	await page.goto("/works/");
-	await expect(page).toHaveScreenshot("transitions-works.png", {
+	// Clip to <main> so the footer (added in Task 4) does not affect
+	// this baseline. Footer has its own footer.spec.ts coverage.
+	await expect(page.locator("main")).toHaveScreenshot("transitions-works.png", {
 		maxDiffPixelRatio: 0.02,
 		mask: [page.locator('[data-test="works-grid"]')],
 	});
@@ -223,7 +227,9 @@ test("6c. visual regression /search (post-ClientRouter baseline)", async ({ page
 	await page.goto("/search/");
 	// Wait for search component to hydrate before snapshot
 	await page.waitForSelector('[role="search"]', { timeout: 10_000 });
-	await expect(page).toHaveScreenshot("transitions-search.png", {
+	// Clip to <main> so the footer (added in Task 4) does not affect
+	// this baseline. Footer has its own footer.spec.ts coverage.
+	await expect(page.locator("main")).toHaveScreenshot("transitions-search.png", {
 		maxDiffPixelRatio: 0.02,
 	});
 });

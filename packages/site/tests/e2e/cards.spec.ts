@@ -46,10 +46,16 @@ for (const route of ROUTES) {
 			// because the area outside the grid (page chrome, h1, spacing) is unmasked.
 			// See: https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2
 			// See: packages/specs/plans/01-card-grid-mvp.md § Reviewer briefing point 5
-			await expect(page).toHaveScreenshot(`${route === "/" ? "home" : "works"}.png`, {
-				maxDiffPixelRatio: 0.001,
-				mask: [page.locator('[data-test="works-grid"]')],
-			});
+			// Clip to <main> so the footer (added in Task 4) does not affect
+			// this baseline — full-page snapshots would require re-baselining on
+			// every footer style change. Footer has its own footer.spec.ts coverage.
+			await expect(page.locator("main")).toHaveScreenshot(
+				`${route === "/" ? "home" : "works"}.png`,
+				{
+					maxDiffPixelRatio: 0.001,
+					mask: [page.locator('[data-test="works-grid"]')],
+				},
+			);
 		});
 
 		test("prefers-reduced-motion disables card outline transition", async ({ page }) => {

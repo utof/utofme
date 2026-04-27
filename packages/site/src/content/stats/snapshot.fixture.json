@@ -1,0 +1,42 @@
+{
+	"snapshot": {
+		"generatedAt": "2026-04-27T15:00:00Z",
+		"sources": {
+			"github": {
+				"id": "github",
+				"label": "GitHub",
+				"value": { "commits30d": 47, "topRepo": "utofme" },
+				"lastSuccessAt": "2026-04-27T15:00:00Z",
+				"error": false
+			},
+			"strava": {
+				"id": "strava",
+				"label": "Strava",
+				"value": { "km30d": 38.4, "activities30d": 9 },
+				"lastSuccessAt": "2026-04-27T15:00:00Z",
+				"error": false
+			},
+			"lastfm": {
+				"id": "lastfm",
+				"label": "Last.fm",
+				"value": { "topArtist": "Boards of Canada", "scrobbles7d": 312 },
+				"lastSuccessAt": "2026-04-27T15:00:00Z",
+				"error": false
+			},
+			"literal": {
+				"id": "literal",
+				"label": "Literal",
+				"value": null,
+				"lastSuccessAt": null,
+				"error": true
+			},
+			"wakatime": {
+				"id": "wakatime",
+				"label": "Wakatime",
+				"value": { "topLanguage": "TypeScript", "hours7d": 21.5 },
+				"lastSuccessAt": "2026-04-27T15:00:00Z",
+				"error": false
+			}
+		}
+	}
+}

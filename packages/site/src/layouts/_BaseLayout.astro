@@ -17,6 +17,7 @@
 import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
 import CommandPalette from "../components/CommandPalette.svelte";
+import SlashFooter from "../components/SlashFooter.astro";
 
 interface Props {
 	/** Document <title> content. */
@@ -66,6 +67,7 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 	</head>
 	<body>
 		<slot />
+		<SlashFooter />
 		<!-- Why: CommandPalette mounted here (not per-page) so it is available on
 		     every route without re-mounting. transition:persist retains the Svelte
 		     island (DOM + state) across Astro ClientRouter SPA navigations once
