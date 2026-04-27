@@ -13,12 +13,14 @@
 	// they are not reachable from src/pages/** so must be declared explicitly.
 	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
 	"project": ["src/**/*.{ts,tsx,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
-	// Why: ignoreExportsUsedInFile for interfaces lets knip skip exported interfaces
-	// that are referenced within the same file (e.g. ListWorksOptions used as the
-	// opts parameter type in listWorks). These are public API types for external
-	// callers added in Task 4; they have no external consumer yet within this phase.
+	// Why: ignoreExportsUsedInFile for interfaces and type aliases lets knip skip
+	// exported types that are referenced within the same file (e.g. ListWorksOptions
+	// used as the opts parameter type in listWorks; StatsSource / Snapshot used as
+	// param/return types in lib/stats.ts). These are public API types for external
+	// callers added in Tasks 4 / 6; they have no external consumer yet within this phase.
 	"ignoreExportsUsedInFile": {
-		"interface": true
+		"interface": true,
+		"type": true
 	},
 	"ignoreDependencies": [
 		// Why: wrangler is a CLI-only dev dep (no `import` from source). It powers
