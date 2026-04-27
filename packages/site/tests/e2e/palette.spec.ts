@@ -161,8 +161,12 @@ test.describe("CommandPalette — /", () => {
 		const dialog = page.locator('[role="dialog"][data-palette]');
 		await expect(dialog).toBeVisible({ timeout: 100 });
 
-		// Click outside the dialog (e.g. the backdrop overlay)
-		await page.locator("[data-palette-backdrop]").click();
+		// Click outside the dialog on the backdrop. Use the bottom-left corner of
+		// the viewport to avoid the dialog, which may be tall on small viewports
+		// (Pixel 5: 393×727) when the nav list has many items.
+		// Why: the dialog sits at top:20% and can be ~350px tall with 8 items;
+		// clicking near y:700 guarantees we land on the backdrop, not a list item.
+		await page.locator("[data-palette-backdrop]").click({ position: { x: 20, y: 700 } });
 		await expect(dialog).toBeHidden({ timeout: 300 });
 	});
 
@@ -211,6 +215,34 @@ test.describe("CommandPalette — /", () => {
 		// With reduced-motion, animationName should be 'none'
 		const animationName = await dialog.evaluate((el) => getComputedStyle(el).animationName);
 		expect(animationName).toBe("none");
+	});
+
+	// Why: Phase 4 adds 5 slash pages (/now /uses /colophon /tops /stats); the
+	// palette must expose navigate entries for each so keyboard-first users can
+	// reach them without touching the mouse.
+	// @see packages/specs/specs/04-slash-pages.md § AC8
+	test("10. palette nav lists 5 slash routes", async ({ page }) => {
+		await page.goto("/");
+		await waitForPalette(page);
+		await openPalette(page);
+
+		const dialog = page.locator('[role="dialog"][data-palette]');
+		await expect(dialog).toBeVisible({ timeout: 100 });
+
+		// Clear query so all actions are visible (no filtering)
+		const input = dialog.locator("input");
+		await input.fill("");
+
+		const items = dialog.locator("[data-palette-item]");
+		for (const slug of [
+			"Go to /now/",
+			"Go to /uses/",
+			"Go to /colophon/",
+			"Go to /tops/",
+			"Go to /stats/",
+		]) {
+			await expect(items.filter({ hasText: slug })).toBeVisible({ timeout: 300 });
+		}
 	});
 
 	// Why: transition:persist only takes effect when Astro's ClientRouter handles

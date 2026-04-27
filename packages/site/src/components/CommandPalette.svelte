@@ -50,6 +50,11 @@
 		{ id: "goto-home", label: "Go to home", kind: "navigate", target: "/" },
 		{ id: "goto-works", label: "Go to /works/", kind: "navigate", target: "/works/" },
 		{ id: "goto-search", label: "Go to search", kind: "navigate", target: "/search/" },
+		{ id: "goto-now", label: "Go to /now/", kind: "navigate", target: "/now/" },
+		{ id: "goto-uses", label: "Go to /uses/", kind: "navigate", target: "/uses/" },
+		{ id: "goto-colophon", label: "Go to /colophon/", kind: "navigate", target: "/colophon/" },
+		{ id: "goto-tops", label: "Go to /tops/", kind: "navigate", target: "/tops/" },
+		{ id: "goto-stats", label: "Go to /stats/", kind: "navigate", target: "/stats/" },
 		{
 			id: "copy-url",
 			label: "Copy current URL",
