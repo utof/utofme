@@ -1,0 +1,54 @@
+---
+/**
+ * Renders one stats source. `formatStatValue` handles the unavailable
+ * branch internally — section markup is identical regardless of error.
+ *
+ * @see packages/specs/specs/04-slash-pages.md § Architecture (/stats data layer)
+ */
+import { formatStatValue, type StatsSource } from "../lib/stats";
+
+interface Props {
+	source: StatsSource;
+}
+
+const { source } = Astro.props;
+const formatted = formatStatValue(source);
+---
+
+<section data-test="stats-section">
+	<h2>{source.label}</h2>
+	<p class="value">
+		{
+			source.error ? (
+				<span aria-label="data temporarily unavailable">⚠ {formatted}</span>
+			) : (
+				<>{formatted}</>
+			)
+		}
+	</p>
+	{
+		source.lastSuccessAt && (
+			<p class="updated">
+				as of <time datetime={source.lastSuccessAt}>{source.lastSuccessAt.slice(0, 10)}</time>
+			</p>
+		)
+	}
+</section>
+
+<style>
+	section {
+		padding: var(--space-3) 0;
+		border-bottom: 1px solid var(--color-border);
+	}
+	h2 {
+		margin: 0 0 var(--space-1);
+	}
+	.value {
+		margin: 0;
+	}
+	.updated {
+		margin: var(--space-1) 0 0;
+		color: var(--color-text-muted);
+		font-size: var(--font-size-2);
+	}
+</style>
