@@ -44,7 +44,7 @@ Publish a curated, hand-picked subset of the user's Obsidian vault as an interco
 
 ### Top-level paths added (predicted; the plan refines)
 
-- `packages/site/src/pages/garden/index.astro` — static route, lists every published note (alphabetical by title, secondary chronological by `updated`). Renders a header + a flat `<ul>` of links + the global SlashFooter.
+- `packages/site/src/pages/garden/index.astro` — static route, lists every published note (primary: title via locale-locked `Intl.Collator("en", { sensitivity: "base" })`; secondary: `updated` desc). Renders a header + a flat `<ul>` of links + the global SlashFooter.
 - `packages/site/src/pages/garden/[slug].astro` — `getStaticPaths`-driven detail page. Renders one note via `_NoteLayout`. The slug is derived from the note's filename (kebab-cased) — see "Slug strategy" below.
 - `packages/site/src/pages/garden/graph.astro` — static route hosting the force-directed graph view. Imports `<GraphView>` Svelte island with `client:visible`. Provides a keyboard-accessible `<details>`-collapsed full notes list as fallback.
 - `packages/site/src/layouts/_NoteLayout.astro` — note detail shell. Underscore-leading per Phase 3 convention. Wraps `_BaseLayout`. Renders `<header>` (title, dates, tag pills), `<article>` body slot (post-MDX with wikilinks resolved, math rendered, callouts styled), `<aside>` table of contents (auto-generated from h2s/h3s), `<footer>` backlinks block.
@@ -65,7 +65,7 @@ Publish a curated, hand-picked subset of the user's Obsidian vault as an interco
 - `packages/site/astro.config.mjs` — **modified**: extend the existing remark/rehype pipeline with `wikilinks-remark`, `embed-remark`, `remark-math`, `rehype-katex`, `remark-callout`. Pipeline order is **fixed** (see Architecture).
 - `packages/site/package.json` — **modified**: adds `sync:vault`, `prebuild:garden` scripts; the `build` script chains `prebuild:stats && prebuild:garden && astro build`. Local `dev` runs `prebuild:garden` once at start (the data files are committed; running once at dev start refreshes them after a manual `sync:vault`).
 - `packages/site/.gitignore` — unchanged. The `src/data/*.json` artefacts ARE committed (so CI builds without running the prebuild are still complete and so `git diff` surfaces unintended drift).
-- `packages/site/.size-limit.cjs` — **modified**: adds 3 entries — `/garden/`, `/garden/<sample-slug>/`, `/garden/graph/`. Garden index + detail at `≤ 60 KB css+html`. **Graph-view route gets a per-route JS budget of `≤ 180 KB` gzipped** covering force-graph + d3-force + GraphView.svelte; CSS+HTML at `≤ 60 KB`.
+- `packages/site/.size-limit.cjs` — **modified**: adds 3 entries — `/garden/`, `/garden/<sample-slug>/`, `/garden/graph/`. Garden index + detail at `≤ 60 KB css+html`. **Graph-view route gets a per-route JS budget of `≤ 180 KB` gzipped** covering force-graph + d3-force-3d + GraphView.svelte; CSS+HTML at `≤ 60 KB`. **Mechanism for excluding the graph-vendor chunk from the global 420 KB site-js cap (locked at spec time):** `astro.config.mjs` adds `vite.build.rollupOptions.output.manualChunks = (id) => id.includes("force-graph") || id.includes("d3-force-3d") ? "graph-vendor" : undefined` so the chunk lands as `dist/_astro/graph-vendor-*.js`. The global `.size-limit.cjs` site-js entry uses a **negated glob** `["dist/_astro/*.js", "!dist/_astro/graph-vendor-*.js"]`. The graph-route entry includes `dist/_astro/graph-vendor-*.js` explicitly. Plan-time verifies `manualChunks` actually emits the named chunk under Astro 6's Vite — fall-back if not: raise the global cap to `≤ 600 KB` and drop the negation.
 - `packages/site/lighthouserc.cjs` — **modified**: adds `/garden/`, `/garden/<sample-slug>/`. `/garden/graph/` deliberately excluded.
 - `packages/site/knip.jsonc` — **modified**: register `scripts/sync-vault.ts`, `scripts/build-garden-data.ts`. Whitelist any vault-only deps (e.g. `gray-matter`) if Knip flags them.
 - `packages/site/.dependency-cruiser.cjs` — **may need** widening to allow `scripts/**` to import from `src/lib/wikilinks.ts` (single source of truth for slug rules).
@@ -73,26 +73,28 @@ Publish a curated, hand-picked subset of the user's Obsidian vault as an interco
 - `packages/site/tests/unit/wikilinks.test.ts` — vitest + fast-check property tests on the slug resolver round-trip (every legal title round-trips slug→title→slug).
 - `packages/site/tests/unit/wikilinks-remark.test.ts` — vitest covering the custom remark plugin: resolved targets, alias rendering, heading-anchored links, broken targets fall back to `<span class="wikilink-broken">`.
 - `packages/site/tests/unit/embed-remark.test.ts` — vitest covering `![[image.png]]` → `<Picture>` transformation; missing-asset case logs warning and falls back to alt text.
-- `packages/site/tests/unit/build-backlinks.test.ts` — vitest + fast-check property test on the backlink inverter (if A → B, B's backlinks contain A; the inverter is symmetric on the union of edges).
+- `packages/site/tests/unit/build-backlinks.test.ts` — vitest + **two fast-check properties on the backlink inverter** asserting mutual inversion: (P1) `∀ (A,B) ∈ forwardEdges, A ∈ backlinks(B)`; (P2) `∀ X ∈ backlinks(B), (X,B) ∈ forwardEdges` (no spurious entries). A third deterministic-write test asserts byte-identical re-runs against a fixed input.
 - `packages/site/tests/unit/build-graph.test.ts` — vitest verifying graph.json shape (every edge's source/target is a known node id; no orphan edges).
 - `packages/site/tests/unit/sync-vault.test.ts` — vitest covering `scripts/sync-vault.ts` against an in-memory fixture vault: only `publish:true` notes are copied; renamed-to-slug filenames; image-dir mirroring; `.obsidian/` skipped; running twice is idempotent.
 - `packages/site/tests/e2e/garden-index.spec.ts` — Playwright e2e for `/garden/`: lists all 6+ committed notes, links resolve to detail pages, axe clean.
 - `packages/site/tests/e2e/garden-detail.spec.ts` — Playwright e2e for `/garden/<sample-slug>/`: title renders, wikilinks resolve, broken wikilink renders styled span (not anchor), backlinks footer present, axe clean. **A second case** asserts a math-bearing note renders `.katex` markup, and a callout-bearing note renders the styled callout.
 - `packages/site/tests/e2e/garden-graph.spec.ts` — Playwright e2e for `/garden/graph/`: canvas mounts within budget; node count matches `graph.json`; clicking a node navigates; keyboard fallback list reachable via Tab; axe clean (the canvas has `role="img"` + `aria-label`).
 - `packages/site/tests/e2e/link-preview.spec.ts` — Playwright e2e for `<LinkPreview>`: hover over a wikilink reveals card within 200 ms (network-quiet baseline); focus also reveals; Escape dismisses; `prefers-reduced-motion` fixture suppresses animation.
-- 5 new ADRs — listed below.
+- 6 new ADRs (0025–0030) — listed below.
 
 ### Verified APIs (context7 / npm-registry / GitHub-fetch probes, performed 2026-04-27)
 
 - `defineCollection({ loader: glob({...}), schema })` — already verified Phase 3/4. `notes` collection uses `glob({ pattern: "**/*.{md,mdx}", base: "./src/content/notes" })` so subfolders are allowed (the user may organise notes by topic in the vault).
 - `import { getCollection, getEntry, render } from "astro:content";` — Astro 6 collection accessors. `getCollection("notes", entry => entry.data.publish)` filters to published notes when the schema retains `publish` as a field; the spec opts to **not** retain `publish` in the schema (the sync script is the gate; if a note is in `src/content/notes/`, it is published) — see Architecture for the trade-off.
 - `import { Picture } from "astro:assets";` — already used Phase 3. The `embed-remark` plugin emits Picture references after collecting the resolved file path against `src/content/notes/_assets/`.
-- `@portaljs/remark-wiki-link@1.2.0` — MIT, no peer-dep constraint. Public API per the GitHub README (verified 2026-04-27): `unified().use(wikiLinkPlugin, { aliasDivider: "|", pageResolver, hrefTemplate, wikiLinkClassName, newClassName })`. `pageResolver(name): string[]` returns candidate slugs (we return `[slugify(name)]`). `hrefTemplate(permalink): string` is what we override to emit `/garden/<slug>/`. `wikiLinkClassName` lets us flag resolved links; `newClassName` flags unresolved ones (we map this to `wikilink-broken` and override the rendered tag from `<a>` to `<span>` in a downstream rehype pass).
-- `remark-math@6` + `rehype-katex@7` — actively maintained in 2026; `unified().use(remarkMath).use(rehypeKatex)` is the canonical chain. KaTeX CSS (`katex.min.css`) is added to `_NoteLayout` via `<link rel="stylesheet" href="...">` **only if** the note's frontmatter declares `math: true`; the plan codifies this conditional load to keep math-free notes free of the ~24 KB stylesheet.
-- `remark-callout@1.1.1` (by `r4ai`) — Obsidian-style `> [!note]` callout transformer. Verified MIT; tested against MDX. Adds CSS classes `callout`, `callout-note`, `callout-warning`, etc; we ship matching CSS in tokens.
-- `force-graph@1.51.4` — vasturiano. **MIT.** Vanilla canvas + d3-force; framework-agnostic. Verified API: `new ForceGraph(<HTMLDivElement>).graphData({nodes, links}).nodeId("id").nodeLabel("label").nodeColor(getColour).linkSource("source").linkTarget("target").onNodeClick(node => navigate(...))`. **No React dependency.** Drops directly into a Svelte 5 island via plain DOM mounting in `onMount`.
-- `@floating-ui/dom@1.x` — MIT. `computePosition(referenceEl, floatingEl, { placement: "top", middleware: [offset, shift, flip] })` — used by `<LinkPreview>` to place the preview card above (or below if no room) the hovered wikilink anchor.
-- `gray-matter@4.x` — MIT. Already a transitive dep via Astro itself (verified 2026-04-27 via `bun pm ls`); the sync script and build-garden-data script reuse it for frontmatter parsing.
+- `@portaljs/remark-wiki-link@1.2.0` — MIT, no peer-dep constraint. Public API per the GitHub README (verified 2026-04-27 via `https://raw.githubusercontent.com/datopian/portaljs/main/packages/remark-wiki-link/README.md`): `unified().use(wikiLinkPlugin, { aliasDivider: "|", permalinks, wikiLinkResolver, hrefTemplate, wikiLinkClassName, newClassName })`. **`permalinks: string[]`** is the array of known target permalinks (e.g. `["/garden/foo/", "/garden/bar/"]`) — the plugin tags each `[[link]]` as resolved iff the result of `wikiLinkResolver(name)[0]` matches an entry in `permalinks`; otherwise it sets `node.data.exists = false` and uses `newClassName`. **`wikiLinkResolver(name): string[]`** (renamed from older `pageResolver`) returns candidate page paths; we return `[`/garden/${noteSlug(name)}/`]`. **`hrefTemplate(permalink): string`** identity-passes here (our resolver already returns the full href). `wikiLinkClassName` defaults `"internal"`; we set it to `"wikilink"`. `newClassName` defaults `"new"`; we set it to `"wikilink-broken"`. **Resolved-vs-broken discrimination is therefore determined at build time by the `permalinks` array** — populated synchronously at Astro-config-load time by a `fast-glob` over `src/content/notes/**/*.{md,mdx}` that maps each filename to its slug-derived href (no separate `known-slugs.json` artefact, no plugin-init filesystem walk per parse). The list is stable for the duration of the build.
+- **Custom rehype `<a>`→`<span>` rewrite (in `src/lib/wikilinks-remark.ts`):** after `remark-rehype` materialises the wikilink as an `<a class="wikilink-broken" href="…">`, a small custom `unified` rehype plugin walks the hast tree (`unist-util-visit` over `element` nodes) and rewrites every `<a>` whose `properties.className` contains `"wikilink-broken"` into a `<span>` (drop `properties.href`, swap `tagName`). Test asserts no `href` attribute on broken anchors.
+- `remark-math@6` + `rehype-katex@7` — both at current latest (verified npm registry probe 2026-04-27); `unified().use(remarkMath).use(rehypeKatex)` is the canonical chain. KaTeX CSS (`katex.min.css`) is added to `_NoteLayout` via `<link rel="stylesheet" href="...">` **only if** the note's frontmatter declares `math: true`; the plan codifies this conditional load to keep math-free notes free of the ~24 KB stylesheet.
+- `remark-callout@1.1.1` (npm package by `rk-terence`; last published 2026-01-30 — stable not abandoned, no ecosystem replacement) — Obsidian-style `> [!note]` callout transformer. Verified MIT; tested against MDX. Adds CSS classes `callout`, `callout-{type}` for type ∈ `{note, info, tip, warning, danger, ...}`; we ship matching CSS in tokens. (NOTE: a separate `@r4ai/remark-callout@0.6.2` package exists with a similar API; we pin the un-namespaced `remark-callout@1.1.1` for the larger node-count + clearer name.)
+- `force-graph@1.51.4` — vasturiano. **MIT.** Canvas + d3-force physics (the lib's transitive dep is `d3-force-3d` — a 2D-compatible fork; it does NOT pull in `three.js` or any 3D runtime — verified via `npm view force-graph dependencies`). Framework-agnostic. Verified API: `new ForceGraph(<HTMLDivElement>).graphData({nodes, links}).nodeId("id").nodeLabel("label").nodeColor(getColour).linkSource("source").linkTarget("target").onNodeClick(node => navigate(...)).cooldownTicks(120).pauseAnimation()`. **No React dependency.** Drops directly into a Svelte 5 island via plain DOM mounting in `onMount`.
+- `@floating-ui/dom@1.x` — MIT. `computePosition(referenceEl, floatingEl, { placement: "top", middleware: [offset(8), shift(), flip()] })` — used by `<LinkPreview>` to place the preview card above (or below if no room) the hovered wikilink anchor.
+- `gray-matter@^4` — **NEW direct dep.** MIT. Earlier draft of this spec claimed gray-matter was transitive via Astro 6; **that claim was wrong** — verified 2026-04-27 by grepping `bun.lock`: zero matches; Astro 6 uses `js-yaml` + custom front-matter handling, not gray-matter. Adding `gray-matter@^4` as a direct dev-dep used only by `scripts/sync-vault.ts` and `scripts/build-garden-data.ts`. Knip ignoreDependencies adds `gray-matter` only if Knip flags it (it should not, because the script files are registered as Knip entries — verified shape against Phase 4 knip.jsonc).
+- `github-slugger@^2` — already in `bun.lock` as a direct dep of `astro@6.1.9` + `@astrojs/markdown-remark@7` (transitive via Astro 6 itself; the rejected `astro-loader-obsidian` is NOT in our dep tree). Used by `src/lib/wikilinks.ts` for slug derivation. No new install.
 
 ### Notes frontmatter schema
 
@@ -123,7 +125,7 @@ const notesSchema = z.object({
 
 ```ts
 // src/lib/wikilinks.ts (canonical)
-import slug from "github-slugger"; // already a transitive dep via astro-loader-obsidian's deps and Astro itself
+import slug from "github-slugger"; // transitive via Astro 6 + @astrojs/markdown-remark@7 (verified bun.lock 2026-04-27)
 export function noteSlug(title: string): string;
 ```
 
@@ -139,7 +141,7 @@ export function noteSlug(title: string): string;
 - `remark-callout@1.1.1` — Obsidian callouts.
 - `force-graph@1.51.4` — graph view (vanilla canvas).
 - `@floating-ui/dom@1.x` — link-preview positioning.
-- `gray-matter@^4` — frontmatter parsing in scripts. (Already transitive but listed explicitly because `scripts/` directly imports it.)
+- `gray-matter@^4` — **NEW direct dev-dep** (corrected from earlier draft — NOT a transitive of Astro 6; verified `bun.lock` zero matches). Frontmatter parsing in `scripts/sync-vault.ts` and `scripts/build-garden-data.ts`.
 - `katex` — peer of rehype-katex, runtime CSS source. (CSS imported, not JS — see Architecture.)
 
 No new react / svelte / astro core upgrades. No new test runners.
@@ -167,7 +169,9 @@ git commit -m "garden: sync vault"
 5. Write `packages/site/src/content/notes/<slug>.mdx`. Overwrite if exists.
 6. For each wikilink-embed `![[image.png]]` referenced in the body, copy the source asset from the vault to `packages/site/src/content/notes/_assets/<image>` (with collision detection — log a warning if two source images would collapse to the same name).
 7. After the walk completes: list all currently-tracked files in `src/content/notes/` and `_assets/`; **delete any not visited by this run** (so unpublishing in Obsidian = `publish: false` → next sync deletes the file). The user reviews the deletion in `git diff` before commit.
-8. Print a summary: N notes synced, M deleted, P assets copied.
+8. Print a summary: N notes synced, M deleted, P assets copied. **If any deletions would happen, print each path to be deleted prefixed with `D ` and remind the user that `git diff` is the safety net.**
+
+The script accepts `--dry-run` (default off): when set, no writes/deletes occur — the script logs every action it WOULD take and exits 0. This is the recommended first invocation after a vault refactor.
 
 The script never runs in CI. Its behaviour is unit-tested against an in-memory fixture vault.
 
@@ -211,7 +215,7 @@ Why this order:
 - `remarkCallout` runs after math so callouts can contain math.
 - Rehype runs after all remark.
 
-Wikilink resolution is **build-time only.** The remark plugin reads a snapshot of all known slugs (loaded from `src/data/known-slugs.json`, written by `scripts/build-garden-data.ts` before `astro build`). If the snapshot is stale (a note was added but the prebuild didn't run), the plugin falls back to filesystem-walking `src/content/notes/`. The plan picks one mechanism — the simplest (filesystem walk at remark-plugin init) — and abandons the snapshot file if not needed.
+Wikilink resolution is **build-time only.** The mechanism is **locked at spec time** (no plan-time deferral): when `astro.config.mjs` is loaded, a synchronous `fast-glob` over `src/content/notes/**/*.{md,mdx}` produces the canonical `permalinks: string[]` array (each entry is `/garden/${noteSlug(filenameMinusExt)}/`). This array is passed to `@portaljs/remark-wiki-link` as the `permalinks` option. **No `src/data/known-slugs.json` artefact is written or committed** — the array is derived deterministically from the filesystem on every config load (dev, build, test alike). If a note is added but the dev server is not restarted, the user sees a broken-link styling on the new wikilink — restart picks it up. (Future: if this becomes painful, a chokidar watcher can re-derive on file events; out-of-scope for Phase 5.)
 
 Image embeds: `![[diagram.png]]` → resolve `diagram.png` against `src/content/notes/_assets/`; emit an MDX import + `<Picture>` reference using the standard `astro:assets` API. Missing assets log a warning at build (not error) and emit alt text.
 
@@ -222,10 +226,17 @@ Image embeds: `![[diagram.png]]` → resolve `diagram.png` against `src/content/
 1. Walk `src/content/notes/`; for each note, parse frontmatter and body via `unified().use(remarkParse).use(remarkMdx).use(...)`.
 2. Extract wikilinks via the same remark plugin used for rendering — single source of truth.
 3. Build the directed edge list: `[{ source: A.slug, target: B.slug }, ...]`.
-4. **Backlinks:** invert the edge list. For each note, list all sources that link to it. Sort alphabetical by title.
+4. **Backlinks:** invert the edge list. For each note, list all sources that link to it. Sort using `new Intl.Collator("en", { sensitivity: "base" })` over the source title (locale-locked for build reproducibility — no host-locale drift between local Bun and CF Pages build runners).
 5. Write `src/data/backlinks.json` (`{ [targetSlug]: [{ slug, title }, ...] }`).
 6. **Note previews:** for each note, extract `summary` (frontmatter) or first paragraph (≤ 240 chars). Write `src/data/note-previews.json` (`{ [slug]: { title, summary, firstParagraph } }`).
-7. **Graph data:** write `src/data/graph.json` (`{ nodes: [{id, label, tags}], edges: [{source, target}] }`).
+7. **Graph data:** write `src/data/graph.json` (`{ nodes: [{id, label, tags}], edges: [{source, target}] }`). Edge list is sorted by `(source, target)` lexicographic (locale-locked); node list is sorted by `id` lexicographic.
+
+**Deterministic-write contract (load-bearing for the CI freshness check):** all three artefacts MUST be byte-identical across runs given identical inputs. The script enforces:
+- Recursive object-key sort on every emitted object (alphabetical, ASCII).
+- Array sorts via the locale-locked Collator above; every array has a stable primary sort key documented in code.
+- Trailing newline after the closing `}` (so `git diff` does not flag terminal-newline drift).
+- 2-space indent (matches Biome's default JSON formatting).
+- A unit test re-runs the writer against a fixed input twice and asserts byte-identical output.
 
 The `<Backlinks>` Astro component imports `backlinks.json` directly:
 
@@ -249,9 +260,9 @@ CI freshness check: `bun run prebuild:garden` is run as a lefthook step (or as a
 
 Behaviour:
 - On mount: read `note-previews.json` from a `<script type="application/json" id="note-previews">` block server-rendered into the page (so the island doesn't refetch).
-- Attach delegated `mouseenter` / `focusin` listener on `document.body`. Filter for `a.wikilink[data-target-slug]`.
+- Attach delegated `mouseover` / `focusin` listener on `document.body` (NOT `mouseenter` — that event does not bubble; document-level delegation requires `mouseover`/`mouseout` or `focusin`/`focusout`). Filter via `event.target.closest("a.wikilink[data-target-slug]")`.
 - On hover/focus: extract `data-target-slug`, look up preview, position card via `@floating-ui/dom`, fade in (≤ 200 ms; reduced-motion: instant).
-- On `mouseleave` / `focusout` / `Escape`: hide.
+- On `mouseout` (delegated on body, filter same way) / `focusout` / `Escape`: hide.
 - Card content: `<strong>title</strong>` + summary line (≤ 240 chars).
 - ARIA: card has `role="tooltip"` + `aria-hidden` toggled.
 
@@ -310,7 +321,8 @@ Behaviour:
 - **0026 — Force-graph (vanilla canvas) over Sigma.js for graph view.** Driver: aesthetic preference (Obsidian-feel) + framework-agnostic + lighter JS budget on a leaf route + canvas vs WebGL trade-off documented.
 - **0027 — Wikilinks via `@portaljs/remark-wiki-link` + custom resolver.** Captures plugin choice, build-time resolution, broken-link styling.
 - **0028 — Backlinks built at build time, not at runtime.** Captures the `prebuild:garden` script + CI freshness check.
-- **0029 — Hover preview as Svelte 5 island with `client:idle` + delegated event listener.** Captures the budget impact, the `<script type="application/json">` payload mechanism (vs runtime fetch), and reduced-motion behaviour.
+- **0029 — Hover preview as Svelte 5 island with `client:idle` + delegated event listener.** Captures the budget impact, the `<script type="application/json">` payload mechanism (vs runtime fetch), the `mouseover`-not-`mouseenter` choice for delegation, and reduced-motion behaviour.
+- **0030 — Math + callouts plugin chain (`remark-math` + `rehype-katex` + `remark-callout`).** Captures: (a) the conditional KaTeX CSS load gated on `math: true` frontmatter, (b) the rejection of MathJax (heavier, server-side cost) and of MDX-component math (loses raw `$...$` Obsidian compatibility), (c) the choice of `remark-callout@1.1.1` over `@r4ai/remark-callout@0.6.2`. One ADR for the whole math+callout decision tree.
 
 ## Tests
 
@@ -322,7 +334,7 @@ Behaviour:
 - **size-limit:** new entries listed above.
 - **fast-check property tests:**
   - `noteSlug` round-trip (slug → "title" form → slug is stable for legal inputs).
-  - Backlink inverter symmetry.
+  - Backlink inverter mutual-inversion (P1: ∀ (A,B) ∈ forwardEdges, A ∈ backlinks(B); P2: ∀ X ∈ backlinks(B), (X,B) ∈ forwardEdges).
   - Wikilink remark plugin: ∀ resolved title, the emitted href matches `noteHref(slug)`.
 - **Stryker mutation (nightly):** `wikilinks.ts` slug rules, `build-garden-data.ts` inverter, `sync-vault.ts` filter logic, all new Zod schemas.
 
@@ -352,8 +364,12 @@ If Phase 5 lands and a regression is discovered post-merge:
 - Whether `<GraphView>` should use `client:visible` or `client:only="svelte"`. The latter avoids SSR rendering of the canvas placeholder; the former keeps a static fallback noscript surface. Plan picks one.
 - Whether `prebuild:garden` is also wired into a chokidar watcher for `astro dev`. Lean: no, run-once-at-start; revisit if the user reports stale data during local edits.
 - Tag-colour palette source: existing tokens vs new garden-specific palette. Plan defines.
-- Whether the 6+ committed fixture notes should also serve as user-facing content (real garden seed) or be replaced post-merge with the user's actual published vault subset. **Lean: real seed** — fewer ceremony files in the repo.
+
+(Note: the prior draft listed a fifth OQ on whether the committed fixture notes are also the real garden seed. That is essentially decided — real seed — and is removed from the OQ list per spec-review.)
 
 ## Changelog
 
 - **v1, 2026-04-27** — initial spec, written after a context7 + npm-registry + GitHub-fetch verification round.
+- **v2, 2026-04-27** — applied Opus spec-review fixes:
+  - **RED:** corrected `@portaljs/remark-wiki-link` API (option `wikiLinkResolver` not `pageResolver`; added `permalinks` array as the build-time resolution mechanism — no separate `known-slugs.json` artefact); corrected `gray-matter` from "transitive via Astro 6" (false) to NEW direct dev-dep; corrected `mouseenter` (does not bubble) → `mouseover` for delegated event handling.
+  - **YELLOW:** corrected `remark-callout` author attribution (`rk-terence`, not `r4ai`) and softened "actively maintained in 2026" claim; fixed `github-slugger` attribution (Astro 6 + @astrojs/markdown-remark@7, not the rejected loader); pinned the rehype `<a>`→`<span>` rewrite plugin mechanism in spec; added deterministic-write contract for `build-garden-data.ts` (object-key sort, locale-locked Collator, trailing newline, 2-space indent, byte-identical re-run test); added `Intl.Collator("en", { sensitivity: "base" })` lock for `/garden/` index sort; added `--dry-run` flag to `sync-vault`; added ADR 0030 (math + callouts chain); locked size-limit chunk-exclusion mechanism (`vite.build.rollupOptions.output.manualChunks`); split backlink property test into two directions (P1 + P2); removed effectively-decided OQ5 from open questions.
