@@ -9,6 +9,8 @@
  * @see packages/specs/specs/04-slash-pages.md § Snapshot shape
  * @see packages/specs/adrs/0024-stats-failure-ux.md
  */
+
+import type { CollectionEntry } from "astro:content";
 import { getEntry } from "astro:content";
 import type { z } from "astro/zod";
 import fixture from "../content/stats/snapshot.fixture.json";
@@ -48,21 +50,29 @@ export type Snapshot = z.infer<typeof snapshotSchema>;
  * not throw (verified via the loader source 2026-04-27). This is
  * cosmetic; the build remains green.
  *
- * The try/catch also covers unit-test contexts where `getEntry` is
- * unavailable (vitest aliases astro:content to astro/content/config,
- * which does not export getEntry — the call throws, we fall back to
- * fixture).
+ * The try/catch wraps ONLY the `getEntry` call. Zod parse errors on
+ * live data propagate to the caller — schema drift is never silently
+ * masked by a fixture fallback. The catch fires solely when `getEntry`
+ * itself is unavailable (vitest aliases astro:content to
+ * astro/content/config, which does not export getEntry).
+ *
+ * Fallback order:
+ * 1. Live entry present → `snapshotSchema.parse(entry.data)` (errors propagate).
+ * 2. `getEntry` threw (vitest) or returned undefined (no snapshot.json) →
+ *    `snapshotSchema.parse(fixture.snapshot)` (errors propagate).
  *
  * @see packages/specs/adrs/0023-stats-build-time-snapshot.md
  */
 export async function loadSnapshot(): Promise<Snapshot> {
+	let entry: CollectionEntry<"stats"> | undefined;
 	try {
-		const entry = await getEntry("stats", "snapshot");
-		if (entry) return snapshotSchema.parse(entry.data);
+		entry = await getEntry("stats", "snapshot");
 	} catch {
-		// getEntry unavailable outside Astro runtime (unit tests, scripts);
-		// fall through to fixture below.
+		// getEntry unavailable outside Astro runtime (e.g. vitest aliases
+		// "astro:content" → "astro/content/config" which doesn't export it).
+		// Fall through to fixture parse below.
 	}
+	if (entry) return snapshotSchema.parse(entry.data);
 	return snapshotSchema.parse(fixture.snapshot);
 }
 
