@@ -36,4 +36,13 @@ describe("notesSchema", () => {
 			notesSchema.parse({ title: "x", created: new Date(), summary: "x".repeat(241) }),
 		).toThrow();
 	});
+
+	it("coerces YYYY-MM-DD strings (mirrors actual frontmatter input)", () => {
+		// Why: YAML frontmatter feeds Zod a string, not a Date. This locks the
+		// `z.coerce.date()` choice — a regression to plain `z.date()` would silently
+		// break astro build by rejecting every fixture's frontmatter.
+		const parsed = notesSchema.parse({ title: "x", created: "2026-04-27" });
+		expect(parsed.created).toBeInstanceOf(Date);
+		expect(parsed.created.toISOString().slice(0, 10)).toBe("2026-04-27");
+	});
 });
