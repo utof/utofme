@@ -44,7 +44,13 @@
 		// task boundary, so knip flags them unused. Remove each entry below once
 		// the corresponding consuming file is added in its respective task.
 		// See packages/specs/specs/05-garden.md § New pinned runtime/build deps.
-		"@portaljs/remark-wiki-link",
+		//
+		// Why: @flowershow/remark-wiki-link is consumed in src/lib/wikilinks-remark.ts
+		// (Task 4) directly, so knip now classifies it as a normally-consumed direct
+		// dep. The pre-existing pin for @portaljs/remark-wiki-link was removed when
+		// the package was swapped — see wikilinks-remark.ts module docstring for
+		// the rationale (portaljs incompat with mdast-util-from-markdown@2.x;
+		// upstream rebrand → flowershow per datopian/portaljs#1059).
 		"remark-math",
 		"rehype-katex",
 		"katex",
