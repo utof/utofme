@@ -37,17 +37,88 @@
 //   - https://fonts.google.com/specimen/Fraunces (Google Fonts catalogue)
 //   - https://fonts.google.com/specimen/Geist (Google Fonts catalogue)
 //   - https://github.com/withastro/docs/blob/main/src/content/docs/en/reference/font-provider-reference.mdx
+// Phase 5 Task 6: wikilinks/embed/math/callout pipeline + manualChunks for graph-vendor.
+// Why plugin order is fixed (embed BEFORE wikilinks BEFORE math BEFORE callout):
+//   - embedRemark consumes `![[image.png]]` first; wikiLinks would otherwise emit a
+//     broken-link wrapper around the inner `[[image]]` and bypass astro:assets.
+//   - remarkMath after wikilinks so `$\sum [[link]]^2$` (math containing `[[`) is
+//     escaped before wikilinks would parse it.
+//   - remarkCallout last so callout bodies can hold math.
+//   - rehypeKatex first in rehype (renders math nodes); brokenLinkRehype rewrites
+//     <a class="wikilink-broken"> to <span> (drops href) + stamps data-target-slug.
+// See: packages/specs/specs/05-garden.md § Architecture (Wikilink + embed pipeline).
+//
+// Why `@r4ai/remark-callout@0.6.2` over `remark-callout@1.1.1`:
+//   ADR 0030 (spec § ADRs to write) lists both as alternatives. The pinned 1.1.1
+//   throws "chunks[startIndex].slice is not a function" inside its micromark
+//   tokenizer (insideTitle handler) on the canonical `> [!note]\n> body` input
+//   under micromark@4.0.2. The @r4ai/0.6.2 alternative parses cleanly and emits
+//   `containerDirective`-shaped mdast that mdast-util-to-hast handles directly.
+//   Verified locally 2026-04-28 with the math-demo + callout-demo fixtures.
+//
+// Why manualChunks isolates force-graph + d3-force-3d into "graph-vendor":
+//   The /garden/graph/ route has its own 180 KB JS budget (ADR 0026 + size-limit
+//   in spec § Per-route size budgets summary). Without a manualChunks split the
+//   force-graph bundle would land in the global site-js cap (420 KB) and bust it.
+// See: packages/specs/specs/05-garden.md § Per-route size budgets summary.
+
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import svelte from "@astrojs/svelte";
+import remarkCallout from "@r4ai/remark-callout";
 import { defineConfig, fontProviders } from "astro/config";
 import expressiveCode from "astro-expressive-code";
 import pagefind from "astro-pagefind";
+import fastGlob from "fast-glob";
+import rehypeKatex from "rehype-katex";
+import remarkMath from "remark-math";
+import { embedRemark } from "./src/lib/embed-remark.ts";
+import { brokenLinkRehype, wikiLinks } from "./src/lib/wikilinks-remark.ts";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Compute permalinks synchronously at config load.
+ * Why: the wikilink plugin needs the full known-targets array up front to
+ * discriminate resolved-vs-broken at parse time. We derive it from the
+ * filesystem on every config load (no committed `known-slugs.json` artefact);
+ * see spec § Architecture (Wikilink + embed pipeline).
+ * @see packages/specs/specs/05-garden.md
+ */
+export function computePermalinks() {
+	const files = fastGlob.sync("**/*.{md,mdx}", {
+		cwd: path.join(__dirname, "src", "content", "notes"),
+	});
+	return files.map((f) => `/garden/${path.basename(f, path.extname(f))}/`).sort();
+}
 
 export default defineConfig({
 	output: "static",
 	trailingSlash: "always",
 	integrations: [expressiveCode(), mdx(), svelte(), pagefind(), react()],
+	markdown: {
+		remarkPlugins: [
+			embedRemark,
+			[wikiLinks, { permalinks: computePermalinks() }],
+			remarkMath,
+			remarkCallout,
+		],
+		rehypePlugins: [rehypeKatex, brokenLinkRehype],
+	},
+	vite: {
+		build: {
+			rollupOptions: {
+				output: {
+					manualChunks: (id) => {
+						if (id.includes("force-graph") || id.includes("d3-force-3d")) return "graph-vendor";
+						return undefined;
+					},
+				},
+			},
+		},
+	},
 	fonts: [
 		// Fraunces — variable serif (wght 100–900 + opsz + SOFT + WONK axes).
 		// Why: `weights: ["100 900"]` string-range is the correct form for variable

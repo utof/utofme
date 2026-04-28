@@ -51,10 +51,16 @@
 		// the package was swapped — see wikilinks-remark.ts module docstring for
 		// the rationale (portaljs incompat with mdast-util-from-markdown@2.x;
 		// upstream rebrand → flowershow per datopian/portaljs#1059).
-		"remark-math",
-		"rehype-katex",
+		//
+		// Why: remark-math + rehype-katex + @r4ai/remark-callout are auto-detected
+		// by knip via astro.config.mjs imports (Task 6). Removed from this list.
+		// remark-callout@1.1.1 was swapped to @r4ai/remark-callout@0.6.2 — the
+		// pinned 1.1.1 throws inside its micromark tokenizer; ADR 0030 now
+		// documents the swap.
+		//
+		// Why: katex stays — it's a CSS-only dep loaded conditionally by the
+		// note layout (math: true frontmatter); knip can't detect CSS imports.
 		"katex",
-		"remark-callout",
 		"force-graph",
 		"@floating-ui/dom"
 		// Why: gray-matter removed from this list — Task 3 (scripts/sync-vault.ts)
