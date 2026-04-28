@@ -46,7 +46,7 @@ packages/site/tests/unit/notes-helpers.test.ts
 packages/site/tests/unit/wikilinks.test.ts
 packages/site/tests/unit/wikilinks-remark.test.ts
 packages/site/tests/unit/embed-remark.test.ts
-packages/site/tests/unit/build-garden-data.test.ts
+packages/site/tests/unit/build-garden-data.test.ts  (consolidates spec's build-backlinks.test.ts + build-graph.test.ts — single producer, single test file)
 packages/site/tests/unit/sync-vault.test.ts
 packages/site/tests/e2e/garden-index.spec.ts
 packages/site/tests/e2e/garden-detail.spec.ts
@@ -182,7 +182,9 @@ Expected: FAIL with `notesSchema is not exported from "../../src/content.config"
 Append to `packages/site/src/content.config.ts` (do not touch existing collections):
 
 ```ts
-import { glob as globLoader } from "astro/loaders"; // already imported in Phase 4 — reuse the existing import
+// Note: `glob` from "astro/loaders" is already imported by content.config.ts
+// (used by Phase 4 slash + stats collections). Reuse the existing import name —
+// do NOT re-import as `globLoader` (avoid alias drift across collections).
 
 /**
  * Note frontmatter schema for the digital garden.
@@ -200,7 +202,7 @@ export const notesSchema = z.object({
 });
 
 const notes = defineCollection({
-  loader: globLoader({ pattern: "**/*.{md,mdx}", base: "./src/content/notes" }),
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/notes" }),
   schema: notesSchema,
 });
 
@@ -741,6 +743,7 @@ Expected: FAIL — module not found.
  */
 import remarkWikiLink from "@portaljs/remark-wiki-link";
 import { visit } from "unist-util-visit";
+import type { Root, Element } from "hast";
 import { noteHref, noteSlug } from "./wikilinks";
 
 interface WikiOptions {
@@ -772,8 +775,8 @@ export function wikiLinks(opts: WikiOptions) {
  * `<a class="wikilink-broken">` to `<span class="wikilink-broken">` (drops href).
  */
 export function brokenLinkRehype() {
-  return (tree: unknown) => {
-    visit(tree as never, "element", (node: { tagName: string; properties?: Record<string, unknown> }) => {
+  return (tree: Root) => {
+    visit(tree, "element", (node: Element) => {
       const cn = node.properties?.className;
       const classes = Array.isArray(cn) ? (cn as string[]) : typeof cn === "string" ? [cn] : [];
       if (node.tagName === "a" && classes.includes("wikilink")) {
@@ -865,6 +868,24 @@ describe("embedRemark", () => {
     expect(out).not.toContain("<Picture");
     expect(out).toContain("[[Welcome]]");
   });
+
+  it("injects `import { Picture } from \"astro:assets\"` when an embed is rewritten", () => {
+    // Why: <Picture> is not auto-imported by Astro's MDX integration. Without
+    // an mdxjsEsm import node the build errors with "Picture is not defined".
+    const out = compile("![[diagram.png]]");
+    expect(out).toContain('import { Picture } from "astro:assets"');
+  });
+
+  it("does not duplicate the import when one is already present", () => {
+    const out = compile('import { Picture } from "astro:assets";\n\n![[diagram.png]]');
+    const matches = out.match(/import \{ Picture \} from "astro:assets"/g) ?? [];
+    expect(matches.length).toBe(1);
+  });
+
+  it("does not inject the import when no embed is rewritten", () => {
+    const out = compile("[[Welcome]]");
+    expect(out).not.toContain('astro:assets');
+  });
 });
 ```
 
@@ -887,16 +908,30 @@ Expected: FAIL — module not found.
  * @see packages/specs/specs/05-garden.md § Architecture (Image embeds)
  */
 import { visit } from "unist-util-visit";
+import type { Root } from "mdast";
 
 const EMBED = /^!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/;
 const IMG_EXT = /\.(png|jpe?g|gif|webp|avif|svg)$/i;
+const PICTURE_IMPORT_VALUE = 'import { Picture } from "astro:assets";';
 
 interface TextNode { type: "text"; value: string; }
 interface ParaNode { type: "paragraph"; children: TextNode[]; }
 
+/**
+ * Predicate: does the AST already carry an `import { Picture } from "astro:assets"`
+ * (e.g. user's note already imported it manually)? We avoid duplicate imports.
+ */
+function hasPictureImport(root: Root): boolean {
+  return (root.children as Array<{ type: string; value?: string }>).some(
+    (n) => n.type === "mdxjsEsm" && typeof n.value === "string" && n.value.includes('from "astro:assets"') && n.value.includes("Picture"),
+  );
+}
+
 export function embedRemark() {
   return (tree: unknown) => {
-    visit(tree as never, "paragraph", (node: ParaNode, index: number | undefined, parent: { children: unknown[] } | undefined) => {
+    let touchedAny = false;
+    const root = tree as Root;
+    visit(root, "paragraph", (node: ParaNode, index: number | undefined, parent: { children: unknown[] } | undefined) => {
       if (parent === undefined || index === undefined) return;
       if (node.children.length !== 1) return;
       const child = node.children[0];
@@ -906,9 +941,11 @@ export function embedRemark() {
       const file = m[1].trim();
       if (!IMG_EXT.test(file)) return;
       const caption = (m[2] ?? "").trim();
+      touchedAny = true;
       // Replace this paragraph with an MDX JSX <Picture> node.
-      // The embed-remark.ts file synthesises a `mdxJsxFlowElement` per the
-      // remark-mdx AST shape (verified in node_modules/remark-mdx tests).
+      // mdxJsxFlowElement is the mdast-util-mdx-jsx node shape; for a
+      // computed JSX prop we wrap the value in mdxJsxAttributeValueExpression
+      // (raw source string — Astro's MDX integration parses it via acorn).
       parent.children[index] = {
         type: "mdxJsxFlowElement",
         name: "Picture",
@@ -920,6 +957,20 @@ export function embedRemark() {
         children: [],
       };
     });
+    // If we synthesised any <Picture>, ensure the import is present at the
+    // top of the document. Why: <Picture> is not auto-imported by Astro's
+    // MDX integration; without this `mdxjsEsm` node the build errors with
+    // "Picture is not defined" at evaluation time.
+    if (touchedAny && !hasPictureImport(root)) {
+      (root.children as unknown[]).unshift({
+        type: "mdxjsEsm",
+        value: PICTURE_IMPORT_VALUE,
+        // NB: the `data.estree` field is normally added by recma but Astro's
+        // MDX integration parses `value` itself. We omit `data.estree`; Astro
+        // re-parses on load. If the build complains about missing estree,
+        // implementer adds `data: { estree: <parsed> }` via `acorn.parseExpressionAt`.
+      });
+    }
   };
 }
 ```
@@ -1167,6 +1218,23 @@ describe("buildArtefacts deterministic writes", () => {
     expect(parsedGraph.nodes[0].id).toBe("a"); // sorted by id ascending
   });
 });
+
+describe("readNotes wikilink-extraction slug parity", () => {
+  // Why: the script's wikilink extractor and the rendering remark plugin must
+  // resolve [[Title]] to the SAME slug — otherwise a backlink edge points to
+  // a slug that doesn't match any rendered href, and the backlinks footer
+  // silently disappears. This is the single source of truth assertion.
+  // @see packages/specs/specs/05-garden.md § Slug strategy
+  it.each([
+    ["Welcome", "welcome"],
+    ["Hello, World!", "hello-world"],
+    ["Café au lait", "café-au-lait"],
+    ["Title#section", "title"], // anchor-stripped before slug
+  ])("readNotes uses noteSlug for '%s' → '%s'", async (raw, expected) => {
+    const { extractWikilinkSlug } = await import("../../scripts/build-garden-data");
+    expect(extractWikilinkSlug(raw)).toBe(expected);
+  });
+});
 ```
 
 - [ ] **Step 3: Run the test to verify it fails.**
@@ -1196,7 +1264,15 @@ Expected: FAIL — module not found.
 import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, basename, extname } from "node:path";
 import matter from "gray-matter";
+import { noteSlug } from "../src/lib/wikilinks";
 
+/**
+ * Structured note record consumed by `buildArtefacts`. `outgoing` holds
+ * resolved wikilink slugs (after anchor-strip + `noteSlug`), so the inverter
+ * sees the same slug shape that the rendering remark plugin will emit.
+ * Why: spec § Slug strategy mandates ONE source of truth for slug rules.
+ * @see packages/specs/specs/05-garden.md § Slug strategy
+ */
 export interface Note {
   slug: string;
   title: string;
@@ -1208,6 +1284,17 @@ export interface Note {
 
 const WIKILINK_RE = /\[\[([^|\]]+)(?:\|[^\]]+)?\]\]/g;
 const COLLATOR = new Intl.Collator("en", { sensitivity: "base" });
+
+/**
+ * Pure helper: take the raw inner of a `[[...]]` token (or just a raw string),
+ * strip a `#section` anchor, and run it through `noteSlug` — the same rule
+ * the rendering remark plugin uses. Exported so the parity-test suite can
+ * exercise it directly without booting the unified pipeline.
+ * @see packages/specs/specs/05-garden.md § Slug strategy
+ */
+export function extractWikilinkSlug(raw: string): string {
+  return noteSlug(raw.split("#")[0]);
+}
 
 function sortObject<T>(obj: Record<string, T>): Record<string, T> {
   const keys = Object.keys(obj).sort();
@@ -1234,6 +1321,13 @@ export interface Artefacts {
   graphJson: string;
 }
 
+/**
+ * Pure builder: take a list of `Note` records and produce all three garden
+ * artefacts plus their canonical-form JSON strings (deterministic write contract).
+ * Why: keeping this pure (no fs I/O) lets fast-check property tests run
+ * against random Note arrays without touching disk.
+ * @see packages/specs/specs/05-garden.md § Deterministic-write contract
+ */
 export function buildArtefacts(notes: Note[]): Artefacts {
   const slugSet = new Set(notes.map((n) => n.slug));
 
@@ -1274,7 +1368,15 @@ export function buildArtefacts(notes: Note[]): Artefacts {
   };
 }
 
-/** Walk src/content/notes/, parse each note, extract the structured Note record. */
+/**
+ * Walk `src/content/notes/`, parse each note's frontmatter + body, and
+ * return one structured `Note` per file. Wikilink targets are normalised
+ * via `extractWikilinkSlug` (single source of truth — see ADR 0027).
+ * Why: keeping the slug rule shared between this script and the remark
+ * plugin prevents backlinks from silently dropping for any title with
+ * punctuation or a heading anchor.
+ * @see packages/specs/specs/05-garden.md § Backlinks at build time
+ */
 export async function readNotes(notesDir: string): Promise<Note[]> {
   const out: Note[] = [];
   for (const f of await readdir(notesDir)) {
@@ -1286,12 +1388,9 @@ export async function readNotes(notesDir: string): Promise<Note[]> {
     const tags = (parsed.data.tags as string[] | undefined) ?? [];
     const summary = (parsed.data.summary as string | undefined) ?? "";
     const firstParagraph = parsed.content.split(/\n\s*\n/)[0]?.slice(0, 240).trim() ?? "";
-    const outgoing = [...parsed.content.matchAll(WIKILINK_RE)].map((m) => {
-      // duplicate of noteSlug logic — kept synchronous + dep-free for the script.
-      // The single source of truth is src/lib/wikilinks.ts; if rules diverge,
-      // the unit test in Task 4 will catch via a separate integration test.
-      return m[1].trim().toLowerCase().replace(/\s+/g, "-");
-    });
+    const outgoing = [...parsed.content.matchAll(WIKILINK_RE)].map((m) =>
+      extractWikilinkSlug(m[1].trim()),
+    );
     out.push({ slug, title, tags, outgoing, summary, firstParagraph });
   }
   return out.sort((a, b) => a.slug.localeCompare(b.slug));
@@ -1373,11 +1472,15 @@ git commit -m "Phase 5 Task 7: build-garden-data with deterministic writes + fre
 import { describe, it, expect } from "vitest";
 import { sortNotes } from "../../src/lib/notes";
 
+import type { Note } from "../../src/lib/notes";
+
 describe("sortNotes", () => {
   it("sorts by title locale-locked, secondary updated desc", () => {
-    const a = { id: "a", data: { title: "Banana", created: new Date("2026-01-01") } } as never;
-    const b = { id: "b", data: { title: "Apple", created: new Date("2026-01-02") } } as never;
-    const c = { id: "c", data: { title: "Apple", created: new Date("2026-02-01"), updated: new Date("2026-03-01") } } as never;
+    // Synthetic test fixtures — `as unknown as Note` instead of `as never`
+    // to keep the cast scoped + type-coverage friendly.
+    const a = { id: "a", data: { title: "Banana", created: new Date("2026-01-01") } } as unknown as Note;
+    const b = { id: "b", data: { title: "Apple", created: new Date("2026-01-02") } } as unknown as Note;
+    const c = { id: "c", data: { title: "Apple", created: new Date("2026-02-01"), updated: new Date("2026-03-01") } } as unknown as Note;
     const sorted = sortNotes([a, b, c]);
     expect(sorted.map((n) => n.id)).toEqual(["c", "b", "a"]);
   });
@@ -1444,13 +1547,18 @@ Expected: PASS, 1/1.
 import BaseLayout from "./_BaseLayout.astro";
 import Backlinks from "../components/Backlinks.astro";
 import type { CollectionEntry } from "astro:content";
+// Self-host KaTeX CSS — Astro's Vite pipeline hashes + cache-busts it,
+// avoids third-party CDN exposure (privacy + reproducibility), and keeps
+// the build hermetic. The `?url` suffix makes Vite emit the asset URL string
+// at build-time so we can render it conditionally inside the template.
+import katexCssUrl from "katex/dist/katex.min.css?url";
 
 interface Props { entry: CollectionEntry<"notes">; }
 const { entry } = Astro.props;
 const updated = entry.data.updated ?? entry.data.created;
 ---
 <BaseLayout title={entry.data.title} description={entry.data.summary ?? "Garden note"}>
-  {entry.data.math && <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />}
+  {entry.data.math && <link rel="stylesheet" href={katexCssUrl} />}
   <main>
     <article class="note">
       <header>
@@ -1536,6 +1644,8 @@ git commit -m "Phase 5 Task 8: lib/notes + _NoteLayout + Backlinks"
 ### Task 9: Garden pages — index + `[slug]` detail; e2e tests
 
 **Implementer model:** Sonnet.
+
+**Note on TDD ordering:** This task is integration-shaped — the e2e tests are exercised against a built + previewed site, so writing the failing test FIRST without an implementation produces a navigation-error fail rather than a meaningful red. We deviate from strict test-first ordering here: implement pages first (Steps 2-3), then write + run e2e (Steps 4-5). This is the same pattern Phase 4 used for slash-pages e2e (`tests/e2e/slash-pages.spec.ts`).
 
 **Files:**
 - Create: `packages/site/src/pages/garden/index.astro`
@@ -1674,7 +1784,7 @@ test("garden detail axe clean", async ({ page }) => {
 - [ ] **Step 5: Run the e2e tests.**
 
 `cd packages/site && bun x playwright test tests/e2e/garden-index.spec.ts tests/e2e/garden-detail.spec.ts`
-Expected: PASS for all cases. (Playwright's webServer config builds the site; the new pages are picked up.)
+Expected: PASS for all cases. (Playwright's `webServer` config in `playwright.config.ts` runs `bun run preview` against `http://127.0.0.1:4321`; `preview` requires a prior `astro build`. If the test fails with "ECONNREFUSED" or 404s, run `bun run build` once before `playwright test`.)
 
 - [ ] **Step 6: Commit.**
 
@@ -1696,7 +1806,7 @@ git commit -m "Phase 5 Task 9: /garden/ index + /garden/[slug]/ detail + e2e"
 - Modify: `packages/site/src/layouts/_BaseLayout.astro` (mount island + inline previews JSON)
 - Create: `packages/site/tests/e2e/link-preview.spec.ts`
 
-- [ ] **Step 1: Read spec § Hover link previews (Batch 5.4).**
+- [ ] **Step 1: Read spec § Hover link previews (Batch 5.4).** Also skim https://svelte.dev/docs/svelte/bind#bind:this and https://svelte.dev/docs/svelte/$state — the LinkPreview island uses Svelte 5 runes with `bind:this` writing into a `$state`-backed variable; that combination is the documented Svelte 5 pattern for capturing element refs from rune mode.
 
 - [ ] **Step 2: Implement `LinkPreview.svelte`.**
 
@@ -1817,7 +1927,7 @@ import previews from "../data/note-previews.json";
 import LinkPreview from "../components/LinkPreview.svelte";
 ---
 <!-- ... existing body ... -->
-<script type="application/json" id="note-previews" set:html={JSON.stringify(previews)}></script>
+<script type="application/json" id="note-previews" set:html={JSON.stringify(previews).replace(/<\/script/g, "<\\/script")}></script>
 <LinkPreview client:idle />
 ```
 
@@ -1876,6 +1986,8 @@ git commit -m "Phase 5 Task 10: LinkPreview Svelte island + delegated mouseover/
 ### Task 11: `GraphView.svelte` + `/garden/graph/` page + `manualChunks` budget verification
 
 **Implementer model:** Opus (force-graph integration + SSR/island lifecycle + chunk strategy verification).
+
+**Note on TDD ordering:** Same as Task 9 — integration-shaped against a built + previewed site. Implement island + page first, then write + run e2e. Phase 4 precedent: stats-page e2e in Phase 4 followed the same shape.
 
 **Files:**
 - Create: `packages/site/src/components/GraphView.svelte`
@@ -1958,7 +2070,9 @@ const notes = await getAllNotes();
 <BaseLayout title="Garden — graph view" description="Force-directed graph of garden notes.">
   <main>
     <header><h1>Graph</h1><p><a href="/garden/">← back to index</a></p></header>
-    <script type="application/json" id="garden-graph" set:html={JSON.stringify(graph)}></script>
+    {/* Why escape `</script>`: a node label like "Foo</script>bar" would otherwise terminate the JSON
+        block early and break parse. Internal data, low real risk, but cheap to defend. */}
+    <script type="application/json" id="garden-graph" set:html={JSON.stringify(graph).replace(/<\/script/g, "<\\/script")}></script>
     <GraphView client:visible />
     <details class="list-fallback">
       <summary>List view ({notes.length} notes)</summary>
@@ -2052,7 +2166,9 @@ git commit -m "Phase 5 Task 11: GraphView island + /garden/graph/ + chunk verifi
 
 - [ ] **Step 2: Update `.size-limit.cjs`.**
 
-Add three new entries; modify the existing site-js entry to use a negated glob:
+Add three new entries; modify the existing site-js entry to use a negated glob.
+
+**Negation-glob support (verified via size-limit's `@size-limit/file` README, fetched 2026-04-27):** size-limit's `path` array supports `!`-prefixed entries to exclude matched files. If the implementer's local size-limit version does NOT honour negation (e.g. a fork or downgrade), **fall back per spec § Per-route size budgets summary**: drop the negation entry, raise the global site-js cap from 420 KB to 600 KB, and document the fallback decision in ADR 0026 ("force-graph-over-sigma"). The 600 KB number absorbs the worst-case force-graph + d3-force-3d chunk (~150-180 KB gzipped) on top of the existing 420 KB site-js budget.
 
 ```cjs
 // In .size-limit.cjs
@@ -2209,6 +2325,11 @@ After CI green: merge with **merge commit** (no squash, no rebase) per CLAUDE.md
 ## Changelog
 
 - **v1, 2026-04-27** — initial plan, 12 tasks, Sonnet/Opus implementer mix.
+- **v2, 2026-04-27** — applied Opus plan-review fixes:
+  - **RED:** T7 `readNotes` slug now uses `noteSlug` (single source of truth) via new exported `extractWikilinkSlug` helper; strips `#section` anchors before slug; new parity test covers "Hello, World!", "Café au lait", "Title#section". This fixes the silent backlink-drop bug for any title with punctuation or anchor.
+  - **RED:** T5 `embedRemark` now injects `import { Picture } from "astro:assets"` as an `mdxjsEsm` node at the AST root when any embed is rewritten (Astro's MDX integration does not auto-import `<Picture>`); duplicate-import guard via `hasPictureImport`; three new test cases cover injection / no-duplicate / no-injection-without-embed.
+  - **RED:** T9 + T11 add explicit "integration-shaped — implement first, e2e after" notes (Phase 4 precedent). Strict test-first ordering deferred for these tasks.
+  - **NITs:** T1 drops `globLoader` alias (reuses existing `glob` import); T4 replaces `(tree as never)` with hast `Root`/`Element` typing; T7 adds per-export TSDoc to `Note`, `buildArtefacts`, `readNotes`; T8 swaps KaTeX CDN `<link>` for self-hosted `import "katex/dist/katex.min.css?url"`; T8 sortNotes test uses `as unknown as Note` (with explicit `Note` import) instead of `as never`; T9 webServer note clarified (preview not build); T10 + T11 escape `</script>` in inlined JSON; T10 Step 1 cites Svelte 5 `bind:this` + `$state` doc URLs; T12 states size-limit negation fallback (raise to 600 KB) inline; file-map annotates `build-garden-data.test.ts` consolidation of spec's two files.
 
 
 
