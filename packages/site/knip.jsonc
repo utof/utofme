@@ -50,8 +50,12 @@
 		"katex",
 		"remark-callout",
 		"force-graph",
-		"@floating-ui/dom",
-		"gray-matter"
+		"@floating-ui/dom"
+		// Why: gray-matter removed from this list — Task 3 (scripts/sync-vault.ts)
+		// imports it directly, so knip now classifies it as a normally-consumed
+		// direct dep. Per Task 1 commit's instruction block: remove each entry
+		// once the corresponding consuming file is added.
+		//
 		// Why: react and react-dom are now used via SandboxIsland.tsx (Task 10)
 		// and knip detects them through the tsx import chain. No longer in
 		// ignoreDependencies — removed after knip confirmed auto-detection.

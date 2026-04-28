@@ -56,6 +56,7 @@
 		"dev": "astro dev",
 		"build": "astro build",
 		"prebuild:stats": "bun run scripts/fetch-stats-snapshot.ts",
+		"sync:vault": "bun run scripts/sync-vault.ts",
 		"preview": "astro preview --host 127.0.0.1",
 		"astro": "astro",
 		"check:biome": "biome check .",
