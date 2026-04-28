@@ -52,4 +52,10 @@ describe("wikiLinks remark + brokenLinkRehype", () => {
 		const html = compile("[[Welcome]]");
 		expect(html).toContain('data-target-slug="welcome"');
 	});
+
+	it("emits data-target-slug for [[Title#heading]] hrefs (fragment-tolerant)", () => {
+		// Why: rehype regex must skip the #fragment when extracting slug from href.
+		const html = compile("[[Welcome#some-section]]");
+		expect(html).toContain('data-target-slug="welcome"');
+	});
 });

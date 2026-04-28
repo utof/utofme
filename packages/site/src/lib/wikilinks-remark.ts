@@ -24,7 +24,11 @@ import { visit } from "unist-util-visit";
 import { noteHref, noteSlug } from "./wikilinks";
 
 interface WikiOptions {
-	/** Array of known permalinks (e.g. ["/garden/welcome/", ...]) — see ADR 0027. */
+	/**
+	 * Why: array of known target permalinks (e.g. ["/garden/foo/", ...]) — the
+	 * plugin tags each `[[link]]` as resolved iff its computed href appears here;
+	 * otherwise it sets `node.data.exists = false` and uses `newClassName`.
+	 */
 	permalinks: string[];
 }
 
