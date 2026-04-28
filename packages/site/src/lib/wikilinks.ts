@@ -2,21 +2,25 @@
  * Slug + href rules for the digital garden. Single source of truth — used by
  * the remark plugin (Task 4), build-garden-data script (Task 7), and the
  * GraphView island (Task 11).
- * Why: github-slugger is already a transitive dep via Astro 6 +
- * @astrojs/markdown-remark@7 (verified bun.lock 2026-04-27).
+ * Why: github-slugger v2 is a direct devDep — Bun's isolated install model
+ * does not surface transitives via `import.meta.resolve`, so the dep can't
+ * be reached transitively via Astro even though it appears in bun.lock.
  * @see packages/specs/specs/05-garden.md § Slug strategy
  */
-import GithubSlugger from "github-slugger";
+import { slug as slugify } from "github-slugger";
 
 /**
  * Convert a free-form note title to its canonical slug.
- * Why: A new slugger per call is intentional — github-slugger's instance state
- * tracks dedup suffixes (foo, foo-1, foo-2). For our use case (independent
- * title→slug mapping, not collision-aware) we want a fresh instance every time.
+ * Why: The named `slug` export is the stateless variant — github-slugger's
+ * class form tracks dedup suffixes (foo, foo-1, foo-2) which we don't want
+ * for independent title→slug mapping.
  * @see packages/specs/specs/05-garden.md § Slug strategy
  */
 export function noteSlug(title: string): string {
-	return new GithubSlugger().slug(title.trim());
+	// The named `slug` export is the stateless variant — github-slugger's
+	// class form tracks dedup suffixes (foo, foo-1, foo-2) which we don't want
+	// for independent title→slug mapping.
+	return slugify(title.trim());
 }
 
 /**
