@@ -38,7 +38,20 @@
 		// `lefthook install` after `bun install`). On a fresh CI checkout, git
 		// hooks are not installed, so knip's `Unlisted binaries` heuristic
 		// can't see lefthook is in use and flags it unused. Pin here.
-		"lefthook"
+		"lefthook",
+		// Why: Phase 5 garden deps are installed in Task 1 but consumed in later
+		// tasks (Tasks 2-9). They are not yet imported by any source file at this
+		// task boundary, so knip flags them unused. Remove each entry below once
+		// the corresponding consuming file is added in its respective task.
+		// See packages/specs/specs/05-garden.md § New pinned runtime/build deps.
+		"@portaljs/remark-wiki-link",
+		"remark-math",
+		"rehype-katex",
+		"katex",
+		"remark-callout",
+		"force-graph",
+		"@floating-ui/dom",
+		"gray-matter"
 		// Why: react and react-dom are now used via SandboxIsland.tsx (Task 10)
 		// and knip detects them through the tsx import chain. No longer in
 		// ignoreDependencies — removed after knip confirmed auto-detection.
