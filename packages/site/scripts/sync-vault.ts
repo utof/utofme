@@ -168,7 +168,16 @@ export async function runSync(opts: SyncOptions): Promise<SyncSummary> {
 		const ext = extname(filePath);
 		if (ext !== ".md" && ext !== ".mdx") continue;
 		const raw = await readFile(filePath, "utf8");
-		const { data, content } = frontmatter(raw);
+		let parsed: { data: Record<string, unknown>; content: string };
+		try {
+			parsed = frontmatter(raw);
+		} catch (err) {
+			console.warn(
+				`[warn] skipping ${filePath}: frontmatter parse error: ${err instanceof Error ? err.message : String(err)}`,
+			);
+			continue;
+		}
+		const { data, content } = parsed;
 		if (data["publish"] !== true) continue;
 
 		const fallbackTitle = basename(filePath, ext);
@@ -190,6 +199,9 @@ export async function runSync(opts: SyncOptions): Promise<SyncSummary> {
 			if (visitedAssets.has(basename(imgName))) {
 				// Collision detection: a later note may also embed this name.
 				// The first copy wins (idempotent); subsequent embeds become no-ops.
+				console.warn(
+					`[warn] image-name collision: '${basename(imgName)}' already mirrored, skipping subsequent embed`,
+				);
 				continue;
 			}
 			visitedAssets.add(basename(imgName));
@@ -217,6 +229,7 @@ export async function runSync(opts: SyncOptions): Promise<SyncSummary> {
 			summary.wouldDelete += 1;
 			console.log(`D ${f}`);
 		} else {
+			console.log(`D ${f}`);
 			await unlink(join(opts.dest, f));
 			summary.deleted += 1;
 		}
@@ -228,6 +241,7 @@ export async function runSync(opts: SyncOptions): Promise<SyncSummary> {
 			summary.wouldDelete += 1;
 			console.log(`D _assets/${f}`);
 		} else {
+			console.log(`D _assets/${f}`);
 			await unlink(join(assetsDir, f));
 			summary.deleted += 1;
 		}
