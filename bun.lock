@@ -42,6 +42,7 @@
         "dependency-cruiser": "^17.3.10",
         "fast-check": "^4",
         "force-graph": "1.51.4",
+        "github-slugger": "^2",
         "gray-matter": "^4",
         "happy-dom": "^20.9.0",
         "katex": "^0.16.45",
