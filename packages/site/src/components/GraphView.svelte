@@ -96,6 +96,15 @@
 		return PALETTE[Math.abs(h) % PALETTE.length] ?? "#888";
 	}
 
+	// Holds the force-graph instance so the onMount cleanup can dispose it
+	// (rAF loop, ResizeObserver, pointer listeners) when the island unmounts —
+	// otherwise <ClientRouter /> SPA navigations leak detached canvas state.
+	// Why: the leak compounds on repeat visits to /garden/graph/.
+	// `_destructor` is the disposal hook exposed in
+	// node_modules/force-graph/dist/force-graph.d.ts:45 — optional-call to
+	// guard against a future minor renaming the underscored API.
+	let fg: import("force-graph").ForceGraph<Node, Edge> | undefined;
+
 	onMount(() => {
 		void (async () => {
 			if (!container) return;
@@ -112,7 +121,7 @@
 			// declares the manualChunks rule that names that chunk.
 			const { default: ForceGraph } = await import("force-graph");
 			const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-			const fg = new ForceGraph<Node, Edge>(container)
+			fg = new ForceGraph<Node, Edge>(container)
 				.graphData({ nodes: graph.nodes, links: graph.edges })
 				.nodeId("id")
 				.nodeLabel((n: Node) => n.label)
@@ -125,6 +134,10 @@
 				});
 			if (reduced) fg.pauseAnimation();
 		})();
+		return () => {
+			fg?._destructor?.();
+			fg = undefined;
+		};
 	});
 </script>
 
