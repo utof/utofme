@@ -80,6 +80,67 @@ describe("buildArtefacts deterministic writes", () => {
 	});
 });
 
+describe("identical-title backlink ordering is deterministic", () => {
+	// Why: COLLATOR returns 0 for identical titles, so insertion order (which
+	// tracks readdir, NOT specified by POSIX) leaks into output. Tiebreaker on
+	// slug guarantees stable order across filesystems / CI runners.
+	it("orders sources with the same title by slug", () => {
+		const notes: Note[] = [
+			{
+				slug: "note-b",
+				title: "Same Title",
+				tags: [],
+				outgoing: ["target"],
+				summary: "",
+				firstParagraph: "",
+			},
+			{
+				slug: "note-a",
+				title: "Same Title",
+				tags: [],
+				outgoing: ["target"],
+				summary: "",
+				firstParagraph: "",
+			},
+			{
+				slug: "target",
+				title: "Target",
+				tags: [],
+				outgoing: [],
+				summary: "",
+				firstParagraph: "",
+			},
+		];
+		const { backlinks } = buildArtefacts(notes);
+		const sources = backlinks["target"] ?? [];
+		expect(sources.map((s) => s.slug)).toEqual(["note-a", "note-b"]);
+	});
+});
+
+describe("readNotes embed exclusion", () => {
+	// Why: WIKILINK_RE prefix `(?<!!)` must reject `![[asset.png]]` embeds so
+	// they don't surface as phantom backlinks if an image basename ever
+	// collides with a note slug.
+	it("does not capture ![[image]] embeds as wikilink targets", async () => {
+		const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+		const { tmpdir } = await import("node:os");
+		const { join } = await import("node:path");
+		const { readNotes } = await import("../../scripts/build-garden-data");
+		const dir = await mkdtemp(join(tmpdir(), "garden-embed-"));
+		try {
+			await writeFile(
+				join(dir, "src.md"),
+				"---\ntitle: Src\n---\n\n![[asset.png]] and [[Real]]\n",
+				"utf8",
+			);
+			const notes = await readNotes(dir);
+			expect(notes[0]?.outgoing).toEqual(["real"]);
+		} finally {
+			await rm(dir, { recursive: true, force: true });
+		}
+	});
+});
+
 describe("readNotes wikilink-extraction slug parity", () => {
 	// Why: the script's wikilink extractor and the rendering remark plugin must
 	// resolve [[Title]] to the SAME slug — otherwise a backlink edge points to

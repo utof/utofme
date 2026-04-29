@@ -8,7 +8,8 @@
  *   - Recursive object-key sort (alphabetical, ASCII).
  *   - Array sorts via Intl.Collator("en", {sensitivity:"base"}).
  *   - Trailing newline on every output.
- *   - 2-space indent.
+ *   - Tab indent (matches `packages/site/biome.json` `indentStyle: tab`;
+ *     Biome reformats committed JSON on precommit, so the script must match).
  *   - Two consecutive runs against identical inputs → byte-identical output.
  *
  * @see packages/specs/specs/05-garden.md § Deterministic-write contract
@@ -90,7 +91,7 @@ export interface Artefacts {
 	graphJson: string;
 }
 
-const WIKILINK_RE = /\[\[([^|\]]+)(?:\|[^\]]+)?\]\]/g;
+const WIKILINK_RE = /(?<!!)\[\[([^|\]]+)(?:\|[^\]]+)?\]\]/g;
 const COLLATOR = new Intl.Collator("en", { sensitivity: "base" });
 
 /**
@@ -142,7 +143,7 @@ function sortObject(value: JSONValue): JSONValue {
 }
 
 function emit(value: JSONValue): string {
-	return `${JSON.stringify(value, null, 2)}\n`;
+	return `${JSON.stringify(value, null, "\t")}\n`;
 }
 
 /**
@@ -168,7 +169,7 @@ export function buildArtefacts(notes: Note[]): Artefacts {
 	for (const k of Object.keys(backlinks)) {
 		const list = backlinks[k];
 		if (list !== undefined) {
-			list.sort((a, b) => COLLATOR.compare(a.title, b.title));
+			list.sort((a, b) => COLLATOR.compare(a.title, b.title) || COLLATOR.compare(a.slug, b.slug));
 		}
 	}
 
@@ -180,13 +181,17 @@ export function buildArtefacts(notes: Note[]): Artefacts {
 
 	// Graph.
 	const nodes: GraphNode[] = notes
-		.map((n) => ({ id: n.slug, label: n.title, tags: [...n.tags].sort() }))
-		.sort((a, b) => a.id.localeCompare(b.id));
+		.map((n) => ({
+			id: n.slug,
+			label: n.title,
+			tags: [...new Set(n.tags)].sort((a, b) => COLLATOR.compare(a, b)),
+		}))
+		.sort((a, b) => COLLATOR.compare(a.id, b.id));
 	const edges: GraphEdge[] = notes
 		.flatMap((n) =>
 			n.outgoing.filter((t) => slugSet.has(t)).map((target) => ({ source: n.slug, target })),
 		)
-		.sort((a, b) => a.source.localeCompare(b.source) || a.target.localeCompare(b.target));
+		.sort((a, b) => COLLATOR.compare(a.source, b.source) || COLLATOR.compare(a.target, b.target));
 
 	// Round-trip the typed shapes through JSON.parse to land them inside
 	// `JSONValue`. JSON.stringify is total over our shapes (only string,

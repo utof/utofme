@@ -237,7 +237,7 @@ Image embeds: `![[diagram.png]]` → resolve `diagram.png` against `src/content/
 - Recursive object-key sort on every emitted object (alphabetical, ASCII).
 - Array sorts via the locale-locked Collator above; every array has a stable primary sort key documented in code.
 - Trailing newline after the closing `}` (so `git diff` does not flag terminal-newline drift).
-- 2-space indent (matches Biome's default JSON formatting).
+- Tab indent (matches this repo's `packages/site/biome.json` `indentStyle: tab` setting; Biome reformats committed JSON on precommit, so the script must match).
 - A unit test re-runs the writer against a fixed input twice and asserts byte-identical output.
 
 The `<Backlinks>` Astro component imports `backlinks.json` directly:
