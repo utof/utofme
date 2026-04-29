@@ -111,10 +111,12 @@ export default defineConfig({
 		build: {
 			rollupOptions: {
 				output: {
-					manualChunks: (id) => {
-						if (id.includes("force-graph") || id.includes("d3-force-3d")) return "graph-vendor";
-						return undefined;
-					},
+					manualChunks: (id) =>
+						/[\\/]node_modules[\\/](?:\.bun[\\/])?(?:[^\\/]+[\\/])?(?:force-graph|d3-force-3d)[\\/]/.test(
+							id,
+						)
+							? "graph-vendor"
+							: undefined,
 				},
 			},
 		},

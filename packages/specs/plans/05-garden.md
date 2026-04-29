@@ -6,7 +6,7 @@
 
 **Architecture:** Static-first. Vault → `src/content/notes/` via local `bun run sync:vault` (no CI run). Content pipeline: `embedRemark` → `@portaljs/remark-wiki-link` (with build-time `permalinks` array from synchronous `fast-glob`) → `remarkMath` → `remarkCallout` → `rehypeKatex` → custom rehype `<a>`→`<span>` rewrite. Three deterministic data artefacts (`backlinks.json`, `note-previews.json`, `graph.json`) built by `scripts/build-garden-data.ts` and committed; CI freshness check via `git diff --exit-code`. Two Svelte 5 islands: `<LinkPreview client:idle>` (delegated `mouseover`/`focusin` on body) and `<GraphView client:visible>` (canvas + d3-force-3d, `manualChunks` for chunk isolation).
 
-**Tech Stack:** Astro 6.x; Svelte 5 runes; Bun 1.2; TypeScript strict + astro/tsconfigs/strictest; Zod (`astro/zod`); Vitest + fast-check; Playwright + Axe-core; size-limit; LHCI. New deps: `@portaljs/remark-wiki-link@1.2.0`, `remark-math@6`, `rehype-katex@7`, `katex`, `remark-callout@1.1.1`, `force-graph@1.51.4`, `@floating-ui/dom@1`, `gray-matter@^4`, `unist-util-visit` (for the rehype rewrite plugin — already transitive via remark/rehype but listed for clarity), `fast-glob` (already transitive via Astro 6).
+**Tech Stack:** Astro 6.x; Svelte 5 runes; Bun 1.2; TypeScript strict + astro/tsconfigs/strictest; Zod (`astro/zod`); Vitest + fast-check; Playwright + Axe-core; size-limit; LHCI. New deps: `@flowershow/remark-wiki-link@3.4.0`, `remark-math@6`, `rehype-katex@7`, `katex`, `@r4ai/remark-callout@0.6.2`, `force-graph@1.51.4`, `@floating-ui/dom@1`, `gray-matter@^4`, `unist-util-visit` (for the rehype rewrite plugin — already transitive via remark/rehype but listed for clarity), `fast-glob` (already transitive via Astro 6).
 
 **Branch:** `phase/05-garden` (already cut from `11c48e9`). Spec at `packages/specs/specs/05-garden.md` v2 (`918dbf0`).
 
@@ -102,7 +102,7 @@ There are **12 tasks**. Each is an isolated commit. Worker subagents (Sonnet/Opu
 
 ```bash
 cd packages/site
-bun add -d @portaljs/remark-wiki-link@1.2.0 remark-math@6 rehype-katex@7 katex remark-callout@1.1.1 force-graph@1.51.4 @floating-ui/dom@1 gray-matter@^4
+bun add -d @flowershow/remark-wiki-link@3.4.0 remark-math@6 rehype-katex@7 katex @r4ai/remark-callout@0.6.2 force-graph@1.51.4 @floating-ui/dom@1 gray-matter@^4
 ```
 
 Verify `bun.lock` updates with these deps; commit alongside Task 1.
@@ -1069,7 +1069,7 @@ import { wikiLinks, brokenLinkRehype } from "./src/lib/wikilinks-remark.ts";
 import { embedRemark } from "./src/lib/embed-remark.ts";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import remarkCallout from "remark-callout";
+import remarkCallout from "@r4ai/remark-callout";
 
 // ... existing config ...
 markdown: {
@@ -2255,10 +2255,10 @@ Each ADR follows the standard skeleton (Context · Decision · Alternatives · C
 ADR mappings (each implementer subagent uses the spec's "ADRs to write" paragraph as the per-ADR brief):
 - 0025 vault-sync-script — driver: astro-loader-obsidian Astro 5 peer-dep break (cite npm registry probe).
 - 0026 force-graph-over-sigma — driver: user preference (Obsidian aesthetic) + canvas + lighter JS budget.
-- 0027 wikilink-remark-plugin — `@portaljs/remark-wiki-link@1.2.0` + custom rehype rewrite mechanism (cite verified API).
+- 0027 wikilink-remark-plugin — `@flowershow/remark-wiki-link@3.4.0` + custom rehype rewrite mechanism (cite verified API).
 - 0028 backlinks-build-time — server-rendered, deterministic-write contract, CI freshness gate.
 - 0029 link-preview-island — `client:idle`, delegated `mouseover` (not `mouseenter`) on body, inlined JSON payload.
-- 0030 math-callouts-chain — `remark-math` + `rehype-katex` + `remark-callout`; conditional KaTeX CSS load gated on `math: true`; rejected MathJax + MDX-component alternatives.
+- 0030 math-callouts-chain — `remark-math` + `rehype-katex` + `@r4ai/remark-callout`; conditional KaTeX CSS load gated on `math: true`; rejected MathJax + MDX-component alternatives.
 
 - [ ] **Step 8: Pre-PR full sweep (run all gates locally before final commit).**
 
