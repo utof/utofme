@@ -62,8 +62,9 @@
 	"private": true,
 	"scripts": {
 		"dev": "astro dev",
-		"build": "astro build",
+		"build": "bun run prebuild:stats && bun run prebuild:garden && astro build",
 		"prebuild:stats": "bun run scripts/fetch-stats-snapshot.ts",
+		"prebuild:garden": "bun run scripts/build-garden-data.ts",
 		"sync:vault": "bun run scripts/sync-vault.ts",
 		"preview": "astro preview --host 127.0.0.1",
 		"astro": "astro",

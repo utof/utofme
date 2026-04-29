@@ -1,0 +1,32 @@
+{
+	"callout-demo": {
+		"firstParagraph": "Callouts use the Obsidian `> [!type]` syntax and are rendered with matching\nCSS classes for visual emphasis.",
+		"summary": "Demonstrates Obsidian-style callout block rendering.",
+		"title": "Callout demo"
+	},
+	"embed-demo": {
+		"firstParagraph": "Image embeds use Obsidian's `![[filename]]` syntax. The build pipeline resolves\nthe filename against `src/content/notes/_assets/` and emits an optimised\n`<Picture>` element via Astro's asset pipeline.",
+		"summary": "Demonstrates image embed syntax using the Obsidian ![[image]] notation.",
+		"title": "Embed demo"
+	},
+	"math-demo": {
+		"firstParagraph": "Einstein's mass-energy equivalence: $E = mc^2$.",
+		"summary": "Demonstrates KaTeX inline and display math rendering.",
+		"title": "Math demo"
+	},
+	"orphan": {
+		"firstParagraph": "This note has no outgoing wikilinks. It exists to ensure the garden renders\ncorrectly when a note is not connected to any other note in the graph.",
+		"summary": "A note with no outgoing wikilinks, exercising the empty-backlinks render path.",
+		"title": "Orphan"
+	},
+	"welcome": {
+		"firstParagraph": "This is the seed of the garden. Notes link to each other via [[Wikilinks]].",
+		"summary": "Entry point for the digital garden.",
+		"title": "Welcome"
+	},
+	"wikilinks": {
+		"firstParagraph": "This note links to [[Welcome]] and [[Math demo]] — both are resolved targets.",
+		"summary": "Demonstrates resolved and broken wikilink rendering.",
+		"title": "Wikilinks"
+	}
+}

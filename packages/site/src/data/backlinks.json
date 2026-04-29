@@ -1,0 +1,20 @@
+{
+	"math-demo": [
+		{
+			"slug": "wikilinks",
+			"title": "Wikilinks"
+		}
+	],
+	"welcome": [
+		{
+			"slug": "wikilinks",
+			"title": "Wikilinks"
+		}
+	],
+	"wikilinks": [
+		{
+			"slug": "welcome",
+			"title": "Welcome"
+		}
+	]
+}
