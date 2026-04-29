@@ -40,43 +40,18 @@
 		// binary via its Node API internally during `astro build`. Knip can't trace
 		// this indirect usage, so it flags pagefind as unused. Verified 2026-04-26.
 		"pagefind",
-		// Why: lefthook is invoked via `.git/hooks/pre-commit` (installed by
-		// `lefthook install` after `bun install`). On a fresh CI checkout, git
-		// hooks are not installed, so knip's `Unlisted binaries` heuristic
-		// can't see lefthook is in use and flags it unused. Pin here.
-		"lefthook",
-		// Why: Phase 5 garden deps are installed in Task 1 but consumed in later
-		// tasks (Tasks 2-9). They are not yet imported by any source file at this
-		// task boundary, so knip flags them unused. Remove each entry below once
-		// the corresponding consuming file is added in its respective task.
-		// See packages/specs/specs/05-garden.md § New pinned runtime/build deps.
-		//
-		// Why: @flowershow/remark-wiki-link is consumed in src/lib/wikilinks-remark.ts
-		// (Task 4) directly, so knip now classifies it as a normally-consumed direct
-		// dep. The pre-existing pin for @portaljs/remark-wiki-link was removed when
-		// the package was swapped — see wikilinks-remark.ts module docstring for
-		// the rationale (portaljs incompat with mdast-util-from-markdown@2.x;
-		// upstream rebrand → flowershow per datopian/portaljs#1059).
-		//
-		// Why: remark-math + rehype-katex + @r4ai/remark-callout are auto-detected
-		// by knip via astro.config.mjs imports (Task 6). Removed from this list.
-		// remark-callout@1.1.1 was swapped to @r4ai/remark-callout@0.6.2 — the
-		// pinned 1.1.1 throws inside its micromark tokenizer; ADR 0030 now
-		// documents the swap.
-		//
-		// Why: katex stays — it's a CSS-only dep loaded conditionally by the
-		// note layout (math: true frontmatter); knip can't detect CSS imports.
-		"katex",
-		"force-graph",
-		"@floating-ui/dom"
-		// Why: gray-matter removed from this list — Task 3 (scripts/sync-vault.ts)
-		// imports it directly, so knip now classifies it as a normally-consumed
-		// direct dep. Per Task 1 commit's instruction block: remove each entry
-		// once the corresponding consuming file is added.
-		//
-		// Why: react and react-dom are now used via SandboxIsland.tsx (Task 10)
-		// and knip detects them through the tsx import chain. No longer in
-		// ignoreDependencies — removed after knip confirmed auto-detection.
-		// @types/react / @types/react-dom similarly auto-detected. Entries removed.
+		// Why: force-graph is consumed via a dynamic import inside GraphView.svelte
+		// (`await import("force-graph")`). Knip cannot trace dynamic imports through
+		// the Svelte component's script block in this version, so it still flags the
+		// dep as unused. Kept here so `bun run check:knip` stays clean.
+		// See: packages/specs/adrs/0026-force-graph-over-sigma.md
+		"force-graph"
+		// Removed in Phase 5 Task 12 (knip hints fired after Task 11 landed):
+		//   lefthook     — knip now detects lefthook.yml usage directly.
+		//   katex        — knip now traces the `katex/dist/katex.min.css?url`
+		//                  import in src/layouts/_NoteLayout.astro.
+		//   @floating-ui/dom — knip now traces import in src/components/LinkPreview.svelte.
+		// Why: gray-matter removed from this list in Task 3 (scripts/sync-vault.ts
+		// imports it directly). react/react-dom removed after Task 10.
 	]
 }

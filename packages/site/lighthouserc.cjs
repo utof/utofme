@@ -34,6 +34,13 @@ module.exports = {
 				"http://localhost:4321/uses/",
 				"http://localhost:4321/colophon/",
 				"http://localhost:4321/stats/",
+				// Phase 5 garden routes. /garden/graph/ is deliberately excluded —
+				// graph-render perf is dominated by canvas init + d3-force layout,
+				// not comparable to a content page on Lighthouse's scoring rubric.
+				// The 60 fps interaction target is enforced by a Playwright performance
+				// assertion instead. See: packages/specs/specs/05-garden.md § Acceptance criteria #9.
+				"http://localhost:4321/garden/",
+				"http://localhost:4321/garden/welcome/",
 			],
 			// Why: 5 runs absorbs Lighthouse-simulation variance inherent to the
 			// Lantern model on localhost. With `aggregationMethod: "optimistic"` the
