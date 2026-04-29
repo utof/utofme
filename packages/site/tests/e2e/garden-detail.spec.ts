@@ -41,3 +41,9 @@ test("garden detail axe clean", async ({ page }) => {
 	const results = await new AxeBuilder({ page }).analyze();
 	expect(results.violations).toEqual([]);
 });
+
+test("embed-demo renders <picture> via astro:assets", async ({ page }) => {
+	await page.goto("/garden/embed-demo/");
+	await expect(page.locator("picture, picture img").first()).toBeVisible();
+	await expect(page.locator("img.wikilink-broken")).toHaveCount(0);
+});

@@ -57,11 +57,19 @@ function attr(node: MdxJsxFlowElement, name: string): MdxJsxAttribute | undefine
 
 describe("embedRemark", () => {
 	it("rewrites ![[diagram.png]] to an mdxJsxFlowElement Picture node", () => {
+		// Why: `src` is an mdxJsxAttributeValueExpression referencing a synthesised
+		// import binding (e.g. `_embed_diagram_png`), NOT a string literal. Astro's
+		// <Picture> demands an imported ImageMetadata; passing a string filepath
+		// raises LocalImageUsedWrongly at build time.
+		// @see https://docs.astro.build/en/reference/errors/local-image-used-wrongly/
 		const tree = transform("text\n\n![[diagram.png]]\n\ntail");
 		const pic = findPicture(tree);
 		expect(pic).toBeDefined();
 		const src = pic === undefined ? undefined : attr(pic, "src");
-		expect(src?.value).toBe("./_assets/diagram.png");
+		expect(src?.value).toMatchObject({
+			type: "mdxJsxAttributeValueExpression",
+			value: "_embed_diagram_png",
+		});
 	});
 
 	it("preserves caption from ![[file.png|caption]] as the alt attribute", () => {
@@ -90,10 +98,18 @@ describe("embedRemark", () => {
 	});
 
 	it('injects `import { Picture } from "astro:assets"` when an embed is rewritten', () => {
+		// Two imports are injected per embed: the named `<Picture>` symbol AND the
+		// per-file default-import binding (`import _embed_diagram_png from
+		// "./_assets/diagram.png"`). The image import is required because Astro's
+		// asset pipeline resolves ImageMetadata at compile time from real ESM
+		// imports, not from string filepaths.
 		const tree = transform("![[diagram.png]]");
 		const esms = findEsmImports(tree);
-		expect(esms.length).toBe(1);
-		expect(esms[0]?.value).toBe('import { Picture } from "astro:assets";');
+		expect(esms.length).toBe(2);
+		const pictureImport = esms.find((e) => e.value.includes("astro:assets"));
+		expect(pictureImport?.value).toBe('import { Picture } from "astro:assets";');
+		const imageImport = esms.find((e) => e.value.includes("./_assets/diagram.png"));
+		expect(imageImport?.value).toBe('import _embed_diagram_png from "./_assets/diagram.png";');
 	});
 
 	it("does not inject the import when no embed is rewritten", () => {
