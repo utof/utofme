@@ -22,6 +22,12 @@
 		"interface": true,
 		"type": true
 	},
+	// Why: Task 8 creates _NoteLayout.astro and Backlinks.astro before Task 9
+	// adds the garden pages that import them. Knip correctly flags these as
+	// unused files at the Task 8 boundary. Remove once Task 9 adds
+	// src/pages/garden/index.astro + [slug].astro.
+	// See packages/specs/plans/05-garden.md § Task 9
+	"ignoreFiles": ["src/layouts/_NoteLayout.astro", "src/components/Backlinks.astro"],
 	"ignoreDependencies": [
 		// Why: wrangler is a CLI-only dev dep (no `import` from source). It powers
 		// the deploy step (cloudflare/wrangler-action@v3 in deploy.yml) and gives

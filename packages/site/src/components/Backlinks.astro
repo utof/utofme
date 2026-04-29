@@ -1,0 +1,45 @@
+---
+/**
+ * Build-time backlinks footer. Reads src/data/backlinks.json statically.
+ * No client JS.
+ * @see packages/specs/specs/05-garden.md § Backlinks at build time
+ */
+import backlinks from "../data/backlinks.json";
+
+interface Props {
+	slug: string;
+}
+const { slug } = Astro.props;
+const items = (backlinks as Record<string, Array<{ slug: string; title: string }>>)[slug] ?? [];
+---
+
+<footer class="backlinks">
+	{
+		items.length === 0 ? (
+			<p class="empty">No backlinks yet.</p>
+		) : (
+			<section aria-label="Backlinks">
+				<h2>Linked from</h2>
+				<ul>
+					{items.map((b) => (
+						<li>
+							<a href={`/garden/${b.slug}/`}>{b.title}</a>
+						</li>
+					))}
+				</ul>
+			</section>
+		)
+	}
+</footer>
+
+<style>
+	.backlinks {
+		margin-block-start: var(--space-5);
+		border-block-start: 1px solid var(--color-surface);
+		padding-block-start: var(--space-3);
+	}
+	.empty {
+		color: var(--color-text-muted);
+		font-style: italic;
+	}
+</style>

@@ -1,0 +1,82 @@
+---
+/**
+ * Note detail shell. Wraps _BaseLayout (aliased per Phase 3 convention).
+ * Renders <header>, body slot, <Backlinks/> footer. KaTeX CSS conditionally
+ * loaded gated on entry.data.math.
+ * Why: shared shell keeps per-page Astro thin; _BaseLayout already mounts
+ * <SlashFooter/> + <CommandPalette/>.
+ * @see packages/specs/specs/05-garden.md § _NoteLayout
+ */
+import BaseLayout from "./_BaseLayout.astro";
+import Backlinks from "../components/Backlinks.astro";
+import type { CollectionEntry } from "astro:content";
+// Self-host KaTeX CSS — Astro's Vite pipeline hashes + cache-busts it,
+// avoids third-party CDN exposure (privacy + reproducibility), and keeps
+// the build hermetic. The `?url` suffix makes Vite emit the asset URL string
+// at build-time so we can render it conditionally inside the template.
+import katexCssUrl from "katex/dist/katex.min.css?url";
+
+interface Props {
+	entry: CollectionEntry<"notes">;
+}
+const { entry } = Astro.props;
+const updated = entry.data.updated ?? entry.data.created;
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.summary ?? "Garden note"}>
+	{entry.data.math && <link rel="stylesheet" href={katexCssUrl} />}
+	<main>
+		<article class="note">
+			<header>
+				<h1 transition:name={`note-${entry.id}`}>{entry.data.title}</h1>
+				<p class="dates">
+					<time datetime={entry.data.created.toISOString()}
+						>{entry.data.created.toISOString().slice(0, 10)}</time
+					>
+					{
+						entry.data.updated && (
+							<>
+								{" "}
+								· updated{" "}
+								<time datetime={updated.toISOString()}>{updated.toISOString().slice(0, 10)}</time>
+							</>
+						)
+					}
+				</p>
+				{
+					entry.data.tags.length > 0 && (
+						<ul class="tags" aria-label="Tags">
+							{entry.data.tags.map((t) => (
+								<li>{t}</li>
+							))}
+						</ul>
+					)
+				}
+			</header>
+			<slot />
+			<Backlinks slug={entry.id} />
+		</article>
+	</main>
+</BaseLayout>
+
+<style>
+	/* tokens reused — only layout-specific overrides here. */
+	.note header {
+		margin-block-end: var(--space-3);
+	}
+	.note .dates {
+		color: var(--color-text-muted);
+		font-size: var(--font-size-2);
+	}
+	.tags {
+		display: flex;
+		gap: var(--space-2);
+		padding: 0;
+		list-style: none;
+	}
+	.tags li {
+		background: var(--color-surface);
+		padding: 0 var(--space-2);
+		border-radius: 4px;
+	}
+</style>
