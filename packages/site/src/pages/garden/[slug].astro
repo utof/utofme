@@ -1,0 +1,20 @@
+---
+/**
+ * Per-note detail page. Static getStaticPaths over all notes.
+ * @see packages/specs/specs/05-garden.md § Acceptance criterion #4
+ */
+import { getCollection, render } from "astro:content";
+import NoteLayout from "../../layouts/_NoteLayout.astro";
+
+export async function getStaticPaths() {
+	const notes = await getCollection("notes");
+	return notes.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<NoteLayout entry={entry}>
+	<Content />
+</NoteLayout>

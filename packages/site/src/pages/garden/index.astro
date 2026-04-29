@@ -1,0 +1,42 @@
+---
+/**
+ * Garden index — alphabetical list of all notes (locale-locked).
+ * @see packages/specs/specs/05-garden.md § Acceptance criterion #3
+ */
+import BaseLayout from "../../layouts/_BaseLayout.astro";
+import { getAllNotes } from "../../lib/notes";
+const notes = await getAllNotes();
+---
+
+<BaseLayout title="Garden — utofme" description="Index of digital garden notes.">
+	<main>
+		<header>
+			<h1>Garden</h1>
+			<p>{notes.length} notes. <a href="/garden/graph/">graph view →</a></p>
+		</header>
+		<ul class="note-list">
+			{
+				notes.map((n) => (
+					<li>
+						<a href={`/garden/${n.id}/`}>{n.data.title}</a>
+						{n.data.summary && <p>{n.data.summary}</p>}
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</BaseLayout>
+
+<style>
+	.note-list {
+		padding: 0;
+		list-style: none;
+	}
+	.note-list li {
+		margin-block-end: var(--space-3);
+	}
+	.note-list p {
+		color: var(--color-text-muted);
+		margin: 0;
+	}
+</style>
