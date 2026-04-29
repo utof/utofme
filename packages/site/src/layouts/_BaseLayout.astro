@@ -83,13 +83,15 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		<!-- Why: inline note-preview index so the LinkPreview island can read it
 		     synchronously (no fetch). The </script escape prevents an
 		     attacker-controlled summary/title from prematurely closing the
-		     <script> block. The build pipeline (Task 7) regenerates this JSON on
-		     every astro build via prebuild:garden.
+		     <script> block. Regex carries the `i` flag because HTML's tokenizer
+		     matches end-tag names case-insensitively, so </SCRIPT> would
+		     also terminate. The build pipeline (Task 7) regenerates this JSON
+		     on every astro build via prebuild:garden.
 		     @see packages/specs/plans/05-garden.md § Task 10 -->
 		<script
 			type="application/json"
 			id="note-previews"
-			set:html={JSON.stringify(previews).replace(/<\/script/g, "<\\/script")}
+			set:html={JSON.stringify(previews).replace(/<\/script/gi, "<\\/script")}
 		/>
 		<!-- Why: Obsidian-style hover preview for wikilinks. client:idle so
 		     hydration does not block first paint. Delegated body-level

@@ -12,9 +12,11 @@
     - Reads the inlined `<script type="application/json" id="note-previews">`
       block injected by _BaseLayout.astro — no network refetch.
     - Positions the card with @floating-ui/dom's computePosition + offset(8) +
-      shift({ padding: 8 }) + flip(). Middleware order matters: shift before
-      flip so the card is nudged within the viewport before being flipped to
-      the opposite side as a fallback.
+      flip() + shift({ padding: 8 }). Middleware order is the floating-ui
+      recommended sequence: flip first picks the side, shift then nudges
+      along that final side. (Running shift before flip wastes the shift on
+      the original side and can leave the floating element overflowing on
+      the flipped side.) See https://floating-ui.com/docs/tutorial.
     - Honours `prefers-reduced-motion` by disabling the opacity transition.
     - role="tooltip" + aria-hidden toggles for screen-reader semantics.
 
@@ -25,7 +27,7 @@
   @see https://svelte.dev/docs/svelte/$state
 -->
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount, tick } from "svelte";
 	import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 
 	/**
@@ -79,13 +81,16 @@
 			title = p.title;
 			body = p.summary || p.firstParagraph;
 			visible = true;
-			// Yield once so Svelte commits the visible=true class flip before we
-			// measure the card; computePosition needs an in-flow target.
-			await Promise.resolve();
+			// Wait for Svelte to flush the DOM change so computePosition reads
+			// the post-flip dimensions. tick() is the documented Svelte 5 way
+			// to await scheduler flush; a bare microtask (Promise.resolve)
+			// does not guarantee ordering against Svelte's flush microtask.
+			// @see https://svelte.dev/docs/svelte/lifecycle-hooks#tick
+			await tick();
 			if (!card) return;
 			const pos = await computePosition(a, card, {
 				placement: "top",
-				middleware: [offset(8), shift({ padding: 8 }), flip()],
+				middleware: [offset(8), flip(), shift({ padding: 8 })],
 			});
 			card.style.left = `${pos.x}px`;
 			card.style.top = `${pos.y}px`;
