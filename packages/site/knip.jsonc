@@ -22,6 +22,12 @@
 		"interface": true,
 		"type": true
 	},
+	// Why: ignoreFiles was used by Task 8 to suppress _NoteLayout.astro +
+	// Backlinks.astro before their consumers existed. Task 9 added
+	// src/pages/garden/index.astro + [slug].astro — both files are now
+	// consumed and no longer need suppression.
+	// See packages/specs/plans/05-garden.md § Task 9
+	"ignoreFiles": [],
 	"ignoreDependencies": [
 		// Why: wrangler is a CLI-only dev dep (no `import` from source). It powers
 		// the deploy step (cloudflare/wrangler-action@v3 in deploy.yml) and gives
@@ -34,14 +40,25 @@
 		// binary via its Node API internally during `astro build`. Knip can't trace
 		// this indirect usage, so it flags pagefind as unused. Verified 2026-04-26.
 		"pagefind",
-		// Why: lefthook is invoked via `.git/hooks/pre-commit` (installed by
-		// `lefthook install` after `bun install`). On a fresh CI checkout, git
-		// hooks are not installed, so knip's `Unlisted binaries` heuristic
-		// can't see lefthook is in use and flags it unused. Pin here.
+		// Why: force-graph is consumed via a dynamic import inside GraphView.svelte
+		// (`await import("force-graph")`). Knip cannot trace dynamic imports through
+		// the Svelte component's script block in this version, so it still flags the
+		// dep as unused. Kept here so `bun run check:knip` stays clean.
+		// See: packages/specs/adrs/0026-force-graph-over-sigma.md
+		"force-graph",
+		// Why: lefthook.yml lives at the MONOREPO ROOT (../../lefthook.yml), but
+		// knip is invoked with `--cwd packages/site` (see CI workflow + local
+		// `bun run check:knip` script). The lefthook plugin doesn't walk up to
+		// the workspace root, so the dep registers as unused in CI. Locally it
+		// can pass via cache state, but CI's frozen-lockfile install scrubs that.
+		// Re-added in Task 12 fixup; remove only after migrating lefthook.yml to
+		// packages/site/ or wiring an explicit `entry: ["../../lefthook.yml"]`.
 		"lefthook"
-		// Why: react and react-dom are now used via SandboxIsland.tsx (Task 10)
-		// and knip detects them through the tsx import chain. No longer in
-		// ignoreDependencies — removed after knip confirmed auto-detection.
-		// @types/react / @types/react-dom similarly auto-detected. Entries removed.
+		// Removed in Phase 5 Task 12 (knip hints fired after Task 11 landed):
+		//   katex        — knip now traces the `katex/dist/katex.min.css?url`
+		//                  import in src/layouts/_NoteLayout.astro.
+		//   @floating-ui/dom — knip now traces import in src/components/LinkPreview.svelte.
+		// Why: gray-matter removed from this list in Task 3 (scripts/sync-vault.ts
+		// imports it directly). react/react-dom removed after Task 10.
 	]
 }

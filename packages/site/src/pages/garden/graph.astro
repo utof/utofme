@@ -1,0 +1,68 @@
+---
+/**
+ * /garden/graph/ — force-directed graph view + a11y floor.
+ *
+ * Why: spec § Acceptance criterion #7 requires a canvas graph with a
+ * keyboard-reachable list fallback. The `<details>`-collapsed full notes
+ * list is the progressive-enhancement floor for users without canvas /
+ * with screen readers / on Tab navigation.
+ *
+ * The JSON `<script>` block inlines `src/data/graph.json` so the island
+ * can parse it synchronously without a fetch. The `</script` escape uses
+ * the `gi` regex flag because HTML's end-tag tokenizer is
+ * case-insensitive (Phase 5 Task 10 fixup applied the same fix to the
+ * note-previews block in _BaseLayout.astro:92).
+ *
+ * `client:visible` defers the island's hydration (and the dynamic
+ * `force-graph` import inside it) until the canvas is scrolled into view.
+ *
+ * @see packages/specs/specs/05-garden.md § Acceptance criterion #7
+ * @see packages/specs/specs/05-garden.md § Per-route size budgets summary
+ * @see packages/specs/plans/05-garden.md § Task 11
+ */
+import BaseLayout from "../../layouts/_BaseLayout.astro";
+import GraphView from "../../components/GraphView.svelte";
+import graph from "../../data/graph.json";
+import { getAllNotes } from "../../lib/notes";
+const notes = await getAllNotes();
+---
+
+<BaseLayout title="Garden — graph view" description="Force-directed graph of garden notes.">
+	<main>
+		<header>
+			<h1>Graph</h1>
+			<p><a href="/garden/">← back to index</a></p>
+		</header>
+		{
+			/* Why escape `</script>` (gi flag): a node label like
+			   "Foo</script>bar" or "Foo</SCRIPT>bar" would terminate the JSON
+			   block early and break parse. HTML's tokenizer matches end-tag
+			   names case-insensitively, so the `i` flag is required.
+			   See _BaseLayout.astro:92 (Phase 5 Task 10 fixup). */
+		}
+		<script
+			type="application/json"
+			id="garden-graph"
+			set:html={JSON.stringify(graph).replace(/<\/script/gi, "<\\/script")}
+		/>
+		<GraphView client:visible />
+		<details class="list-fallback">
+			<summary>List view ({notes.length} notes)</summary>
+			<ul>
+				{
+					notes.map((n) => (
+						<li>
+							<a href={`/garden/${n.id}/`}>{n.data.title}</a>
+						</li>
+					))
+				}
+			</ul>
+		</details>
+	</main>
+</BaseLayout>
+
+<style>
+	.list-fallback {
+		margin-block-start: var(--space-3);
+	}
+</style>

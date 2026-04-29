@@ -1,0 +1,16 @@
+---
+title: Embed demo
+created: 2026-04-27
+tags: ["demo"]
+summary: Demonstrates image embed syntax using the Obsidian ![[image]] notation.
+---
+
+Image embeds use Obsidian's `![[filename]]` syntax. The build pipeline resolves
+the filename against `src/content/notes/_assets/` and emits an optimised
+`<Picture>` element via Astro's asset pipeline.
+
+![[diagram.png]]
+
+The image above is a placeholder diagram. In a real vault the embed would point
+to a sketch or screenshot stored alongside the note in the vault's attachments
+folder.

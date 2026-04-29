@@ -17,7 +17,9 @@
 import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
 import CommandPalette from "../components/CommandPalette.svelte";
+import LinkPreview from "../components/LinkPreview.svelte";
 import SlashFooter from "../components/SlashFooter.astro";
+import previews from "../data/note-previews.json";
 
 interface Props {
 	/** Document <title> content. */
@@ -78,6 +80,24 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     See: https://docs.astro.build/en/guides/view-transitions/#maintaining-state
 		     @see packages/specs/plans/02-interactivity.md § Task 10 -->
 		<CommandPalette client:idle transition:persist />
+		<!-- Why: inline note-preview index so the LinkPreview island can read it
+		     synchronously (no fetch). The </script escape prevents an
+		     attacker-controlled summary/title from prematurely closing the
+		     <script> block. Regex carries the `i` flag because HTML's tokenizer
+		     matches end-tag names case-insensitively, so </SCRIPT> would
+		     also terminate. The build pipeline (Task 7) regenerates this JSON
+		     on every astro build via prebuild:garden.
+		     @see packages/specs/plans/05-garden.md § Task 10 -->
+		<script
+			type="application/json"
+			id="note-previews"
+			set:html={JSON.stringify(previews).replace(/<\/script/gi, "<\\/script")}
+		/>
+		<!-- Why: Obsidian-style hover preview for wikilinks. client:idle so
+		     hydration does not block first paint. Delegated body-level
+		     mouseover/focusin keeps per-link cost flat as the garden grows.
+		     @see packages/specs/plans/05-garden.md § Task 10 -->
+		<LinkPreview client:idle />
 	</body>
 </html>
 

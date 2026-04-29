@@ -1,0 +1,48 @@
+{
+	"nodes": [
+		{
+			"id": "callout-demo",
+			"label": "Callout demo",
+			"tags": ["demo"]
+		},
+		{
+			"id": "embed-demo",
+			"label": "Embed demo",
+			"tags": ["demo"]
+		},
+		{
+			"id": "math-demo",
+			"label": "Math demo",
+			"tags": ["demo", "math"]
+		},
+		{
+			"id": "orphan",
+			"label": "Orphan",
+			"tags": ["meta"]
+		},
+		{
+			"id": "welcome",
+			"label": "Welcome",
+			"tags": ["meta"]
+		},
+		{
+			"id": "wikilinks",
+			"label": "Wikilinks",
+			"tags": ["demo"]
+		}
+	],
+	"edges": [
+		{
+			"source": "welcome",
+			"target": "wikilinks"
+		},
+		{
+			"source": "wikilinks",
+			"target": "math-demo"
+		},
+		{
+			"source": "wikilinks",
+			"target": "welcome"
+		}
+	]
+}

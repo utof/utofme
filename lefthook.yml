@@ -82,6 +82,20 @@ pre-commit:
             root: "packages/site"
             run: bun run check:astro
 
+          - name: freshness-garden
+            # Why: ensures src/data/*.json artefacts are up-to-date with
+            # src/content/notes/**. Only runs when note files change.
+            # biome format --write is run before the git diff so the comparison
+            # is against Biome-normalised output (the script emits expanded JSON;
+            # Biome compacts single-element arrays — the committed artefact must
+            # already match the normalised form).
+            # See: packages/specs/specs/05-garden.md § CI freshness check
+            # See: packages/specs/adrs/0028-backlinks-build-time.md
+            glob: "packages/site/src/content/notes/**/*"
+            root: "packages/site"
+            run: bun run prebuild:garden && bunx biome format --write src/data/ && git diff --exit-code src/data/
+            fail_text: "src/data/*.json is stale — run `bun run prebuild:garden` in packages/site and amend the commit"
+
           - name: type-coverage
             root: "packages/site"
             run: bun run check:type-coverage

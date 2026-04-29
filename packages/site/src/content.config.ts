@@ -161,11 +161,31 @@ const stats = defineCollection({
 });
 
 /**
+ * Note frontmatter schema for the digital garden.
+ * Why: `publish` deliberately absent — the sync script is the gate
+ * (see ADR 0025). Title required for <h1>; created required for sort/preview.
+ * @see packages/specs/specs/05-garden.md § Notes frontmatter schema
+ */
+export const notesSchema = z.object({
+	title: z.string(),
+	created: z.coerce.date(),
+	updated: z.coerce.date().optional(),
+	tags: z.array(z.string()).default([]),
+	math: z.boolean().default(false),
+	summary: z.string().max(240).optional(),
+});
+
+const notes = defineCollection({
+	loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/notes" }),
+	schema: notesSchema,
+});
+
+/**
  * Astro Content Collections registry.
  *
  * Why: Astro 6 requires this exact named export at `src/content.config.ts`
- * to wire the `works`, `slash`, and `stats` collections.
+ * to wire the `works`, `slash`, `stats`, and `notes` collections.
  *
  * @see https://docs.astro.build/en/guides/content-collections/
  */
-export const collections = { works, slash, stats };
+export const collections = { works, slash, stats, notes };
