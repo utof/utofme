@@ -105,19 +105,32 @@ describe("stripIslands", () => {
 });
 
 describe("toRssItem", () => {
-  it("emits required RSS fields for a works entry", () => {
+  it("emits required RSS fields for a works entry (uses data.date, not data.created)", () => {
+    // Works schema: src/content.config.ts:36 — `date: z.coerce.date()`.
+    // Notes schema: src/content.config.ts:171 — `created: z.coerce.date()`.
     const fakeWork = {
       id: "code-2",
       collection: "works" as const,
-      data: { title: "Code 2", created: new Date("2026-01-01"), description: "Test" },
+      data: { title: "Code 2", date: new Date("2026-01-01"), description: "Test", draft: false },
       render: async () => ({ Content: () => "<p>body</p>" }),
     };
-    // Test the helper produces { title, link, pubDate, description } at minimum.
     const item = toRssItem(fakeWork as never, "works", "https://utof.me/");
     expect(item.title).toBe("Code 2");
     expect(item.link).toBe("/works/code-2/");
     expect(item.pubDate.toISOString()).toBe("2026-01-01T00:00:00.000Z");
-    expect(item.description).toBe("Test");
+    expect(item.pubDate.getFullYear()).not.toBe(1970);  // regression guard against wrong-field-name bug
+  });
+
+  it("emits required RSS fields for a notes entry (uses data.created)", () => {
+    const fakeNote = {
+      id: "welcome",
+      collection: "notes" as const,
+      data: { title: "Welcome", created: new Date("2026-02-15") },
+      render: async () => ({ Content: () => "<p>body</p>" }),
+    };
+    const item = toRssItem(fakeNote as never, "notes", "https://utof.me/");
+    expect(item.link).toBe("/garden/welcome/");
+    expect(item.pubDate.toISOString()).toBe("2026-02-15T00:00:00.000Z");
   });
 });
 ```
@@ -166,9 +179,12 @@ export function toRssItem(
 ): FeedItem {
   const segment = kind === "works" ? "works" : "garden";
   const link = `/${segment}/${entry.id}/`;
-  const pubDate = "created" in entry.data && entry.data.created
-    ? new Date(entry.data.created)
-    : new Date(0);
+  // Works schema uses `date` (src/content.config.ts:36); notes use `created` (line 171).
+  // The two fields exist on disjoint collection types — guard via `kind`.
+  const raw = kind === "works"
+    ? (entry as CollectionEntry<"works">).data.date
+    : (entry as CollectionEntry<"notes">).data.created;
+  const pubDate = raw ? new Date(raw) : new Date(0);
   const description = "description" in entry.data && typeof entry.data.description === "string"
     ? entry.data.description
     : (entry.data as { title?: string }).title ?? "";
@@ -195,7 +211,10 @@ import { stripIslands, toRssItem } from "../lib/feed.ts";
 
 export const GET: APIRoute = async (context) => {
   const works = await getCollection("works", (e) => e.data.draft !== true);
-  const notes = await getCollection("notes", (e) => e.data.publish === true);
+  // Notes have no `publish` field — sync-vault gate (ADR 0025) is the publish boundary.
+  // Every committed note in src/content/notes/ is publishable. Same predicate as
+  // src/lib/notes.ts:27 + src/pages/garden/[slug].astro:10 (no filter callback).
+  const notes = await getCollection("notes");
   const items = [
     ...works.map((e) => toRssItem(e, "works", context.site!.toString())),
     ...notes.map((e) => toRssItem(e, "notes", context.site!.toString())),
@@ -233,13 +252,15 @@ export const GET: APIRoute = async (context) => {
 
 ### GREEN — `package.json` patch
 
+`@astrojs/rss` is imported by runtime endpoint files (`src/pages/feed*.xml.ts`); `linkedom` is imported by `src/lib/feed.ts` (also runtime). Both are **runtime `dependencies`**, NOT devDependencies — knip and dep-cruiser see them as runtime imports and would flag a misclassification.
+
 ```diff
-   "devDependencies": {
+   "dependencies": {
 +    "@astrojs/rss": "^4",
 +    "linkedom": "^0.18",
 ```
 
-(Pin to current latest at install time. `bun add -d @astrojs/rss linkedom`.)
+Install: `bun add @astrojs/rss linkedom` (no `-d`). Pin to current latest at install time.
 
 ### Verification
 
@@ -326,7 +347,7 @@ Mirror Task 1's `feed.xml.ts` but only `getCollection("works", e => e.data.draft
 
 ### GREEN — `src/pages/feed/garden.xml.ts`
 
-Same shape, `getCollection("notes", e => e.data.publish === true)`. Title `"utof.me — garden"`.
+Same shape, **`getCollection("notes")` with NO filter callback** (notes have no `publish` field; sync-vault is the gate per ADR 0025). Title `"utof.me — garden"`.
 
 ### Verification
 
@@ -396,6 +417,12 @@ test("/sitemap-0.xml includes published routes", async ({ request }) => {
   expect(body).not.toContain("/search");
   expect(body).not.toContain("/garden/graph/");
   expect(body).not.toContain("/stats/");
+  // .xml/.txt endpoints must not pollute the sitemap (RSS feeds, sitemap-index, robots.txt).
+  expect(body).not.toContain("/feed.xml");
+  expect(body).not.toContain("/feed/works.xml");
+  expect(body).not.toContain("/feed/garden.xml");
+  expect(body).not.toContain("/sitemap-index.xml");
+  expect(body).not.toContain("/robots.txt");
 });
 
 test("/robots.txt allows all and references sitemap-index", async ({ request }) => {
@@ -427,10 +454,15 @@ test("/robots.txt allows all and references sitemap-index", async ({ request }) 
 +    svelte(),
 +    sitemap({
 +      // Exclude non-indexable routes per spec § Architecture (Sitemap pipeline).
++      // Also exclude .xml/.txt endpoints (RSS feeds, sitemap-index, robots.txt
++      // themselves) — sitemap should list HTML pages only; otherwise Search
++      // Console flags "page is not HTML" warnings on the feed entries.
 +      filter: (page) =>
 +        !page.includes("/search") &&
 +        !page.includes("/garden/graph/") &&
-+        !page.includes("/stats/"),
++        !page.includes("/stats/") &&
++        !page.endsWith(".xml") &&
++        !page.endsWith(".txt"),
 +    }),
 +    pagefind(),
 +    react(),
@@ -642,15 +674,20 @@ import { profiles } from "../lib/profiles.ts";
 import { profiles } from "../lib/profiles.ts";
 interface Props { route: string; }
 const { route } = Astro.props;
-const isWorks = route === "/" || route === "/works/" || route === "/works";
-const isGarden = route.startsWith("/garden/") || route === "/garden";
+// Per-route alternate-link policy locked in spec § Architecture:
+// - Index pages (/, /works/, /garden/) emit firehose + per-collection alternate.
+// - Detail pages (/works/[slug]/, /garden/[slug]/) emit firehose only — must NOT match here.
+// - Slash pages (/now/, /uses/, …) emit firehose only.
+// `route` is `Astro.url.pathname` with `trailingSlash: "always"` — so equality on the index URL only.
+const isWorksIndex = route === "/" || route === "/works/";
+const isGardenIndex = route === "/garden/" || route === "/garden/graph/";
 ---
 <link rel="webmention" href="https://webmention.io/utof.me/webmention" />
 <link rel="alternate" type="application/rss+xml" title="utof.me — firehose" href="/feed.xml" />
-{isWorks && (
+{isWorksIndex && (
   <link rel="alternate" type="application/rss+xml" title="utof.me — works" href="/feed/works.xml" />
 )}
-{isGarden && (
+{isGardenIndex && (
   <link rel="alternate" type="application/rss+xml" title="utof.me — garden" href="/feed/garden.xml" />
 )}
 {profiles.map((p) => (
@@ -880,34 +917,14 @@ describe("build-webmentions", () => {
  */
 import { writeFile, readdir, unlink, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { z } from "zod";
+import { Mention, type Mention as MentionType } from "../src/lib/webmentions-types.ts";
+// Single source of truth for the jf2 schema — also imported by Webmentions.astro.
 
 const JF2_ENDPOINT = "https://webmention.io/api/mentions.jf2";
 const PER_PAGE = 100;
 const MAX_RETRIES = 3;
 
-const Mention = z.object({
-  "wm-id": z.number().int(),
-  "wm-property": z.enum(["like-of", "repost-of", "in-reply-to", "mention-of", "bookmark-of"]),
-  "wm-target": z.string().url(),
-  "wm-source": z.string().url(),
-  "wm-received": z.string(),
-  type: z.string().optional(),
-  author: z.object({
-    name: z.string().optional(),
-    photo: z.string().optional(),
-    url: z.string().optional(),
-  }).optional(),
-  content: z.object({
-    text: z.string().optional(),
-    html: z.string().optional(),  // typed but NEVER rendered
-  }).optional(),
-  published: z.string().optional(),
-  url: z.string().optional(),
-});
-type Mention = z.infer<typeof Mention>;
-
-async function fetchPage(target: string, page: number): Promise<Mention[]> {
+async function fetchPage(target: string, page: number): Promise<MentionType[]> {
   const url = `${JF2_ENDPOINT}?target=${encodeURIComponent(target)}&page=${page}&per-page=${PER_PAGE}`;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const r = await fetch(url);
@@ -915,9 +932,14 @@ async function fetchPage(target: string, page: number): Promise<Mention[]> {
       await new Promise((res) => setTimeout(res, 1000 * 2 ** attempt));
       continue;
     }
-    if (!r.ok) throw new Error(`webmention.io ${r.status} for ${target}`);
+    // Non-429 non-2xx: log and return empty (skip this page only — outer loop continues
+    // to the next page so a transient 5xx doesn't abandon the whole target's later pages).
+    if (!r.ok) {
+      console.warn(`[webmentions] ${target} page=${page} HTTP ${r.status} — skipping page`);
+      return [];
+    }
     const body = await r.json() as { children?: unknown[] };
-    const out: Mention[] = [];
+    const out: MentionType[] = [];
     for (const child of body.children ?? []) {
       const parsed = Mention.safeParse(child);
       if (parsed.success) out.push(parsed.data);
@@ -925,7 +947,9 @@ async function fetchPage(target: string, page: number): Promise<Mention[]> {
     }
     return out;
   }
-  throw new Error(`webmention.io retry budget exhausted for ${target}`);
+  // Retry budget exhausted on 429 — log and skip just this page (outer loop continues).
+  console.warn(`[webmentions] ${target} page=${page} 429 retry budget exhausted — skipping page`);
+  return [];
 }
 
 function slugFromUrl(url: string): string {
@@ -934,20 +958,19 @@ function slugFromUrl(url: string): string {
   return m?.[2] ?? url;
 }
 
-export async function buildWebmentions(targets: string[]): Promise<Record<string, Mention[]>> {
-  const result: Record<string, Mention[]> = {};
+export async function buildWebmentions(targets: string[]): Promise<Record<string, MentionType[]>> {
+  const result: Record<string, MentionType[]> = {};
   for (const target of targets) {
-    const all: Mention[] = [];
-    for (let page = 0; ; page++) {
-      let items: Mention[];
-      try {
-        items = await fetchPage(target, page);
-      } catch (e) {
-        console.warn(`[webmentions] skip ${target} page ${page}:`, (e as Error).message);
-        break;
-      }
+    const all: MentionType[] = [];
+    // Bounded page loop. fetchPage() returns [] both for "end of pagination" and
+    // "transient skip"; the bound (50 pages = 5000 mentions per URL) prevents
+    // an always-full-page server bug from looping forever.
+    const MAX_PAGES = 50;
+    let prevLen = PER_PAGE;
+    for (let page = 0; page < MAX_PAGES && prevLen >= PER_PAGE; page++) {
+      const items = await fetchPage(target, page);
       all.push(...items);
-      if (items.length < PER_PAGE) break;
+      prevLen = items.length;
     }
     if (all.length > 0) {
       all.sort((a, b) => a["wm-id"] - b["wm-id"]);
@@ -1041,7 +1064,43 @@ test("a route without webmentions renders no <aside.webmentions>", async ({ page
 });
 ```
 
+### Files added (Task 8 addendum)
+
+- `packages/site/src/lib/webmentions-types.ts` — extracted `Mention` Zod schema + inferred type, imported by both `scripts/build-webmentions.ts` and `Webmentions.astro` to satisfy `type-coverage --at-least 100 --strict`. (Keeps `any[]` out of the rendered component — addressed B10 from plan-review.)
+
+### GREEN — `src/lib/webmentions-types.ts`
+
+```ts
+import { z } from "zod";
+
+/** Minimal jf2 schema — only fields the site renders. */
+export const Mention = z.object({
+  "wm-id": z.number().int(),
+  "wm-property": z.enum(["like-of", "repost-of", "in-reply-to", "mention-of", "bookmark-of"]),
+  "wm-target": z.string().url(),
+  "wm-source": z.string().url(),
+  "wm-received": z.string(),
+  type: z.string().optional(),
+  author: z.object({
+    name: z.string().optional(),
+    photo: z.string().optional(),
+    url: z.string().optional(),
+  }).optional(),
+  content: z.object({
+    text: z.string().optional(),
+    html: z.string().optional(),
+  }).optional(),
+  published: z.string().optional(),
+  url: z.string().optional(),
+});
+export type Mention = z.infer<typeof Mention>;
+```
+
+`scripts/build-webmentions.ts` (Task 7) imports `Mention` from this module instead of declaring it locally.
+
 ### GREEN — `src/components/Webmentions.astro`
+
+Uses `import.meta.glob` (eager) instead of dynamic-template `import()` to avoid Vite's eager-glob fallback warning and keep the full mention set tree-shakable per page.
 
 ```astro
 ---
@@ -1050,30 +1109,35 @@ test("a route without webmentions renders no <aside.webmentions>", async ({ page
  * Reads `src/data/webmentions/<slug>.json` (committed by Task 7).
  * @see packages/specs/specs/06-indieweb.md § Architecture (Webmentions render fallbacks)
  */
+import type { Mention } from "../lib/webmentions-types.ts";
+
 interface Props {
   /** Page slug (matches a JSON file in src/data/webmentions/). */
   slug: string;
 }
 const { slug } = Astro.props;
 
-let mentions: any[] = [];
-try {
-  mentions = (await import(`../data/webmentions/${slug}.json`)).default;
-} catch {
-  mentions = [];
-}
+// Eager-glob keeps Vite happy + lets us look up by basename without a runtime import.
+const all = import.meta.glob<{ default: Mention[] }>(
+  "../data/webmentions/*.json",
+  { eager: true },
+);
+const file = all[`../data/webmentions/${slug}.json`];
+const mentions: Mention[] = file?.default ?? [];
 
-const likes = mentions.filter((m) => ["like-of", "repost-of"].includes(m["wm-property"]));
-const replies = mentions.filter((m) => ["in-reply-to", "mention-of"].includes(m["wm-property"]));
+const LIKE_TYPES = ["like-of", "repost-of"] as const;
+const REPLY_TYPES = ["in-reply-to", "mention-of"] as const;
+const likes = mentions.filter((m) => (LIKE_TYPES as readonly string[]).includes(m["wm-property"]));
+const replies = mentions.filter((m) => (REPLY_TYPES as readonly string[]).includes(m["wm-property"]));
 
-function authorName(m: any): string {
-  if (m.author?.name) return String(m.author.name).slice(0, 80);
+function authorName(m: Mention): string {
+  if (m.author?.name) return m.author.name.slice(0, 80);
   if (m.author?.url) {
     try { return new URL(m.author.url).host; } catch { return ""; }
   }
   return "";
 }
-function publishedAt(m: any): string {
+function publishedAt(m: Mention): string {
   return m.published ?? m["wm-received"];
 }
 ---
@@ -1153,6 +1217,26 @@ function publishedAt(m: any): string {
 ```
 
 (Tab-indent — Biome formats it.)
+
+### GREEN — `_WorkLayout.astro` patch (mount Webmentions below the article body)
+
+```diff
++import Webmentions from "../components/Webmentions.astro";
+ …
+   </article>
++  <Webmentions slug={entry.id} />
+```
+
+`entry.id` is the works collection-entry id (filename basename, e.g. `code-2`); matches `slugFromUrl()` output in Task 7's build script.
+
+### GREEN — `_NoteLayout.astro` patch (mount below `<Backlinks />`)
+
+```diff
++import Webmentions from "../components/Webmentions.astro";
+ …
+   <Backlinks slug={entry.id} />
++  <Webmentions slug={entry.id} />
+```
 
 ### Verification
 
@@ -1280,9 +1364,16 @@ export function inlineThemeScript(): string {
   return `(function(){try{var t=localStorage.getItem("utofme:theme");if(t==="light"||t==="dark"){document.documentElement.dataset.theme=t;return;}var d=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.dataset.themeSource="system";}catch(e){try{document.documentElement.dataset.theme=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}catch(e2){}}})();`;
 }
 
-/** Toggle button click handler — ≤ 600 B. */
+/** Toggle button click handler — ≤ 600 B.
+ *
+ * Idempotent across SPA navigations: the script tag must carry
+ * `data-astro-rerun` (Astro docs: ClientRouter re-runs only inline scripts with
+ * that attribute). Each rerun re-binds via `onclick=` (overwrites prior binding,
+ * no double-fire) instead of `addEventListener` (which would stack handlers).
+ * @see https://docs.astro.build/en/guides/view-transitions/#script-behavior-with-view-transitions
+ */
 export function wireToggleScript(): string {
-  return `document.querySelectorAll("[data-theme-toggle]").forEach(function(b){b.addEventListener("click",function(){var d=document.documentElement.dataset;var c=d.themeSource==="system"?"system":d.theme;var n=c==="light"?"dark":c==="dark"?"system":"light";if(n==="system"){try{localStorage.removeItem("utofme:theme");}catch(e){}var m=window.matchMedia("(prefers-color-scheme: dark)").matches;d.theme=m?"dark":"light";d.themeSource="system";}else{try{localStorage.setItem("utofme:theme",n);}catch(e){}d.theme=n;delete d.themeSource;}});});`;
+  return `document.querySelectorAll("[data-theme-toggle]").forEach(function(b){b.onclick=function(){var d=document.documentElement.dataset;var c=d.themeSource==="system"?"system":d.theme;var n=c==="light"?"dark":c==="dark"?"system":"light";if(n==="system"){try{localStorage.removeItem("utofme:theme");}catch(e){}var m=window.matchMedia("(prefers-color-scheme: dark)").matches;d.theme=m?"dark":"light";d.themeSource="system";}else{try{localStorage.setItem("utofme:theme",n);}catch(e){}d.theme=n;delete d.themeSource;}};});`;
 }
 ```
 
@@ -1304,7 +1395,7 @@ import { wireToggleScript } from "../lib/theme.ts";
 >
   <span aria-hidden="true">◐</span>
 </button>
-<script is:inline set:html={wireToggleScript()}></script>
+<script is:inline data-astro-rerun set:html={wireToggleScript()}></script>
 
 <style>
   button[data-theme-toggle] {
@@ -1327,7 +1418,7 @@ interface Props { route: string; }
 const { route } = Astro.props;
 // … per-route logic from Task 5
 ---
-<script is:inline set:html={inlineThemeScript()}></script>
+<script is:inline data-astro-rerun set:html={inlineThemeScript()}></script>
 <link rel="webmention" … />
 … (rest from Task 5)
 ```
@@ -1336,11 +1427,37 @@ const { route } = Astro.props;
 
 Place inside footer area (alongside `<HCard />` from Task 5).
 
+### Additional RED — head-ordering invariant (closes spec criterion #8 ordering claim)
+
+Add to `tests/unit/theme-script.test.ts`:
+
+```ts
+import { readFileSync } from "node:fs";
+
+it("dist/index.html places theme inline-script after viewport, before <title>", () => {
+  // Run AFTER `bun run build` — depends on built artefact.
+  const html = readFileSync("dist/index.html", "utf8");
+  // Capture index of each marker; the script must sit between viewport and title.
+  const iCharset = html.indexOf('<meta charset');
+  const iViewport = html.indexOf('name="viewport"');
+  // The first inline <script> after viewport whose body contains "data-theme" or "utofme:theme".
+  const themeScriptIdx = html.search(/<script[^>]*>[\s\S]{0,1200}utofme:theme/);
+  const iTitle = html.indexOf('<title');
+  expect(iCharset).toBeGreaterThan(-1);
+  expect(iViewport).toBeGreaterThan(iCharset);
+  expect(themeScriptIdx).toBeGreaterThan(iViewport);
+  expect(themeScriptIdx).toBeLessThan(iTitle);
+});
+```
+
+This test runs in vitest's "integration" tier (depends on `dist/`). The implementer wires it into `vitest.config.ts` if a separate tier is needed; otherwise it runs in the unit pass after a prior `bun run build`.
+
 ### Verification
 
 ```bash
 bun run test -- theme-script.test
 bun run build
+bun run test -- theme-script.test    # re-run; the dist-reading assertion now has artefact
 # Manually inspect dist/index.html — theme script must be after <meta viewport>, before <Font> calls.
 ```
 
@@ -1419,6 +1536,20 @@ test("system mode follows prefers-color-scheme: dark", async ({ browser }) => {
   await page.goto("/");
   expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe("dark");
   expect(await page.evaluate(() => document.documentElement.dataset.themeSource)).toBe("system");
+});
+
+test("toggle still works after SPA navigation (data-astro-rerun)", async ({ page }) => {
+  // ClientRouter re-renders <body>; without `data-astro-rerun` on the toggle's
+  // inline script, the new button has no click handler. Regression guard.
+  await page.goto("/");
+  await page.click("a[href='/works/']");
+  await page.waitForURL("**/works/");
+  const btn = page.locator("[data-theme-toggle]");
+  await expect(btn).toBeVisible();
+  const before = await page.evaluate(() => document.documentElement.dataset.theme);
+  await btn.click();
+  const after = await page.evaluate(() => document.documentElement.dataset.theme);
+  expect(after).not.toBe(before);
 });
 ```
 
