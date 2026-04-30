@@ -12,6 +12,7 @@
  * @see packages/specs/plans/06-indieweb.md § Task 5
  */
 import { profiles } from "../lib/profiles.ts";
+import { inlineThemeScript } from "../lib/theme.ts";
 
 interface Props {
 	/** Astro.url.pathname — used for per-route <link rel="alternate"> wiring. */
@@ -26,6 +27,7 @@ const isWorksIndex = route === "/" || route === "/works/";
 const isGardenIndex = route === "/garden/" || route === "/garden/graph/";
 ---
 
+<script is:inline data-astro-rerun set:html={inlineThemeScript()} />
 <link rel="webmention" href="https://webmention.io/utof.me/webmention" />
 <link rel="alternate" type="application/rss+xml" title="utof.me — firehose" href="/feed.xml" />
 {

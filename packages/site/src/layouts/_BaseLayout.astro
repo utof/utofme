@@ -21,6 +21,7 @@ import HCard from "../components/HCard.astro";
 import LinkPreview from "../components/LinkPreview.svelte";
 import MetaHead from "../components/MetaHead.astro";
 import SlashFooter from "../components/SlashFooter.astro";
+import ThemeToggle from "../components/ThemeToggle.astro";
 import previews from "../data/note-previews.json";
 
 interface Props {
@@ -76,6 +77,7 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     appears above the navigation links — keeps microformat-scoped markup
 		     separate from the nav list while staying inside the footer area. -->
 		<HCard />
+		<ThemeToggle />
 		<SlashFooter />
 		<!-- Why: CommandPalette mounted here (not per-page) so it is available on
 		     every route without re-mounting. transition:persist retains the Svelte
