@@ -7,8 +7,10 @@
  *
  * @see packages/specs/specs/06-indieweb.md § Architecture (RSS feed pipeline)
  * @see packages/specs/plans/06-indieweb.md § Task 1 RED
+ * @see packages/specs/plans/06-indieweb.md § Task 2 RED
  */
 import type { CollectionEntry } from "astro:content";
+import { fc, test as fcTest } from "@fast-check/vitest";
 import { describe, expect, it } from "vitest";
 import { stripIslands, toRssItem } from "../../src/lib/feed.ts";
 
@@ -37,6 +39,26 @@ describe("stripIslands", () => {
 		const html = `<astro-island>x</astro-island>`;
 		expect(stripIslands(stripIslands(html))).toBe(stripIslands(html));
 	});
+});
+
+// ---------------------------------------------------------------------------
+// stripIslands — fast-check property tests (Task 2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Property tests for `stripIslands` against arbitrary string inputs.
+ * Why: unit fixtures cover known HTML; property tests guard against edge cases
+ * in linkedom's HTML parser (e.g. null bytes, non-BMP chars, lone surrogates).
+ * @see packages/specs/plans/06-indieweb.md § Task 2 RED
+ */
+fcTest.prop([fc.string()])("stripIslands never throws on arbitrary input", (s) => {
+	expect(() => stripIslands(s)).not.toThrow();
+});
+
+fcTest.prop([fc.string()])("stripIslands output never contains <astro-island", (s) => {
+	const wrapped = `<astro-island>${s}</astro-island>`;
+	const out = stripIslands(wrapped);
+	expect(out).not.toMatch(/<astro-island/i);
 });
 
 // ---------------------------------------------------------------------------
