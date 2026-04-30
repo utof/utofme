@@ -1,0 +1,21 @@
+---
+/**
+ * Phase 6 head augmentations: rel=webmention + firehose rel=alternate.
+ *
+ * Why: centralises <head> additions so _BaseLayout doesn't grow further.
+ * Mounted as the first content node of <head> after <meta charset> +
+ * <meta viewport>. Per-route alternate-link wiring + rel=me + theme
+ * inline-script land in subsequent Phase 6 tasks (5, 9).
+ *
+ * @see packages/specs/specs/06-indieweb.md § Architecture (Self-link, MetaHead)
+ * @see packages/specs/plans/06-indieweb.md § Task 4
+ */
+interface Props {
+	/** Astro.url.pathname — used in Task 5 for per-route <link rel="alternate"> wiring. */
+	route: string;
+}
+const { route: _route } = Astro.props;
+---
+
+<link rel="webmention" href="https://webmention.io/utof.me/webmention" />
+<link rel="alternate" type="application/rss+xml" title="utof.me — firehose" href="/feed.xml" />

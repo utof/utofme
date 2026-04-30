@@ -18,6 +18,7 @@ import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
 import CommandPalette from "../components/CommandPalette.svelte";
 import LinkPreview from "../components/LinkPreview.svelte";
+import MetaHead from "../components/MetaHead.astro";
 import SlashFooter from "../components/SlashFooter.astro";
 import previews from "../data/note-previews.json";
 
@@ -36,6 +37,7 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<MetaHead route={Astro.url.pathname} />
 		<!-- Why: an empty inline favicon prevents the spurious /favicon.ico 404 +
 		     console error that Lighthouse counts under `errors-in-console` (a
 		     best-practices audit also factored into Performance via Speed Index
