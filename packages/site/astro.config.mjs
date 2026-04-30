@@ -95,6 +95,7 @@ export function computePermalinks() {
 }
 
 export default defineConfig({
+	site: "https://utof.me/",
 	output: "static",
 	trailingSlash: "always",
 	integrations: [expressiveCode(), mdx(), svelte(), pagefind(), react()],
