@@ -92,6 +92,7 @@
 	},
 	"dependencies": {
 		"@astrojs/rss": "^4.0.18",
+		"@astrojs/sitemap": "^3.7.2",
 		"linkedom": "^0.18.12",
 		"react": "^19",
 		"react-dom": "^19",

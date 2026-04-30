@@ -66,6 +66,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
+import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import remarkCallout from "@r4ai/remark-callout";
 import { defineConfig, fontProviders } from "astro/config";
@@ -98,7 +99,26 @@ export default defineConfig({
 	site: "https://utof.me/",
 	output: "static",
 	trailingSlash: "always",
-	integrations: [expressiveCode(), mdx(), svelte(), pagefind(), react()],
+	integrations: [
+		expressiveCode(),
+		mdx(),
+		svelte(),
+		// Why: sitemap() must slot BEFORE pagefind() (pagefind must remain LAST per ADR 0007
+		// + Phase 2 invariant — its build hook runs after Astro emits HTML).
+		// filter excludes non-indexable routes and .xml/.txt endpoints so Search Console
+		// does not flag "page is not HTML" warnings on feed/sitemap/robots entries.
+		// See: packages/specs/plans/06-indieweb.md § Task 3 GREEN
+		sitemap({
+			filter: (page) =>
+				!page.includes("/search") &&
+				!page.includes("/garden/graph/") &&
+				!page.includes("/stats/") &&
+				!page.endsWith(".xml") &&
+				!page.endsWith(".txt"),
+		}),
+		pagefind(),
+		react(),
+	],
 	markdown: {
 		remarkPlugins: [
 			embedRemark,
