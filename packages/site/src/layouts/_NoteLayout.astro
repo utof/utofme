@@ -26,11 +26,11 @@ const updated = entry.data.updated ?? entry.data.created;
 <BaseLayout title={entry.data.title} description={entry.data.summary ?? "Garden note"}>
 	{entry.data.math && <link rel="stylesheet" href={katexCssUrl} />}
 	<main>
-		<article class="note">
+		<article class="note h-entry">
 			<header>
-				<h1 transition:name={`note-${entry.id}`}>{entry.data.title}</h1>
+				<h1 class="p-name" transition:name={`note-${entry.id}`}>{entry.data.title}</h1>
 				<p class="dates">
-					<time datetime={entry.data.created.toISOString()}
+					<time class="dt-published" datetime={entry.data.created.toISOString()}
 						>{entry.data.created.toISOString().slice(0, 10)}</time
 					>
 					{
@@ -53,7 +53,8 @@ const updated = entry.data.updated ?? entry.data.created;
 					)
 				}
 			</header>
-			<slot />
+			<a class="u-url" href={`/garden/${entry.id}/`} aria-hidden="true" hidden></a>
+			<div class="e-content"><slot /></div>
 			<Backlinks slug={entry.id} />
 		</article>
 	</main>

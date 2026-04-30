@@ -48,11 +48,13 @@ const externalUrl =
 
 <BaseLayout title={`${data.title} · utofme`}>
 	<main>
-		<article>
+		<article class="h-entry">
 			<header>
 				<a href="/works/" data-test="breadcrumb">← All works</a>
-				<h1 transition:name={`card-${entry.id}`}>{data.title}</h1>
-				<time datetime={data.date.toISOString()}>{data.date.toISOString().slice(0, 10)}</time>
+				<h1 class="p-name" transition:name={`card-${entry.id}`}>{data.title}</h1>
+				<time class="dt-published" datetime={data.date.toISOString()}
+					>{data.date.toISOString().slice(0, 10)}</time
+				>
 				<MetaPills date={data.date} tagCount={data.tags.length} />
 				{
 					externalUrl && (
@@ -63,7 +65,8 @@ const externalUrl =
 				}
 			</header>
 			{data.cover && <CoverImage src={data.cover.src} alt={data.cover.alt} />}
-			<slot />
+			<a class="u-url" href={`/works/${entry.id}/`} aria-hidden="true" hidden></a>
+			<div class="e-content"><slot /></div>
 		</article>
 	</main>
 </BaseLayout>
