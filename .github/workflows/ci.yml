@@ -50,8 +50,17 @@ jobs:
       # even on partial fetch (commits last-known-good JSON), and the `|| echo`
       # belt-and-suspenders covers any non-zero exit. Placed AFTER install +
       # BEFORE check:biome so the JSON is in place for all downstream steps.
+      #
+      # Why the secret gate: until the user provisions a webmention.io account
+      # for utof.me, every target returns 0 mentions and the script's orphan-
+      # deletion phase wipes committed test fixtures (e.g. welcome.json) — which
+      # then breaks the webmentions e2e. Skip the step entirely until the secret
+      # exists; once set, sync runs end-to-end. See progress.md user-only queue.
       # See: packages/specs/plans/06-indieweb.md § Task 11
       - name: sync:webmentions
+        if: env.WEBMENTION_IO_TOKEN != ''
+        env:
+          WEBMENTION_IO_TOKEN: ${{ secrets.WEBMENTION_IO_TOKEN }}
         run: |
           cd packages/site
           bun run sync:webmentions || echo "[webmentions] non-fatal sync issue; using last-known-good"
