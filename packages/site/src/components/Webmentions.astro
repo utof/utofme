@@ -1,0 +1,99 @@
+---
+/**
+ * Server-rendered webmentions for one detail page.
+ * Reads `src/data/webmentions/<slug>.json` (committed by Task 7).
+ *
+ * Why: `import.meta.glob` with `{ eager: true }` instead of dynamic
+ * `import()` keeps Vite from emitting an eager-glob fallback warning and
+ * lets each page bundle only the JSON it actually references at build time
+ * (tree-shaken). Empty fixture array → no `<aside>` rendered (the mount
+ * site stays clean for routes without mentions). Avatar `referrerpolicy`
+ * + reply `rel="external nofollow"` enforce the privacy / SEO invariants
+ * stated in the spec.
+ *
+ * @see packages/specs/specs/06-indieweb.md § Architecture (Webmentions render fallbacks)
+ */
+import type { Mention } from "../lib/webmentions-types.ts";
+
+interface Props {
+	/** Page slug (matches a JSON file in src/data/webmentions/). */
+	slug: string;
+}
+const { slug } = Astro.props;
+
+// Eager glob keeps Vite happy + lets us look up by basename without a runtime import.
+const all = import.meta.glob<{ default: Mention[] }>("../data/webmentions/*.json", {
+	eager: true,
+});
+const file = all[`../data/webmentions/${slug}.json`];
+const mentions: Mention[] = file?.default ?? [];
+
+const LIKE_TYPES = ["like-of", "repost-of"] as const;
+const REPLY_TYPES = ["in-reply-to", "mention-of"] as const;
+const likes = mentions.filter((m) => (LIKE_TYPES as readonly string[]).includes(m["wm-property"]));
+const replies = mentions.filter((m) =>
+	(REPLY_TYPES as readonly string[]).includes(m["wm-property"]),
+);
+
+function authorName(m: Mention): string {
+	if (m.author?.name) return m.author.name.slice(0, 80);
+	if (m.author?.url) {
+		try {
+			return new URL(m.author.url).host;
+		} catch {
+			return "";
+		}
+	}
+	return "";
+}
+function publishedAt(m: Mention): string {
+	return m.published ?? m["wm-received"];
+}
+---
+
+{
+	mentions.length > 0 && (
+		<aside class="webmentions" aria-labelledby="wm-h">
+			<h2 id="wm-h">Webmentions</h2>
+			{likes.length > 0 && (
+				<ul class="webmention-likes">
+					{likes.map((m) => (
+						<li>
+							{m.author?.photo && (
+								<img
+									class="webmention-avatar"
+									src={m.author.photo}
+									alt=""
+									loading="lazy"
+									decoding="async"
+									referrerpolicy="no-referrer"
+									width="32"
+									height="32"
+								/>
+							)}
+							<span class="p-name">{authorName(m)}</span>
+						</li>
+					))}
+				</ul>
+			)}
+			{replies.length > 0 && (
+				<ol class="webmention-replies">
+					{replies.map((m) => (
+						<li class="h-cite">
+							<span class="p-name">{authorName(m)}</span>
+							{m.content?.text && <p class="p-content">{String(m.content.text).slice(0, 280)}</p>}
+							<time class="dt-published" datetime={publishedAt(m)}>
+								{publishedAt(m)}
+							</time>
+							{m.url && (
+								<a class="u-url" rel="external nofollow" referrerpolicy="no-referrer" href={m.url}>
+									permalink
+								</a>
+							)}
+						</li>
+					))}
+				</ol>
+			)}
+		</aside>
+	)
+}

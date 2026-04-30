@@ -1,0 +1,27 @@
+[
+	{
+		"wm-id": 1,
+		"wm-property": "like-of",
+		"wm-target": "https://utof.me/garden/welcome/",
+		"wm-source": "https://example.com/profile",
+		"wm-received": "2026-04-29T12:00:00Z",
+		"author": {
+			"name": "Alex Example",
+			"photo": "https://example.com/avatar.jpg",
+			"url": "https://example.com/"
+		},
+		"published": "2026-04-29T12:00:00Z",
+		"url": "https://example.com/profile"
+	},
+	{
+		"wm-id": 2,
+		"wm-property": "in-reply-to",
+		"wm-target": "https://utof.me/garden/welcome/",
+		"wm-source": "https://example.com/post/1",
+		"wm-received": "2026-04-29T13:00:00Z",
+		"author": { "name": "Sam Reply", "url": "https://example.com/sam" },
+		"content": { "text": "Great post!" },
+		"published": "2026-04-29T13:00:00Z",
+		"url": "https://example.com/post/1"
+	}
+]

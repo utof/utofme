@@ -9,6 +9,7 @@
  */
 import BaseLayout from "./_BaseLayout.astro";
 import Backlinks from "../components/Backlinks.astro";
+import Webmentions from "../components/Webmentions.astro";
 import type { CollectionEntry } from "astro:content";
 // Self-host KaTeX CSS — Astro's Vite pipeline hashes + cache-busts it,
 // avoids third-party CDN exposure (privacy + reproducibility), and keeps
@@ -56,6 +57,7 @@ const updated = entry.data.updated ?? entry.data.created;
 			<a class="u-url" href={`/garden/${entry.id}/`} aria-hidden="true" hidden></a>
 			<div class="e-content"><slot /></div>
 			<Backlinks slug={entry.id} />
+			<Webmentions slug={entry.id} />
 		</article>
 	</main>
 </BaseLayout>

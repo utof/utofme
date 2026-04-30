@@ -13,6 +13,7 @@
 import BaseLayout from "./_BaseLayout.astro";
 import CoverImage from "../components/CoverImage.astro";
 import MetaPills from "../components/MetaPills.astro";
+import Webmentions from "../components/Webmentions.astro";
 import type { CollectionEntry } from "astro:content";
 
 /**
@@ -68,6 +69,8 @@ const externalUrl =
 			<a class="u-url" href={`/works/${entry.id}/`} aria-hidden="true" hidden></a>
 			<div class="e-content"><slot /></div>
 		</article>
+		{/* Why: webmentions are about the article, not part of it — kept outside <article>. */}
+		<Webmentions slug={entry.id} />
 	</main>
 </BaseLayout>
 
