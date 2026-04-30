@@ -17,6 +17,7 @@
 import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
 import CommandPalette from "../components/CommandPalette.svelte";
+import CustomCursor from "../components/CustomCursor.svelte";
 import HCard from "../components/HCard.astro";
 import LinkPreview from "../components/LinkPreview.svelte";
 import MetaHead from "../components/MetaHead.astro";
@@ -107,6 +108,12 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     mouseover/focusin keeps per-link cost flat as the garden grows.
 		     @see packages/specs/plans/05-garden.md § Task 10 -->
 		<LinkPreview client:idle />
+		<!-- Why: client:media="(pointer: fine)" ensures the cursor JS is never
+		     downloaded on touch/coarse-pointer devices (phones, tablets). The
+		     component itself gates rAF on prefers-reduced-motion: reduce.
+		     @see packages/specs/specs/07-atmosphere.md § T1
+		     @see packages/specs/adrs/0036-custom-cursor-island.md -->
+		<CustomCursor client:media="(pointer: fine)" />
 	</body>
 </html>
 
