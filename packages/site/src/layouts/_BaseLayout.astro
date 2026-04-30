@@ -22,6 +22,7 @@ import HCard from "../components/HCard.astro";
 import LinkPreview from "../components/LinkPreview.svelte";
 import MetaHead from "../components/MetaHead.astro";
 import SlashFooter from "../components/SlashFooter.astro";
+import SoundToggle from "../components/SoundToggle.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
 import previews from "../data/note-previews.json";
 
@@ -76,8 +77,12 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		<slot />
 		<!-- Why: HCard placed before SlashFooter so the indieweb identity block
 		     appears above the navigation links — keeps microformat-scoped markup
-		     separate from the nav list while staying inside the footer area. -->
+		     separate from the nav list while staying inside the footer area.
+		     SoundToggle sits adjacent to HCard in the footer area — both are
+		     persistent UI controls that belong at page scope rather than per-route.
+		     @see packages/specs/specs/07-atmosphere.md § T2 -->
 		<HCard />
+		<SoundToggle />
 		<ThemeToggle />
 		<SlashFooter />
 		<!-- Why: CommandPalette mounted here (not per-page) so it is available on

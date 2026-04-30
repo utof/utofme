@@ -9,8 +9,10 @@
  * cannot be exercised here.
  *
  * @see packages/specs/plans/07-atmosphere.md § T1 TDD red cases
+ * @see packages/specs/plans/07-atmosphere.md § T2 TDD red cases
  * @see packages/site/playwright.config.ts (chromium-mobile only)
  */
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
@@ -29,6 +31,38 @@ test("cursor: no JS downloaded on coarse pointer", async ({ page }) => {
 	await page.goto("/");
 
 	expect(cursorRequests).toHaveLength(0);
+});
+
+// ---------------------------------------------------------------------------
+// T2 — Sound toggle
+// ---------------------------------------------------------------------------
+
+test("sound: default off, axe-clean", async ({ page }) => {
+	await page.goto("/");
+
+	// SoundToggle button should be in the DOM with aria-pressed="false"
+	const btn = page.locator("[data-sound-toggle]");
+	await expect(btn).toHaveAttribute("aria-pressed", "false");
+
+	// Axe-core: zero violations on the page (sound toggle is part of the page)
+	const results = await new AxeBuilder({ page }).analyze();
+	expect(results.violations).toHaveLength(0);
+});
+
+test("sound: toggle persists across reload", async ({ page }) => {
+	await page.goto("/");
+
+	const btn = page.locator("[data-sound-toggle]");
+	await expect(btn).toHaveAttribute("aria-pressed", "false");
+
+	// Click the toggle to enable sound
+	await btn.click();
+	await expect(btn).toHaveAttribute("aria-pressed", "true");
+
+	// Reload and assert state is restored from localStorage
+	await page.reload();
+	const btnAfterReload = page.locator("[data-sound-toggle]");
+	await expect(btnAfterReload).toHaveAttribute("aria-pressed", "true");
 });
 
 test("cursor: no JS downloaded on coarse pointer + reduced-motion", async ({ page }) => {
