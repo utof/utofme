@@ -13,11 +13,14 @@ test("/stats renders all 5 sources from the fixture", async ({ page }) => {
 	await expect(page.locator("h1")).toHaveText("Stats");
 	const sections = page.locator('[data-test="stats-section"]');
 	await expect(sections).toHaveCount(5);
-	await expect(page.getByText("GitHub")).toBeVisible();
-	await expect(page.getByText("Strava")).toBeVisible();
-	await expect(page.getByText("Last.fm")).toBeVisible();
-	await expect(page.getByText("Literal")).toBeVisible();
-	await expect(page.getByText("Wakatime")).toBeVisible();
+	// Scope the source-label assertions to the stats sections so the
+	// HCard footer's "GitHub @utof" rel=me link doesn't collide with
+	// strict-mode locator resolution.
+	await expect(sections.getByText("GitHub")).toBeVisible();
+	await expect(sections.getByText("Strava")).toBeVisible();
+	await expect(sections.getByText("Last.fm")).toBeVisible();
+	await expect(sections.getByText("Literal")).toBeVisible();
+	await expect(sections.getByText("Wakatime")).toBeVisible();
 });
 
 test("/stats shows ⚠ indicator on errored sources (Literal in fixture)", async ({ page }) => {
