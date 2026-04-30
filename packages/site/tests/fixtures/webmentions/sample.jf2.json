@@ -1,0 +1,33 @@
+{
+	"type": "feed",
+	"name": "Webmentions",
+	"children": [
+		{
+			"wm-id": 1234,
+			"wm-property": "in-reply-to",
+			"wm-target": "https://utof.me/works/code-2/",
+			"wm-source": "https://example.com/post-a",
+			"wm-received": "2025-04-15T12:00:00Z",
+			"type": "entry",
+			"url": "https://example.com/post-a",
+			"published": "2025-04-15T11:55:00Z",
+			"author": {
+				"name": "Jane Doe",
+				"photo": "https://example.com/avatar.jpg",
+				"url": "https://example.com/"
+			},
+			"content": { "text": "Great post!" }
+		},
+		{
+			"wm-id": 1235,
+			"wm-property": "like-of",
+			"wm-target": "https://utof.me/works/code-2/",
+			"wm-source": "https://example.org/likes/9",
+			"wm-received": "2025-04-16T08:30:00Z",
+			"type": "entry",
+			"url": "https://example.org/likes/9",
+			"published": null,
+			"author": { "name": "Likey McLikeface", "url": "https://example.org/" }
+		}
+	]
+}

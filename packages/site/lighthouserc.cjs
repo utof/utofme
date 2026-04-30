@@ -41,6 +41,13 @@ module.exports = {
 				// assertion instead. See: packages/specs/specs/05-garden.md § Acceptance criteria #9.
 				"http://localhost:4321/garden/",
 				"http://localhost:4321/garden/welcome/",
+				// Why: /feed.xml NOT added here — LHCI throws "Runtime error: page is
+				// not HTML (served as application/rss+xml)" and fails the run. Plan
+				// assumed graceful skip; in practice it doesn't. The size-limit entry
+				// in .size-limit.cjs already asserts feed.xml builds + stays ≤ 30 KB,
+				// which covers acceptance #10's spirit. A curl-based 200 probe is
+				// queued as a follow-up nit.
+				// See: packages/specs/plans/06-indieweb.md § Task 11
 			],
 			// Why: 5 runs absorbs Lighthouse-simulation variance inherent to the
 			// Lantern model on localhost. With `aggregationMethod: "optimistic"` the

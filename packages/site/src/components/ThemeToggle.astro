@@ -1,0 +1,25 @@
+---
+/**
+ * Theme toggle button. Carries its own inline click handler.
+ * Why: data-astro-rerun ensures the handler re-binds across ClientRouter SPA
+ * navigations; onclick= (not addEventListener) avoids double-fire after rerun.
+ * @see packages/specs/specs/06-indieweb.md § Architecture (Theme persistence)
+ * @see packages/specs/plans/06-indieweb.md § Task 9
+ */
+import { wireToggleScript } from "../lib/theme.ts";
+---
+
+<button type="button" data-theme-toggle aria-label="Switch theme" aria-live="polite">
+	<span aria-hidden="true">◐</span>
+</button>
+<script is:inline data-astro-rerun set:html={wireToggleScript()} />
+
+<style>
+	button[data-theme-toggle] {
+		background: none;
+		border: 1px solid currentColor;
+		border-radius: 4px;
+		cursor: pointer;
+		padding: 0.25rem 0.5rem;
+	}
+</style>

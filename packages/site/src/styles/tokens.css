@@ -85,8 +85,38 @@
 }
 
 /* ─── Dark-mode overrides ─────────────────────────────────────────────────── */
+/*
+ * Why: two selectors — explicit `[data-theme="dark"]` (set by the inline theme
+ * script in lib/theme.ts) is the JS-driven source of truth. The media-query
+ * block is kept as a progressive-enhancement fallback for users with JS
+ * disabled, where the inline script never runs and `[data-theme]` stays unset.
+ * Both blocks must define identical token values; if you edit one, edit the
+ * other. The inline script always sets `data-theme` on <html> (light or dark)
+ * regardless of system preference, so the media query is dormant in normal use.
+ *
+ * @see packages/specs/plans/06-indieweb.md § Task 10
+ * @see packages/site/src/lib/theme.ts (inlineThemeScript)
+ */
+:root[data-theme="dark"] {
+	--color-bg: #09090b;
+	--color-surface: #18181b;
+	--color-border: #27272a;
+	--color-text: #fafafa;
+	--color-text-muted: #a1a1aa;
+	--color-accent: #fafafa;
+	--color-accent-contrast: #09090b;
+
+	/* Shadows are near-invisible on dark backgrounds; use subtle glows instead. */
+	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+}
+
+/* Why: scoped to :root:not([data-theme="light"]) so an explicit user choice of
+ * light always wins over the system preference. The inline script always sets
+ * an explicit data-theme; this block matters only for the JS-disabled case. */
 @media (prefers-color-scheme: dark) {
-	:root {
+	:root:not([data-theme="light"]) {
 		--color-bg: #09090b;
 		--color-surface: #18181b;
 		--color-border: #27272a;
@@ -100,4 +130,13 @@
 		--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.3);
 		--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.3);
 	}
+}
+
+/* Why: color-scheme reflects the current theme to UA-rendered widgets
+ * (scrollbars, form controls). Set on the html element via data-theme. */
+:root[data-theme="light"] {
+	color-scheme: light;
+}
+:root[data-theme="dark"] {
+	color-scheme: dark;
 }

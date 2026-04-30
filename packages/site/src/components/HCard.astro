@@ -1,0 +1,36 @@
+---
+/**
+ * Footer h-card. Declares the site's own identity for indieweb tools.
+ * @see packages/specs/specs/06-indieweb.md § Architecture (Microformats markup)
+ */
+import { profiles } from "../lib/profiles.ts";
+---
+
+<aside class="h-card">
+	<a class="u-url p-name" href="/">utof.me</a>
+	<p class="p-note">Personal site and portfolio.</p>
+	<ul>
+		{
+			profiles.map((p) => (
+				<li>
+					<a class="u-url" rel="me" href={p.url}>
+						{p.label}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</aside>
+
+<style>
+	.h-card {
+		font-size: 0.85em;
+		opacity: 0.7;
+	}
+	.h-card ul {
+		display: flex;
+		gap: 1rem;
+		list-style: none;
+		padding: 0;
+	}
+</style>

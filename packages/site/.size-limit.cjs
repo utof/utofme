@@ -207,4 +207,20 @@ module.exports = [
 		gzip: true,
 		disablePlugins: ["@size-limit/time"],
 	},
+	// Phase 6 RSS firehose budget
+	{
+		// Why: /feed.xml is the unified firehose RSS feed (works + garden + slashes).
+		// 30 KB ungzipped covers the spec's 30-item limit at typical post sizes
+		// (~few hundred bytes of metadata + summary per <item>). Catches both
+		// runaway item counts and accidental full-content embedding.
+		// gzip:false because RSS is XML — readers fetch ungzipped from many CDNs
+		// and the wire-size is what matters for RSS-reader memory.
+		// See: packages/specs/specs/06-indieweb.md § "Per-route size budgets"
+		// See: packages/specs/plans/06-indieweb.md § Task 11
+		name: "feed.xml (RSS firehose)",
+		path: "dist/feed.xml",
+		limit: "30 KB",
+		gzip: false,
+		disablePlugins: ["@size-limit/time"],
+	},
 ];
