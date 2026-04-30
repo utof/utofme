@@ -17,6 +17,7 @@
 import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
 import CommandPalette from "../components/CommandPalette.svelte";
+import HCard from "../components/HCard.astro";
 import LinkPreview from "../components/LinkPreview.svelte";
 import MetaHead from "../components/MetaHead.astro";
 import SlashFooter from "../components/SlashFooter.astro";
@@ -71,6 +72,10 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 	</head>
 	<body>
 		<slot />
+		<!-- Why: HCard placed before SlashFooter so the indieweb identity block
+		     appears above the navigation links — keeps microformat-scoped markup
+		     separate from the nav list while staying inside the footer area. -->
+		<HCard />
 		<SlashFooter />
 		<!-- Why: CommandPalette mounted here (not per-page) so it is available on
 		     every route without re-mounting. transition:persist retains the Svelte

@@ -1,21 +1,51 @@
 ---
 /**
- * Phase 6 head augmentations: rel=webmention + firehose rel=alternate.
+ * Phase 6 head augmentations: rel=webmention + firehose rel=alternate +
+ * per-route collection alternates + rel=me identity links.
  *
  * Why: centralises <head> additions so _BaseLayout doesn't grow further.
  * Mounted as the first content node of <head> after <meta charset> +
- * <meta viewport>. Per-route alternate-link wiring + rel=me + theme
- * inline-script land in subsequent Phase 6 tasks (5, 9).
+ * <meta viewport>.
  *
  * @see packages/specs/specs/06-indieweb.md § Architecture (Self-link, MetaHead)
  * @see packages/specs/plans/06-indieweb.md § Task 4
+ * @see packages/specs/plans/06-indieweb.md § Task 5
  */
+import { profiles } from "../lib/profiles.ts";
+
 interface Props {
-	/** Astro.url.pathname — used in Task 5 for per-route <link rel="alternate"> wiring. */
+	/** Astro.url.pathname — used for per-route <link rel="alternate"> wiring. */
 	route: string;
 }
-const { route: _route } = Astro.props;
+const { route } = Astro.props;
+
+// Per-route alternate-link policy locked in spec § Architecture.
+// `route` is `Astro.url.pathname` with `trailingSlash: "always"`.
+// Equality check (not startsWith) so detail pages do NOT match index branches.
+const isWorksIndex = route === "/" || route === "/works/";
+const isGardenIndex = route === "/garden/" || route === "/garden/graph/";
 ---
 
 <link rel="webmention" href="https://webmention.io/utof.me/webmention" />
 <link rel="alternate" type="application/rss+xml" title="utof.me — firehose" href="/feed.xml" />
+{
+	isWorksIndex && (
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title="utof.me — works"
+			href="/feed/works.xml"
+		/>
+	)
+}
+{
+	isGardenIndex && (
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title="utof.me — garden"
+			href="/feed/garden.xml"
+		/>
+	)
+}
+{profiles.map((p) => <link rel="me" href={p.url} />)}
