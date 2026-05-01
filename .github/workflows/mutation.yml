@@ -1,13 +1,12 @@
-# Nightly mutation testing workflow.
-# Why: Stryker runs are slow (minutes); blocking PR CI on them creates throughput
-# drag with no benefit over nightly reporting. workflow_dispatch allows on-demand runs.
+# On-demand mutation testing workflow.
+# Why: Stryker runs are slow and the nightly cadence produced fail-and-forget
+# noise (5+ consecutive failed runs as of 2026-05-01). Switched to workflow_dispatch
+# only — fix-on-demand instead of fail-nightly.
 # Source: packages/specs/adrs/0008-stryker-and-fast-check-targets.md
 # setup-bun@v2 bun-version: "1.3" matches ci.yml for consistency.
 name: mutation
 
 on:
-  schedule:
-    - cron: "0 5 * * *"
   workflow_dispatch:
 
 jobs:
