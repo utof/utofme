@@ -48,3 +48,21 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config packages/site/wrangler.jsonc
+
+      # Smoke probe — verifies /feed.xml returns 200 after Cloudflare deploy.
+      # Why: LHCI removed /feed.xml from its URL list (non-HTML); this curl probe
+      # is the lightweight replacement to catch feed regressions. See GH #87.
+      # Retries 3× with 2s backoff to allow Cloudflare edge to warm after deploy.
+      - name: Smoke — feed.xml 200 probe
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if curl --fail --silent --show-error -o /dev/null https://utof.me/feed.xml; then
+              echo "✓ /feed.xml returned 200 (attempt $attempt)"
+              exit 0
+            fi
+            echo "Attempt $attempt failed; sleeping 2s..."
+            sleep 2
+          done
+          echo "ERROR: /feed.xml did not return 200 after 3 attempts" >&2
+          exit 1
