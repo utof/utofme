@@ -91,7 +91,7 @@ module.exports = [
 		name: "site js (all routes, ex graph-vendor)",
 		path: ["dist/_astro/*.js", "!dist/_astro/graph-vendor.*.js"],
 		gzip: true,
-		limit: "420 KB",
+		limit: "408.5 KB",
 		disablePlugins: ["@size-limit/time"],
 	},
 	{
@@ -220,7 +220,51 @@ module.exports = [
 		name: "feed.xml (RSS firehose)",
 		path: "dist/feed.xml",
 		limit: "30 KB",
-		gzip: false,
+		// Why brotli:false (not gzip:false): the @size-limit/file plugin at
+		// node_modules/@size-limit/file/index.js gates raw-byte mode on
+		// `check.brotli === false`. `gzip: false` falls through to the
+		// default brotli branch. Phase-7 nit #79 ("size-limit feed.xml says
+		// raw bytes but reports brotli") fixed by switching the option.
+		brotli: false,
+		disablePlugins: ["@size-limit/time"],
+	},
+	// Phase 7 atmosphere-island budgets
+	{
+		// Why: CustomCursor.svelte ships behind `client:media="(pointer:fine)"`,
+		// so it loads only on desktops. 1.5 KB gzip ceiling catches accidental
+		// bloat (e.g. importing a heavy easing library).
+		// See: packages/specs/specs/07-atmosphere.md § "Per-feature size budgets"
+		// See: packages/specs/adrs/0036-cursor-svelte-island.md
+		name: "cursor-island",
+		path: ["dist/_astro/CustomCursor*.js"],
+		gzip: true,
+		limit: "1.5 KB",
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		// Why: ClickCounter (Konami easter egg) is a tiny localStorage-backed
+		// click counter loaded `client:idle` on the home page. 1 KB gzip
+		// ceiling reflects the minimal Svelte 5 island surface.
+		// See: packages/specs/specs/07-atmosphere.md § "Per-feature size budgets"
+		// See: packages/specs/adrs/0039-easter-eggs.md
+		name: "click-counter-island",
+		path: ["dist/_astro/ClickCounter*.js"],
+		gzip: true,
+		limit: "1 KB",
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		// Why: cmd-k.{mp3,webm} + hover.{mp3,webm} ship as static binary
+		// audio assets. 40 KB raw is a generous ceiling — current total is
+		// ~4.6 KB (under 5 % of the cap). brotli:false because already-
+		// compressed audio (Opus/MP3) doesn't gzip meaningfully and we care
+		// about the wire bytes the browser actually fetches.
+		// See: packages/specs/specs/07-atmosphere.md § "Per-feature size budgets"
+		// See: packages/specs/adrs/0037-web-audio-api.md
+		name: "audio-assets",
+		path: ["dist/audio/*"],
+		brotli: false,
+		limit: "40 KB",
 		disablePlugins: ["@size-limit/time"],
 	},
 ];

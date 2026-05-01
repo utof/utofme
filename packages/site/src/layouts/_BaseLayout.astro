@@ -17,10 +17,13 @@
 import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
 import CommandPalette from "../components/CommandPalette.svelte";
+import CustomCursor from "../components/CustomCursor.svelte";
 import HCard from "../components/HCard.astro";
+import KonamiListener from "../components/KonamiListener.astro";
 import LinkPreview from "../components/LinkPreview.svelte";
 import MetaHead from "../components/MetaHead.astro";
 import SlashFooter from "../components/SlashFooter.astro";
+import SoundToggle from "../components/SoundToggle.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
 import previews from "../data/note-previews.json";
 
@@ -75,8 +78,12 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		<slot />
 		<!-- Why: HCard placed before SlashFooter so the indieweb identity block
 		     appears above the navigation links — keeps microformat-scoped markup
-		     separate from the nav list while staying inside the footer area. -->
+		     separate from the nav list while staying inside the footer area.
+		     SoundToggle sits adjacent to HCard in the footer area — both are
+		     persistent UI controls that belong at page scope rather than per-route.
+		     @see packages/specs/specs/07-atmosphere.md § T2 -->
 		<HCard />
+		<SoundToggle />
 		<ThemeToggle />
 		<SlashFooter />
 		<!-- Why: CommandPalette mounted here (not per-page) so it is available on
@@ -107,6 +114,17 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     mouseover/focusin keeps per-link cost flat as the garden grows.
 		     @see packages/specs/plans/05-garden.md § Task 10 -->
 		<LinkPreview client:idle />
+		<!-- Why: client:media="(pointer: fine)" ensures the cursor JS is never
+		     downloaded on touch/coarse-pointer devices (phones, tablets). The
+		     component itself gates rAF on prefers-reduced-motion: reduce.
+		     @see packages/specs/specs/07-atmosphere.md § T1
+		     @see packages/specs/adrs/0036-custom-cursor-island.md -->
+		<CustomCursor client:media="(pointer: fine)" />
+		<!-- Why: inline script registered at first paint — no hydration delay.
+		     Toggles [data-konami] on <html> for the rainbow accent easter egg.
+		     @see packages/specs/specs/07-atmosphere.md § T4
+		     @see packages/specs/adrs/0039-easter-eggs-in-house.md -->
+		<KonamiListener />
 	</body>
 </html>
 

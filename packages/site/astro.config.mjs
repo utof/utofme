@@ -76,6 +76,7 @@ import fastGlob from "fast-glob";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
 import { embedRemark } from "./src/lib/embed-remark.ts";
+import { sitemapFilter } from "./src/lib/sitemap-filter.ts";
 import { brokenLinkRehype, wikiLinks } from "./src/lib/wikilinks-remark.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -109,12 +110,10 @@ export default defineConfig({
 		// does not flag "page is not HTML" warnings on feed/sitemap/robots entries.
 		// See: packages/specs/plans/06-indieweb.md § Task 3 GREEN
 		sitemap({
-			filter: (page) =>
-				!page.includes("/search") &&
-				!page.includes("/garden/graph/") &&
-				!page.includes("/stats/") &&
-				!page.endsWith(".xml") &&
-				!page.endsWith(".txt"),
+			// Why: sitemapFilter is extracted to src/lib/sitemap-filter.ts so it can
+			// be unit-tested in isolation. See the module's JSDoc for exclusion rules.
+			// See: https://github.com/utof/utofme/issues/58
+			filter: sitemapFilter,
 		}),
 		pagefind(),
 		react(),

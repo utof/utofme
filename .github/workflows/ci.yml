@@ -61,8 +61,8 @@ jobs:
         if: env.WEBMENTION_IO_TOKEN != ''
         env:
           WEBMENTION_IO_TOKEN: ${{ secrets.WEBMENTION_IO_TOKEN }}
+        working-directory: packages/site
         run: |
-          cd packages/site
           bun run sync:webmentions || echo "[webmentions] non-fatal sync issue; using last-known-good"
         continue-on-error: true
 

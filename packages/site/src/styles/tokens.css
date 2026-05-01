@@ -140,3 +140,58 @@
 :root[data-theme="dark"] {
 	color-scheme: dark;
 }
+
+/* ─── Time-of-day accent shifts (Phase 7 T3) ─────────────────────────────── */
+/*
+ * Why: accent-only overrides — no body-bg / text-color deltas — so contrast
+ * ratios remain within existing theme guarantees. These compose with [data-theme]
+ * via CSS specificity (both selectors target :root with one attribute each;
+ * ToD rules are declared after theme rules so they win on equal specificity).
+ * The inline script in MetaHead.astro sets [data-tod] at first paint; no FOAC.
+ *
+ * Token name matches the existing convention in this file: --color-accent.
+ *
+ * @see packages/specs/plans/07-atmosphere.md § T3 Implementation outline
+ * @see packages/specs/adrs/0038-time-of-day-inline-script.md
+ */
+:root[data-tod="dawn"] {
+	--color-accent: oklch(0.78 0.1 60);
+}
+:root[data-tod="day"] {
+	--color-accent: oklch(0.65 0.18 250);
+}
+:root[data-tod="dusk"] {
+	--color-accent: oklch(0.72 0.15 30);
+}
+:root[data-tod="night"] {
+	--color-accent: oklch(0.75 0.12 280);
+}
+
+/* ─── Easter egg: Konami code rainbow override (Phase 7 T4) ──────────────── */
+/*
+ * Why: when [data-konami] is toggled on <html> by KonamiListener.astro, the
+ * accent cycles through the hue wheel via a CSS @keyframes animation on the
+ * custom property. Uses @property (Houdini) for smooth interpolation when
+ * supported; falls back to a static rainbow hue otherwise. Layout-safe:
+ * no geometry tokens change — only --color-accent is overridden.
+ *
+ * @see packages/specs/plans/07-atmosphere.md § T4 Implementation outlines
+ * @see packages/specs/adrs/0039-easter-eggs-in-house.md
+ */
+@property --konami-hue {
+	syntax: "<number>";
+	inherits: true;
+	initial-value: 0;
+}
+
+@keyframes konami-rainbow {
+	to {
+		--konami-hue: 360;
+	}
+}
+
+:root[data-konami] {
+	--konami-hue: 0;
+	animation: konami-rainbow 3s linear infinite;
+	--color-accent: oklch(0.7 0.2 var(--konami-hue));
+}

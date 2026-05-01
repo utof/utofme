@@ -23,6 +23,14 @@ export default getViteConfig(
 		// (those come from the full virtual module and are not needed in schema unit tests).
 		// @see packages/specs/plans/01-card-grid-mvp.md § Task 2
 		resolve: {
+			// Why: Svelte 5 ships separate browser/server entry points. Without the
+			// `browser` condition, Node resolves to `src/index-server.js` which throws
+			// on `mount()` ("not available on the server"). Adding `browser` here
+			// mirrors the canonical Svelte Vitest setup documented at:
+			// https://svelte.dev/docs/svelte/testing#Unit-and-integration-tests
+			// Conditioned on VITEST so the Astro build (which deliberately uses SSR
+			// Svelte) is not affected.
+			conditions: process.env.VITEST ? ["browser"] : [],
 			alias: {
 				"astro:content": "astro/content/config",
 			},

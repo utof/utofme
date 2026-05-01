@@ -9,7 +9,7 @@
 import { wireToggleScript } from "../lib/theme.ts";
 ---
 
-<button type="button" data-theme-toggle aria-label="Switch theme" aria-live="polite">
+<button type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="false">
 	<span aria-hidden="true">◐</span>
 </button>
 <script is:inline data-astro-rerun set:html={wireToggleScript()} />
