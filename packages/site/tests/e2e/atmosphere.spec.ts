@@ -204,6 +204,92 @@ test.describe("time-of-day", () => {
 	});
 });
 
+// ---------------------------------------------------------------------------
+// T4 — Easter eggs
+// ---------------------------------------------------------------------------
+
+/**
+ * Konami sequence: ↑↑↓↓←→←→BA (10 keys).
+ * First completion → [data-konami] added to <html>.
+ * Second completion → [data-konami] removed (toggle).
+ *
+ * @see packages/specs/plans/07-atmosphere.md § T4 TDD red cases
+ * @see packages/specs/specs/07-atmosphere.md § Success criteria #12
+ */
+test("konami: dispatching the canonical sequence toggles [data-konami]", async ({ page }) => {
+	await page.goto("/");
+
+	async function fireKonami() {
+		await page.keyboard.press("ArrowUp");
+		await page.keyboard.press("ArrowUp");
+		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("ArrowLeft");
+		await page.keyboard.press("ArrowRight");
+		await page.keyboard.press("ArrowLeft");
+		await page.keyboard.press("ArrowRight");
+		await page.keyboard.press("b");
+		await page.keyboard.press("a");
+	}
+
+	// First sequence → attribute appears
+	await fireKonami();
+	expect(await page.evaluate(() => document.documentElement.hasAttribute("data-konami"))).toBe(
+		true,
+	);
+
+	// Second sequence → attribute removed
+	await fireKonami();
+	expect(await page.evaluate(() => document.documentElement.hasAttribute("data-konami"))).toBe(
+		false,
+	);
+});
+
+/**
+ * Click counter: increments, persists across reload, resets after localStorage.clear().
+ *
+ * @see packages/specs/plans/07-atmosphere.md § T4 TDD red cases
+ * @see packages/specs/specs/07-atmosphere.md § Success criteria #13
+ */
+test("click counter: increments and persists across reload", async ({ page }) => {
+	await page.goto("/");
+
+	// Wait for the ClickCounter island to hydrate (client:idle)
+	const btn = page.locator(".click-zone");
+	await btn.waitFor({ state: "visible" });
+
+	const span = page.locator(".click-zone span");
+
+	// Click 3 times
+	await btn.click();
+	await btn.click();
+	await btn.click();
+
+	await expect(span).toContainText("3");
+
+	// Reload — count should persist from localStorage
+	await page.reload();
+	const btnAfter = page.locator(".click-zone");
+	await btnAfter.waitFor({ state: "visible" });
+	await expect(page.locator(".click-zone span")).toContainText("3");
+
+	// Clear localStorage and click once → should start from 1
+	await page.evaluate(() => localStorage.clear());
+	await page.locator(".click-zone").click();
+	// After localStorage.clear() the component is already hydrated; the
+	// stored count was 3 before clear — clicking adds 1 to the in-memory n=3.
+	// To test the "starts from 0 after clear" case, we reload first.
+	await page.reload();
+	const btnReset = page.locator(".click-zone");
+	await btnReset.waitFor({ state: "visible" });
+	await page.evaluate(() => localStorage.clear());
+	await page.reload();
+	const btnClean = page.locator(".click-zone");
+	await btnClean.waitFor({ state: "visible" });
+	await btnClean.click();
+	await expect(page.locator(".click-zone span")).toContainText("1");
+});
+
 test("cursor: no JS downloaded on coarse pointer + reduced-motion", async ({ page }) => {
 	// Merged per plan §T1: "Implementer may merge into the JS-download case."
 	// On chromium-mobile (Pixel 5, coarse pointer) the client:media="(pointer: fine)"

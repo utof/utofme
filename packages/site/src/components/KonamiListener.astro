@@ -1,0 +1,47 @@
+---
+/**
+ * KonamiListener — global keydown listener that toggles [data-konami]
+ * on <html> when the canonical Konami sequence is detected.
+ *
+ * Sequence: ↑↑↓↓←→←→BA (10 keys).
+ * Toggling: first completion sets the attribute; second completion removes it.
+ *
+ * Why inline script: the listener must be registered immediately at first
+ * paint (no hydration delay) and requires no reactive state — a tiny IIFE
+ * is the appropriate delivery vehicle. No npm dependency justified for ≤ 25 LOC.
+ *
+ * @see packages/specs/specs/07-atmosphere.md § T4
+ * @see packages/specs/adrs/0039-easter-eggs-in-house.md
+ */
+---
+
+<script is:inline>
+	(function () {
+		var seq = [
+			"ArrowUp",
+			"ArrowUp",
+			"ArrowDown",
+			"ArrowDown",
+			"ArrowLeft",
+			"ArrowRight",
+			"ArrowLeft",
+			"ArrowRight",
+			"b",
+			"a",
+		];
+		var i = 0;
+		window.addEventListener("keydown", function (e) {
+			if (e.repeat) return;
+			var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+			if (k === seq[i]) {
+				i++;
+				if (i === seq.length) {
+					document.documentElement.toggleAttribute("data-konami");
+					i = 0;
+				}
+			} else {
+				i = k === seq[0] ? 1 : 0;
+			}
+		});
+	})();
+</script>

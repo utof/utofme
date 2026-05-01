@@ -166,3 +166,32 @@
 :root[data-tod="night"] {
 	--color-accent: oklch(0.75 0.12 280);
 }
+
+/* ─── Easter egg: Konami code rainbow override (Phase 7 T4) ──────────────── */
+/*
+ * Why: when [data-konami] is toggled on <html> by KonamiListener.astro, the
+ * accent cycles through the hue wheel via a CSS @keyframes animation on the
+ * custom property. Uses @property (Houdini) for smooth interpolation when
+ * supported; falls back to a static rainbow hue otherwise. Layout-safe:
+ * no geometry tokens change — only --color-accent is overridden.
+ *
+ * @see packages/specs/plans/07-atmosphere.md § T4 Implementation outlines
+ * @see packages/specs/adrs/0039-easter-eggs-in-house.md
+ */
+@property --konami-hue {
+	syntax: "<number>";
+	inherits: true;
+	initial-value: 0;
+}
+
+@keyframes konami-rainbow {
+	to {
+		--konami-hue: 360;
+	}
+}
+
+:root[data-konami] {
+	--konami-hue: 0;
+	animation: konami-rainbow 3s linear infinite;
+	--color-accent: oklch(0.7 0.2 var(--konami-hue));
+}
