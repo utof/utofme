@@ -18,4 +18,9 @@ jobs:
         with:
           bun-version: "1.3"
       - run: bun install --frozen-lockfile
+      # astro sync generates .astro/types.d.ts (the virtual `astro:content` module
+      # types). Stryker's typescript-checker reads tsconfig.json which `include`s
+      # .astro/types.d.ts; without the sync, getCollection callbacks infer as `any`
+      # and the checker fails before any mutant runs.
+      - run: cd packages/site && bun x astro sync
       - run: cd packages/site && bunx stryker run
