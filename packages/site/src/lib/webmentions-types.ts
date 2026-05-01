@@ -27,17 +27,17 @@ import { z } from "astro/zod";
 export const Mention = z.object({
 	"wm-id": z.number(),
 	"wm-property": z.string(),
-	"wm-target": z.string().url(),
-	"wm-source": z.string().url(),
+	"wm-target": z.url(),
+	"wm-source": z.url(),
 	"wm-received": z.string(), // ISO 8601 datetime as returned by webmention.io
 	type: z.string().default("entry"),
-	url: z.string().url().optional(),
+	url: z.url().optional(),
 	published: z.string().nullable().optional(),
 	author: z
 		.object({
 			name: z.string().optional(),
-			photo: z.string().url().optional(),
-			url: z.string().url().optional(),
+			photo: z.url().optional(),
+			url: z.url().optional(),
 		})
 		.optional(),
 	content: z

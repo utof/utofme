@@ -122,7 +122,7 @@ export const StatsSourceSchema = z.object({
 	id: z.string(),
 	label: z.string(),
 	value: z.unknown().nullable(),
-	lastSuccessAt: z.string().datetime().nullable(),
+	lastSuccessAt: z.iso.datetime().nullable(),
 	error: z.boolean().default(false),
 });
 
@@ -134,7 +134,7 @@ export const StatsSourceSchema = z.object({
  * @see packages/specs/adrs/0023-stats-build-time-snapshot.md
  */
 export const snapshotSchema = z.object({
-	generatedAt: z.string().datetime(),
+	generatedAt: z.iso.datetime(),
 	sources: z.object({
 		github: StatsSourceSchema,
 		strava: StatsSourceSchema,
