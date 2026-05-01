@@ -3,7 +3,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
-import { inlineThemeScript, wireToggleScript } from "../../src/lib/theme.ts";
+import { inlineThemeScript, THEME_STORAGE_KEY, wireToggleScript } from "../../src/lib/theme.ts";
 
 describe("inlineThemeScript", () => {
 	beforeEach(() => {
@@ -23,7 +23,7 @@ describe("inlineThemeScript", () => {
 	});
 
 	it("respects explicit dark localStorage", () => {
-		localStorage.setItem("utofme:theme", "dark");
+		localStorage.setItem(THEME_STORAGE_KEY, "dark");
 		Object.defineProperty(window, "matchMedia", {
 			writable: true,
 			value: () => ({ matches: false }),
@@ -34,7 +34,7 @@ describe("inlineThemeScript", () => {
 	});
 
 	it("respects explicit light localStorage even with dark media query", () => {
-		localStorage.setItem("utofme:theme", "light");
+		localStorage.setItem(THEME_STORAGE_KEY, "light");
 		Object.defineProperty(window, "matchMedia", {
 			writable: true,
 			value: () => ({ matches: true }),
@@ -67,13 +67,68 @@ describe("wireToggleScript", () => {
 		if (!btn) throw new Error("toggle button missing");
 		btn.click();
 		expect(document.documentElement.dataset.theme).toBe("dark");
-		expect(localStorage.getItem("utofme:theme")).toBe("dark");
+		expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
 		btn.click();
 		expect(document.documentElement.dataset.themeSource).toBe("system");
-		expect(localStorage.getItem("utofme:theme")).toBeNull();
+		expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
 		btn.click();
 		expect(document.documentElement.dataset.theme).toBe("light");
-		expect(localStorage.getItem("utofme:theme")).toBe("light");
+		expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
+	});
+
+	it("sets aria-pressed=true on bind when explicit theme stored", () => {
+		// Why: locks the #76 fix — SR users see pressed state immediately on page load.
+		document.documentElement.dataset.theme = "dark";
+		document.documentElement.removeAttribute("data-theme-source");
+		document.body.innerHTML = `<button data-theme-toggle></button>`;
+		Object.defineProperty(window, "matchMedia", {
+			writable: true,
+			value: () => ({ matches: true }),
+		});
+		new Function(wireToggleScript())();
+		const btn = document.querySelector<HTMLButtonElement>("[data-theme-toggle]");
+		if (!btn) throw new Error("toggle button missing");
+		expect(btn.getAttribute("aria-pressed")).toBe("true");
+	});
+
+	it("sets aria-pressed=false on bind when system mode", () => {
+		// Why: system mode = no explicit user choice = aria-pressed false.
+		document.documentElement.dataset.theme = "light";
+		document.documentElement.dataset.themeSource = "system";
+		document.body.innerHTML = `<button data-theme-toggle></button>`;
+		Object.defineProperty(window, "matchMedia", {
+			writable: true,
+			value: () => ({ matches: false }),
+		});
+		new Function(wireToggleScript())();
+		const btn = document.querySelector<HTMLButtonElement>("[data-theme-toggle]");
+		if (!btn) throw new Error("toggle button missing");
+		expect(btn.getAttribute("aria-pressed")).toBe("false");
+	});
+
+	it("updates aria-pressed after each click (#76)", () => {
+		// Why: SR users must hear the state change after each toggle action.
+		document.documentElement.dataset.theme = "light";
+		document.documentElement.dataset.themeSource = "system";
+		document.body.innerHTML = `<button data-theme-toggle></button>`;
+		Object.defineProperty(window, "matchMedia", {
+			writable: true,
+			value: () => ({ matches: false }),
+		});
+		new Function(wireToggleScript())();
+		const btn = document.querySelector<HTMLButtonElement>("[data-theme-toggle]");
+		if (!btn) throw new Error("toggle button missing");
+		// start: system → aria-pressed=false
+		expect(btn.getAttribute("aria-pressed")).toBe("false");
+		// click → light (explicit) → aria-pressed=true
+		btn.click();
+		expect(btn.getAttribute("aria-pressed")).toBe("true");
+		// click → dark (explicit) → aria-pressed=true
+		btn.click();
+		expect(btn.getAttribute("aria-pressed")).toBe("true");
+		// click → system → aria-pressed=false
+		btn.click();
+		expect(btn.getAttribute("aria-pressed")).toBe("false");
 	});
 });
 

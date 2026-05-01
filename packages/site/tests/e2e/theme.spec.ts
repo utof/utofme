@@ -11,6 +11,7 @@
  * @see packages/site/src/styles/tokens.css
  */
 import { expect, test } from "@playwright/test";
+import { THEME_STORAGE_KEY } from "../../src/lib/theme.ts";
 
 test("toggle cycles system → light → dark → system", async ({ page }) => {
 	// The wireToggleScript cycle is system → light → dark → system → light → … —
@@ -24,30 +25,35 @@ test("toggle cycles system → light → dark → system", async ({ page }) => {
 	const btn = page.locator("[data-theme-toggle]");
 	await expect(btn).toBeVisible();
 
-	// Initial: system source.
+	// Initial: system source → aria-pressed="false" (no explicit user choice).
+	// Why: locks the #76 fix — SR state is set on bind, not just on click.
 	expect(await page.evaluate(() => document.documentElement.dataset.themeSource)).toBe("system");
+	await expect(btn).toHaveAttribute("aria-pressed", "false");
 
-	// Click 1: system → light, localStorage = "light"
+	// Click 1: system → light, localStorage = "light", aria-pressed="true"
 	await btn.click();
 	expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe("light");
 	expect(await page.evaluate(() => document.documentElement.dataset.themeSource)).toBeUndefined();
-	expect(await page.evaluate(() => localStorage.getItem("utofme:theme"))).toBe("light");
+	expect(await page.evaluate((k) => localStorage.getItem(k), THEME_STORAGE_KEY)).toBe("light");
+	await expect(btn).toHaveAttribute("aria-pressed", "true");
 
-	// Click 2: light → dark, localStorage = "dark"
+	// Click 2: light → dark, localStorage = "dark", aria-pressed="true"
 	await btn.click();
 	expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe("dark");
-	expect(await page.evaluate(() => localStorage.getItem("utofme:theme"))).toBe("dark");
+	expect(await page.evaluate((k) => localStorage.getItem(k), THEME_STORAGE_KEY)).toBe("dark");
+	await expect(btn).toHaveAttribute("aria-pressed", "true");
 
-	// Click 3: dark → system, localStorage cleared, themeSource = "system"
+	// Click 3: dark → system, localStorage cleared, themeSource = "system", aria-pressed="false"
 	await btn.click();
 	expect(await page.evaluate(() => document.documentElement.dataset.themeSource)).toBe("system");
-	expect(await page.evaluate(() => localStorage.getItem("utofme:theme"))).toBeNull();
+	expect(await page.evaluate((k) => localStorage.getItem(k), THEME_STORAGE_KEY)).toBeNull();
+	await expect(btn).toHaveAttribute("aria-pressed", "false");
 });
 
 test("dark localStorage persists across reload (no FOUC)", async ({ page, context }) => {
 	// addInitScript runs BEFORE every page-script, so the inline theme script in
 	// <head> reads "dark" on first paint — no flash of light theme.
-	await context.addInitScript(() => localStorage.setItem("utofme:theme", "dark"));
+	await context.addInitScript((k) => localStorage.setItem(k, "dark"), THEME_STORAGE_KEY);
 	await page.goto("/");
 
 	// Assert <html data-theme="dark"> is set BEFORE the first paint.
@@ -84,7 +90,7 @@ test("toggle still works after SPA navigation (data-astro-rerun)", async ({ page
 	// starting state so the toggle's next step (→ dark) makes data-theme observably
 	// flip. Without seeding, the fresh context starts at system+light and click 1
 	// also produces light — `before === after` would falsely fail.
-	await context.addInitScript(() => localStorage.setItem("utofme:theme", "light"));
+	await context.addInitScript((k) => localStorage.setItem(k, "light"), THEME_STORAGE_KEY);
 	await page.goto("/works/code-1/");
 	await page.click("a[href='/works/']");
 	await page.waitForURL("**/works/");

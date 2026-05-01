@@ -57,8 +57,13 @@ const updated = entry.data.updated ?? entry.data.created;
 			<a class="u-url" href={`/garden/${entry.id}/`} aria-hidden="true" hidden></a>
 			<div class="e-content"><slot /></div>
 			<Backlinks slug={entry.id} />
-			<Webmentions slug={entry.id} />
 		</article>
+		{
+			/* Why: webmentions are about the article, not part of it — kept outside <article>
+		    for parity with _WorkLayout and so mf2 parsers do not treat reply h-cites as
+		    nested cites of the note's h-entry. See https://github.com/utof/utofme/issues/73 */
+		}
+		<Webmentions slug={entry.id} />
 	</main>
 </BaseLayout>
 

@@ -6,6 +6,14 @@
  */
 
 /**
+ * localStorage key used for theme persistence.
+ * Why: single source of truth shared by inlineThemeScript, wireToggleScript,
+ * and test assertions — prevents silent drift if the key is ever renamed.
+ * @see https://github.com/utof/utofme/issues/75
+ */
+export const THEME_STORAGE_KEY = "utofme:theme";
+
+/**
  * First-paint script — head-injected, runs before any stylesheet load. ≤ 800 B.
  * Why: must execute before CSS to avoid FOUC. Wrapped in IIFE + try/catch to
  * survive Safari private-mode (localStorage throws) without leaving <html>
@@ -32,5 +40,13 @@ export function inlineThemeScript(): string {
  * @see https://docs.astro.build/en/guides/view-transitions/#script-behavior-with-view-transitions
  */
 export function wireToggleScript(): string {
-	return `document.querySelectorAll("[data-theme-toggle]").forEach(function(b){b.onclick=function(){var d=document.documentElement.dataset;var c=d.themeSource==="system"?"system":d.theme;var n=c==="light"?"dark":c==="dark"?"system":"light";if(n==="system"){try{localStorage.removeItem("utofme:theme");}catch(e){}var m=window.matchMedia("(prefers-color-scheme: dark)").matches;d.theme=m?"dark":"light";d.themeSource="system";}else{try{localStorage.setItem("utofme:theme",n);}catch(e){}d.theme=n;delete d.themeSource;}};});`;
+	// Why: aria-pressed reflects whether an explicit theme is stored:
+	//   false = system (no user choice), true = light or dark persisted.
+	// Set on bind (initial state) and after each click (state change) so SR
+	// users receive state feedback without aria-live announcements on a button.
+	// ''+(bool) coerces to the 'true'/'false' strings required by ARIA spec.
+	// D is captured once per forEach; data-astro-rerun re-runs the script on
+	// each SPA navigation, re-capturing a fresh reference.
+	// See: https://github.com/utof/utofme/issues/76
+	return `document.querySelectorAll('[data-theme-toggle]').forEach(function(b){var A='aria-pressed',K='utofme:theme',D=document.documentElement.dataset;b.setAttribute(A,''+(D.themeSource!='system'));b.onclick=function(){var c=D.themeSource=='system'?'system':D.theme,n=c=='light'?'dark':c=='dark'?'system':'light';if(n=='system'){try{localStorage.removeItem(K);}catch(e){}D.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';D.themeSource='system';}else{try{localStorage.setItem(K,n);}catch(e){}D.theme=n;delete D.themeSource;}b.setAttribute(A,''+(n!='system'));};});`;
 }

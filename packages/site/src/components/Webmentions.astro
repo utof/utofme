@@ -28,15 +28,20 @@ const all = import.meta.glob<{ default: Mention[] }>("../data/webmentions/*.json
 const file = all[`../data/webmentions/${slug}.json`];
 const mentions: Mention[] = file?.default ?? [];
 
-const LIKE_TYPES = ["like-of", "repost-of"] as const;
-const REPLY_TYPES = ["in-reply-to", "mention-of"] as const;
-const likes = mentions.filter((m) => (LIKE_TYPES as readonly string[]).includes(m["wm-property"]));
-const replies = mentions.filter((m) =>
-	(REPLY_TYPES as readonly string[]).includes(m["wm-property"]),
-);
+// Why: Set.has() is O(1) vs Array.includes() O(n); also eliminates the
+// `as readonly string[]` cast that LIKE_TYPES / REPLY_TYPES required. See #71.
+const LIKE_TYPES = new Set<string>(["like-of", "repost-of"]);
+const REPLY_TYPES = new Set<string>(["in-reply-to", "mention-of"]);
+const likes = mentions.filter((m) => LIKE_TYPES.has(m["wm-property"]));
+const replies = mentions.filter((m) => REPLY_TYPES.has(m["wm-property"]));
+
+// Why: named constants pin the UI density invariants stated in the spec so a
+// future edit to one slice limit doesn't silently drift the other. See #72.
+const MAX_REPLY_CHARS = 280;
+const MAX_AUTHOR_NAME = 80;
 
 function authorName(m: Mention): string {
-	if (m.author?.name) return m.author.name.slice(0, 80);
+	if (m.author?.name) return m.author.name.slice(0, MAX_AUTHOR_NAME);
 	if (m.author?.url) {
 		try {
 			return new URL(m.author.url).host;
@@ -81,7 +86,9 @@ function publishedAt(m: Mention): string {
 					{replies.map((m) => (
 						<li class="h-cite">
 							<span class="p-name">{authorName(m)}</span>
-							{m.content?.text && <p class="p-content">{String(m.content.text).slice(0, 280)}</p>}
+							{m.content?.text && (
+								<p class="p-content">{String(m.content.text).slice(0, MAX_REPLY_CHARS)}</p>
+							)}
 							<time class="dt-published" datetime={publishedAt(m)}>
 								{publishedAt(m)}
 							</time>

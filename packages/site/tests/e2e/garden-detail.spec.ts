@@ -47,3 +47,16 @@ test("embed-demo renders <picture> via astro:assets", async ({ page }) => {
 	await expect(page.locator("picture, picture img").first()).toBeVisible();
 	await expect(page.locator("img.wikilink-broken")).toHaveCount(0);
 });
+
+test("webmentions section is a sibling of article.h-entry, not a descendant (#73)", async ({
+	page,
+}) => {
+	// Why: mf2 parsers treat nested h-cite as cites of the enclosing h-entry;
+	// keeping <Webmentions> outside <article class="h-entry"> matches _WorkLayout
+	// and prevents that mis-parse. See https://github.com/utof/utofme/issues/73
+	await page.goto("/garden/welcome/");
+	// The webmentions aside must NOT be a descendant of article.h-entry.
+	await expect(page.locator("article.h-entry aside.webmentions")).toHaveCount(0);
+	// The note's main container must not nest the webmentions aside inside the article.
+	await expect(page.locator("article.note aside.webmentions")).toHaveCount(0);
+});
