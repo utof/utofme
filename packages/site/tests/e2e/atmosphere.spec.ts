@@ -140,6 +140,70 @@ test("sound: cmd-k keydown plays the cmd-k buffer", async ({ page }) => {
 	expect(after).toBeGreaterThan(before);
 });
 
+// ---------------------------------------------------------------------------
+// T3 — Time-of-day accent shifts
+// ---------------------------------------------------------------------------
+
+/**
+ * Verifies that [data-tod] is set on <html> before DOMContentLoaded, proving
+ * the inline-script runs at first paint (not post-hydration).
+ *
+ * Why per-test timezoneId: setting it at project scope would affect every other
+ * e2e case; scoped here to isolate the UTC clock fixture.
+ *
+ * @see packages/specs/plans/07-atmosphere.md § T3 TDD red cases
+ * @see packages/specs/specs/07-atmosphere.md § Success criteria #11
+ */
+test.describe("time-of-day", () => {
+	test.use({ timezoneId: "UTC" });
+
+	test("applies before DOMContentLoaded — 06:00 UTC → dawn", async ({ page }) => {
+		await page.clock.install({ time: new Date("2026-05-01T06:00:00Z") });
+		await page.clock.pauseAt(new Date("2026-05-01T06:00:00Z"));
+		await page.goto("/");
+
+		const tod = await page.evaluate(
+			() =>
+				new Promise<string>((resolve) => {
+					if (document.readyState === "loading") {
+						document.addEventListener(
+							"DOMContentLoaded",
+							() => resolve(document.documentElement.dataset.tod ?? ""),
+							{ once: true },
+						);
+					} else {
+						resolve(document.documentElement.dataset.tod ?? "");
+					}
+				}),
+		);
+
+		expect(tod).toBe("dawn");
+	});
+
+	test("applies before DOMContentLoaded — 12:00 UTC → day", async ({ page }) => {
+		await page.clock.install({ time: new Date("2026-05-01T12:00:00Z") });
+		await page.clock.pauseAt(new Date("2026-05-01T12:00:00Z"));
+		await page.goto("/");
+
+		const tod = await page.evaluate(
+			() =>
+				new Promise<string>((resolve) => {
+					if (document.readyState === "loading") {
+						document.addEventListener(
+							"DOMContentLoaded",
+							() => resolve(document.documentElement.dataset.tod ?? ""),
+							{ once: true },
+						);
+					} else {
+						resolve(document.documentElement.dataset.tod ?? "");
+					}
+				}),
+		);
+
+		expect(tod).toBe("day");
+	});
+});
+
 test("cursor: no JS downloaded on coarse pointer + reduced-motion", async ({ page }) => {
 	// Merged per plan §T1: "Implementer may merge into the JS-download case."
 	// On chromium-mobile (Pixel 5, coarse pointer) the client:media="(pointer: fine)"

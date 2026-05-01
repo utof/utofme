@@ -140,3 +140,29 @@
 :root[data-theme="dark"] {
 	color-scheme: dark;
 }
+
+/* ─── Time-of-day accent shifts (Phase 7 T3) ─────────────────────────────── */
+/*
+ * Why: accent-only overrides — no body-bg / text-color deltas — so contrast
+ * ratios remain within existing theme guarantees. These compose with [data-theme]
+ * via CSS specificity (both selectors target :root with one attribute each;
+ * ToD rules are declared after theme rules so they win on equal specificity).
+ * The inline script in MetaHead.astro sets [data-tod] at first paint; no FOAC.
+ *
+ * Token name matches the existing convention in this file: --color-accent.
+ *
+ * @see packages/specs/plans/07-atmosphere.md § T3 Implementation outline
+ * @see packages/specs/adrs/0038-time-of-day-inline-script.md
+ */
+:root[data-tod="dawn"] {
+	--color-accent: oklch(0.78 0.1 60);
+}
+:root[data-tod="day"] {
+	--color-accent: oklch(0.65 0.18 250);
+}
+:root[data-tod="dusk"] {
+	--color-accent: oklch(0.72 0.15 30);
+}
+:root[data-tod="night"] {
+	--color-accent: oklch(0.75 0.12 280);
+}

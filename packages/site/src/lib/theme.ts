@@ -13,7 +13,13 @@
  * @see packages/specs/plans/06-indieweb.md § Task 9
  */
 export function inlineThemeScript(): string {
-	return `(function(){try{var t=localStorage.getItem("utofme:theme");if(t==="light"||t==="dark"){document.documentElement.dataset.theme=t;return;}var d=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.dataset.themeSource="system";}catch(e){try{document.documentElement.dataset.theme=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}catch(e2){}}})();`;
+	// Why: ToD logic is inlined here (duplicates src/lib/time-of-day.ts) because
+	// <script is:inline> cannot import from source modules at runtime. The unit
+	// tests in tests/unit/time-of-day.test.ts guard the canonical form; keep
+	// both in sync if the hour ranges change.
+	// @see packages/specs/plans/07-atmosphere.md § T3 Implementation outline
+	// @see packages/specs/adrs/0038-time-of-day-inline-script.md
+	return `(function(){try{var t=localStorage.getItem("utofme:theme");if(t==="light"||t==="dark"){document.documentElement.dataset.theme=t;}else{var d=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.dataset.themeSource="system";}}catch(e){try{document.documentElement.dataset.theme=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}catch(e2){}}try{var h=new Date().getHours();document.documentElement.dataset.tod=h<5?"night":h<8?"dawn":h<17?"day":h<20?"dusk":"night";}catch(e3){}})();`;
 }
 
 /**
