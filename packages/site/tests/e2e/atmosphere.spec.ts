@@ -15,6 +15,23 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+// Why: global Window merge lets page.evaluate callbacks read __startCalls
+// without `as unknown` casts (following the pattern in palette.spec.ts).
+// This merge is test-file-local and not exported.
+declare global {
+	interface Window {
+		/**
+		 * Spy counter set by the cmd-K BufferSource test's addInitScript.
+		 * Incremented each time `AudioBufferSourceNode.prototype.start` is called.
+		 *
+		 * @see packages/specs/plans/07-atmosphere.md § T2 TDD red cases
+		 */
+		__startCalls: number;
+		/** Vendor-prefixed AudioContext present on some older Chromium builds. */
+		webkitAudioContext?: typeof AudioContext;
+	}
+}
+
 // ---------------------------------------------------------------------------
 // T1 — Custom cursor
 // ---------------------------------------------------------------------------
@@ -63,6 +80,64 @@ test("sound: toggle persists across reload", async ({ page }) => {
 	await page.reload();
 	const btnAfterReload = page.locator("[data-sound-toggle]");
 	await expect(btnAfterReload).toHaveAttribute("aria-pressed", "true");
+});
+
+/**
+ * Plan §T2 red case (lines ~201–202): e2e coverage for spec acceptance #5
+ * (lazy AudioContext — only plays after user opt-in and cmd-K keydown).
+ *
+ * Option B: spy on `AudioBufferSourceNode.prototype.start` via `addInitScript`
+ * (stronger signal than `resume` — directly asserts "audio playback was triggered").
+ *
+ * Why `addInitScript` + `__startCalls`: the IIFE in SoundToggle.astro uses
+ * `ctx.createBufferSource()` then `.start()` to play sounds. Patching the
+ * prototype before page load intercepts every call regardless of when the
+ * AudioContext was created.
+ *
+ * @see packages/specs/plans/07-atmosphere.md § T2 TDD red cases ~201–202
+ * @see packages/specs/specs/07-atmosphere.md § acceptance #5
+ */
+test("sound: cmd-k keydown plays the cmd-k buffer", async ({ page }) => {
+	// Instrument BEFORE navigation so the patch runs in the page context on load.
+	await page.addInitScript(() => {
+		window.__startCalls = 0;
+		const Ctor = window.AudioContext || window.webkitAudioContext;
+		if (!Ctor) return;
+		const origCreate = Ctor.prototype.createBufferSource;
+		Ctor.prototype.createBufferSource = function (this: AudioContext) {
+			const node = origCreate.call(this) as AudioBufferSourceNode;
+			const origStart = node.start.bind(node);
+			node.start = (...args: Parameters<typeof node.start>) => {
+				window.__startCalls += 1;
+				return origStart(...(args as Parameters<typeof origStart>));
+			};
+			return node;
+		};
+	});
+
+	await page.goto("/");
+
+	// Enable sound — this triggers ensure() which creates AudioContext + decodes buffers.
+	await page.locator("[data-sound-toggle]").click();
+
+	// Wait for decodeAudioData to settle; allow up to 4 s for network + decode.
+	// The `__startCalls` key exists immediately (set by addInitScript) so we
+	// wait for the toggle's aria-pressed to be "true" as a proxy that the click
+	// was processed, then give decode time to complete.
+	await expect(page.locator("[data-sound-toggle]")).toHaveAttribute("aria-pressed", "true");
+	// Small grace period for async decode pipeline to finish before we fire cmd-K.
+	await page.waitForTimeout(500);
+
+	const before = await page.evaluate(() => window.__startCalls);
+
+	// Dispatch ctrl+K — the IIFE accepts both metaKey and ctrlKey (SoundToggle.astro line 110).
+	await page.keyboard.press("Control+k");
+
+	// Wait up to 3 s for BufferSource.start() to be called.
+	await page.waitForFunction((b: number) => window.__startCalls > b, before, { timeout: 3000 });
+
+	const after = await page.evaluate(() => window.__startCalls);
+	expect(after).toBeGreaterThan(before);
 });
 
 test("cursor: no JS downloaded on coarse pointer + reduced-motion", async ({ page }) => {
