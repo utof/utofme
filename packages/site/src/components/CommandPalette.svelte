@@ -339,7 +339,9 @@
 	[data-palette-backdrop] {
 		position: fixed;
 		inset: 0;
-		background: color-mix(in srgb, var(--color-bg) 20%, transparent);
+		/* v21: the page dims to 60 % behind a 4 px blur (the only blur in the system). */
+		background: rgb(255 255 255 / 0.4);
+		backdrop-filter: blur(4px);
 		z-index: 200;
 		/* Why: backdrop must not intercept keyboard events — only pointer events. */
 	}
@@ -349,25 +351,25 @@
 		top: 20%;
 		left: 50%;
 		translate: -50% 0;
-		width: min(560px, calc(100vw - var(--space-6, 24px) * 2));
+		width: min(520px, calc(100vw - var(--space-6, 24px) * 2));
 		background: var(--color-bg);
-		border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-		border-radius: var(--radius-md, 6px);
-		box-shadow:
-			0 4px 24px color-mix(in srgb, currentColor 12%, transparent),
-			0 1px 4px color-mix(in srgb, currentColor 8%, transparent);
+		/* v21: one of the three elevated surfaces — 10 px radius, --shadow-lg. */
+		border: 0;
+		border-radius: var(--radius-lg, 10px);
+		box-shadow: var(--shadow-lg);
 		z-index: 201;
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
 		/* Why: enter animation for sighted users; reduced-motion zeroes it below. */
-		animation: palette-in 120ms ease forwards;
+		/* v21's single playful moment: 220 ms, scale 0.96 -> 1. */
+		animation: palette-in var(--motion-base, 220ms) var(--ease-out, ease) forwards;
 	}
 
 	@keyframes palette-in {
 		from {
 			opacity: 0;
-			scale: 0.97;
+			scale: 0.96;
 		}
 		to {
 			opacity: 1;
@@ -385,36 +387,43 @@
 
 	[data-palette] input {
 		border: none;
-		border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
-		padding: var(--space-3, 12px) var(--space-4, 16px);
+		border-bottom: 1px solid var(--color-border);
+		padding: 10px 14px;
 		font: inherit;
-		font-size: var(--font-size-3, 1rem);
+		font-size: 15px;
 		background: transparent;
 		outline: none;
+		box-shadow: none;
 		color: inherit;
+	}
+
+	[data-palette] input::placeholder {
+		color: var(--color-text-faint);
 	}
 
 	[data-palette] ul {
 		list-style: none;
 		margin: 0;
-		padding: var(--space-1, 4px) 0;
+		padding: 6px;
 		max-height: 320px;
 		overflow-y: auto;
 	}
 
 	[data-palette-item] {
-		padding: var(--space-2, 8px) var(--space-4, 16px);
+		padding: 8px 12px;
+		border-radius: var(--radius-sm, 4px);
+		font-size: var(--font-size-2, 0.875rem);
 		cursor: pointer;
 		display: block;
 	}
 
 	[data-palette-item][aria-selected="true"] {
-		background: color-mix(in srgb, currentColor 10%, transparent);
+		background: var(--color-surface-hover);
 	}
 
 	.palette-empty {
-		padding: var(--space-2, 8px) var(--space-4, 16px);
-		opacity: 0.5;
-		font-style: italic;
+		padding: 8px 12px;
+		font-size: var(--font-size-2, 0.875rem);
+		color: var(--color-text-muted);
 	}
 </style>

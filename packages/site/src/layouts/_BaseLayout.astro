@@ -191,6 +191,65 @@ const {
 		margin: 0;
 		padding: 0;
 		min-height: 100vh;
+		line-height: var(--leading-normal);
+		-webkit-font-smoothing: antialiased;
+	}
+
+	/* v21 element defaults. `:where()` keeps specificity at 0 so every
+	 * component-scoped rule still wins.
+	 * Why: headings are Geist 600 with tight tracking (the serif is reserved for
+	 * editorial moments); the v21 blue is the only link / focus / selection hue;
+	 * focus is a box-shadow ring, never an outline; hairlines replace rules.
+	 * See: packages/specs/adrs/0042-v21-visual-language.md */
+	:where(h1, h2, h3, h4) {
+		font-family: var(--font-sans);
+		font-weight: 600;
+		letter-spacing: var(--tracking-tight);
+		line-height: var(--leading-snug);
+		color: var(--color-text);
+	}
+	:where(a) {
+		color: var(--color-link);
+		text-decoration-thickness: 1px;
+		text-underline-offset: 0.2em;
+	}
+	:where(a):hover {
+		color: var(--color-link-hover);
+	}
+	:where(:focus-visible) {
+		outline: none;
+		box-shadow: var(--shadow-focus);
+	}
+	::selection {
+		background: var(--color-focus-tint);
+		color: var(--color-text);
+	}
+	:where(hr) {
+		border: 0;
+		border-top: 1px solid var(--color-border);
+	}
+	/* v21 key cap: mono 11 px, 2 px radius, hairline with a 2 px bottom edge. */
+	:where(kbd) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		box-sizing: border-box;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		line-height: 16px;
+		color: var(--color-text-body);
+		background: var(--color-surface-hover);
+		border: 1px solid var(--color-border);
+		border-bottom-width: 2px;
+		border-radius: var(--radius-xs);
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		:where(a) {
+			transition: color var(--motion-fast) var(--ease-out);
+		}
 	}
 
 	/* Why: minimal pages (masonry home) align the footer with the page's side

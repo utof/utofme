@@ -1,13 +1,13 @@
 // Why: Task 8 typography e2e test — verifies that all three font CSS variables are
 // wired into the document and that the browser resolves fonts within the 200 ms budget.
 // Four assertions per the plan:
-//   (i)  Computed style of body resolves to a Geist-prefixed family, h1 to a
-//        Fraunces-prefixed family, and <code> to a Commit-Mono-prefixed family.
+//   (i)  Computed style of body and h1 resolves to a Geist-prefixed family;
+//        --font-serif / --font-mono to Newsreader / Geist Mono (ADR 0042).
 //        These match the Astro Fonts API's hashed-family-name convention
 //        (e.g. "Geist-8451acc10d36f8f4"), which is what `getComputedStyle` returns.
-//   (ii) A <link rel="preload" as="font"> exists for the local OFL mono file.
+//   (ii) A <link rel="preload" as="font"> exists for the mono face.
 //   (iii) document.fonts.ready resolves within 200 ms.
-//   (iv) The Commit Mono woff2 asset responds with Cache-Control containing
+//   (iv) The mono woff2 asset responds with Cache-Control containing
 //        max-age=31536000 and immutable. Per spec § "Success criteria" (line 109),
 //        this header is verified in PRODUCTION on the deployed *.workers.dev URL —
 //        Cloudflare Workers Assets emits the immutable header. Astro's local preview
@@ -36,27 +36,32 @@ test("body font-family resolves to a Geist-prefixed family (--font-sans cascade)
 	expect(fontFamily).toMatch(/Geist/);
 });
 
-test("h1 font-family resolves to a Fraunces-prefixed family (--font-serif cascade)", async ({
-	page,
-}) => {
+test("h1 font-family resolves to Geist (v21: headings are sans, ADR 0042)", async ({ page }) => {
 	await page.goto("/");
 	const h1FontFamily = await page
 		.locator("h1")
 		.evaluate((el) => window.getComputedStyle(el).fontFamily);
-	expect(h1FontFamily).toMatch(/Fraunces/);
+	expect(h1FontFamily).toMatch(/Geist/);
+	expect(h1FontFamily).not.toMatch(/Geist\s*Mono/i);
 });
 
-test("code font-family resolves to a Commit-Mono-prefixed family (--font-mono cascade)", async ({
-	page,
-}) => {
+// Why: `/` no longer renders serif text or a <code> element (masonry home), so the
+// serif + mono wiring is asserted on the Fonts API custom properties instead.
+test("--font-serif resolves to a Newsreader-prefixed family", async ({ page }) => {
 	await page.goto("/");
-	const codeFontFamily = await page
-		.locator("code")
-		.evaluate((el) => window.getComputedStyle(el).fontFamily);
-	// Commit Mono has a space in its registered family name; Astro emits both
-	// "Commit Mono-<hash>" and "\"Commit Mono-<hash> fallback: Courier New\"" tokens
-	// into --font-mono. The regex tolerates either spelling.
-	expect(codeFontFamily).toMatch(/Commit\s*Mono/i);
+	const serif = await page.evaluate(() =>
+		getComputedStyle(document.documentElement).getPropertyValue("--font-serif"),
+	);
+	expect(serif).toMatch(/Newsreader/);
+});
+
+test("--font-mono resolves to a Geist-Mono-prefixed family", async ({ page }) => {
+	await page.goto("/");
+	const mono = await page.evaluate(() =>
+		getComputedStyle(document.documentElement).getPropertyValue("--font-mono"),
+	);
+	// Astro emits "Geist Mono-<hash>" plus a quoted fallback token; tolerate both.
+	expect(mono).toMatch(/Geist\s*Mono/i);
 });
 
 test("document.fonts.ready resolves within 200 ms", async ({ page }) => {
