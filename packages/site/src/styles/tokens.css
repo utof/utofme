@@ -82,6 +82,19 @@
 	--color-text-muted: #71717a;
 	--color-accent: #18181b;
 	--color-accent-contrast: #ffffff;
+
+	/* Why: UA widgets (scrollbars, form controls) stay light even when the OS is
+	 * dark; the dark override below only applies if [data-theme="dark"] is set,
+	 * which nothing does while LIGHT_ONLY is true (src/lib/theme.ts). */
+	color-scheme: light;
+
+	/* Masonry home (light-only MVP).
+	 * Why: one gutter token drives both the column gap and the vertical gap
+	 * between items — set it to 0 for an edge-to-edge mosaic. --page-margin is
+	 * the side inset of the page (~85 % content width at 1600 px).
+	 * @see packages/site/src/pages/index.astro */
+	--masonry-gap: 12px;
+	--page-margin: clamp(var(--space-4), 7.5vw, 9rem);
 }
 
 /* ─── Dark-mode overrides ─────────────────────────────────────────────────── */

@@ -3,7 +3,13 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
-import { inlineThemeScript, THEME_STORAGE_KEY, wireToggleScript } from "../../src/lib/theme.ts";
+import {
+	forcedLightThemeScript,
+	inlineThemeScript,
+	LIGHT_ONLY,
+	THEME_STORAGE_KEY,
+	wireToggleScript,
+} from "../../src/lib/theme.ts";
 
 describe("inlineThemeScript", () => {
 	beforeEach(() => {
@@ -45,6 +51,35 @@ describe("inlineThemeScript", () => {
 
 	it("inline script body is ≤ 800 bytes", () => {
 		expect(new TextEncoder().encode(inlineThemeScript()).byteLength).toBeLessThanOrEqual(800);
+	});
+});
+
+describe("forcedLightThemeScript (light-only MVP)", () => {
+	beforeEach(() => {
+		document.documentElement.removeAttribute("data-theme");
+		document.documentElement.removeAttribute("data-theme-source");
+		document.documentElement.removeAttribute("data-tod");
+		localStorage.clear();
+	});
+
+	it("is on by default", () => {
+		expect(LIGHT_ONLY).toBe(true);
+	});
+
+	it("stays light with a stored dark choice AND a dark OS preference", () => {
+		localStorage.setItem(THEME_STORAGE_KEY, "dark");
+		Object.defineProperty(window, "matchMedia", {
+			writable: true,
+			value: () => ({ matches: true }),
+		});
+		new Function(forcedLightThemeScript())();
+		expect(document.documentElement.dataset.theme).toBe("light");
+		expect(document.documentElement.dataset.themeSource).toBeUndefined();
+	});
+
+	it("still stamps data-tod", () => {
+		new Function(forcedLightThemeScript())();
+		expect(["dawn", "day", "dusk", "night"]).toContain(document.documentElement.dataset.tod);
 	});
 });
 

@@ -25,6 +25,7 @@ import MetaHead from "../components/MetaHead.astro";
 import SlashFooter from "../components/SlashFooter.astro";
 import SoundToggle from "../components/SoundToggle.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
+import { LIGHT_ONLY } from "../lib/theme.ts";
 import previews from "../data/note-previews.json";
 
 interface Props {
@@ -32,14 +33,32 @@ interface Props {
 	title: string;
 	/** Optional meta description for the page (defaults to a phase-appropriate placeholder). */
 	description?: string;
+	/**
+	 * Strip decorative chrome (SoundToggle, CustomCursor, visible h-card).
+	 *
+	 * Why: the masonry home is "name + media + footer" only. The h-card stays in
+	 * the DOM inside a `hidden` wrapper (IndieWeb parsers read the markup, not the
+	 * rendering) so the representative h-card on `/` is not lost.
+	 *
+	 * @see packages/specs/adrs/0040-light-only-masonry-home.md
+	 */
+	minimal?: boolean;
 }
 
-const { title, description = "utofme — personal site and portfolio." } = Astro.props;
+const {
+	title,
+	description = "utofme — personal site and portfolio.",
+	minimal = false,
+} = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme={LIGHT_ONLY ? "light" : undefined}>
 	<head>
+		<!-- Why: static data-theme="light" on <html> under LIGHT_ONLY so the no-JS /
+		     pre-script paint is already light and the dark selectors in tokens.css
+		     can never match.
+		     @see packages/specs/adrs/0040-light-only-masonry-home.md -->
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<MetaHead route={Astro.url.pathname} />
@@ -74,7 +93,7 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     @see packages/specs/plans/02-interactivity.md § Task 12 -->
 		<ClientRouter />
 	</head>
-	<body>
+	<body data-minimal={minimal ? "" : undefined}>
 		<slot />
 		<!-- Why: HCard placed before SlashFooter so the indieweb identity block
 		     appears above the navigation links — keeps microformat-scoped markup
@@ -82,9 +101,17 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     SoundToggle sits adjacent to HCard in the footer area — both are
 		     persistent UI controls that belong at page scope rather than per-route.
 		     @see packages/specs/specs/07-atmosphere.md § T2 -->
-		<HCard />
-		<SoundToggle />
-		<ThemeToggle />
+		{
+			minimal ? (
+				<div hidden>
+					<HCard />
+				</div>
+			) : (
+				<HCard />
+			)
+		}
+		{!minimal && <SoundToggle />}
+		{!LIGHT_ONLY && <ThemeToggle />}
 		<SlashFooter />
 		<!-- Why: CommandPalette mounted here (not per-page) so it is available on
 		     every route without re-mounting. transition:persist retains the Svelte
@@ -119,7 +146,7 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     component itself gates rAF on prefers-reduced-motion: reduce.
 		     @see packages/specs/specs/07-atmosphere.md § T1
 		     @see packages/specs/adrs/0036-custom-cursor-island.md -->
-		<CustomCursor client:media="(pointer: fine)" />
+		{!minimal && <CustomCursor client:media="(pointer: fine)" />}
 		<!-- Why: inline script registered at first paint — no hydration delay.
 		     Toggles [data-konami] on <html> for the rainbow accent easter egg.
 		     @see packages/specs/specs/07-atmosphere.md § T4
@@ -152,5 +179,11 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		margin: 0;
 		padding: 0;
 		min-height: 100vh;
+	}
+
+	/* Why: minimal pages (masonry home) align the footer with the page's side
+	 * margin; see SlashFooter.astro --footer-inset. */
+	body[data-minimal] {
+		--footer-inset: var(--page-margin);
 	}
 </style>

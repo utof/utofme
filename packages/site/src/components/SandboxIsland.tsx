@@ -42,7 +42,10 @@ export default function SandboxIsland({
 			{...(files !== undefined ? { files } : {})}
 			{...(dependencies !== undefined ? { customSetup: { dependencies } } : {})}
 			options={{ readOnly }}
-			theme="auto"
+			// Why: light-only MVP — "auto" would follow prefers-color-scheme. Flip back to
+			// "auto" together with LIGHT_ONLY in src/lib/theme.ts.
+			// @see packages/specs/adrs/0040-light-only-masonry-home.md
+			theme="light"
 		/>
 	);
 }
