@@ -43,12 +43,23 @@ interface Props {
 	 * @see packages/specs/adrs/0040-light-only-masonry-home.md
 	 */
 	minimal?: boolean;
+	/**
+	 * Emit `<meta name="robots" content="noindex" />`.
+	 *
+	 * Why: dev-only playgrounds (`/lab/datamosh/`) must stay out of search results;
+	 * the sitemap filter excludes `/lab/` as well. `| undefined` for
+	 * `exactOptionalPropertyTypes`.
+	 *
+	 * @see packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
+	 */
+	noindex?: boolean | undefined;
 }
 
 const {
 	title,
 	description = "utofme — personal site and portfolio.",
 	minimal = false,
+	noindex = false,
 } = Astro.props;
 ---
 
@@ -73,6 +84,7 @@ const {
 		<!-- Why: meta-description is a SEO + best-practices audit; an empty page
 		     fails the `meta-description` audit and is flagged in Lighthouse SEO. -->
 		<meta name="description" content={description} />
+		{noindex && <meta name="robots" content="noindex" />}
 		<title>{title}</title>
 		<!-- Astro Fonts API: emits @font-face CSS + optional preload <link> for each
 		     registered font family. We preload ONLY the mono face — both variable

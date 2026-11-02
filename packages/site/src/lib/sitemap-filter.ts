@@ -10,6 +10,7 @@
  *     against over-broad substring match that would hit /works/search-engine-design.
  *   - /garden/graph/ — canvas-only route, no crawlable content.
  *   - /stats/ — server-rendered data route, no static permalink.
+ *   - /lab/ — dev playgrounds (e.g. /lab/datamosh/), noindex'd and not content.
  *   - *.xml / *.txt — feed, sitemap, robots — not HTML.
  *
  * @see https://github.com/utof/utofme/issues/58
@@ -23,6 +24,7 @@ export function sitemapFilter(page: string): boolean {
 		!/\/search\/?$/.test(page) &&
 		!page.includes("/garden/graph/") &&
 		!page.includes("/stats/") &&
+		!page.includes("/lab/") &&
 		!page.endsWith(".xml") &&
 		!page.endsWith(".txt")
 	);

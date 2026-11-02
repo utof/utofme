@@ -134,27 +134,41 @@ const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 </script>
 
 <!--
-  Hover-dither loader (experimental, OFF by default).
+  Hover-effect loader (experimental, OFF by default): `dither` or `mosh`.
 
-  Why: the flag check is the only code shipped to everyone (a few hundred bytes);
-  the WebGL module is a dynamic import() that is only fetched when `?dither`
-  (or the persisted `utofme:dither` flag) is on. `/?dither=0` switches it off.
-  Re-runs on astro:page-load so ClientRouter navigations re-arm it; the module
-  disposes itself on astro:before-swap.
+  Why: the flag checks are the only code shipped to everyone (a few hundred bytes);
+  each effect module is a dynamic import() that is only fetched when its flag is on
+  (`?dither` / `?mosh`, or the persisted `utofme:dither` / `utofme:mosh` flag;
+  `=0` switches it off). The two are mutually exclusive: `mosh` wins when both
+  resolve on. `/?mosh&m-block=8&...` also carries datamosh tunables (see
+  `src/lib/datamosh/config.ts`; the `/lab/datamosh/` playground generates these URLs).
+  Re-runs on astro:page-load so ClientRouter navigations re-arm it; the modules
+  dispose themselves on astro:before-swap.
 
   @see packages/specs/adrs/0040-light-only-masonry-home.md
+  @see packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
 -->
 <script>
 	import { browserStorage, resolveFlag } from "../lib/flags";
 
-	async function armDither(): Promise<void> {
+	async function armHoverEffect(): Promise<void> {
 		const grid = document.querySelector<HTMLElement>('[data-test="works-grid"]');
-		if (!grid || !resolveFlag("dither", window.location.search, browserStorage())) return;
-		const { mountCardDither } = await import("../lib/dither/card-dither");
-		mountCardDither(grid);
+		if (!grid) return;
+		const search = window.location.search;
+		const storage = browserStorage();
+		// Resolve both so `?dither=0` / `?mosh=0` always update their persisted flags.
+		const mosh = resolveFlag("mosh", search, storage);
+		const dither = resolveFlag("dither", search, storage);
+		if (mosh) {
+			const { mountCardMosh } = await import("../lib/datamosh/card-mosh");
+			mountCardMosh(grid);
+		} else if (dither) {
+			const { mountCardDither } = await import("../lib/dither/card-dither");
+			mountCardDither(grid);
+		}
 	}
 
-	document.addEventListener("astro:page-load", () => void armDither());
+	document.addEventListener("astro:page-load", () => void armHoverEffect());
 </script>
 
 <style>

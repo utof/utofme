@@ -562,15 +562,23 @@ let mounted: Mounted | null = null;
  * is a no-op; mounting a new grid disposes the previous one. Also disposes itself on
  * Astro's `astro:before-swap` so view-transition navigations never leak GL resources.
  *
+ * `options.onFrame` receives the wall time of each `render()` in ms; the datamosh
+ * playground uses it to compare this effect's cost with the mosh kernel. Omitted,
+ * behaviour is unchanged.
+ *
  * Why: the effect is an opt-in experiment (flag `dither`); keeping it in one lazily
  * imported module makes "off" cost nothing.
  *
  * @see packages/specs/adrs/0040-light-only-masonry-home.md
+ * @see packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
  */
-export function mountCardDither(grid: HTMLElement): () => void {
+export function mountCardDither(
+	grid: HTMLElement,
+	options: { onFrame?: (ms: number) => void } = {},
+): () => void {
 	if (mounted?.grid === grid) return mounted.dispose;
 	mounted?.dispose();
-	const teardown = setup(grid);
+	const teardown = setup(grid, options.onFrame);
 	const dispose = (): void => {
 		teardown();
 		document.removeEventListener("astro:before-swap", dispose);
@@ -581,7 +589,7 @@ export function mountCardDither(grid: HTMLElement): () => void {
 	return dispose;
 }
 
-function setup(grid: HTMLElement): () => void {
+function setup(grid: HTMLElement, onFrame?: (ms: number) => void): () => void {
 	if (!window.matchMedia("(pointer: fine)").matches) return noop;
 
 	const backend = createBackend();
@@ -707,7 +715,13 @@ function setup(grid: HTMLElement): () => void {
 			}
 		}
 
-		render();
+		if (onFrame) {
+			const started = performance.now();
+			render();
+			onFrame(performance.now() - started);
+		} else {
+			render();
+		}
 
 		const fading = !reduceMotion && (presence > 0.01 || trail.some((p) => p.weight > 0.01));
 		const keepAnimating = target.animated && pointer.inside;

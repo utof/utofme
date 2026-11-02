@@ -89,12 +89,20 @@ module.exports = [
 		// Note: Vite appends `.{hash}.js` to manualChunks names, so the chunk
 		// lands as `graph-vendor.{hash}.js` (dot-separated), not `graph-vendor-*`.
 		//
-		// Why hover-fx negations (Phase 8): card-dither is a dynamic import that
-		// loads only when `?dither` is set. The default page view never fetches
-		// it, so it is budgeted in its own entry below, the same way graph-vendor is.
+		// Why hover-fx negations (Phase 8): card-dither and card-mosh are dynamic
+		// imports that load only when `?dither` / `?mosh` is set, and MoshLab loads
+		// only on /lab/datamosh/. The default page view never fetches them, so they
+		// are budgeted in their own entries below, the same way graph-vendor is.
 		// See: packages/specs/adrs/0040-light-only-masonry-home.md
+		// See: packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
 		name: "site js (all routes, ex graph-vendor + hover fx)",
-		path: ["dist/_astro/*.js", "!dist/_astro/graph-vendor.*.js", "!dist/_astro/card-dither.*.js"],
+		path: [
+			"dist/_astro/*.js",
+			"!dist/_astro/graph-vendor.*.js",
+			"!dist/_astro/card-dither.*.js",
+			"!dist/_astro/card-mosh.*.js",
+			"!dist/_astro/MoshLab.*.js",
+		],
 		gzip: true,
 		limit: "408.5 KB",
 		disablePlugins: ["@size-limit/time"],
@@ -214,13 +222,24 @@ module.exports = [
 	},
 	// Phase 8 flag-gated hover-effect budgets
 	{
-		// Why: the hover effect is a lazy chunk excluded from site js above.
-		// Measured 2026-11-02: card-dither 5.18 KB gzip.
+		// Why: the two hover effects are lazy chunks excluded from site js above.
+		// Measured 2026-11-02: card-dither 5.18 KB + card-mosh 8.56 KB gzip.
 		// See: packages/specs/adrs/0040-light-only-masonry-home.md
-		name: "hover fx js (?dither)",
-		path: ["dist/_astro/card-dither.*.js"],
+		// See: packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
+		name: "hover fx js (?dither / ?mosh)",
+		path: ["dist/_astro/card-dither.*.js", "dist/_astro/card-mosh.*.js"],
 		gzip: true,
-		limit: "7 KB",
+		limit: "16 KB",
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		// Why: the slider panel only ships on the noindex /lab/datamosh/ page.
+		// Measured 2026-11-02: 3.76 KB gzip (it reuses the hover-fx chunks above).
+		// See: packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
+		name: "/lab/datamosh/ js",
+		path: ["dist/_astro/MoshLab.*.js"],
+		gzip: true,
+		limit: "5 KB",
 		disablePlugins: ["@size-limit/time"],
 	},
 	// Phase 6 RSS firehose budget
