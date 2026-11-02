@@ -88,8 +88,13 @@ module.exports = [
 		// See: packages/specs/adrs/0026-force-graph-over-sigma.md
 		// Note: Vite appends `.{hash}.js` to manualChunks names, so the chunk
 		// lands as `graph-vendor.{hash}.js` (dot-separated), not `graph-vendor-*`.
-		name: "site js (all routes, ex graph-vendor)",
-		path: ["dist/_astro/*.js", "!dist/_astro/graph-vendor.*.js"],
+		//
+		// Why hover-fx negations (Phase 8): card-dither is a dynamic import that
+		// loads only when `?dither` is set. The default page view never fetches
+		// it, so it is budgeted in its own entry below, the same way graph-vendor is.
+		// See: packages/specs/adrs/0040-light-only-masonry-home.md
+		name: "site js (all routes, ex graph-vendor + hover fx)",
+		path: ["dist/_astro/*.js", "!dist/_astro/graph-vendor.*.js", "!dist/_astro/card-dither.*.js"],
 		gzip: true,
 		limit: "408.5 KB",
 		disablePlugins: ["@size-limit/time"],
@@ -207,6 +212,17 @@ module.exports = [
 		gzip: true,
 		disablePlugins: ["@size-limit/time"],
 	},
+	// Phase 8 flag-gated hover-effect budgets
+	{
+		// Why: the hover effect is a lazy chunk excluded from site js above.
+		// Measured 2026-11-02: card-dither 5.18 KB gzip.
+		// See: packages/specs/adrs/0040-light-only-masonry-home.md
+		name: "hover fx js (?dither)",
+		path: ["dist/_astro/card-dither.*.js"],
+		gzip: true,
+		limit: "7 KB",
+		disablePlugins: ["@size-limit/time"],
+	},
 	// Phase 6 RSS firehose budget
 	{
 		// Why: /feed.xml is the unified firehose RSS feed (works + garden + slashes).
@@ -241,18 +257,10 @@ module.exports = [
 		limit: "1.5 KB",
 		disablePlugins: ["@size-limit/time"],
 	},
-	{
-		// Why: ClickCounter (Konami easter egg) is a tiny localStorage-backed
-		// click counter loaded `client:idle` on the home page. 1 KB gzip
-		// ceiling reflects the minimal Svelte 5 island surface.
-		// See: packages/specs/specs/07-atmosphere.md § "Per-feature size budgets"
-		// See: packages/specs/adrs/0039-easter-eggs.md
-		name: "click-counter-island",
-		path: ["dist/_astro/ClickCounter*.js"],
-		gzip: true,
-		limit: "1 KB",
-		disablePlugins: ["@size-limit/time"],
-	},
+	// Why no click-counter-island entry: the light-only masonry home dropped the
+	// ClickCounter island, so no ClickCounter chunk is emitted and size-limit
+	// fails with "can't find files". Restore the 1 KB entry if it ships again.
+	// See: packages/specs/adrs/0040-light-only-masonry-home.md
 	{
 		// Why: cmd-k.{mp3,webm} + hover.{mp3,webm} ship as static binary
 		// audio assets. 40 KB raw is a generous ceiling — current total is
