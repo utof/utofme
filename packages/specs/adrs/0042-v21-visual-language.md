@@ -34,6 +34,7 @@ components keep working unchanged, and add the v21 tokens that have no counterpa
 
 Deviations from v21, with reasons:
 - **Link text uses `#0064C2`** (v21 "accent-press"), not `#0D99FF`. `#0D99FF` on white is about 2.9:1, which fails WCAG AA for text (4.5:1).
+- **Muted text is `#6F6F6F`**, not v21's `#757575`. Axe measured `#757575` at 4.41:1 on the panel grey `#FAFAFA` and 4.18:1 on the tag-chip grey `#F4F4F4`. `#6F6F6F` clears AA on all three light surfaces (4.57 / 4.81 / 5.03:1). For the same reason the footer h-card drops `opacity: 0.7` (it took the link blue down to 3.26:1) and uses the muted meta-row style instead.
 - **Focus ring = 2 px accent inside a 4 px tint halo.** v21's `--shadow-focus` lists the 2 px tint first, so the tint paints over the 1 px accent ring and the ring disappears on white.
 - **Body stays at 16 px.** v21's 14 px body is app density. v21 itself bumps "reading-heavy surfaces" to 16 px.
 - **The time-of-day accent shifts stay** (ADR 0038). They still drive `--color-accent`, which the cursor uses. v21's fixed blue lives in the new `--color-focus` / `--color-link` instead. Dropping time-of-day to honour v21's single-accent rule would be a separate decision.

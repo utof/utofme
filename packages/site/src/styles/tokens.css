@@ -101,7 +101,10 @@
 	 * decoration. --color-accent keeps its name (time-of-day shifts it, ADR 0038);
 	 * --color-focus / --color-link are the v21 blue and stay fixed.
 	 * Link text uses v21's "press" blue: #0d99ff on white is ~2.9:1 (fails WCAG AA
-	 * for text), #0064c2 is ~5.9:1. */
+	 * for text), #0064c2 is ~5.9:1.
+	 * Muted is #6f6f6f, not v21's #757575: #757575 is 4.41:1 on the panel grey and
+	 * 4.18:1 on the hover grey (tag chips), both below AA. #6f6f6f is 4.57:1 on
+	 * #f4f4f4, 4.81:1 on #fafafa and 5.03:1 on white. */
 	--color-bg: #ffffff;
 	--color-surface: #fafafa;
 	--color-surface-hover: #f4f4f4;
@@ -110,7 +113,7 @@
 	--color-border-strong: #d9d9d9;
 	--color-text: #1e1e1e;
 	--color-text-body: #444444;
-	--color-text-muted: #757575;
+	--color-text-muted: #6f6f6f;
 	--color-text-faint: #b3b3b3; /* placeholders only — below AA for text */
 	--color-accent: #0d99ff;
 	--color-accent-contrast: #ffffff;
