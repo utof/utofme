@@ -31,15 +31,15 @@ const notes = await getAllNotes();
 	<main>
 		<header>
 			<h1>Graph</h1>
-			<p><a href="/garden/">← back to index</a></p>
+			<p>
+				<a href="/garden/">← back to index</a>
+			</p>
 		</header>
-		{
-			/* Why escape `</script>` (gi flag): a node label like
+		{/* Why escape `</script>` (gi flag): a node label like
 			   "Foo</script>bar" or "Foo</SCRIPT>bar" would terminate the JSON
 			   block early and break parse. HTML's tokenizer matches end-tag
 			   names case-insensitively, so the `i` flag is required.
-			   See _BaseLayout.astro:92 (Phase 5 Task 10 fixup). */
-		}
+			   See _BaseLayout.astro:92 (Phase 5 Task 10 fixup). */}
 		<script
 			type="application/json"
 			id="garden-graph"
@@ -49,13 +49,11 @@ const notes = await getAllNotes();
 		<details class="list-fallback">
 			<summary>List view ({notes.length} notes)</summary>
 			<ul>
-				{
-					notes.map((n) => (
-						<li>
-							<a href={`/garden/${n.id}/`}>{n.data.title}</a>
-						</li>
-					))
-				}
+				{notes.map((n) => (
+					<li>
+						<a href={`/garden/${n.id}/`}>{n.data.title}</a>
+					</li>
+				))}
 			</ul>
 		</details>
 	</main>

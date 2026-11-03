@@ -38,24 +38,17 @@ const isGardenIndex = route === "/garden/" || route === "/garden/graph/";
 />
 <link rel="webmention" href="https://webmention.io/utof.me/webmention" />
 <link rel="alternate" type="application/rss+xml" title="utof.me — firehose" href="/feed.xml" />
-{
-	isWorksIndex && (
-		<link
-			rel="alternate"
-			type="application/rss+xml"
-			title="utof.me — works"
-			href="/feed/works.xml"
-		/>
-	)
-}
-{
-	isGardenIndex && (
-		<link
-			rel="alternate"
-			type="application/rss+xml"
-			title="utof.me — garden"
-			href="/feed/garden.xml"
-		/>
-	)
-}
-{profiles.map((p) => <link rel="me" href={p.url} />)}
+{isWorksIndex && (
+	<link rel="alternate" type="application/rss+xml" title="utof.me — works" href="/feed/works.xml" />
+)}
+{isGardenIndex && (
+	<link
+		rel="alternate"
+		type="application/rss+xml"
+		title="utof.me — garden"
+		href="/feed/garden.xml"
+	/>
+)}
+{profiles.map((p) => (
+	<link rel="me" href={p.url} />
+))}

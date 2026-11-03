@@ -29,40 +29,38 @@ const updated = entry.data.updated ?? entry.data.created;
 	<main>
 		<article class="note h-entry">
 			<header>
-				<h1 class="p-name" transition:name={`note-${entry.id}`}>{entry.data.title}</h1>
+				<h1 class="p-name" transition:name={`note-${entry.id}`}>
+					{entry.data.title}
+				</h1>
 				<p class="dates">
-					<time class="dt-published" datetime={entry.data.created.toISOString()}
-						>{entry.data.created.toISOString().slice(0, 10)}</time
-					>
-					{
-						entry.data.updated && (
-							<>
-								{" "}
-								· updated{" "}
-								<time datetime={updated.toISOString()}>{updated.toISOString().slice(0, 10)}</time>
-							</>
-						)
-					}
+					<time class="dt-published" datetime={entry.data.created.toISOString()}>
+						{entry.data.created.toISOString().slice(0, 10)}
+					</time>
+					{entry.data.updated && (
+						<>
+							{" "}
+							· updated{" "}
+							<time datetime={updated.toISOString()}>{updated.toISOString().slice(0, 10)}</time>
+						</>
+					)}
 				</p>
-				{
-					entry.data.tags.length > 0 && (
-						<ul class="tags" aria-label="Tags">
-							{entry.data.tags.map((t) => (
-								<li>{t}</li>
-							))}
-						</ul>
-					)
-				}
+				{entry.data.tags.length > 0 && (
+					<ul class="tags" aria-label="Tags">
+						{entry.data.tags.map((t) => (
+							<li>{t}</li>
+						))}
+					</ul>
+				)}
 			</header>
 			<a class="u-url" href={`/garden/${entry.id}/`} aria-hidden="true" hidden></a>
-			<div class="e-content"><slot /></div>
+			<div class="e-content">
+				<slot />
+			</div>
 			<Backlinks slug={entry.id} />
 		</article>
-		{
-			/* Why: webmentions are about the article, not part of it — kept outside <article>
+		{/* Why: webmentions are about the article, not part of it — kept outside <article>
 		    for parity with _WorkLayout and so mf2 parsers do not treat reply h-cites as
-		    nested cites of the note's h-entry. See https://github.com/utof/utofme/issues/73 */
-		}
+		    nested cites of the note's h-entry. See https://github.com/utof/utofme/issues/73 */}
 		<Webmentions slug={entry.id} />
 	</main>
 </BaseLayout>

@@ -113,15 +113,13 @@ const {
 		     SoundToggle sits adjacent to HCard in the footer area — both are
 		     persistent UI controls that belong at page scope rather than per-route.
 		     @see packages/specs/specs/07-atmosphere.md § T2 -->
-		{
-			minimal ? (
-				<div hidden>
-					<HCard />
-				</div>
-			) : (
+		{minimal ? (
+			<div hidden>
 				<HCard />
-			)
-		}
+			</div>
+		) : (
+			<HCard />
+		)}
 		{!minimal && <SoundToggle />}
 		{!LIGHT_ONLY && <ThemeToggle />}
 		<SlashFooter />

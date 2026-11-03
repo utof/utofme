@@ -12,17 +12,17 @@ const notes = await getAllNotes();
 	<main>
 		<header>
 			<h1>Garden</h1>
-			<p>{notes.length} notes. <a href="/garden/graph/">graph view →</a></p>
+			<p>
+				{notes.length} notes. <a href="/garden/graph/">graph view →</a>
+			</p>
 		</header>
 		<ul class="note-list">
-			{
-				notes.map((n) => (
-					<li>
-						<a href={`/garden/${n.id}/`}>{n.data.title}</a>
-						{n.data.summary && <p>{n.data.summary}</p>}
-					</li>
-				))
-			}
+			{notes.map((n) => (
+				<li>
+					<a href={`/garden/${n.id}/`}>{n.data.title}</a>
+					{n.data.summary && <p>{n.data.summary}</p>}
+				</li>
+			))}
 		</ul>
 	</main>
 </BaseLayout>

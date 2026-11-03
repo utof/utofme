@@ -14,22 +14,20 @@ const items = (backlinks as Record<string, Array<{ slug: string; title: string }
 ---
 
 <footer class="backlinks">
-	{
-		items.length === 0 ? (
-			<p class="empty">No backlinks yet.</p>
-		) : (
-			<section aria-label="Backlinks">
-				<h2>Linked from</h2>
-				<ul>
-					{items.map((b) => (
-						<li>
-							<a href={`/garden/${b.slug}/`}>{b.title}</a>
-						</li>
-					))}
-				</ul>
-			</section>
-		)
-	}
+	{items.length === 0 ? (
+		<p class="empty">No backlinks yet.</p>
+	) : (
+		<section aria-label="Backlinks">
+			<h2>Linked from</h2>
+			<ul>
+				{items.map((b) => (
+					<li>
+						<a href={`/garden/${b.slug}/`}>{b.title}</a>
+					</li>
+				))}
+			</ul>
+		</section>
+	)}
 </footer>
 
 <style>

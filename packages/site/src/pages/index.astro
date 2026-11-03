@@ -52,26 +52,24 @@ const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 		</header>
 
 		<ul class="masonry" data-test="works-grid">
-			{
-				works.map((entry) => {
-					const Thumb = ThumbFor[entry.data.type];
-					const cover = entry.data.cover;
-					return (
-						<li>
-							<Card variant="media" data={entry.data} id={entry.id} body={entry.body}>
-								{cover ? (
-									<CoverImage slot="thumb" src={cover.src} alt={cover.alt} sizes={COVER_SIZES} />
-								) : (
-									<Thumb slot="thumb" />
-								)}
-								<header slot="header">
-									<h2>{entry.data.title}</h2>
-								</header>
-							</Card>
-						</li>
-					);
-				})
-			}
+			{works.map((entry) => {
+				const Thumb = ThumbFor[entry.data.type];
+				const cover = entry.data.cover;
+				return (
+					<li>
+						<Card variant="media" data={entry.data} id={entry.id} body={entry.body}>
+							{cover ? (
+								<CoverImage slot="thumb" src={cover.src} alt={cover.alt} sizes={COVER_SIZES} />
+							) : (
+								<Thumb slot="thumb" />
+							)}
+							<header slot="header">
+								<h2>{entry.data.title}</h2>
+							</header>
+						</Card>
+					</li>
+				);
+			})}
 		</ul>
 	</main>
 </BaseLayout>

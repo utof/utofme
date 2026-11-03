@@ -51,23 +51,27 @@ const externalUrl =
 	<main>
 		<article class="h-entry">
 			<header>
-				<a href="/works/" data-test="breadcrumb">← All works</a>
-				<h1 class="p-name" transition:name={`card-${entry.id}`}>{data.title}</h1>
-				<time class="dt-published" datetime={data.date.toISOString()}
-					>{data.date.toISOString().slice(0, 10)}</time
-				>
+				<a href="/works/" data-test="breadcrumb">
+					← All works
+				</a>
+				<h1 class="p-name" transition:name={`card-${entry.id}`}>
+					{data.title}
+				</h1>
+				<time class="dt-published" datetime={data.date.toISOString()}>
+					{data.date.toISOString().slice(0, 10)}
+				</time>
 				<MetaPills date={data.date} tagCount={data.tags.length} />
-				{
-					externalUrl && (
-						<a href={externalUrl} data-test="detail-external" rel="external noopener">
-							Open external →
-						</a>
-					)
-				}
+				{externalUrl && (
+					<a href={externalUrl} data-test="detail-external" rel="external noopener">
+						Open external →
+					</a>
+				)}
 			</header>
 			{data.cover && <CoverImage src={data.cover.src} alt={data.cover.alt} />}
 			<a class="u-url" href={`/works/${entry.id}/`} aria-hidden="true" hidden></a>
-			<div class="e-content"><slot /></div>
+			<div class="e-content">
+				<slot />
+			</div>
 		</article>
 		{/* Why: webmentions are about the article, not part of it — kept outside <article>. */}
 		<Webmentions slug={entry.id} />

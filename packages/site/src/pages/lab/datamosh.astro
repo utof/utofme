@@ -52,23 +52,21 @@ const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 			<MoshLab client:only="svelte" />
 
 			<ul class="masonry" data-test="mosh-lab-grid">
-				{
-					picks.map((entry) => {
-						const cover = entry.data.cover;
-						return (
-							<li>
-								<Card variant="media" data={entry.data} id={entry.id} body={entry.body}>
-									{cover && (
-										<CoverImage slot="thumb" src={cover.src} alt={cover.alt} sizes={COVER_SIZES} />
-									)}
-									<header slot="header">
-										<h2>{entry.data.title}</h2>
-									</header>
-								</Card>
-							</li>
-						);
-					})
-				}
+				{picks.map((entry) => {
+					const cover = entry.data.cover;
+					return (
+						<li>
+							<Card variant="media" data={entry.data} id={entry.id} body={entry.body}>
+								{cover && (
+									<CoverImage slot="thumb" src={cover.src} alt={cover.alt} sizes={COVER_SIZES} />
+								)}
+								<header slot="header">
+									<h2>{entry.data.title}</h2>
+								</header>
+							</Card>
+						</li>
+					);
+				})}
 			</ul>
 		</div>
 	</main>
