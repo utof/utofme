@@ -8,14 +8,14 @@
 		{
 			"src": "modified-maxwell-taichi/fdtd_2d.gif",
 			"start": 1.6,
-			"duration": 1.45,
+			"duration": 1.5,
 			"fit": "cover",
 			"crop": { "x": 0, "y": 190, "w": 800, "h": 450 }
 		},
 		{
 			"src": "modified-maxwell-taichi/fdtd_2d.gif",
-			"start": 3.05,
-			"duration": 1.45,
+			"start": 3.1,
+			"duration": 1.4,
 			"fit": "cover",
 			"crop": { "x": 0, "y": 190, "w": 800, "h": 450 }
 		}
