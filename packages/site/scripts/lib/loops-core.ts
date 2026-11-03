@@ -290,6 +290,9 @@ export interface MasterGraph {
  * Why: golden-tested so filtergraph changes are deliberate.
  * @see https://ffmpeg.org/ffmpeg-filters.html#concat
  */
+/** Still-image sources: looped for the shot's duration instead of trimmed. */
+const STILL_EXT = /\.(png|jpe?g|webp)$/i;
+
 export function buildMasterGraph(
 	r: Recipe,
 	size: SizeName,
@@ -327,8 +330,23 @@ export function buildMasterGraph(
 				"-i",
 				resolve(it.src),
 			);
-		else inputArgs.push("-ss", String(it.start), "-t", String(it.len), "-i", resolve(it.src));
+		else if (STILL_EXT.test(it.src))
+			inputArgs.push(
+				"-loop",
+				"1",
+				"-framerate",
+				String(fps),
+				"-t",
+				String(it.len),
+				"-i",
+				resolve(it.src),
+			);
+		// Why: input seeking (`-ss/-t` before `-i`) drops frames on GIFs; normalise the rate
+		// first, then cut with `trim`, so every shot yields exactly len × fps frames.
+		else inputArgs.push("-i", resolve(it.src));
 		const parts = [`fps=${fps}`];
+		if (r.kind !== "slideshow" && !STILL_EXT.test(it.src))
+			parts.push(`trim=start=${it.start}:duration=${it.len}`, "setpts=PTS-STARTPTS");
 		if (it.crop) parts.push(`crop=${it.crop.w}:${it.crop.h}:${it.crop.x}:${it.crop.y}`);
 		if (it.fit === "cover")
 			parts.push(`scale=${w}:${h}:force_original_aspect_ratio=increase`, `crop=${w}:${h}`);

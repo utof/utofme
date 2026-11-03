@@ -1,26 +1,41 @@
 {
 	"slug": "modified-maxwell-taichi",
-	"kind": "transcode",
+	"kind": "montage",
 	"aspect": "16:9",
 	"fps": 30,
-	"sizes": ["card", "banner"],
+	"sizes": [
+		"card",
+		"banner"
+	],
 	"shots": [
 		{
 			"src": "modified-maxwell-taichi/fdtd_2d.gif",
 			"start": 1.6,
 			"duration": 1.5,
 			"fit": "cover",
-			"crop": { "x": 0, "y": 190, "w": 800, "h": 450 }
+			"crop": {
+				"x": 0,
+				"y": 190,
+				"w": 800,
+				"h": 450
+			}
 		},
 		{
 			"src": "modified-maxwell-taichi/fdtd_2d.gif",
 			"start": 3.1,
 			"duration": 1.4,
 			"fit": "cover",
-			"crop": { "x": 0, "y": 190, "w": 800, "h": 450 }
+			"crop": {
+				"x": 0,
+				"y": 190,
+				"w": 800,
+				"h": 450
+			}
 		}
 	],
-	"poster": { "at": 1.3 },
+	"poster": {
+		"at": 1.3
+	},
 	"stills": [
 		{
 			"src": "modified-maxwell-taichi/fdtd_2d_snapshot.png",

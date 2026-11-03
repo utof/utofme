@@ -30,7 +30,7 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 // Why: neighbours among non-fixture, non-draft works, newest first (P9-8 item 7).
-const siblings = (await getCollection("works", (e) => !e.data.draft)).filter(
+const siblings = (await getWorksCollection((e) => !e.data.draft)).filter(
 	(e) => projectFields(e.data).fixture !== true,
 );
 const neighbours = prevNext(

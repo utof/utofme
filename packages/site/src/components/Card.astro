@@ -234,8 +234,9 @@ const caption = captionParts(data);
 		color: var(--caption-fg);
 		text-align: start;
 	}
+	/* Why no `margin: 0` here: scoped `.cap > *` outranks `.cap__d`, which dropped the bottom
+	 * pads and let the rest-state translate clip the description. Margins are set per line. */
 	.cap > * {
-		margin: 0;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
@@ -247,13 +248,14 @@ const caption = captionParts(data);
 		font-weight: 600;
 		letter-spacing: 0;
 		line-height: var(--leading-snug);
+		margin: 0;
 	}
 	.cap__d {
 		font-family: var(--font-sans);
 		font-size: var(--font-size-ui); /* 13 px */
 		font-weight: 400;
 		line-height: var(--leading-snug);
-		margin-bottom: var(--cap-pad);
+		margin: 0 0 var(--cap-pad);
 	}
 	/* Description is optional: keep the pad under the title when it is absent. */
 	.cap__t:has(+ .cap__m) {
@@ -266,7 +268,7 @@ const caption = captionParts(data);
 		font-variant-numeric: tabular-nums;
 		line-height: var(--cap-meta-h);
 		height: var(--cap-meta-h);
-		margin-bottom: var(--cap-pad);
+		margin: 0 0 var(--cap-pad);
 	}
 
 	/* Opt-in blur (perf-gated, see tokens.css): only the hovered/focused bar. */

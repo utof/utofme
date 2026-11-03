@@ -88,36 +88,29 @@ describe("recipeSchema", () => {
 describe("buildMasterGraph", () => {
 	it("matches the golden filtergraph for a 3-shot montage (card)", () => {
 		const g = buildMasterGraph(recipeSchema.parse(montage), "card");
-		expect(g.inputArgs).toEqual([
-			"-ss",
-			"0",
-			"-t",
-			"1.5",
-			"-i",
-			"a/one.mp4",
-			"-ss",
-			"2",
-			"-t",
-			"1",
-			"-i",
-			"a/two.mp4",
-			"-ss",
-			"0",
-			"-t",
-			"2",
-			"-i",
-			"a/three.mp4",
-		]);
+		expect(g.inputArgs).toEqual(["-i", "a/one.mp4", "-i", "a/two.mp4", "-i", "a/three.mp4"]);
 		const tail = "setsar=1,scale=out_color_matrix=bt709:out_range=tv,format=yuv420p";
 		expect(g.filterComplex).toBe(
 			[
-				`[0:v]fps=30,scale=768:432:force_original_aspect_ratio=increase,crop=768:432,${tail}[v0]`,
-				`[1:v]fps=30,scale=768:432:force_original_aspect_ratio=decrease,pad=768:432:(ow-iw)/2:(oh-ih)/2:color=black,${tail}[v1]`,
-				`[2:v]fps=30,crop=640:360:10:20,scale=768:432:force_original_aspect_ratio=increase,crop=768:432,${tail}[v2]`,
+				`[0:v]fps=30,trim=start=0:duration=1.5,setpts=PTS-STARTPTS,scale=768:432:force_original_aspect_ratio=increase,crop=768:432,${tail}[v0]`,
+				`[1:v]fps=30,trim=start=2:duration=1,setpts=PTS-STARTPTS,scale=768:432:force_original_aspect_ratio=decrease,pad=768:432:(ow-iw)/2:(oh-ih)/2:color=black,${tail}[v1]`,
+				`[2:v]fps=30,trim=start=0:duration=2,setpts=PTS-STARTPTS,crop=640:360:10:20,scale=768:432:force_original_aspect_ratio=increase,crop=768:432,${tail}[v2]`,
 				"[v0][v1][v2]concat=n=3:v=1:a=0[v]",
 			].join(";"),
 		);
 		expect(g.filterComplex).not.toContain("xfade");
+	});
+	it("loops still-image shots for their duration instead of trimming them", () => {
+		const g = buildMasterGraph(
+			recipeSchema.parse({
+				...montage,
+				shots: [{ src: "s/still.png", duration: 1.2, fit: "cover" }],
+				poster: { at: 0.5 },
+			}),
+			"card",
+		);
+		expect(g.inputArgs).toEqual(["-loop", "1", "-framerate", "30", "-t", "1.2", "-i", "s/still.png"]);
+		expect(g.filterComplex).not.toContain("trim=");
 	});
 	it("uses the banner frame for banner and looped stills for slideshows", () => {
 		const r = recipeSchema.parse({

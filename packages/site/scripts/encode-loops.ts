@@ -484,15 +484,14 @@ function main(argv: readonly string[], env: NodeJS.ProcessEnv): number {
 	if (!o.dryRun) assertTools();
 	const manifestPath = join(o.siteRoot, "src/data/loops.json");
 	const manifest = loadManifest(manifestPath);
-	let wrote = false;
+	// Why: save after every finished slug, so a later slug failing (e.g. flash lint) doesn't
+	// leave earlier slugs' files on disk without manifest entries (they'd read as orphans).
 	for (const s of slugs)
-		if (encodeSlug(must(recipes.get(s), `recipe ${s}`), o, mediaRoot, manifest) === "done")
-			wrote = true;
-	if (wrote) {
-		loopsManifestSchema.parse(manifest);
-		mkdirSync(dirname(manifestPath), { recursive: true });
-		writeFileSync(manifestPath, serializeManifest(manifest));
-	}
+		if (encodeSlug(must(recipes.get(s), `recipe ${s}`), o, mediaRoot, manifest) === "done") {
+			loopsManifestSchema.parse(manifest);
+			mkdirSync(dirname(manifestPath), { recursive: true });
+			writeFileSync(manifestPath, serializeManifest(manifest));
+		}
 	// Pruning only removes names matching the strict output pattern inside re-encoded slug dirs;
 	// orphan directories of removed slugs are reported by --check and removed by hand.
 	return 0;

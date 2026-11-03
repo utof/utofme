@@ -15,10 +15,6 @@ cover:
   loop: "modified-maxwell-taichi"
   focus: 50
 gallery:
-  - src: "../../assets/loops/modified-maxwell-taichi-pulse/poster.png"
-    alt: "Close-up of the Ez field: a point source emits a pulse that grows into red and blue rings"
-    loop: "modified-maxwell-taichi-pulse"
-    caption: "One pulse spreads as a ring; the time step is 0.99 of the Courant stability limit" # src: fdtd_2d_2.py:122
   - src: "../../assets/loops/modified-maxwell-taichi-pml/poster.png"
     alt: "The outgoing ring reaches the dashed PML boundary and fades out toward the plot edges"
     loop: "modified-maxwell-taichi-pml"
@@ -30,6 +26,6 @@ gallery:
 
 {/* src paths are relative to modified-maxwell-taichi/ under UTOFME_MEDIA_ROOT (local repo, no remote). README.md is empty, so every claim comes from code. */}
 
-Electromagnetic waves, simulated live. The main app runs a 2D finite-difference time-domain (FDTD) solver on a 400×400 Yee grid with absorbing PML edges {/* src: fdtd_2d_2.py:5; fdtd_2d_2.py:59-60 */}. Drag the source, right-click to drop dielectric blocks, or press Tab for a 64³ 3D scene with a slotted metal slab and a dielectric sphere {/* src: fdtd_2d_2.py:6-19; fdtd_2d_2.py:61 */}. JAX runs the physics and pygfx draws it {/* src: fdtd_2d_2.py:33-35 */}.
+Electromagnetic waves, simulated live. The main app runs a 2D finite-difference time-domain (FDTD) solver on a 400×400 Yee grid with absorbing PML edges. {/* src: fdtd_2d_2.py:5; fdtd_2d_2.py:59-60 */} Drag the source, right-click to drop dielectric blocks, or press Tab for a 64³ 3D scene with a slotted metal slab and a dielectric sphere. {/* src: fdtd_2d_2.py:6-19; fdtd_2d_2.py:61 */} JAX runs the physics and pygfx draws it. {/* src: fdtd_2d_2.py:33-35 */}
 
-A separate Taichi version on a 96³ grid cycles the update equations from normal to anisotropic to a flipped curl, which the code itself labels unstable {/* src: test.py:12; test.py:39; test.py:57 */}.
+A separate Taichi version on a 96³ grid cycles the update equations from normal to anisotropic to a flipped curl, which the code itself labels unstable. {/* src: test.py:12; test.py:39; test.py:57 */}

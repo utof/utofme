@@ -36,7 +36,7 @@ jobs:
       # Source: packages/specs/specs/00-foundations.md § "Success criteria" LHCI note.
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.12"
+          node-version: "22.23"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
