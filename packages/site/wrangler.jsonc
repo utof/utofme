@@ -5,8 +5,11 @@
 // path when SSR /stats will call env.ASSETS.fetch(request).
 // not_found_handling: "404-page" serves dist/404.html on unmatched routes (Astro generates
 // it for output: 'static'). html_handling defaults to "auto-trailing-slash" (omitted).
-// No `main` key: omitting (not setting null) is required — presence of `main` with a missing
-// file fails wrangler schema validation; Phase 0 is assets-only.
+// `main` (Phase 9, P9-5/D15): a tiny Worker that runs FIRST only for `/loops/*`
+// (`assets.run_worker_first` array form, `!` negation allowed) and answers `Range` with 206/416,
+// because Workers Static Assets reply 200 + full body, which Safari/iOS cannot play. All other
+// paths are served by assets without invoking the Worker. Paths resolve relative to this file.
+// See packages/specs/adrs/0045-loops-range-worker.md
 // Sources:
 //   developers.cloudflare.com/workers/wrangler/configuration (Static Assets Configuration)
 //   docs.astro.build/en/guides/integrations-guide/cloudflare/ (adapter not needed for static)
@@ -16,10 +19,12 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "utofme",
+	"main": "./worker/index.ts",
 	"compatibility_date": "2026-04-01",
 	"assets": {
 		"directory": "./dist",
 		"binding": "ASSETS",
-		"not_found_handling": "404-page"
+		"not_found_handling": "404-page",
+		"run_worker_first": ["/loops/*"]
 	}
 }

@@ -72,3 +72,22 @@ jobs:
           done
           echo "ERROR: /feed.xml did not return 200 after 3 attempts" >&2
           exit 1
+
+      # Range probe — a Range request on a /loops/ file must return 206 (P9-5, D15).
+      # WARN-ONLY: never fails the deploy (the domain may not be live yet, and no loop
+      # may be published yet). Emits a GitHub ::warning:: annotation instead.
+      - name: Probe — /loops Range 206 (warn-only)
+        continue-on-error: true
+        run: |
+          manifest=packages/site/src/data/loops.json
+          if [ ! -f "$manifest" ]; then echo "::warning::no loops manifest yet; skipping Range probe"; exit 0; fi
+          path=$(grep -o '/loops/[^"]*\.mp4' "$manifest" | head -n 1 || true)
+          if [ -z "$path" ]; then echo "::warning::no /loops/ URL in manifest; skipping Range probe"; exit 0; fi
+          sleep 5
+          out=$(curl --silent --show-error -o /dev/null -D - -H 'Range: bytes=0-1' "https://utof.me$path" || true)
+          if echo "$out" | head -n 1 | grep -q ' 206' && echo "$out" | grep -qi '^content-range: bytes 0-1/'; then
+            echo "✓ $path returned 206 with Content-Range"
+          else
+            echo "::warning::Range probe on $path did not return 206 (warn-only; domain may not be live)"
+            echo "$out"
+          fi

@@ -19,6 +19,6 @@
 		// @types/bun is declared as a devDependency per packages/specs/specs/00-foundations.md § "Pinned dev deps".
 		"types": ["node", "bun"]
 	},
-	"include": [".astro/types.d.ts", "src/**/*", "tests/**/*", "scripts/**/*"],
+	"include": [".astro/types.d.ts", "src/**/*", "tests/**/*", "scripts/**/*", "worker/**/*"],
 	"exclude": ["dist"]
 }
