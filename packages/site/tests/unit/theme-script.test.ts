@@ -179,7 +179,10 @@ describe("head ordering (built artefact)", () => {
 		const html = readFileSync(distPath, "utf8");
 		const iCharset = html.indexOf("<meta charset");
 		const iViewport = html.indexOf('name="viewport"');
-		const themeScriptIdx = html.search(/<script[^>]*>[\s\S]{0,1200}utofme:theme/);
+		// Why: match on `dataset.theme=` (both inlineThemeScript and the light-only
+		// forcedLightThemeScript assign it) rather than on the `utofme:theme` storage
+		// key, which the light-only script deliberately never touches (ADR 0040).
+		const themeScriptIdx = html.search(/<script[^>]*>[\s\S]{0,1200}dataset\.theme=/);
 		const iTitle = html.indexOf("<title");
 		expect(iCharset).toBeGreaterThan(-1);
 		expect(iViewport).toBeGreaterThan(iCharset);
