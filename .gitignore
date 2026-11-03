@@ -46,3 +46,6 @@ Thumbs.db
 !/packages/specs/**/*.md
 !/packages/site/src/content/works/**/*.md
 !/packages/site/tests/fixtures/**/*.md
+
+# Local-only scratch (research, proposals, cloud briefs/logs)
+/_local/
