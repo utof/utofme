@@ -18,6 +18,7 @@
 import type { CollectionEntry } from "astro:content";
 import Gallery from "../components/Gallery.astro";
 import LoopMedia from "../components/LoopMedia.astro";
+import MotionToggle from "../components/MotionToggle.astro";
 import PrevNext from "../components/PrevNext.astro";
 import ProjectMeta from "../components/ProjectMeta.astro";
 import ProjectStill from "../components/ProjectStill.astro";
@@ -95,6 +96,8 @@ const cover = data.cover;
 					<a href="/works/" data-test="breadcrumb">
 						← All works
 					</a>
+					{/* Why: project pages play a banner loop, so they get the same Pause-motion toggle as `/` (D16). */}
+					<MotionToggle />
 					<h1 class="p-name" tabindex="-1">
 						{data.title}
 					</h1>
