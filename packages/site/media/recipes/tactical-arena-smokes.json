@@ -1,0 +1,18 @@
+{
+	"slug": "tactical-arena-smokes",
+	"kind": "transcode",
+	"aspect": "16:9",
+	"fps": 30,
+	"sizes": ["card"],
+	"shots": [
+		{
+			"src": "RL_playground/tactical-arena/runs/m27/round_gifs_best_v2/wide_s2_util_best_att.gif",
+			"start": 2.0,
+			"duration": 2.0,
+			"fit": "cover",
+			"crop": { "x": 0, "y": 60, "w": 560, "h": 315 }
+		}
+	],
+	"poster": { "at": 1.4 },
+	"stills": []
+}
