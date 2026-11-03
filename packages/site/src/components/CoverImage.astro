@@ -5,8 +5,18 @@
  *      <Image> with formats emits only ONE format; <Picture> emits a <picture>
  *      with one <source> per format plus an <img> fallback.
  *      sizes prop drives srcset width selection per Astro docs.
+ *
+ * Why (GIF branch): animated GIFs bypass <Picture>. Astro's sharp service runs
+ *      with `pages: -1`, and its AVIF / PNG outputs of an animated GIF collapse
+ *      to ONE tall still with every frame stacked (measured: 28 frames of a
+ *      600x327 GIF -> a single 600x9156 AVIF), and the browser would pick that
+ *      AVIF <source> first. A plain <img> of the imported asset keeps the
+ *      animation byte-for-byte; intrinsic width/height are kept so the layout
+ *      does not shift. This is the fallback Astro's own docs recommend for GIFs.
  * @see packages/specs/plans/03-content-pipeline.md § Task 5
+ * @see packages/specs/adrs/0040-light-only-masonry-home.md
  * @see https://docs.astro.build/en/reference/modules/astro-assets/#picture- (verified 2026-04-26 via context7)
+ * @see https://docs.astro.build/en/reference/errors/unsupported-image-format/ (GIF -> plain <img>, verified 2026-10-27 via context7)
  */
 import { Picture } from "astro:assets";
 import type { ImageMetadata } from "astro";
@@ -23,17 +33,41 @@ import type { ImageMetadata } from "astro";
 export interface Props {
 	src: ImageMetadata;
 	alt: string;
+	/**
+	 * `sizes` hint for the responsive srcset (stills only).
+	 *
+	 * Why: the detail page renders ~800 px wide; the masonry card is a column
+	 * (~1/3 of the viewport), so callers can ask for smaller variants.
+	 * `string | undefined` (not `string?`) for `exactOptionalPropertyTypes`.
+	 */
+	sizes?: string | undefined;
 }
 
-const { src, alt } = Astro.props;
+const { src, alt, sizes = "(min-width: 800px) 800px, 100vw" } = Astro.props;
+const isAnimatedFormat = src.format === "gif";
 ---
 
-<Picture
-	src={src}
-	formats={["avif", "webp"]}
-	widths={[320, 640, 960, 1280]}
-	sizes="(min-width: 800px) 800px, 100vw"
-	alt={alt}
-	loading="lazy"
-	decoding="async"
-/>
+{
+	isAnimatedFormat ? (
+		<img
+			src={src.src}
+			width={src.width}
+			height={src.height}
+			alt={alt}
+			loading="lazy"
+			decoding="async"
+			style="max-width:100%;max-height:80vh;width:auto;height:auto"
+		/>
+	) : (
+		<Picture
+			src={src}
+			formats={["avif", "webp"]}
+			widths={[320, 640, 960, 1280]}
+			sizes={sizes}
+			alt={alt}
+			loading="lazy"
+			decoding="async"
+			style="max-width:100%;max-height:80vh;width:auto;height:auto"
+		/>
+	)
+}

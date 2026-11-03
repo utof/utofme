@@ -184,16 +184,28 @@
 		gap: var(--space-1);
 	}
 
+	/* v21 outline button (sm): 24 px, 4 px radius, hairline border; pressed =
+	 * accent tint + accent text (ADR 0042). */
 	button {
-		padding: var(--space-1) var(--space-2);
-		border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
-		border-radius: var(--radius-md, 4px);
+		height: 24px;
+		padding: 0 var(--space-2);
+		border: 1px solid var(--color-border-strong);
+		border-radius: var(--radius-sm);
 		background: transparent;
+		color: var(--color-text);
 		cursor: pointer;
 		font: inherit;
+		font-size: var(--font-size-1);
+		font-weight: 500;
+	}
+
+	button:hover {
+		background: var(--color-surface-hover);
 	}
 
 	button[aria-pressed="true"] {
-		background: color-mix(in srgb, currentColor 15%, transparent);
+		background: var(--color-focus-tint);
+		border-color: var(--color-focus);
+		color: var(--color-link);
 	}
 </style>

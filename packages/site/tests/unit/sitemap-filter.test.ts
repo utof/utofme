@@ -30,6 +30,11 @@ describe("sitemapFilter — excluded routes", () => {
 		expect(sitemapFilter(`${BASE}/stats/`)).toBe(false);
 	});
 
+	it("excludes /lab/ playgrounds", () => {
+		expect(sitemapFilter(`${BASE}/lab/datamosh/`)).toBe(false);
+		expect(sitemapFilter(`${BASE}/lab/`)).toBe(false);
+	});
+
 	it("excludes .xml endpoints (sitemap, feed)", () => {
 		expect(sitemapFilter(`${BASE}/sitemap-index.xml`)).toBe(false);
 		expect(sitemapFilter(`${BASE}/feed.xml`)).toBe(false);
@@ -47,6 +52,11 @@ describe("sitemapFilter — allowed routes", () => {
 
 	it("does not exclude / (home)", () => {
 		expect(sitemapFilter(`${BASE}/`)).toBe(true);
+	});
+
+	it("does not exclude a route that merely contains 'lab' (e.g. /works/lab-notes/)", () => {
+		expect(sitemapFilter(`${BASE}/works/lab-notes/`)).toBe(true);
+		expect(sitemapFilter(`${BASE}/works/collab/`)).toBe(true);
 	});
 
 	it("does not exclude /works/", () => {

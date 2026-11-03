@@ -2,7 +2,7 @@
  * Why: Phase 3 Task 4 — e2e tests for per-work detail pages at /works/<id>/.
  *      Nine cases covering route generation, draft exclusion, content, external
  *      links, accessibility, view-transition anchor, and body visibility.
- *      Task 8 adds cases 10–12: Expressive Code rendering, copy button, dual-theme.
+ *      Task 8 adds cases 10–12: Expressive Code rendering, copy button, light-only theme.
  *      Task 9 adds cases 13–15: Svelte 5 Counter island embedded in MDX, state isolation.
  *      Task 10 adds code-sandbox to PROD_IDS (Sandpack fixture).
  * @see packages/specs/plans/03-content-pipeline.md § Task 4
@@ -171,16 +171,19 @@ test("11. /works/code-1/ EC frame has a copy-to-clipboard button", async ({ page
 	await expect(copyBtn).toBeVisible();
 });
 
-// Case 12 — background colour differs between light and dark media preference
-test("12. /works/code-1/ EC code-block background changes between light and dark", async ({
+// Case 12 — light-only: the code-block background is the same under light and dark media preference
+test("12. /works/code-1/ EC code-block stays light under a dark colour-scheme preference", async ({
 	page,
 }) => {
-	// Why: ec.config.mjs uses themes ["github-light","github-dark"] with
-	// useDarkModeMediaQuery: true — EC emits separate CSS for each colour scheme
-	// keyed on prefers-color-scheme. Emulating the media feature forces the
-	// browser to load the correct theme stylesheet, so the computed background
-	// of the <pre> element changes between emulations.
+	// Why: the site is light-only (ADR 0040). ec.config.mjs still lists
+	// ["github-light","github-dark"] but sets `useDarkModeMediaQuery: false`, so EC
+	// no longer emits the `@media (prefers-color-scheme: dark)` block and the dark
+	// theme only applies under `[data-theme='github-dark']`, which nothing sets.
+	// Emulating each colour scheme must therefore leave the computed background of
+	// the <pre> unchanged, and it must be a light colour. (Previously this case
+	// asserted the two backgrounds DIFFER — the dual-theme swap.)
 	// @see https://expressive-code.com/reference/configuration/ (fetched 2026-04-26)
+	// @see packages/specs/adrs/0040-light-only-masonry-home.md
 	await page.goto("/works/code-1/");
 	const preLocator = page.locator(".expressive-code pre");
 
@@ -190,8 +193,15 @@ test("12. /works/code-1/ EC code-block background changes between light and dark
 	await page.emulateMedia({ colorScheme: "dark" });
 	const darkBg = await preLocator.evaluate((el) => getComputedStyle(el).backgroundColor);
 
-	// The two backgrounds must not be identical — the dual-theme swap is working.
-	expect(lightBg).not.toBe(darkBg);
+	expect(darkBg).toBe(lightBg);
+
+	// And the shared background really is the light theme's, not a dark one that merely
+	// stopped changing: every RGB channel is bright.
+	const channels = (lightBg.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
+	expect(channels).toHaveLength(3);
+	for (const channel of channels) {
+		expect(channel).toBeGreaterThan(200);
+	}
 });
 
 // ---------------------------------------------------------------------------
@@ -216,11 +226,32 @@ test("13. /works/writing-mdx-island/ has two counter instances with distinct ids
 	expect(id0).not.toBe(id1);
 });
 
-// Case 14 — click counter A 3× → A shows 3, B shows 0 (no state sharing)
-test("14. clicking counter A 3× shows A=3, B=0", async ({ page }) => {
+/**
+ * Navigate to the MDX island page and return the two Counter buttons once BOTH
+ * islands have hydrated.
+ *
+ * Why: the SSR markup already contains the buttons, so `toHaveCount(2)` passes
+ * before `client:visible` hydration; a click in that window is silently lost
+ * ("count: 2" after three clicks) whenever the machine is slow. Astro removes the
+ * `ssr` attribute from `<astro-island>` when it hydrates (runtime/server/astro-island.js),
+ * and `client:visible` only hydrates once the island is scrolled into view, so each
+ * button is scrolled into view first.
+ *
+ * @see https://docs.astro.build/en/reference/directives-reference/#clientvisible
+ */
+async function hydratedCounters(page: import("@playwright/test").Page) {
 	await page.goto("/works/writing-mdx-island/");
 	const counters = page.locator("button[data-counter-id]");
 	await expect(counters).toHaveCount(2);
+	await counters.nth(0).scrollIntoViewIfNeeded();
+	await counters.nth(1).scrollIntoViewIfNeeded();
+	await expect(page.locator("astro-island:not([ssr]):has(button[data-counter-id])")).toHaveCount(2);
+	return counters;
+}
+
+// Case 14 — click counter A 3× → A shows 3, B shows 0 (no state sharing)
+test("14. clicking counter A 3× shows A=3, B=0", async ({ page }) => {
+	const counters = await hydratedCounters(page);
 
 	const counterA = counters.nth(0);
 	// Click counter A three times.
@@ -239,9 +270,7 @@ test("14. clicking counter A 3× shows A=3, B=0", async ({ page }) => {
 test("15. clicking counter B 2× shows B=2, A still 3 (no state leak)", async ({ page }) => {
 	// Why: state test must start from a fresh navigation so A is back at 0,
 	// then we replicate the A=3 state before asserting B isolation.
-	await page.goto("/works/writing-mdx-island/");
-	const counters = page.locator("button[data-counter-id]");
-	await expect(counters).toHaveCount(2);
+	const counters = await hydratedCounters(page);
 
 	const counterA = counters.nth(0);
 	const counterB = counters.nth(1);

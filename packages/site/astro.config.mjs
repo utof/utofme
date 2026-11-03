@@ -23,7 +23,8 @@
 //   - local provider: options.variants[].weight is numeric (400) for static, string "100 900" for variable
 //   - local provider: src paths in src/ dir per Astro recommendation (avoids public/ duplication)
 //
-// Why: fontProviders.google() used instead of fontProviders.fontsource() for Fraunces and Geist:
+// Why: fontProviders.google() used instead of fontProviders.fontsource() (originally for Fraunces
+//   and Geist; Newsreader + Geist Mono since ADR 0042):
 //   Both fonts are on Google Fonts (confirmed: api.fontsource.org/v1/fonts/fraunces → "type":"google";
 //   api.fontsource.org/v1/fonts/geist → "type":"google"). The fontsource provider calls
 //   https://api.fontsource.org/v1/fonts (the full font listing, ~several MB) which proved unreliable
@@ -142,17 +143,19 @@ export default defineConfig({
 		},
 	},
 	fonts: [
-		// Fraunces — variable serif (wght 100–900 + opsz + SOFT + WONK axes).
-		// Why: `weights: ["100 900"]` string-range is the correct form for variable
-		// fonts per the Astro Fonts API docs. opsz / SOFT / WONK axes are not
-		// config-level options; they are exposed via CSS font-variation-settings.
-		// See: packages/specs/specs/00-foundations.md § "Open questions" #1
+		// Newsreader — variable serif (wght 200–800, opsz 6–72), roman + italic.
+		// Why: v21 design system — the serif is for editorial moments only (block
+		// quotes, maths thumbs, prompts); headings are Geist. Replaces Fraunces.
+		// `weights: ["200 800"]` string-range = variable font per the Astro Fonts API
+		// docs (see header). Axes verified on fonts.googleapis.com/css2 2026-11-02.
+		// See: packages/specs/adrs/0042-v21-visual-language.md
+		// See: https://fonts.google.com/specimen/Newsreader
 		{
 			provider: fontProviders.google(),
-			name: "Fraunces",
+			name: "Newsreader",
 			cssVariable: "--font-serif",
-			weights: ["100 900"],
-			styles: ["normal"],
+			weights: ["200 800"],
+			styles: ["normal", "italic"],
 			subsets: ["latin"],
 			// Why: `display: "optional"` tells the browser to use the metric-optimized
 			// fallback if the web font isn't ready within ~100ms, and to never swap.
@@ -164,7 +167,7 @@ export default defineConfig({
 			display: "optional",
 			fallbacks: ["serif"],
 		},
-		// Geist — variable sans-serif (wght 100–900).
+		// Geist — variable sans-serif (wght 100–900). v21's primary UI + heading face.
 		// Why: string-range weight matches the variable-font pattern above.
 		{
 			provider: fontProviders.google(),
@@ -173,46 +176,29 @@ export default defineConfig({
 			weights: ["100 900"],
 			styles: ["normal"],
 			subsets: ["latin"],
-			// Why: same Speed-Index reasoning as Fraunces — optional + serif/sans/mono
+			// Why: same Speed-Index reasoning as Newsreader — optional + serif/sans/mono
 			// fallback keeps the metric-adjusted fallback rendering until the variable
 			// woff2 lands, with no swap-induced repaint counted against Speed Index.
 			display: "optional",
 			fallbacks: ["sans-serif"],
 		},
-		// Commit Mono — static monospace weight 400, OFL-1.1.
-		// Why: local provider used instead of a remote provider because the woff2
-		// is committed to the repo (src/assets/fonts/) per ADR 0005; this guarantees
-		// offline builds and zero CDN dependency for the mono face at runtime.
-		// Font file: src/assets/fonts/CommitMono-400.woff2 (47 KB, extracted from
-		// @fontsource/commit-mono@5.2.5 package which redistributes it under OFL-1.1,
-		// by Eigil Nikolajsen — https://commitmono.com/).
-		// License: src/assets/fonts/OFL.txt
-		// weight: 400 (numeric) = static weight per Astro local-provider docs.
-		// Stored in src/assets/fonts/ (not public/) per Astro recommendation:
-		// "it is recommended to store font files in the src/ directory rather than
-		// the public/ directory to avoid file duplication during the build process"
-		// Source: https://github.com/withastro/docs → font-provider-reference.mdx
+		// Geist Mono — variable monospace (wght 100–900). Replaces Commit Mono.
+		// Why: v21 pairs Geist with Geist Mono for maths, code, IDs and key caps.
+		// Trade-off vs. the previous local Commit Mono woff2 (ADR 0005): the mono
+		// face is now fetched from Google Fonts at build time like the other two.
+		// See: packages/specs/adrs/0042-v21-visual-language.md
+		// See: https://fonts.google.com/specimen/Geist+Mono
 		{
-			provider: fontProviders.local(),
-			name: "Commit Mono",
+			provider: fontProviders.google(),
+			name: "Geist Mono",
 			cssVariable: "--font-mono",
-			// Why: mono is used in pills + inline `<code>`. `display: "optional"` keeps
-			// the metric-optimized monospace fallback rendering if the woff2 isn't
-			// ready in ~100ms, which avoids the swap-repaint that hurts Speed Index.
-			// `fallbacks: ["monospace"]` overrides the default `["sans-serif"]`,
-			// so the fallback chain in --font-mono ends with `monospace` (correct
-			// generic family for code blocks).
+			weights: ["100 900"],
+			styles: ["normal"],
+			subsets: ["latin"],
+			// Why: `fallbacks: ["monospace"]` overrides the default `["sans-serif"]`
+			// so the fallback chain in --font-mono ends with the right generic family.
 			display: "optional",
 			fallbacks: ["monospace"],
-			options: {
-				variants: [
-					{
-						weight: 400,
-						style: "normal",
-						src: ["./src/assets/fonts/CommitMono-400.woff2"],
-					},
-				],
-			},
 		},
 	],
 });

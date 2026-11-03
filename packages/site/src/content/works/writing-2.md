@@ -6,6 +6,9 @@ tags: ["post", "iteration"]
 wordCount: 1200
 readingTime: 6
 summary: "Production-visible writing fixture about the value of iterative thinking."
+cover:
+  src: "../../assets/works/mock/patent-animation.gif"
+  alt: "Animated 1928 engine patent drawing: a piston driving a crankshaft"
 ---
 
 Production post body.

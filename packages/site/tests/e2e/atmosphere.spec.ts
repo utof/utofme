@@ -54,8 +54,19 @@ test("cursor: no JS downloaded on coarse pointer", async ({ page }) => {
 // T2 — Sound toggle
 // ---------------------------------------------------------------------------
 
-test("sound: default off, axe-clean", async ({ page }) => {
+// Why /works/: the masonry home renders `_BaseLayout` with `minimal`, which drops
+// SoundToggle (ADR 0040), so the toggle is exercised on /works/ — a full-chrome
+// page that still mounts it. The home gets its own negative case below.
+const SOUND_ROUTE = "/works/";
+
+test("sound: the minimal masonry home does not mount the toggle", async ({ page }) => {
+	// @see packages/specs/adrs/0040-light-only-masonry-home.md
 	await page.goto("/");
+	await expect(page.locator("[data-sound-toggle]")).toHaveCount(0);
+});
+
+test("sound: default off, axe-clean", async ({ page }) => {
+	await page.goto(SOUND_ROUTE);
 
 	// SoundToggle button should be in the DOM with aria-pressed="false"
 	const btn = page.locator("[data-sound-toggle]");
@@ -67,7 +78,7 @@ test("sound: default off, axe-clean", async ({ page }) => {
 });
 
 test("sound: toggle persists across reload", async ({ page }) => {
-	await page.goto("/");
+	await page.goto(SOUND_ROUTE);
 
 	const btn = page.locator("[data-sound-toggle]");
 	await expect(btn).toHaveAttribute("aria-pressed", "false");
@@ -115,7 +126,7 @@ test("sound: cmd-k keydown plays the cmd-k buffer", async ({ page }) => {
 		};
 	});
 
-	await page.goto("/");
+	await page.goto(SOUND_ROUTE);
 
 	// Enable sound — this triggers ensure() which creates AudioContext + decodes buffers.
 	await page.locator("[data-sound-toggle]").click();
@@ -246,48 +257,23 @@ test("konami: dispatching the canonical sequence toggles [data-konami]", async (
 });
 
 /**
- * Click counter: increments, persists across reload, resets after localStorage.clear().
+ * Click counter: no longer mounted anywhere (hidden from the masonry home).
+ *
+ * Why: ADR 0040 ("hide, don't delete") removed `<ClickCounter client:idle />` from
+ * `/` and no other page renders it, so the old "increments and persists across
+ * reload" browser flow has no page to run on. The component's behaviour (synchronous
+ * localStorage init, increment + persist, badge timing) stays covered by
+ * tests/unit/click-counter.test.ts; this case pins the intended new state so the
+ * island does not silently reappear on the home.
  *
  * @see packages/specs/plans/07-atmosphere.md § T4 TDD red cases
  * @see packages/specs/specs/07-atmosphere.md § Success criteria #13
+ * @see packages/specs/adrs/0040-light-only-masonry-home.md
  */
-test("click counter: increments and persists across reload", async ({ page }) => {
+test("click counter: the masonry home does not mount the island", async ({ page }) => {
 	await page.goto("/");
-
-	// Wait for the ClickCounter island to hydrate (client:idle)
-	const btn = page.locator(".click-zone");
-	await btn.waitFor({ state: "visible" });
-
-	const span = page.locator(".click-zone span");
-
-	// Click 3 times
-	await btn.click();
-	await btn.click();
-	await btn.click();
-
-	await expect(span).toContainText("3");
-
-	// Reload — count should persist from localStorage
-	await page.reload();
-	const btnAfter = page.locator(".click-zone");
-	await btnAfter.waitFor({ state: "visible" });
-	await expect(page.locator(".click-zone span")).toContainText("3");
-
-	// Clear localStorage and click once → should start from 1
-	await page.evaluate(() => localStorage.clear());
-	await page.locator(".click-zone").click();
-	// After localStorage.clear() the component is already hydrated; the
-	// stored count was 3 before clear — clicking adds 1 to the in-memory n=3.
-	// To test the "starts from 0 after clear" case, we reload first.
-	await page.reload();
-	const btnReset = page.locator(".click-zone");
-	await btnReset.waitFor({ state: "visible" });
-	await page.evaluate(() => localStorage.clear());
-	await page.reload();
-	const btnClean = page.locator(".click-zone");
-	await btnClean.waitFor({ state: "visible" });
-	await btnClean.click();
-	await expect(page.locator(".click-zone span")).toContainText("1");
+	await expect(page.locator("h1")).toBeVisible();
+	await expect(page.locator(".click-zone")).toHaveCount(0);
 });
 
 test("cursor: no JS downloaded on coarse pointer + reduced-motion", async ({ page }) => {

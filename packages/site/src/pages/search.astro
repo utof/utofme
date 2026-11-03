@@ -29,10 +29,12 @@ import SearchBox from "../components/SearchBox.astro";
 	}
 
 	h1 {
-		font-family: var(--font-serif);
+		/* v21: headings are Geist 600, tight tracking (ADR 0042). */
+		font-family: var(--font-sans);
 		font-size: var(--font-size-6);
 		font-weight: 600;
-		line-height: 1.1;
+		letter-spacing: var(--tracking-tight);
+		line-height: var(--leading-tight);
 		margin-block: 0 var(--space-4);
 	}
 </style>

@@ -6,6 +6,9 @@ tags: ["beat", "study"]
 bpm: 100
 listen: "https://example.com/track-2"
 summary: "Production-visible music fixture: synthesizer melody over a live drum loop."
+cover:
+  src: "../../assets/works/mock/waves-interference.gif"
+  alt: "Animated interference pattern of two travelling waves"
 ---
 
 Production beat study notes. Features a synthesizer melody over a live drum loop.

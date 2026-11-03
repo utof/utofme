@@ -1,0 +1,141 @@
+---
+/**
+ * /lab/datamosh/ — slider playground for the hover datamosh.
+ *
+ * A small masonry (same markup and CSS as the home grid) of a few works, with at
+ * least two GIF covers and two still covers so the real-GIF-frame path and the
+ * seed-from-previous-card cut can both be tried. The controls island (`MoshLab`)
+ * mutates one live config that the hover shell reads every frame, mirrors it into
+ * `m-*` URL params, and can swap in the dither for a timing comparison.
+ *
+ * Why: the look cannot be settled on paper (the design report says the playground
+ * exists to settle it) and nobody can see the owner's GPU-less Chrome but the
+ * owner, so the page also prints calibration readouts. Noindexed and excluded from
+ * the sitemap: it is a tool, not content.
+ *
+ * @see packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
+ * @see packages/site/src/pages/index.astro
+ */
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/_BaseLayout.astro";
+import Card from "../../components/Card.astro";
+import CoverImage from "../../components/CoverImage.astro";
+import MoshLab from "../../components/lab/MoshLab.svelte";
+import { listWorks } from "../../lib/works";
+
+const all = await getCollection("works", ({ data }) =>
+	import.meta.env.PROD ? data.draft !== true : true,
+);
+// Why: `cover-fixture` is the Phase 3 pipeline test image (a flat blue rectangle): useless for judging a smear.
+const covered = listWorks(all).filter((entry) => entry.data.cover && entry.id !== "cover-fixture");
+const gifs = covered.filter((entry) => entry.data.cover?.src.format === "gif").slice(0, 3);
+const stills = covered.filter((entry) => entry.data.cover?.src.format !== "gif").slice(0, 3);
+
+/** Still, GIF, still, GIF, ...: neighbours differ, so hopping card to card shows the cut. */
+const picks = stills.flatMap((still, i) => (gifs[i] ? [still, gifs[i]] : [still]));
+
+/** Mirrors the column breakpoints in the stylesheet below. */
+const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
+---
+
+<BaseLayout title="Datamosh lab" minimal noindex>
+	<main data-pagefind-ignore>
+		<header class="lab-head">
+			<h1>Datamosh lab</h1>
+			<p>
+				Hover and drag across the cards. Settings live in the URL (<code>m-*</code>); the effect is
+				the <code>mosh</code> flag on the <a href="/?mosh">home grid</a>.
+			</p>
+		</header>
+
+		<div class="lab">
+			<MoshLab client:only="svelte" />
+
+			<ul class="masonry" data-test="mosh-lab-grid">
+				{
+					picks.map((entry) => {
+						const cover = entry.data.cover;
+						return (
+							<li>
+								<Card variant="media" data={entry.data} id={entry.id} body={entry.body}>
+									{cover && (
+										<CoverImage slot="thumb" src={cover.src} alt={cover.alt} sizes={COVER_SIZES} />
+									)}
+									<header slot="header">
+										<h2>{entry.data.title}</h2>
+									</header>
+								</Card>
+							</li>
+						);
+					})
+				}
+			</ul>
+		</div>
+	</main>
+</BaseLayout>
+
+<style>
+	main {
+		width: min(100% - 2 * var(--page-margin), 1800px);
+		margin-inline: auto;
+		padding-block: var(--space-6) var(--space-7);
+	}
+
+	.lab-head {
+		margin-bottom: var(--space-5);
+	}
+
+	h1 {
+		font-family: var(--font-serif);
+		font-size: var(--font-size-6);
+		font-weight: 600;
+		line-height: 1.1;
+		margin-block: 0 var(--space-2);
+	}
+
+	.lab-head p {
+		margin: 0;
+		color: var(--color-text-muted);
+		font-size: var(--font-size-2);
+	}
+
+	.lab-head a {
+		color: var(--color-text);
+	}
+
+	/* Controls beside the grid on wide screens (sticky), above it on narrow ones. */
+	.lab {
+		display: grid;
+		gap: var(--space-6);
+		grid-template-columns: minmax(0, 1fr);
+		align-items: start;
+	}
+
+	@media (min-width: 1000px) {
+		.lab {
+			grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+		}
+	}
+
+	/* Same masonry as the home grid (src/pages/index.astro). */
+	.masonry {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		column-count: 1;
+		column-gap: var(--masonry-gap);
+	}
+
+	.masonry > li {
+		break-inside: avoid;
+		margin: 0 0 var(--masonry-gap);
+		/* Containing block for the hover-effect canvas. */
+		position: relative;
+	}
+
+	@media (min-width: 560px) {
+		.masonry {
+			column-count: 2;
+		}
+	}
+</style>

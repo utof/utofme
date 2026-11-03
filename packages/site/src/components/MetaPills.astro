@@ -21,14 +21,21 @@ const ymd = date.toISOString().slice(0, 10);
 </div>
 
 <style>
+	/* v21 tag chip: mono 11 px, 18 px tall, 2 px radius, flat grey fill (ADR 0042). */
 	.pills {
 		display: flex;
+		flex-wrap: wrap;
 		gap: var(--space-1);
-		font-size: var(--font-size-1);
 	}
 	.pill {
-		padding: 0 var(--space-1);
-		border-radius: var(--radius-sm);
-		background: color-mix(in srgb, currentColor 8%, transparent);
+		display: inline-flex;
+		align-items: center;
+		height: 18px;
+		padding: 0 6px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		border-radius: var(--radius-xs);
+		background: var(--color-surface-hover);
+		color: var(--color-text-muted);
 	}
 </style>

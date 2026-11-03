@@ -25,6 +25,7 @@ import MetaHead from "../components/MetaHead.astro";
 import SlashFooter from "../components/SlashFooter.astro";
 import SoundToggle from "../components/SoundToggle.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
+import { LIGHT_ONLY } from "../lib/theme.ts";
 import previews from "../data/note-previews.json";
 
 interface Props {
@@ -32,14 +33,43 @@ interface Props {
 	title: string;
 	/** Optional meta description for the page (defaults to a phase-appropriate placeholder). */
 	description?: string;
+	/**
+	 * Strip decorative chrome (SoundToggle, CustomCursor, visible h-card).
+	 *
+	 * Why: the masonry home is "name + media + footer" only. The h-card stays in
+	 * the DOM inside a `hidden` wrapper (IndieWeb parsers read the markup, not the
+	 * rendering) so the representative h-card on `/` is not lost.
+	 *
+	 * @see packages/specs/adrs/0040-light-only-masonry-home.md
+	 */
+	minimal?: boolean;
+	/**
+	 * Emit `<meta name="robots" content="noindex" />`.
+	 *
+	 * Why: dev-only playgrounds (`/lab/datamosh/`) must stay out of search results;
+	 * the sitemap filter excludes `/lab/` as well. `| undefined` for
+	 * `exactOptionalPropertyTypes`.
+	 *
+	 * @see packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
+	 */
+	noindex?: boolean | undefined;
 }
 
-const { title, description = "utofme — personal site and portfolio." } = Astro.props;
+const {
+	title,
+	description = "utofme — personal site and portfolio.",
+	minimal = false,
+	noindex = false,
+} = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme={LIGHT_ONLY ? "light" : undefined}>
 	<head>
+		<!-- Why: static data-theme="light" on <html> under LIGHT_ONLY so the no-JS /
+		     pre-script paint is already light and the dark selectors in tokens.css
+		     can never match.
+		     @see packages/specs/adrs/0040-light-only-masonry-home.md -->
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<MetaHead route={Astro.url.pathname} />
@@ -54,6 +84,7 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		<!-- Why: meta-description is a SEO + best-practices audit; an empty page
 		     fails the `meta-description` audit and is flagged in Lighthouse SEO. -->
 		<meta name="description" content={description} />
+		{noindex && <meta name="robots" content="noindex" />}
 		<title>{title}</title>
 		<!-- Astro Fonts API: emits @font-face CSS + optional preload <link> for each
 		     registered font family. We preload ONLY the mono face — both variable
@@ -74,7 +105,7 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     @see packages/specs/plans/02-interactivity.md § Task 12 -->
 		<ClientRouter />
 	</head>
-	<body>
+	<body data-minimal={minimal ? "" : undefined}>
 		<slot />
 		<!-- Why: HCard placed before SlashFooter so the indieweb identity block
 		     appears above the navigation links — keeps microformat-scoped markup
@@ -82,9 +113,17 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     SoundToggle sits adjacent to HCard in the footer area — both are
 		     persistent UI controls that belong at page scope rather than per-route.
 		     @see packages/specs/specs/07-atmosphere.md § T2 -->
-		<HCard />
-		<SoundToggle />
-		<ThemeToggle />
+		{
+			minimal ? (
+				<div hidden>
+					<HCard />
+				</div>
+			) : (
+				<HCard />
+			)
+		}
+		{!minimal && <SoundToggle />}
+		{!LIGHT_ONLY && <ThemeToggle />}
 		<SlashFooter />
 		<!-- Why: CommandPalette mounted here (not per-page) so it is available on
 		     every route without re-mounting. transition:persist retains the Svelte
@@ -119,7 +158,7 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		     component itself gates rAF on prefers-reduced-motion: reduce.
 		     @see packages/specs/specs/07-atmosphere.md § T1
 		     @see packages/specs/adrs/0036-custom-cursor-island.md -->
-		<CustomCursor client:media="(pointer: fine)" />
+		{!minimal && <CustomCursor client:media="(pointer: fine)" />}
 		<!-- Why: inline script registered at first paint — no hydration delay.
 		     Toggles [data-konami] on <html> for the rainbow accent easter egg.
 		     @see packages/specs/specs/07-atmosphere.md § T4
@@ -152,5 +191,70 @@ const { title, description = "utofme — personal site and portfolio." } = Astro
 		margin: 0;
 		padding: 0;
 		min-height: 100vh;
+		line-height: var(--leading-normal);
+		-webkit-font-smoothing: antialiased;
+	}
+
+	/* v21 element defaults. `:where()` keeps specificity at 0 so every
+	 * component-scoped rule still wins.
+	 * Why: headings are Geist 600 with tight tracking (the serif is reserved for
+	 * editorial moments); the v21 blue is the only link / focus / selection hue;
+	 * focus is a box-shadow ring, never an outline; hairlines replace rules.
+	 * See: packages/specs/adrs/0042-v21-visual-language.md */
+	:where(h1, h2, h3, h4) {
+		font-family: var(--font-sans);
+		font-weight: 600;
+		letter-spacing: var(--tracking-tight);
+		line-height: var(--leading-snug);
+		color: var(--color-text);
+	}
+	:where(a) {
+		color: var(--color-link);
+		text-decoration-thickness: 1px;
+		text-underline-offset: 0.2em;
+	}
+	:where(a):hover {
+		color: var(--color-link-hover);
+	}
+	:where(:focus-visible) {
+		outline: none;
+		box-shadow: var(--shadow-focus);
+	}
+	::selection {
+		background: var(--color-focus-tint);
+		color: var(--color-text);
+	}
+	:where(hr) {
+		border: 0;
+		border-top: 1px solid var(--color-border);
+	}
+	/* v21 key cap: mono 11 px, 2 px radius, hairline with a 2 px bottom edge. */
+	:where(kbd) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		box-sizing: border-box;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		line-height: 16px;
+		color: var(--color-text-body);
+		background: var(--color-surface-hover);
+		border: 1px solid var(--color-border);
+		border-bottom-width: 2px;
+		border-radius: var(--radius-xs);
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		:where(a) {
+			transition: color var(--motion-fast) var(--ease-out);
+		}
+	}
+
+	/* Why: minimal pages (masonry home) align the footer with the page's side
+	 * margin; see SlashFooter.astro --footer-inset. */
+	body[data-minimal] {
+		--footer-inset: var(--page-margin);
 	}
 </style>

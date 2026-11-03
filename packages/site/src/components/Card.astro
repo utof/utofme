@@ -27,7 +27,13 @@
  * transition:name={`card-${id}`}: registers a unique View Transition name per
  * card. ClientRouter lands in Task 12; the attribute is harmless without it.
  *
+ * variant="media": the image-first masonry card used on `/` (no border, no
+ * padding, media on top at its natural aspect ratio, quiet title caption below;
+ * the `meta` slot is not rendered). Why a variant and not a restyle: `/works/`
+ * still uses the bordered default card. The link mechanism is shared.
+ *
  * @see packages/specs/adrs/0011-card-click-target-strategy.md
+ * @see packages/specs/adrs/0040-light-only-masonry-home.md
  * @see packages/specs/plans/02-interactivity.md § Task 7
  * @see packages/specs/plans/02-interactivity.md § Task 8
  * @see packages/specs/plans/03-content-pipeline.md § Task 6
@@ -53,8 +59,16 @@ interface Props {
 	 * @see packages/specs/plans/03-content-pipeline.md § Task 6
 	 */
 	body?: string | undefined;
+	/**
+	 * Visual variant: bordered `default` (works archive) or image-first `media`
+	 * (masonry home).
+	 *
+	 * Why: keeps one link/Pagefind/preview implementation for both layouts.
+	 * `| undefined` for `exactOptionalPropertyTypes`.
+	 */
+	variant?: "default" | "media" | undefined;
 }
-const { data, id, body } = Astro.props;
+const { data, id, body, variant = "default" } = Astro.props;
 
 const href = cardHref({ id: id ?? "", body, data });
 const Tag = href ? "a" : "article";
@@ -70,7 +84,7 @@ const dateStr = data.date.toISOString().split("T")[0];
 ---
 
 <Tag
-	class="card"
+	class:list={["card", { "card--media": variant === "media" }]}
 	href={href || undefined}
 	data-test={linkTest}
 	data-draft={data.draft ? "true" : undefined}
@@ -82,9 +96,20 @@ const dateStr = data.date.toISOString().split("T")[0];
 	data-summary={data.summary}
 	transition:name={`card-${id}`}
 >
-	<slot name="header" />
-	<slot name="thumb" />
-	<slot name="meta" />
+	{
+		variant === "media" ? (
+			<>
+				<slot name="thumb" />
+				<slot name="header" />
+			</>
+		) : (
+			<>
+				<slot name="header" />
+				<slot name="thumb" />
+				<slot name="meta" />
+			</>
+		)
+	}
 	<!-- Pagefind metadata: one hidden span per field; Pagefind reads textContent.
 	     See https://pagefind.app/docs/metadata/ (verified 2026-04-26) -->
 	<span data-pagefind-meta="title" hidden>{data.title}</span>
@@ -108,24 +133,92 @@ const dateStr = data.date.toISOString().split("T")[0];
 </Tag>
 
 <style>
+	/* v21 card: hairline rectangle, 6 px radius, white fill, 16 px padding, no
+	 * shadow; a 1 px shadow appears on hover only (ADR 0042). */
 	.card {
 		display: grid;
 		grid-template-rows: auto 1fr auto;
 		gap: var(--space-2);
-		padding: var(--space-3);
-		border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+		padding: var(--space-4);
+		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		background: transparent;
+		background: var(--color-bg);
 		text-decoration: none;
 		color: inherit;
 	}
-	a.card:hover,
+	a.card:hover {
+		box-shadow: var(--shadow-sm);
+	}
 	a.card:focus-visible {
-		outline: 1px solid currentColor;
+		outline: none;
+		box-shadow: var(--shadow-focus);
 	}
 	@media (prefers-reduced-motion: no-preference) {
 		.card {
-			transition: outline 100ms ease;
+			transition: box-shadow var(--motion-fast) var(--ease-out);
 		}
+	}
+
+	/* ─── variant="media": image-first masonry card ───────────────────────── */
+	.card--media {
+		display: block;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+	}
+	/* Why :global — the <img>/<picture>/<header> are slotted from the page, so
+	 * they carry the page's scope id, not Card's. */
+	.card--media :global(picture),
+	.card--media :global(img) {
+		display: block;
+	}
+	/* Why: a hairline + surface tint keep white-background media (diagrams, GIFs)
+	 * legible as a tile on the white page and avoid a white flash while lazy
+	 * images load; both are barely-there, per "no heavy borders". */
+	/* Why max-height: every piece must fit on one screen (≤80vh); tall media
+	 * scales down with its aspect ratio and centres in the column. */
+	.card--media :global(img) {
+		width: auto;
+		max-width: 100%;
+		height: auto;
+		max-height: 80vh;
+		margin-inline: auto;
+		background-color: var(--color-surface);
+		outline: 1px solid var(--color-border);
+		outline-offset: -1px;
+	}
+	.card--media :global(header) {
+		margin-top: var(--space-2);
+	}
+	/* v21 meta row: 13 px Geist 500, secondary grey; darkens on hover. */
+	.card--media :global(h2) {
+		margin: 0;
+		font-size: var(--font-size-ui);
+		font-weight: 500;
+		letter-spacing: 0;
+		line-height: var(--leading-snug);
+		color: var(--color-text-muted);
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.card--media :global(h2) {
+			transition: color var(--motion-fast) var(--ease-out);
+		}
+	}
+	a.card--media:hover :global(h2),
+	a.card--media:focus-visible :global(h2) {
+		color: var(--color-text);
+	}
+	/* Why: no outline on hover (the media itself is the affordance); keep a
+	 * visible keyboard focus ring for a11y. */
+	a.card--media:hover {
+		outline: none;
+	}
+	a.card--media:hover {
+		box-shadow: none;
+	}
+	a.card--media:focus-visible {
+		outline: none;
+		box-shadow: var(--shadow-focus);
+		border-radius: var(--radius-xs);
 	}
 </style>

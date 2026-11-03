@@ -6,6 +6,9 @@ tags: ["utility"]
 stack: ["bun"]
 repo: "https://github.com/utof/hello-world"
 summary: "Production-visible code fixture."
+cover:
+  src: "../../assets/works/mock/lissajous-lab.jpg"
+  alt: "A vintage computer lab with an oscilloscope displaying Lissajous curves"
 ---
 
 Hello world body.

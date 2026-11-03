@@ -19,9 +19,12 @@
  * beforeAll races with that test's fixture file and the build fails on the
  * invalid content entry. Reading the already-built dist avoids the race.
  *
- * Per-card block extraction: each card is `<a class="card"` or
- * `<article class="card"` … `</a>` / `</article>`. We locate each block by
- * splitting on the card open-tag pattern and finding the matching close tag.
+ * Per-card block extraction: each card is `<a class="card …"` or
+ * `<article class="card …"` … `</a>` / `</article>`. We locate each block by
+ * scanning for opening tags whose class list contains the token `card` (the
+ * masonry home renders `class="card card--media"`, `/works/` renders
+ * `class="card"`) and finding the matching close tag. Attributes are read
+ * independently of their order (Astro emits `class:list` last).
  * This is intentionally simple — no external HTML parser dep needed.
  * The assertion is per-card (keyed on data-preview-target) so a regression
  * that emits spans outside a card, or skips spans on one variant, will fail.
@@ -50,49 +53,81 @@ let html = "";
 /** Map from data-preview-target id → the inner HTML of that card element. */
 const cardBlocks = new Map<string, string>();
 
+/** Map from data-preview-target id → the card's opening tag (attributes only). */
+const cardOpenTags = new Map<string, string>();
+
 /**
- * Extract per-card HTML blocks from the built index.html.
+ * Opening tag of an `<a>` / `<article>`. The attribute part tolerates a `>`
+ * inside a quoted value (e.g. a `data-summary` containing markup characters).
+ */
+const OPEN_TAG_RE = /<(a|article)\s(?:[^>"]|"[^"]*")*>/g;
+
+/**
+ * Read one attribute value out of an opening tag, independent of attribute order.
+ *
+ * @see packages/specs/plans/02-interactivity.md § Task 8
+ */
+function attrValue(openTag: string, name: string): string | undefined {
+	return new RegExp(`\\s${name}="([^"]*)"`).exec(openTag)?.[1];
+}
+
+/**
+ * Extract per-card HTML blocks (and opening tags) from the built index.html.
  *
  * Why regex over a DOM parser: avoids an extra dev-dep; the HTML shape is
  * fixed by Card.astro and deterministic across builds. A real HTML parser
  * would be safer for arbitrary HTML but is overkill for one known template.
  *
+ * Why match the `card` class TOKEN rather than `class="card"`: the media variant
+ * on the masonry home adds `card--media` (ADR 0040), and Astro renders `class:list`
+ * after the other attributes, so neither the exact class string nor the position of
+ * `data-preview-target` relative to it is stable.
+ *
  * @see packages/specs/plans/02-interactivity.md § Task 8
+ * @see packages/specs/adrs/0040-light-only-masonry-home.md
  */
-function extractCardBlocks(source: string): Map<string, string> {
+function extractCards(source: string): {
+	blocks: Map<string, string>;
+	openTags: Map<string, string>;
+} {
 	const blocks = new Map<string, string>();
-	// Match the opening tag of each card (both <a> and <article> variants).
-	// data-preview-target is always present on cards rendered by Grid.astro.
-	const openTagRe = /<(a|article)\s[^>]*class="card"[^>]*data-preview-target="([^"]+)"[^>]*>/g;
+	const openTags = new Map<string, string>();
 	// Use matchAll to avoid Biome's noAssignInExpressions lint rule; the pattern
 	// has the /g flag so matchAll returns all matches lazily.
 	// match.index is always defined for /g matches from matchAll — narrow it
 	// explicitly because TS types it as `number | undefined`.
-	for (const match of source.matchAll(openTagRe)) {
-		// Capture groups are always present when the overall regex matches, but
-		// TS types them as `string | undefined` because RegExpMatchArray is a
-		// sparse array. Skip if absent (shouldn't happen with this regex).
+	for (const match of source.matchAll(OPEN_TAG_RE)) {
+		const openTag = match[0];
 		const tagName = match[1]; // "a" or "article"
-		const id = match[2]; // e.g. "code-2"
-		if (tagName === undefined || id === undefined) continue;
+		if (tagName === undefined) continue;
+		const classes = (attrValue(openTag, "class") ?? "").split(/\s+/);
+		if (!classes.includes("card")) continue;
+		// data-preview-target is always present on cards rendered by Card.astro.
+		const id = attrValue(openTag, "data-preview-target"); // e.g. "code-2"
+		if (id === undefined) continue;
 		const tagStart = match.index ?? 0;
-		const innerStart = tagStart + match[0].length;
+		const innerStart = tagStart + openTag.length;
 		// Find the matching close tag. Nesting of the same tag isn't a concern
 		// because <a> and <article> never nest within themselves in this output.
 		const closeTag = `</${tagName}>`;
 		const closeIdx = source.indexOf(closeTag, innerStart);
 		if (closeIdx === -1) continue;
 		blocks.set(id, source.slice(innerStart, closeIdx));
+		openTags.set(id, openTag);
 	}
-	return blocks;
+	return { blocks, openTags };
 }
 
 beforeAll(() => {
 	// Read the previously-built dist/index.html.
 	// If the file doesn't exist the test will throw here with a clear message.
 	html = readFileSync(INDEX_HTML, "utf-8");
-	for (const [id, block] of extractCardBlocks(html)) {
+	const { blocks, openTags } = extractCards(html);
+	for (const [id, block] of blocks) {
 		cardBlocks.set(id, block);
+	}
+	for (const [id, openTag] of openTags) {
+		cardOpenTags.set(id, openTag);
 	}
 });
 
@@ -108,7 +143,7 @@ const PROD_FIXTURES = [
 		type: "code",
 		tags: ["demo", "expressive-code"],
 		summary:
-			"A demo code work showcasing Expressive Code rendering with title, copy button, and dual-theme support.",
+			"A demo code work showcasing Expressive Code rendering with title, copy button, and the light github theme.",
 	},
 	{
 		id: "code-2",
@@ -290,22 +325,20 @@ describe("Card.astro — transition:name / data-astro-transition-scope (per-vari
 		// so this test remains stable across Astro version upgrades that change the
 		// internal hashing scheme. See https://docs.astro.build/en/guides/view-transitions/
 		for (const fixture of PROD_FIXTURES) {
-			// Check the opening tag (before the inner block) for the attribute.
-			// The opening tag precedes the block content stored in cardBlocks.
-			const openTagRe = new RegExp(
-				`<(?:a|article)[^>]*data-preview-target="${fixture.id}"[^>]*data-astro-transition-scope=`,
-			);
+			// Check the card's own opening tag (the block holds only the inner HTML).
+			const openTag = cardOpenTags.get(fixture.id) ?? "";
 			expect(
-				openTagRe.test(html),
+				attrValue(openTag, "data-astro-transition-scope"),
 				`data-astro-transition-scope missing on card "${fixture.id}"`,
-			).toBe(true);
+			).toBeDefined();
 		}
 	});
 
 	it("exactly 12 card elements have data-astro-transition-scope (one per production fixture)", () => {
-		// Count opening card tags that carry the transition scope attr.
-		const matches =
-			html.match(/<(?:a|article)\s[^>]*class="card"[^>]*data-astro-transition-scope=/g) ?? [];
-		expect(matches.length).toBe(PROD_FIXTURES.length);
+		// Count card opening tags that carry the transition scope attr.
+		const withScope = [...cardOpenTags.values()].filter(
+			(openTag) => attrValue(openTag, "data-astro-transition-scope") !== undefined,
+		);
+		expect(withScope.length).toBe(PROD_FIXTURES.length);
 	});
 });

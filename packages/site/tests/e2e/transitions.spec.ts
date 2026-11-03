@@ -8,6 +8,7 @@
 // @see packages/specs/plans/02-interactivity.md § Task 12
 
 import { expect, test } from "@playwright/test";
+import { waitForImagesSettled } from "./support";
 
 // Why: augment the browser Window type for test-injected properties so
 // page.evaluate callbacks are fully typed without `as unknown` casts.
@@ -98,12 +99,21 @@ test("2. astro:page-load fires once per SPA nav", async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
+// Cases 3–4 — card stagger (transitions.css keys on `[data-component="grid"] > *`)
+//
+// Why /works/: the light-only masonry home is a CSS multi-column <ul>, not a
+// <Grid>, so it carries no stagger (ADR 0040); /works/ still renders <Grid> and
+// is where the stagger contract is exercised.
+// @see packages/specs/adrs/0040-light-only-masonry-home.md
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // Case 3 — reduced-motion: all card animation-delays are "0s"
 // ---------------------------------------------------------------------------
 
 test("3. prefers-reduced-motion: all card animation-delays are 0s", async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
-	await page.goto("/");
+	await page.goto("/works/");
 
 	const delays = await page.evaluate(() => {
 		const grid = document.querySelector('[data-component="grid"]');
@@ -125,7 +135,7 @@ test("3. prefers-reduced-motion: all card animation-delays are 0s", async ({ pag
 
 test("4. without reduced-motion, third card animation-delay ≈ 60 ms", async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "no-preference" });
-	await page.goto("/");
+	await page.goto("/works/");
 
 	// The third card (index 2) should have --i: 2, delay = 2 * 30ms = 60ms
 	const delay = await page.evaluate(() => {
@@ -150,6 +160,13 @@ test("4. without reduced-motion, third card animation-delay ≈ 60 ms", async ({
 	} else {
 		throw new Error(`Unexpected animation-delay format: ${delayStr}`);
 	}
+});
+
+// Case 4b — the masonry home has no stagger (it is not a <Grid>)
+test("4b. the masonry home has no Grid stagger wrapper", async ({ page }) => {
+	await page.goto("/");
+	await expect(page.locator('[data-test="works-grid"] > li').first()).toBeVisible();
+	await expect(page.locator('[data-component="grid"]')).toHaveCount(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -205,6 +222,8 @@ test("5. view-transition CSS injected after SPA navigation (best-effort)", async
 
 test("6a. visual regression / (post-ClientRouter baseline)", async ({ page }) => {
 	await page.goto("/");
+	// Why: the masonry home's lazy covers change <main>'s height until loaded.
+	await waitForImagesSettled(page);
 	// Clip to <main> so the footer (added in Task 4) does not affect
 	// this baseline. Footer has its own footer.spec.ts coverage.
 	await expect(page.locator("main")).toHaveScreenshot("transitions-home.png", {
