@@ -82,6 +82,7 @@
 		"check:size": "size-limit",
 		"media:encode": "bun run scripts/encode-loops.ts",
 		"check:media": "bun run scripts/encode-loops.ts --check",
+		"check:budgets": "bun run scripts/route-budgets.ts",
 		"check:lighthouse": "npx @lhci/cli autorun",
 		"test": "vitest run",
 		"test:unit": "vitest run --coverage",
