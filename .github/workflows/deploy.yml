@@ -53,7 +53,11 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config packages/site/wrangler.jsonc
+          # Why: run inside packages/site so the action finds the pinned wrangler 4.x there; from the
+          # repo root it found none and installed its default 3.90, which ignores
+          # `assets.run_worker_first`, so /loops/* never reached the range Worker (no 206 for Safari).
+          workingDirectory: packages/site
+          command: deploy --config wrangler.jsonc
 
       # Smoke probe — verifies /feed.xml returns 200 after Cloudflare deploy.
       # Why: LHCI removed /feed.xml from its URL list (non-HTML); this curl probe
