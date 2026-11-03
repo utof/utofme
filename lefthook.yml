@@ -111,3 +111,11 @@ pre-commit:
           - name: check-docs
             root: "packages/site"
             run: bun run check:docs
+
+          - name: check-media
+            # Why: committed loop outputs, recipes and src/data/loops.json must stay consistent.
+            # Only runs when loop files are staged (needs no ffmpeg).
+            # See: packages/specs/specs/09-project-view.md § P9-4 (wiring)
+            glob: "packages/site/{public/loops/**,src/data/loops.json,media/recipes/**}"
+            root: "packages/site"
+            run: bun run check:media

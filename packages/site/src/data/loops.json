@@ -1,0 +1,50 @@
+{
+	"fixture-testsrc": {
+		"aspect": "16:9",
+		"banner": {
+			"height": 720,
+			"sources": [
+				{
+					"bytes": 99713,
+					"type": "video/mp4; codecs=\"av01.0.05M.08\"",
+					"url": "/loops/fixture-testsrc/banner.9e51ee43.av1.mp4"
+				},
+				{
+					"bytes": 149567,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/fixture-testsrc/banner.af89743e.h264.mp4"
+				}
+			],
+			"width": 1280
+		},
+		"card": {
+			"height": 432,
+			"sources": [
+				{
+					"bytes": 62083,
+					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
+					"url": "/loops/fixture-testsrc/card.3848e677.av1.mp4"
+				},
+				{
+					"bytes": 69703,
+					"type": "video/mp4; codecs=\"avc1.64001E\"",
+					"url": "/loops/fixture-testsrc/card.6ee9a96a.h264.mp4"
+				}
+			],
+			"width": 768
+		},
+		"durationS": 4,
+		"flash": {
+			"maxEventsPerWindow": 2,
+			"maxPerSecond": 1,
+			"renderWidthCss": {
+				"banner": 1280,
+				"card": 1200
+			},
+			"status": "pass"
+		},
+		"fps": 30,
+		"posterPath": "src/assets/loops/fixture-testsrc/poster.png",
+		"recipe": "cb1a039d"
+	}
+}

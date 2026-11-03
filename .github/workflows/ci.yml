@@ -88,6 +88,10 @@ jobs:
       - name: check:docs
         run: bun run --cwd packages/site check:docs
 
+      # ── Loop media consistency (committed outputs ↔ src/data/loops.json; needs no ffmpeg) ──
+      - name: check:media
+        run: bun run --cwd packages/site check:media
+
       # ── Build (must precede vitest AND e2e) ────────────────────────────────────
       #    vitest's tests/unit/card-pagefind-attrs.test.ts reads dist/index.html for
       #    the Pagefind attribute snapshot test (Astro Container API can't render

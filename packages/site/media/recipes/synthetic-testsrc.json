@@ -1,0 +1,13 @@
+{
+	"slug": "fixture-testsrc",
+	"kind": "montage",
+	"aspect": "16:9",
+	"sizes": ["card", "banner"],
+	"shots": [
+		{ "src": "media/fixtures/gradients.mp4", "duration": 1.5, "fit": "cover" },
+		{ "src": "media/fixtures/testsrc2.mp4", "start": 0.5, "duration": 1, "fit": "cover" },
+		{ "src": "media/fixtures/bars.mp4", "duration": 1.5, "fit": "cover" }
+	],
+	"poster": { "at": 2 },
+	"stills": [{ "src": "media/fixtures/still.png", "out": "fixture-still" }]
+}
