@@ -1,5 +1,6 @@
 ---
 type: math
+fixture: true
 title: "Production number theory notes"
 date: 2026-03-28
 tags: ["number-theory"]

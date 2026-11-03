@@ -1,5 +1,6 @@
 ---
 type: writing
+fixture: true
 title: "Production post on iteration"
 date: 2026-03-30
 tags: ["post", "iteration"]

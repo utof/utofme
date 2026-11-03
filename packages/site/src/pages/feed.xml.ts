@@ -12,6 +12,7 @@ import { getCollection } from "astro:content";
 import rss from "@astrojs/rss";
 import type { APIRoute } from "astro";
 import { toRssItem } from "../lib/feed.ts";
+import { getWorksCollection } from "../lib/works-collection.ts";
 
 /**
  * Astro GET handler for the firehose RSS feed.
@@ -20,7 +21,7 @@ import { toRssItem } from "../lib/feed.ts";
  * @see packages/specs/specs/06-indieweb.md § Architecture (RSS feed pipeline)
  */
 export const GET: APIRoute = async (context) => {
-	const works = await getCollection("works", (e) => e.data.draft !== true);
+	const works = await getWorksCollection((e) => e.data.draft !== true);
 	// Notes have no `publish` field — sync-vault gate (ADR 0025) is the publish
 	// boundary. Every committed note in src/content/notes/ is publishable.
 	// Same predicate as src/lib/notes.ts + src/pages/garden/[slug].astro (no filter).

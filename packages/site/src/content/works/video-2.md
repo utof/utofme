@@ -1,5 +1,6 @@
 ---
 type: video
+fixture: true
 title: "Production video overview"
 date: 2026-03-20
 tags: ["overview", "video"]

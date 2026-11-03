@@ -18,7 +18,7 @@ import type { WorkEntry } from "../content.config";
  *
  * @see packages/specs/specs/01-card-grid-mvp.md § lib/works.ts
  */
-export type EntryLike<D extends { date: Date; draft?: boolean } = WorkEntry> = {
+export type EntryLike<D extends { date: Date; draft?: boolean; fixture?: boolean } = WorkEntry> = {
 	readonly id: string;
 	readonly data: D;
 };
@@ -53,6 +53,15 @@ export interface ListWorksOptions {
 	 * Defaults to `import.meta.env.PROD`.
 	 */
 	isProd?: boolean;
+	/**
+	 * When false, entries with `fixture: true` are excluded.
+	 *
+	 * Why: P9-3 keeps mock entries out of the deployed site; defaults to true so
+	 * dev, CI and tests keep seeing them.
+	 *
+	 * @see packages/specs/specs/09-project-view.md § P9-3
+	 */
+	includeFixtures?: boolean;
 }
 
 /**
@@ -63,13 +72,33 @@ export interface ListWorksOptions {
  *
  * @see packages/specs/specs/01-card-grid-mvp.md § Schema/draft filter
  */
-export function listWorks<E extends EntryLike<{ date: Date; draft?: boolean }>>(
+export function listWorks<E extends EntryLike<{ date: Date; draft?: boolean; fixture?: boolean }>>(
 	entries: readonly E[],
 	opts: ListWorksOptions = {},
 ): E[] {
 	const isProd = opts.isProd ?? import.meta.env.PROD;
-	const filtered = isProd ? entries.filter((e) => e.data.draft !== true) : [...entries];
+	const includeFixtures = opts.includeFixtures ?? true;
+	const filtered = entries
+		.filter((e) => !isProd || e.data.draft !== true)
+		.filter((e) => includeFixtures || e.data.fixture !== true);
 	return sortByDateDesc(filtered);
+}
+
+/**
+ * Returns the neighbours of `id` in the given (already ordered) list.
+ *
+ * Why: the project page's prev/next follows home order; pure so it is
+ * property-testable. `undefined` at either end, and for an unknown id.
+ *
+ * @see packages/specs/specs/09-project-view.md § P9-3 (AC3.3)
+ */
+export function prevNext<E extends { readonly id: string }>(
+	entries: readonly E[],
+	id: string,
+): { prev: E | undefined; next: E | undefined } {
+	const i = entries.findIndex((e) => e.id === id);
+	if (i < 0) return { prev: undefined, next: undefined };
+	return { prev: entries[i - 1], next: entries[i + 1] };
 }
 
 /**

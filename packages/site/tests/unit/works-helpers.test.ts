@@ -37,6 +37,9 @@ const workEntryDataArb: fc.Arbitrary<WorkEntry> = fc.oneof(
 		draft: fc.boolean(),
 		summary: fc.option(fc.string(), { nil: undefined }),
 		cover: fc.constant(undefined),
+		gallery: fc.constant<never[]>([]),
+		links: fc.constant<never[]>([]),
+		fixture: fc.constant(false),
 	}),
 	fc.record({
 		type: fc.constant("video" as const),
@@ -54,6 +57,9 @@ const workEntryDataArb: fc.Arbitrary<WorkEntry> = fc.oneof(
 		draft: fc.boolean(),
 		summary: fc.option(fc.string(), { nil: undefined }),
 		cover: fc.constant(undefined),
+		gallery: fc.constant<never[]>([]),
+		links: fc.constant<never[]>([]),
+		fixture: fc.constant(false),
 	}),
 	fc.record({
 		type: fc.constant("music" as const),
@@ -71,6 +77,9 @@ const workEntryDataArb: fc.Arbitrary<WorkEntry> = fc.oneof(
 		draft: fc.boolean(),
 		summary: fc.option(fc.string(), { nil: undefined }),
 		cover: fc.constant(undefined),
+		gallery: fc.constant<never[]>([]),
+		links: fc.constant<never[]>([]),
+		fixture: fc.constant(false),
 	}),
 	fc.record({
 		type: fc.constant("math" as const),
@@ -88,6 +97,9 @@ const workEntryDataArb: fc.Arbitrary<WorkEntry> = fc.oneof(
 		draft: fc.boolean(),
 		summary: fc.option(fc.string(), { nil: undefined }),
 		cover: fc.constant(undefined),
+		gallery: fc.constant<never[]>([]),
+		links: fc.constant<never[]>([]),
+		fixture: fc.constant(false),
 	}),
 	fc.record({
 		type: fc.constant("writing" as const),
@@ -105,6 +117,9 @@ const workEntryDataArb: fc.Arbitrary<WorkEntry> = fc.oneof(
 		draft: fc.boolean(),
 		summary: fc.option(fc.string(), { nil: undefined }),
 		cover: fc.constant(undefined),
+		gallery: fc.constant<never[]>([]),
+		links: fc.constant<never[]>([]),
+		fixture: fc.constant(false),
 	}),
 );
 
@@ -163,6 +178,9 @@ describe("cardHref", () => {
 			draft: fc.boolean(),
 			summary: fc.option(fc.string(), { nil: undefined }),
 			cover: fc.constant(undefined),
+			gallery: fc.constant<never[]>([]),
+			links: fc.constant<never[]>([]),
+			fixture: fc.constant(false),
 		}) as fc.Arbitrary<WorkEntry>,
 	])("!hasBody && writing (no external url) → href === ''", (id, data) => {
 		const entry: IdDataEntry = { id, data, body: "" };
@@ -187,6 +205,9 @@ describe("cardHref", () => {
 		draft: fc.boolean(),
 		summary: fc.option(fc.string(), { nil: undefined }),
 		cover: fc.constant(undefined),
+		gallery: fc.constant<never[]>([]),
+		links: fc.constant<never[]>([]),
+		fixture: fc.constant(false),
 	});
 	test.prop([idArb, codeWithRepoArb])(
 		"!hasBody && code with repo → href === repo url",
@@ -203,6 +224,9 @@ describe("cardHref", () => {
 
 describe("cardHref (deterministic)", () => {
 	const baseData = {
+		gallery: [],
+		links: [],
+		fixture: false,
 		title: "Test",
 		date: new Date("2026-01-01"),
 		tags: [],
