@@ -241,8 +241,8 @@ function containsFilter(block: string, filterValue: string): boolean {
 }
 
 describe("Card.astro — per-card block extraction", () => {
-	it("all 12 production cards are present in the build output", () => {
-		expect(cardBlocks.size).toBe(PROD_FIXTURES.length);
+	it("every fixture card is present in the build output (real works may add more)", () => {
+		expect(cardBlocks.size).toBeGreaterThanOrEqual(PROD_FIXTURES.length);
 		for (const f of PROD_FIXTURES) {
 			expect(cardBlocks.has(f.id), `card block missing for id "${f.id}"`).toBe(true);
 		}
@@ -264,7 +264,7 @@ describe("Card.astro — per-card data-pagefind-meta spans (per-variant)", () =>
 				// Assert the ISO date slice (YYYY-MM-DD) appears in this card.
 				expect(block).toContain(fixture.date);
 				// Assert the value is formatted as YYYY-MM-DD (not a full ISO string).
-				expect(block).toMatch(/data-pagefind-meta="date"[^>]*>\d{4}-\d{2}-\d{2}/);
+				expect(block).toMatch(/data-pagefind-meta="date"[^>]*>\s*\d{4}-\d{2}-\d{2}/);
 			});
 
 			if (fixture.summary !== undefined) {
@@ -326,10 +326,11 @@ describe("Card.astro — morph hooks (per-variant)", () => {
 		}
 	});
 
-	it("exactly one data-work-slug card per production fixture", () => {
+	it("every card in the build output carries data-work-slug", () => {
 		const withSlug = [...cardOpenTags.values()].filter(
 			(openTag) => attrValue(openTag, "data-work-slug") !== undefined,
 		);
-		expect(withSlug.length).toBe(PROD_FIXTURES.length);
+		expect(withSlug.length).toBe(cardOpenTags.size);
+		expect(withSlug.length).toBeGreaterThanOrEqual(PROD_FIXTURES.length);
 	});
 });
