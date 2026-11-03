@@ -1,6 +1,6 @@
 /**
  * Why: pins the pure core of the loop pipeline — recipe schema, golden filtergraph, codecs strings
- * (measured with ffprobe on the four encodes), budgets, prune planning, manifest ↔ files diff and the
+ * (measured with ffprobe on the real card and 1080p banner encodes), budgets, prune planning, manifest ↔ files diff and the
  * manifest schema round-trip.
  * @see packages/specs/specs/09-project-view.md § P9-4 (AC4.1, AC4.2)
  */
@@ -12,6 +12,7 @@ import {
 	buildMasterGraph,
 	canonicalJson,
 	codecsFromProbe,
+	crfFor,
 	diffManifestFiles,
 	encodeArgs,
 	planPrune,
@@ -141,7 +142,7 @@ describe("buildMasterGraph", () => {
 			"-i",
 			"/m/s/1.png",
 		]);
-		expect(g.filterComplex).toContain("scale=1280:720");
+		expect(g.filterComplex).toContain("scale=1920:1080");
 	});
 });
 
@@ -159,18 +160,27 @@ describe("encodeArgs", () => {
 			expect(has(a, "-movflags +faststart")).toBe(true);
 		}
 	});
-	it("banner crf and slideshow tune", () => {
-		expect(has(encodeArgs("montage", "banner", "av1", "i", "o"), "-crf 36")).toBe(true);
+	it("banner crf (montage vs slideshow), level 4.0 and slideshow tune", () => {
+		expect(has(encodeArgs("montage", "banner", "av1", "i", "o"), "-crf 30")).toBe(true);
+		expect(has(encodeArgs("slideshow", "banner", "av1", "i", "o"), "-crf 28")).toBe(true);
+		const m = encodeArgs("montage", "banner", "h264", "i", "o");
+		expect(has(m, "-crf 22 -profile:v high -level:v 4.0")).toBe(true);
+		expect(m).not.toContain("stillimage");
 		const h = encodeArgs("slideshow", "banner", "h264", "i", "o");
-		expect(has(h, "-crf 24")).toBe(true);
+		expect(has(h, "-crf 20")).toBe(true);
 		expect(has(h, "-tune stillimage")).toBe(true);
+	});
+	it("card crf does not depend on the loop kind", () => {
+		for (const codec of ["av1", "h264"] as const)
+			expect(crfFor("slideshow", "card", codec)).toBe(crfFor("montage", "card", codec));
 	});
 });
 
 describe("codecsFromProbe (probe fixtures measured on the real encodes)", () => {
 	it.each([
 		[{ codec_name: "h264", profile: "High", level: 30, width: 768, height: 432 }, "avc1.64001E"],
-		[{ codec_name: "h264", profile: "High", level: 31, width: 1280, height: 720 }, "avc1.64001F"],
+		// Banner at 1920x1080 (ffprobe of the real encodes: H.264 level 40 = 4.0, AV1 seq_level_idx 8 = 4.0).
+		[{ codec_name: "h264", profile: "High", level: 40, width: 1920, height: 1080 }, "avc1.640028"],
 		[
 			{ codec_name: "av1", profile: "Main", level: 4, width: 768, height: 432, pix_fmt: "yuv420p" },
 			"av01.0.04M.08",
@@ -179,12 +189,12 @@ describe("codecsFromProbe (probe fixtures measured on the real encodes)", () => 
 			{
 				codec_name: "av1",
 				profile: "Main",
-				level: 5,
-				width: 1280,
-				height: 720,
+				level: 8,
+				width: 1920,
+				height: 1080,
 				pix_fmt: "yuv420p",
 			},
-			"av01.0.05M.08",
+			"av01.0.08M.08",
 		],
 	])("%j → %s", (probe, codec) => {
 		expect(codecsFromProbe(probe)).toBe(`video/mp4; codecs="${codec}"`);
@@ -207,10 +217,12 @@ describe("budgetVerdict", () => {
 		expect(budgetVerdict("card", 300 * 1024)).toBe("warn");
 		expect(budgetVerdict("card", 300 * 1024 + 1)).toBe("fail");
 	});
-	it("banner: warn > 600 KB, fail > 1 MB", () => {
-		expect(budgetVerdict("banner", 600 * 1024)).toBe("ok");
-		expect(budgetVerdict("banner", 600 * 1024 + 1)).toBe("warn");
-		expect(budgetVerdict("banner", 1024 * 1024 + 1)).toBe("fail");
+	it("banner (1080p): warn > 1.5 MB, fail > 2.5 MB", () => {
+		const MB = 1024 * 1024;
+		expect(budgetVerdict("banner", 1.5 * MB)).toBe("ok");
+		expect(budgetVerdict("banner", 1.5 * MB + 1)).toBe("warn");
+		expect(budgetVerdict("banner", 2.5 * MB)).toBe("warn");
+		expect(budgetVerdict("banner", 2.5 * MB + 1)).toBe("fail");
 	});
 });
 
