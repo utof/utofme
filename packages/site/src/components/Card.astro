@@ -24,13 +24,20 @@
  * 2026-04-26). These spans are invisible to users but remain in the DOM so
  * Pagefind's indexer can read them.
  *
- * transition:name={`card-${id}`}: registers a unique View Transition name per
- * card. ClientRouter lands in Task 12; the attribute is harmless without it.
+ * No static `transition:name`: the project-view morph names the clicked card's
+ * `[data-vt-frame]` at click time (P9-9), so cards carry `data-work-slug` instead.
  *
- * variant="media": the image-first masonry card used on `/` (no border, no
- * padding, media on top at its natural aspect ratio, quiet title caption below;
- * the `meta` slot is not rendered). Why a variant and not a restyle: `/works/`
- * still uses the bordered default card. The link mechanism is shared.
+ * variant="media": the image-first masonry card used on `/`: media on top at its
+ * natural aspect ratio inside a clipping `[data-vt-frame]`, with a dark-glass
+ * caption bar (title, one-line description = `lede ?? summary`, meta line
+ * `year · stack`) flush at the bottom of the media. Hover = "zoom + reveal":
+ * the media children scale 1.05 and the bar content slides up to reveal the meta
+ * line (transform/opacity only). Every glyph is #fff on `--caption-bg`; contrast
+ * is proven in `tests/unit/contrast.test.ts`. The `header`/`meta` slots are not
+ * rendered. Why a variant and not a restyle: `/works/` still uses the bordered
+ * default card. The link mechanism is shared.
+ *
+ * @see packages/specs/specs/09-project-view.md § P9-7
  *
  * @see packages/specs/adrs/0011-card-click-target-strategy.md
  * @see packages/specs/adrs/0040-light-only-masonry-home.md
@@ -40,6 +47,7 @@
  * @see https://pagefind.app/docs/metadata/
  */
 import type { WorkEntry } from "../content.config";
+import { captionParts, optionalFlag } from "../lib/card-caption";
 import { cardHref } from "../lib/works";
 
 interface Props {
@@ -81,6 +89,7 @@ const linkTest = href
 
 /** ISO date string (YYYY-MM-DD) for data-date and the Pagefind meta span. */
 const dateStr = data.date.toISOString().split("T")[0];
+const caption = captionParts(data);
 ---
 
 <Tag
@@ -94,13 +103,20 @@ const dateStr = data.date.toISOString().split("T")[0];
 	data-title={data.title}
 	data-date={dateStr}
 	data-summary={data.summary}
-	transition:name={`card-${id}`}
+	data-work-slug={id}
+	data-fixture={optionalFlag(data, "fixture") ? "" : undefined}
 >
 	{variant === "media" ? (
-		<>
-			<slot name="thumb" />
-			<slot name="header" />
-		</>
+		<div class="card-figure">
+			<div data-vt-frame>
+				<slot name="thumb" />
+			</div>
+			<div class="cap" data-cap>
+				<h2 class="cap__t">{caption.title}</h2>
+				{caption.description && <p class="cap__d">{caption.description}</p>}
+				<p class="cap__m">{caption.meta}</p>
+			</div>
+		</div>
 	) : (
 		<>
 			<slot name="header" />
@@ -166,17 +182,32 @@ const dateStr = data.date.toISOString().split("T")[0];
 		border: 0;
 		border-radius: 0;
 	}
-	/* Why :global — the <img>/<picture>/<header> are slotted from the page, so
-	 * they carry the page's scope id, not Card's. */
+	/* Why: the figure clips the zoom and the sliding bar. It must NOT carry
+	 * filter / opacity / mask / clip-path / will-change (a Backdrop Root would
+	 * blind the bar's optional backdrop-filter). Shrink-wraps still media so the
+	 * bar matches the image width; loops fill the column. */
+	.card-figure {
+		position: relative;
+		overflow: hidden;
+		width: fit-content;
+		max-width: 100%;
+		margin-inline: auto;
+	}
+	.card-figure:has(.loop-frame) {
+		width: 100%;
+	}
+	[data-vt-frame] {
+		overflow: hidden;
+	}
+	/* Why :global — the <img>/<picture> are slotted from the page, so they carry
+	 * the page's scope id, not Card's. */
 	.card--media :global(picture),
 	.card--media :global(img) {
 		display: block;
 	}
-	/* Why: a hairline + surface tint keep white-background media (diagrams, GIFs)
-	 * legible as a tile on the white page and avoid a white flash while lazy
-	 * images load; both are barely-there, per "no heavy borders". */
 	/* Why max-height: every piece must fit on one screen (≤80vh); tall media
-	 * scales down with its aspect ratio and centres in the column. */
+	 * scales down with its aspect ratio and centres in the column. The hairline +
+	 * surface tint keep white-background media legible on the white page. */
 	.card--media :global(img) {
 		width: auto;
 		max-width: 100%;
@@ -187,33 +218,112 @@ const dateStr = data.date.toISOString().split("T")[0];
 		outline: 1px solid var(--color-border);
 		outline-offset: -1px;
 	}
-	.card--media :global(header) {
-		margin-top: var(--space-2);
+	.card--media [data-vt-frame] > :global(*) {
+		transform-origin: 50% 50%;
 	}
-	/* v21 meta row: 13 px Geist 500, secondary grey; darkens on hover. */
-	.card--media :global(h2) {
+
+	/* Caption: dark glass bar, flush bottom, full width, no radius. Hierarchy by
+	 * size/weight only — no grey, no semi-transparent text (contrast guarantee). */
+	.cap {
+		position: absolute;
+		inset-inline: 0;
+		bottom: 0;
+		z-index: 2; /* above the flagged hover canvas (z-index 1) in the <li> */
+		padding: var(--cap-pad) var(--space-3) 0;
+		background: var(--caption-bg);
+		color: var(--caption-fg);
+		text-align: start;
+	}
+	.cap > * {
 		margin: 0;
-		font-size: var(--font-size-ui);
-		font-weight: 500;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		color: var(--caption-fg);
+	}
+	.cap__t {
+		font-family: var(--font-sans);
+		font-size: 0.9375rem; /* 15 px */
+		font-weight: 600;
 		letter-spacing: 0;
 		line-height: var(--leading-snug);
-		color: var(--color-text-muted);
 	}
-	@media (prefers-reduced-motion: no-preference) {
-		.card--media :global(h2) {
-			transition: color var(--motion-fast) var(--ease-out);
+	.cap__d {
+		font-family: var(--font-sans);
+		font-size: var(--font-size-ui); /* 13 px */
+		font-weight: 400;
+		line-height: var(--leading-snug);
+		margin-bottom: var(--cap-pad);
+	}
+	/* Description is optional: keep the pad under the title when it is absent. */
+	.cap__t:has(+ .cap__m) {
+		margin-bottom: var(--cap-pad);
+	}
+	.cap__m {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem; /* 11 px */
+		font-weight: 400;
+		font-variant-numeric: tabular-nums;
+		line-height: var(--cap-meta-h);
+		height: var(--cap-meta-h);
+		margin-bottom: var(--cap-pad);
+	}
+
+	/* Opt-in blur (perf-gated, see tokens.css): only the hovered/focused bar. */
+	@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+		:global(html[data-caption-blur]) {
+			--caption-blur: var(--caption-blur-on);
+		}
+		a.card--media:is(:hover, :focus-visible) .cap {
+			-webkit-backdrop-filter: var(--caption-blur);
+			backdrop-filter: var(--caption-blur);
 		}
 	}
-	a.card--media:hover :global(h2),
-	a.card--media:focus-visible :global(h2) {
-		color: var(--color-text);
+
+	/* ─── Hover "zoom + reveal" (fine pointers only, motion allowed) ───────── */
+	@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+		:global(html:not([data-motion="paused"])) .card--media .cap {
+			transform: translateY(calc(var(--cap-meta-h) + var(--cap-pad)));
+			transition: transform 160ms var(--ease-out);
+		}
+		:global(html:not([data-motion="paused"])) .card--media .cap__m {
+			opacity: 0;
+			transition: opacity 160ms var(--ease-out);
+		}
+		:global(html:not([data-motion="paused"])) .card--media [data-vt-frame] > :global(*) {
+			transition: transform 340ms cubic-bezier(0.23, 1, 0.32, 1);
+		}
+		:global(html:not([data-motion="paused"])) a.card--media:hover .cap {
+			transform: none;
+			transition: transform 220ms var(--ease-out) 50ms;
+		}
+		:global(html:not([data-motion="paused"])) a.card--media:hover .cap__m {
+			opacity: 1;
+			transition: opacity 160ms var(--ease-out) 110ms; /* 50 ms intent + 60 ms delay */
+		}
+		:global(html:not([data-motion="paused"])) a.card--media:hover [data-vt-frame] > :global(*) {
+			transform: scale(1.05);
+			transition: transform 560ms cubic-bezier(0.23, 1, 0.32, 1) 50ms;
+		}
 	}
-	/* Why: no outline on hover (the media itself is the affordance); keep a
-	 * visible keyboard focus ring for a11y. */
+	/* Keyboard parity: the same end state on any device, ungated; the focus ring
+	 * stays on the <a> (outside the clipped figure) so the zoom never covers it. */
+	a.card--media:focus-visible .cap {
+		transform: none;
+	}
+	a.card--media:focus-visible .cap__m {
+		opacity: 1;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		:global(html:not([data-motion="paused"]))
+			a.card--media:focus-visible
+			[data-vt-frame]
+			> :global(*) {
+			transform: scale(1.05);
+		}
+	}
 	a.card--media:hover {
 		outline: none;
-	}
-	a.card--media:hover {
 		box-shadow: none;
 	}
 	a.card--media:focus-visible {

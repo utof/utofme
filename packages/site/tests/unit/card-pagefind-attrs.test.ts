@@ -29,13 +29,8 @@
  * The assertion is per-card (keyed on data-preview-target) so a regression
  * that emits spans outside a card, or skips spans on one variant, will fail.
  *
- * transition:name / data-astro-transition-scope: Astro compiles
- * `transition:name={…}` into a `data-astro-transition-scope` attribute on the
- * element plus an inline `<style>` rule that maps the scope id to the CSS
- * @view-transition name. The exact scope id is an opaque hash — we assert only
- * that the attribute is PRESENT on each card. This decouples the test from
- * Astro's internal hash algorithm; see
- * https://docs.astro.build/en/guides/view-transitions/ (verified 2026-04-26).
+ * data-work-slug: replaces the old static `transition:name` (P9-9 names the
+ * morph frame at click time); the scope attribute must be absent.
  *
  * @see packages/specs/plans/02-interactivity.md § Task 8 (Container API fallback)
  * @see https://pagefind.app/docs/metadata/ (fetched 2026-04-26)
@@ -318,27 +313,23 @@ describe("Card.astro — per-card data-pagefind-filter spans (per-variant)", () 
 	}
 });
 
-describe("Card.astro — transition:name / data-astro-transition-scope (per-variant)", () => {
-	it("every production card has a data-astro-transition-scope attribute (any value)", () => {
-		// Why: Astro compiles `transition:name={…}` into `data-astro-transition-scope`
-		// on the element. We assert presence of the attribute — NOT its hash value —
-		// so this test remains stable across Astro version upgrades that change the
-		// internal hashing scheme. See https://docs.astro.build/en/guides/view-transitions/
+describe("Card.astro — morph hooks (per-variant)", () => {
+	it("every production card has data-work-slug and no static transition scope", () => {
+		// Why: P9-9 names the clicked card's [data-vt-frame] at click time, so cards
+		// must carry `data-work-slug` and NO static `transition:name` scope.
 		for (const fixture of PROD_FIXTURES) {
-			// Check the card's own opening tag (the block holds only the inner HTML).
 			const openTag = cardOpenTags.get(fixture.id) ?? "";
-			expect(
-				attrValue(openTag, "data-astro-transition-scope"),
-				`data-astro-transition-scope missing on card "${fixture.id}"`,
-			).toBeDefined();
+			expect(attrValue(openTag, "data-work-slug"), `data-work-slug on "${fixture.id}"`).toBe(
+				fixture.id,
+			);
+			expect(attrValue(openTag, "data-astro-transition-scope")).toBeUndefined();
 		}
 	});
 
-	it("exactly 12 card elements have data-astro-transition-scope (one per production fixture)", () => {
-		// Count card opening tags that carry the transition scope attr.
-		const withScope = [...cardOpenTags.values()].filter(
-			(openTag) => attrValue(openTag, "data-astro-transition-scope") !== undefined,
+	it("exactly one data-work-slug card per production fixture", () => {
+		const withSlug = [...cardOpenTags.values()].filter(
+			(openTag) => attrValue(openTag, "data-work-slug") !== undefined,
 		);
-		expect(withScope.length).toBe(PROD_FIXTURES.length);
+		expect(withSlug.length).toBe(PROD_FIXTURES.length);
 	});
 });

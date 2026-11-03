@@ -20,6 +20,9 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/_BaseLayout.astro";
 import Card from "../components/Card.astro";
 import CoverImage from "../components/CoverImage.astro";
+import LoopMedia from "../components/LoopMedia.astro";
+import MotionToggle from "../components/MotionToggle.astro";
+import { coverLoop } from "../lib/card-caption";
 import CodeThumb from "../components/thumbs/CodeThumb.astro";
 import VideoThumb from "../components/thumbs/VideoThumb.astro";
 import MusicThumb from "../components/thumbs/MusicThumb.astro";
@@ -41,6 +44,18 @@ const ThumbFor = {
 	writing: WritingThumb,
 } as const;
 
+/**
+ * How many leading DOM cards load eagerly.
+ *
+ * Why: the masonry is column-major (CSS multi-column), so the first DOM cards
+ * fill column 1 top-to-bottom and the top of column 2 is a later DOM card. The
+ * first 4 cover the above-the-fold cards of both columns; only card 1 gets
+ * `fetchpriority="high"` (the LCP candidate).
+ *
+ * @see packages/specs/reviews/09-spec-review.md finding 5
+ */
+const EAGER_CARDS = 4;
+
 /** Mirrors the column breakpoints in the stylesheet below (--masonry-cols / 2 / 1 columns). */
 const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 ---
@@ -49,23 +64,41 @@ const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 	<main>
 		<header class="site-head">
 			<h1>utofme</h1>
+			<MotionToggle />
 		</header>
 
 		<ul class="masonry" data-test="works-grid">
-			{works.map((entry) => {
+			{works.map((entry, i) => {
 				const Thumb = ThumbFor[entry.data.type];
 				const cover = entry.data.cover;
+				const loop = coverLoop(cover);
+				const eager = i < EAGER_CARDS;
+				const priority = i === 0;
 				return (
 					<li>
 						<Card variant="media" data={entry.data} id={entry.id} body={entry.body}>
-							{cover ? (
-								<CoverImage slot="thumb" src={cover.src} alt={cover.alt} sizes={COVER_SIZES} />
+							{cover && loop ? (
+								<LoopMedia
+									slot="thumb"
+									slug={loop}
+									size="card"
+									alt=""
+									eager={eager}
+									priority={priority}
+									persistId={`loop-${entry.id}`}
+								/>
+							) : cover ? (
+								<CoverImage
+									slot="thumb"
+									src={cover.src}
+									alt={cover.alt}
+									sizes={COVER_SIZES}
+									eager={eager}
+									priority={priority}
+								/>
 							) : (
 								<Thumb slot="thumb" />
 							)}
-							<header slot="header">
-								<h2>{entry.data.title}</h2>
-							</header>
 						</Card>
 					</li>
 				);
@@ -177,6 +210,10 @@ const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 	}
 
 	.site-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-4);
 		margin-bottom: var(--space-6);
 	}
 

@@ -64,6 +64,18 @@
 	--space-11: 12rem; /* 192 px */
 	--space-12: 16rem; /* 256 px */
 
+	/* Card caption — dark glass bar (P9-7). Every glyph is #fff: white on the bar
+	 * over a pure-white frame is ≈ 5.34:1 (src/lib/contrast.ts, unit-tested), so
+	 * the fill alone carries WCAG 1.4.3; blur is polish, never the guarantee.
+	 * --caption-blur stays `none` until the no-GPU perf check passes; opt in with
+	 * <html data-caption-blur>. See packages/specs/specs/09-project-view.md § P9-7. */
+	--caption-bg: rgb(16 16 16 / 0.62);
+	--caption-fg: #fff;
+	--caption-blur: none;
+	--caption-blur-on: blur(10px) saturate(1.3);
+	--cap-pad: 10px;
+	--cap-meta-h: 16px; /* meta line-height; the reveal translates by meta + pad */
+
 	/* Border radii — v21: sharp by default, one soft shape.
 	 * Why: tags / key caps 2 px, inputs / buttons 4 px, cards 6 px, modals 10 px;
 	 * 14 px is reserved for a single "bubble" surface.

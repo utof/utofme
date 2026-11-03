@@ -1,0 +1,83 @@
+---
+/**
+ * "Pause motion" / "Play motion" button (WCAG 2.2.2).
+ *
+ * Why: looping media auto-plays for > 5 s, so a page-level control is required
+ * and must come before the first loop in tab order (render it in the page
+ * header). State lives in `src/lib/motion.ts`; pausing also disables the card
+ * hover zoom through `html[data-motion="paused"]`. No island: a bundled module
+ * script re-binds on `astro:page-load` (ClientRouter) and restores the `<html>`
+ * attribute, which the router drops on swap.
+ *
+ * @see packages/specs/specs/09-project-view.md § P9-6
+ * @see https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html
+ */
+---
+
+<button type="button" class="motion-toggle" data-motion-toggle aria-pressed="false">
+	<span data-motion-label>Pause motion</span>
+</button>
+
+<script>
+	import {
+		MOTION_EVENT,
+		isMotionPaused,
+		setMotionPaused,
+		syncMotionAttribute,
+	} from "../lib/motion";
+
+	function paint(): void {
+		const paused = isMotionPaused();
+		for (const btn of document.querySelectorAll<HTMLButtonElement>("[data-motion-toggle]")) {
+			btn.setAttribute("aria-pressed", String(paused));
+			const label = btn.querySelector("[data-motion-label]");
+			if (label) label.textContent = paused ? "Play motion" : "Pause motion";
+		}
+	}
+
+	function bind(): void {
+		syncMotionAttribute();
+		for (const btn of document.querySelectorAll<HTMLButtonElement>("[data-motion-toggle]")) {
+			if (btn.dataset.bound === "1") continue;
+			btn.dataset.bound = "1";
+			btn.addEventListener("click", () => setMotionPaused(!isMotionPaused()));
+		}
+		paint();
+	}
+
+	document.addEventListener("astro:page-load", bind);
+	document.addEventListener("astro:after-swap", () => {
+		syncMotionAttribute();
+		paint();
+	});
+	document.addEventListener(MOTION_EVENT, paint);
+	// Live changes to the OS preference (only matters while no explicit choice is stored).
+	matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", () => {
+		syncMotionAttribute();
+		paint();
+		document.dispatchEvent(new CustomEvent(MOTION_EVENT, { detail: { paused: isMotionPaused() } }));
+	});
+	bind();
+</script>
+
+<style>
+	/* Why: quiet, mono, hairline — a control, not a CTA; focus ring matches the site. */
+	.motion-toggle {
+		font: inherit;
+		font-family: var(--font-mono);
+		font-size: var(--font-size-1);
+		padding: var(--space-1) var(--space-2);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		background: var(--color-bg);
+		color: var(--color-text);
+		cursor: pointer;
+	}
+	.motion-toggle:hover {
+		border-color: var(--color-text-muted);
+	}
+	.motion-toggle:focus-visible {
+		outline: none;
+		box-shadow: var(--shadow-focus);
+	}
+</style>
