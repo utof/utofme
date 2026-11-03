@@ -162,6 +162,14 @@ const {
 		     @see packages/specs/specs/07-atmosphere.md § T4
 		     @see packages/specs/adrs/0039-easter-eggs-in-house.md -->
 		<KonamiListener />
+		<!-- TODO(@issue utof/utofme#0): render <MotionToggle /> in the header once W4's
+		     MotionToggle.astro lands (p09/w4-card); it does not exist on this branch. -->
+		<!-- Why: bundled module script (runs once; the document survives ClientRouter
+		     swaps) that names the card/banner frames for the card→banner morph.
+		     @see packages/specs/specs/09-project-view.md § P9-9 -->
+		<script>
+			import "../lib/vt/hero-morph.ts";
+		</script>
 	</body>
 </html>
 

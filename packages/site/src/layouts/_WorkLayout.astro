@@ -1,40 +1,54 @@
 ---
 /**
- * _WorkLayout.astro — detail-page shell for a single work entry.
+ * _WorkLayout.astro — project page shell ("Tier S" anatomy, spec P9-8).
  *
- * Why: Phase 3 ships per-work detail pages; this layout provides the
- * <article> wrapper, <header> with breadcrumb, <h1>, <time>, MetaPills,
- * and optional secondary external-URL link. Leading underscore signals
- * "layout, not a routable page" — consistent with Astro convention.
- * CoverImage slot is reserved for Task 5.
+ * Order: banner → title + lede → one meta row → body → gallery → research
+ * slot → prev/next. Webmentions and h-entry microformats are unchanged.
  *
+ * Why: the banner frame is `[data-vt-frame][data-work-slug]` so hero-morph can
+ * pair it with the clicked card (the name is applied at navigation time, never
+ * statically; the old `transition:name` on the h1 is gone). Projects without a
+ * loop fall back to the still cover in the same frame; without any cover no
+ * banner renders. Leading underscore signals "layout, not a routable page".
+ *
+ * @see packages/specs/specs/09-project-view.md § P9-8
+ * @see packages/specs/specs/09-project-view.md § P9-9
  * @see packages/specs/plans/03-content-pipeline.md § Task 4
  */
-import BaseLayout from "./_BaseLayout.astro";
-import CoverImage from "../components/CoverImage.astro";
-import MetaPills from "../components/MetaPills.astro";
-import Webmentions from "../components/Webmentions.astro";
 import type { CollectionEntry } from "astro:content";
+import Gallery from "../components/Gallery.astro";
+import LoopMedia from "../components/LoopMedia.astro";
+import PrevNext from "../components/PrevNext.astro";
+import ProjectMeta from "../components/ProjectMeta.astro";
+import ProjectStill from "../components/ProjectStill.astro";
+import Webmentions from "../components/Webmentions.astro";
+import type { Neighbours } from "../lib/prev-next";
+import { projectFields } from "../lib/project-fields";
+import BaseLayout from "./_BaseLayout.astro";
 
 /**
  * Props for _WorkLayout.
  *
  * Why: typed as CollectionEntry<"works"> so the layout has access to both
- * entry.id (for transition:name) and entry.data (all frontmatter fields).
+ * entry.id (slug) and entry.data (all frontmatter fields).
  * @see packages/specs/plans/03-content-pipeline.md § Task 4
  */
 export interface Props {
 	entry: CollectionEntry<"works">;
+	/**
+	 * Prev/next neighbours, computed by the route (it owns the collection query).
+	 *
+	 * Why: keeps the layout free of `getCollection` so container unit tests that
+	 * render it need no content-layer stub.
+	 */
+	neighbours?: Neighbours<{ id: string; title: string; date: Date }> | undefined;
 }
 
-const { entry } = Astro.props;
-const { data } = entry;
+const { entry, neighbours } = Astro.props;
+const data = projectFields(entry.data);
 
-// Why: secondary external-URL chain mirrors ADR 0011 priority order.
-//      Phase 3 makes the detail-page link the primary card href (ADR landing in
-//      Task 12, will be 0021-detail-page-as-default-card-link); this layout's
-//      external link is the secondary "open external" action visible only on the
-//      detail page itself.
+// Why: secondary external-URL chain mirrors ADR 0011 priority order; kept as the
+// meta-row fallback when `links` is empty.
 const externalUrl =
 	data.type === "code"
 		? data.repo
@@ -45,46 +59,112 @@ const externalUrl =
 				: data.type === "math"
 					? (data.arxiv ?? data.pdf)
 					: undefined;
+
+const lede = data.lede ?? data.summary;
+const description = data.summary ?? data.lede;
+const stack = data.stack;
+const cover = data.cover;
 ---
 
-<BaseLayout title={`${data.title} · utofme`}>
+<BaseLayout title={`${data.title} · utofme`} {...(description ? { description } : {})}>
 	<main>
 		<article class="h-entry">
-			<header>
-				<a href="/works/" data-test="breadcrumb">
-					← All works
-				</a>
-				<h1 class="p-name" transition:name={`card-${entry.id}`}>
-					{data.title}
-				</h1>
-				<time class="dt-published" datetime={data.date.toISOString()}>
-					{data.date.toISOString().slice(0, 10)}
-				</time>
-				<MetaPills date={data.date} tagCount={data.tags.length} />
-				{externalUrl && (
-					<a href={externalUrl} data-test="detail-external" rel="external noopener">
-						Open external →
+			{cover && (
+				<div
+					class="banner"
+					data-vt-frame
+					data-work-slug={entry.id}
+					style={`--focus:${cover.focus ?? 50}%`}
+				>
+					{cover.loop ? (
+						<LoopMedia
+							slug={cover.loop}
+							size="banner"
+							alt={cover.alt}
+							persistId={`loop-${cover.loop}`}
+							eager
+							priority
+						/>
+					) : (
+						<ProjectStill src={cover.src} alt={cover.alt} eager focus={cover.focus ?? 50} />
+					)}
+				</div>
+			)}
+			<div class="col">
+				<header>
+					<a href="/works/" data-test="breadcrumb">
+						← All works
 					</a>
+					<h1 class="p-name" tabindex="-1">
+						{data.title}
+					</h1>
+					{lede && <p class="lede p-summary">{lede}</p>}
+					<ProjectMeta
+						date={data.date}
+						started={data.started}
+						status={data.status}
+						stack={stack}
+						links={data.links}
+						externalUrl={externalUrl}
+					/>
+				</header>
+				<a class="u-url" href={`/works/${entry.id}/`} aria-hidden="true" hidden></a>
+				<div class="e-content">
+					<slot />
+				</div>
+				<Gallery items={data.gallery ?? []} />
+				{Astro.slots.has("research") && (
+					<section class="research" data-test="research">
+						<slot name="research" />
+					</section>
 				)}
-			</header>
-			{data.cover && <CoverImage src={data.cover.src} alt={data.cover.alt} />}
-			<a class="u-url" href={`/works/${entry.id}/`} aria-hidden="true" hidden></a>
-			<div class="e-content">
-				<slot />
+				<PrevNext prev={neighbours?.prev ?? null} next={neighbours?.next ?? null} />
 			</div>
 		</article>
 		{/* Why: webmentions are about the article, not part of it — kept outside <article>. */}
-		<Webmentions slug={entry.id} />
+		<div class="col">
+			<Webmentions slug={entry.id} />
+		</div>
 	</main>
 </BaseLayout>
 
 <style>
 	main {
-		padding: var(--space-6);
-		max-width: 80ch;
-		margin-inline: auto;
+		padding: var(--space-6) var(--space-6) var(--space-8);
 		/* v21: body copy in --color-text-body (#444), headings in --color-text. */
 		color: var(--color-text-body);
+	}
+
+	.col {
+		max-width: 80ch;
+		margin-inline: auto;
+	}
+
+	/* Banner: 16:9 below 700 px, 3:1 above; clipping frame for the morph. */
+	.banner {
+		position: relative;
+		width: 100%;
+		max-width: 1280px;
+		max-height: 60vh;
+		margin: 0 auto var(--space-4);
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+		background: var(--color-surface);
+	}
+	@media (min-width: 700px) {
+		.banner {
+			aspect-ratio: 3 / 1;
+		}
+	}
+	.banner :global(picture),
+	.banner :global(img),
+	.banner :global(video),
+	.banner :global(.loop-frame) {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: 50% var(--focus, 50%);
 	}
 
 	header {
@@ -100,11 +180,17 @@ const externalUrl =
 		line-height: var(--leading-tight);
 		margin-block: var(--space-2) 0;
 	}
+	h1:focus {
+		outline: none;
+	}
 
-	/* v21 meta: mono 12 px, secondary grey (no opacity tricks). */
-	time {
-		font-family: var(--font-mono);
-		font-size: var(--font-size-1);
-		color: var(--color-text-muted);
+	.lede {
+		margin: var(--space-2) 0 0;
+		font-size: var(--font-size-4, 1.125rem);
+		color: var(--color-text);
+	}
+
+	.research {
+		margin-block: var(--space-6);
 	}
 </style>
