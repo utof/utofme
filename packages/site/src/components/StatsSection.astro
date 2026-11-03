@@ -18,21 +18,17 @@ const formatted = formatStatValue(source);
 <section data-test="stats-section">
 	<h2>{source.label}</h2>
 	<p class="value">
-		{
-			source.error ? (
-				<span aria-label="data temporarily unavailable">⚠ {formatted}</span>
-			) : (
-				<>{formatted}</>
-			)
-		}
+		{source.error ? (
+			<span aria-label="data temporarily unavailable">⚠ {formatted}</span>
+		) : (
+			<>{formatted}</>
+		)}
 	</p>
-	{
-		source.lastSuccessAt && (
-			<p class="updated">
-				as of <time datetime={source.lastSuccessAt}>{source.lastSuccessAt.slice(0, 10)}</time>
-			</p>
-		)
-	}
+	{source.lastSuccessAt && (
+		<p class="updated">
+			as of <time datetime={source.lastSuccessAt}>{source.lastSuccessAt.slice(0, 10)}</time>
+		</p>
+	)}
 </section>
 
 <style>

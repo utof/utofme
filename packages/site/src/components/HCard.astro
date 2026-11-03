@@ -7,18 +7,18 @@ import { profiles } from "../lib/profiles.ts";
 ---
 
 <aside class="h-card">
-	<a class="u-url p-name" href="/">utof.me</a>
+	<a class="u-url p-name" href="/">
+		utof.me
+	</a>
 	<p class="p-note">Personal site and portfolio.</p>
 	<ul>
-		{
-			profiles.map((p) => (
-				<li>
-					<a class="u-url" rel="me" href={p.url}>
-						{p.label}
-					</a>
-				</li>
-			))
-		}
+		{profiles.map((p) => (
+			<li>
+				<a class="u-url" rel="me" href={p.url}>
+					{p.label}
+				</a>
+			</li>
+		))}
 	</ul>
 </aside>
 

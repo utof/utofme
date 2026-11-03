@@ -96,40 +96,40 @@ const dateStr = data.date.toISOString().split("T")[0];
 	data-summary={data.summary}
 	transition:name={`card-${id}`}
 >
-	{
-		variant === "media" ? (
-			<>
-				<slot name="thumb" />
-				<slot name="header" />
-			</>
-		) : (
-			<>
-				<slot name="header" />
-				<slot name="thumb" />
-				<slot name="meta" />
-			</>
-		)
-	}
+	{variant === "media" ? (
+		<>
+			<slot name="thumb" />
+			<slot name="header" />
+		</>
+	) : (
+		<>
+			<slot name="header" />
+			<slot name="thumb" />
+			<slot name="meta" />
+		</>
+	)}
 	<!-- Pagefind metadata: one hidden span per field; Pagefind reads textContent.
 	     See https://pagefind.app/docs/metadata/ (verified 2026-04-26) -->
-	<span data-pagefind-meta="title" hidden>{data.title}</span>
-	<span data-pagefind-meta="date" hidden>{dateStr}</span>
-	{
-		data.summary && (
-			<span data-pagefind-meta="summary" hidden>
-				{data.summary}
-			</span>
-		)
-	}
+	<span data-pagefind-meta="title" hidden>
+		{data.title}
+	</span>
+	<span data-pagefind-meta="date" hidden>
+		{dateStr}
+	</span>
+	{data.summary && (
+		<span data-pagefind-meta="summary" hidden>
+			{data.summary}
+		</span>
+	)}
 	<!-- Pagefind filters: one hidden span per filter value; textContent is the value. -->
-	<span data-pagefind-filter="type" hidden>{data.type}</span>
-	{
-		data.tags.map((tag) => (
-			<span data-pagefind-filter="tag" hidden>
-				{tag}
-			</span>
-		))
-	}
+	<span data-pagefind-filter="type" hidden>
+		{data.type}
+	</span>
+	{data.tags.map((tag) => (
+		<span data-pagefind-filter="tag" hidden>
+			{tag}
+		</span>
+	))}
 </Tag>
 
 <style>

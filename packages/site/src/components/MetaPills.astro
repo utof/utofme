@@ -16,8 +16,12 @@ const ymd = date.toISOString().slice(0, 10);
 ---
 
 <div class="pills">
-	<span class="pill" data-test="meta-date">{ymd}</span>
-	<span class="pill" data-test="meta-tags">{tagCount} {tagCount === 1 ? "tag" : "tags"}</span>
+	<span class="pill" data-test="meta-date">
+		{ymd}
+	</span>
+	<span class="pill" data-test="meta-tags">
+		{tagCount} {tagCount === 1 ? "tag" : "tags"}
+	</span>
 </div>
 
 <style>

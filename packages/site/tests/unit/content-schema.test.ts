@@ -17,7 +17,8 @@ import {
 // matches `ImageFunction`'s return type exactly (src: string, width: number,
 // height: number, format: union of string literals).
 // `z.union([z.literal("png"), ...])` is used instead of `z.enum([...])` to
-// match the `$ZodUnion<[$ZodLiteral<...>]>` shape declared in ImageFunction.
+// match the `$ZodUnion<[$ZodLiteral<...>]>` shape declared in ImageFunction
+// (Astro 7 added the `apng` member).
 // @see packages/site/node_modules/astro/dist/content/config.d.ts § ImageFunction
 const mockImage: SchemaContext["image"] = () =>
 	z.object({
@@ -33,6 +34,7 @@ const mockImage: SchemaContext["image"] = () =>
 			z.literal("gif"),
 			z.literal("svg"),
 			z.literal("avif"),
+			z.literal("apng"),
 		]),
 	});
 
