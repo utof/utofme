@@ -27,7 +27,7 @@
  */
 
 import { loadRenderers } from "astro:container";
-import { getContainerRenderer as getSvelteRenderer } from "@astrojs/svelte";
+import { getContainerRenderer as getSvelteRenderer } from "@astrojs/svelte/container-renderer";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SoundToggle from "../../src/components/SoundToggle.astro";

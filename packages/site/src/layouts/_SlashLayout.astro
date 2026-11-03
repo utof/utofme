@@ -25,7 +25,7 @@ const updatedISO = updated.toISOString();
 const updatedHuman = updated.toISOString().slice(0, 10);
 ---
 
-<BaseLayout title={title} {...description !== undefined ? { description } : {}}>
+<BaseLayout title={title} {...(description !== undefined ? { description } : {})}>
 	<main>
 		<article>
 			<header>
@@ -39,13 +39,11 @@ const updatedHuman = updated.toISOString().slice(0, 10);
 			<nav class="cross-link" aria-label="Other slash pages">
 				<h2>more about me</h2>
 				<ul>
-					{
-						siblings.map((s) => (
-							<li>
-								<a href={s.href}>{s.title}</a>
-							</li>
-						))
-					}
+					{siblings.map((s) => (
+						<li>
+							<a href={s.href}>{s.title}</a>
+						</li>
+					))}
 				</ul>
 			</nav>
 		</article>

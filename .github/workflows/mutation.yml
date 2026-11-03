@@ -23,7 +23,7 @@ jobs:
       # message "Node.js v20… is not supported by Astro!". Mirrors ci.yml.
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.12"
+          node-version: "22.23"
       - run: bun install --frozen-lockfile
       # astro sync generates .astro/types.d.ts (the virtual `astro:content` module
       # types). Stryker's typescript-checker reads tsconfig.json which `include`s

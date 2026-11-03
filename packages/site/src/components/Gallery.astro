@@ -1,0 +1,72 @@
+---
+/**
+ * Gallery.astro — 3–5 captioned figures under the project body.
+ *
+ * Why: anatomy item 5. Items with a `loop` render LoopMedia (size "gallery",
+ * no persist id); the rest are stills. Captions state claims (≤ 100 chars,
+ * enforced by the schema). Renders nothing for an empty list.
+ *
+ * @see packages/specs/specs/09-project-view.md § P9-8
+ */
+import LoopMedia from "./LoopMedia.astro";
+import ProjectStill from "./ProjectStill.astro";
+import type { GalleryItem } from "../lib/project-fields";
+
+export interface Props {
+	items: GalleryItem[];
+}
+const { items } = Astro.props;
+---
+
+{items.length > 0 && (
+	<section class="gallery" aria-label="Gallery" data-test="gallery">
+		{items.map((it) => (
+			<figure>
+				<div class="frame">
+					{it.loop ? (
+						<LoopMedia slug={it.loop} size="gallery" alt={it.alt} />
+					) : (
+						<ProjectStill
+							src={it.src}
+							alt={it.alt}
+							sizes="(min-width: 700px) 640px, 100vw"
+							focus={it.focus}
+						/>
+					)}
+				</div>
+				<figcaption>{it.caption}</figcaption>
+			</figure>
+		))}
+	</section>
+)}
+
+<style>
+	.gallery {
+		display: grid;
+		gap: var(--space-4);
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+		margin-block: var(--space-6);
+	}
+	figure {
+		margin: 0;
+	}
+	.frame {
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+		background: var(--color-surface);
+		border-radius: var(--radius-xs);
+	}
+	.frame :global(img),
+	.frame :global(video),
+	.frame :global(picture) {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	figcaption {
+		margin-top: var(--space-2);
+		font-size: var(--font-size-1);
+		color: var(--color-text-body);
+	}
+</style>

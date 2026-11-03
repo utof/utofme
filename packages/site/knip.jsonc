@@ -11,8 +11,18 @@
 	// and correctly classify ts-morph as a used dependency.
 	// Why: CLI scripts are stand-alone entry points invoked via `bun run check:docs`;
 	// they are not reachable from src/pages/** so must be declared explicitly.
-	"entry": ["src/pages/**/*.{astro,ts,js}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
-	"project": ["src/**/*.{ts,tsx,astro,svelte}", "tests/{unit,e2e}/**/*.ts", "scripts/**/*.ts"],
+	"entry": [
+		"src/pages/**/*.{astro,ts,js}",
+		"tests/{unit,e2e}/**/*.ts",
+		"scripts/**/*.ts",
+		"worker/**/*.ts"
+	],
+	"project": [
+		"src/**/*.{ts,tsx,astro,svelte}",
+		"tests/{unit,e2e}/**/*.ts",
+		"scripts/**/*.ts",
+		"worker/**/*.ts"
+	],
 	// Why: ignoreExportsUsedInFile for interfaces and type aliases lets knip skip
 	// exported types that are referenced within the same file (e.g. ListWorksOptions
 	// used as the opts parameter type in listWorks; StatsSource / Snapshot used as

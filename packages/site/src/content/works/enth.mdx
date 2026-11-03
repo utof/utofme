@@ -1,0 +1,35 @@
+---
+type: code
+title: "enth"
+date: 2026-10-27 # src: git log -1 (last commit)
+started: 2026-10-19 # src: git log --reverse (first commit)
+status: prototype
+lede: "enth is a Rust synth plugin: rebuild a random patch by ear and get scored."
+summary: "An open-source (MIT) modular synth in Rust, shipped first as a CLAP plugin. Recreate makes a patch for you to rebuild by ear and scores the result; Learn teaches sound design; Sound → patch and an agent CLI build patches for you."
+tags: ["audio", "synthesizer", "rust", "game"]
+stack: ["Rust", "egui", "CLAP", "VST3"] # src: docs/README.md:7; docs/README.md:51; crates/enth-ui/Cargo.toml:69
+links:
+  - label: "Code"
+    href: "https://github.com/utof/enth"
+cover:
+  src: "../../assets/loops/enth/poster.png"
+  alt: "The enth synth editor in a dark theme: oscillators, filters, envelopes, LFOs and effect lanes"
+  loop: "enth"
+  focus: 50
+gallery:
+  - src: "../../assets/works/enth/recreate-results.png"
+    alt: "A Recreate round's results: sound and structure scores, a checklist of matches, red rings on knobs"
+    caption: "Recreate scores how close the sound is, how close the patch is and how fast you got there" # src: docs/README.md:9
+  - src: "../../assets/works/enth/learn-browser.png"
+    alt: "The Learn panel beside the synth, listing lessons from waveforms and noise to drive and envelopes"
+    caption: "Learn teaches sound design by ear on the same synth, from waveforms to envelopes" # src: docs/README.md:11
+  - src: "../../assets/works/enth/create-done.png"
+    alt: "The Create from sound panel: a sample, a ladder of candidate patches and A/B buttons"
+    caption: "Sound → patch: give it a sample, get editable patches back, computed fully locally" # src: docs/README.md:12
+---
+
+{/* src paths are relative to enth/ under UTOFME_MEDIA_ROOT (public repo utof/enth). Screens are the committed egui_kittest snapshots in crates/enth-ui/tests/snapshots/. */}
+
+A modular synthesizer in Rust, released under MIT and shipped first as a CLAP plugin, with a game built in. {/* src: docs/README.md:7; LICENSE:1 */} Recreate generates a random patch at the difficulty you pick; you rebuild it by ear and get a score. {/* src: docs/README.md:9 */} Learn teaches sound design on the same instrument. Sound → patch turns a sample into editable patches with a CMA-ES search. {/* src: docs/README.md:11-12; docs/README.md:31 */}
+
+It is also built for AI agents: through a CLI, an LLM can create a patch, render it, read how it sounds and adjust it toward a goal. {/* src: docs/README.md:14 */}

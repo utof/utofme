@@ -1,0 +1,31 @@
+{
+	"slug": "godot-ctcs",
+	"kind": "slideshow",
+	"aspect": "16:9",
+	"fps": 10,
+	"sizes": ["card", "banner"],
+	"slides": [
+		{ "src": "godot_ctcs/artifacts/01-observatory.png", "hold": 1.4, "fit": "cover" },
+		{
+			"src": "godot_ctcs/docs/screenshots/2026-10-17/1440-67-holes-kerr.png",
+			"hold": 1.2,
+			"fit": "cover"
+		},
+		{ "src": "godot_ctcs/artifacts/06-dneg.png", "hold": 1.2, "fit": "cover" },
+		{ "src": "godot_ctcs/artifacts/03-portals.png", "hold": 1.2, "fit": "cover" },
+		{
+			"src": "godot_ctcs/docs/screenshots/2026-10-17/1440-68-rooms-green-room.png",
+			"hold": 1.4,
+			"fit": "cover"
+		}
+	],
+	"poster": { "at": 0.5 },
+	"stills": [
+		{
+			"src": "godot_ctcs/docs/screenshots/2026-10-17/1440-68-rooms-green-room.png",
+			"out": "rooms-green-room"
+		},
+		{ "src": "godot_ctcs/docs/screenshots/2026-10-17/1440-67-holes-kerr.png", "out": "holes-kerr" },
+		{ "src": "godot_ctcs/artifacts/06-dneg.png", "out": "sky-dneg-matter" }
+	]
+}

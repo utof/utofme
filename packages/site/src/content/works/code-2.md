@@ -1,5 +1,6 @@
 ---
 type: code
+fixture: true
 title: "Hello world utility"
 date: 2026-03-15
 tags: ["utility"]

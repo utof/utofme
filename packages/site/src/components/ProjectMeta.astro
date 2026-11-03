@@ -1,0 +1,88 @@
+---
+/**
+ * ProjectMeta.astro — the one-line meta row of a project page.
+ *
+ * Why: anatomy item 3 — year (or range) · status · up to 4 stack items · links.
+ * The year is the page's single `<time class="dt-published">` (microformats).
+ * A `private: true` link renders its label as plain text plus a "private for
+ * now" note (D12): the URL is not yet public, so it must not be a live link.
+ * With no `links`, the legacy "Open external →" link is kept.
+ *
+ * @see packages/specs/specs/09-project-view.md § P9-8
+ */
+import type { ProjectLink } from "../lib/project-fields";
+
+export interface Props {
+	date: Date;
+	started?: Date | undefined;
+	status?: string | undefined;
+	stack?: string[] | undefined;
+	links?: ProjectLink[] | undefined;
+	/** Legacy primary external URL (repo / youtube / listen / arxiv / pdf). */
+	externalUrl?: string | undefined;
+}
+const { date, started, status, stack = [], links = [], externalUrl } = Astro.props;
+const year = date.getUTCFullYear();
+const startYear = started?.getUTCFullYear();
+const showRange = startYear !== undefined && startYear !== year;
+---
+
+<!-- Why: items use class "m", not "item": `item` is a microformats1 root class and
+     made the parser drop dt-published from the enclosing h-entry. -->
+<p class="meta" data-test="project-meta">
+	<span class="m">
+		{showRange && <span>{startYear}–</span>}
+		<time class="dt-published" datetime={date.toISOString()}>
+			{year}
+		</time>
+	</span>
+	{status && (
+		<span class="m" data-test="meta-status">
+			{status}
+		</span>
+	)}
+	{stack.slice(0, 4).map((s) => (
+		<span class="m p-category">{s}</span>
+	))}
+	{links.map((l) => (
+		<span class="m" data-test="meta-link">
+			{l.private ? (
+				<>
+					<span>{l.label} ↗</span>{" "}
+					<span class="private" data-test="private-label">
+						private for now
+					</span>
+				</>
+			) : (
+				<a href={l.href} rel="external noopener">
+					{l.label} ↗
+				</a>
+			)}
+		</span>
+	))}
+	{links.length === 0 && externalUrl && (
+		<span class="m">
+			<a href={externalUrl} data-test="detail-external" rel="external noopener">
+				Open external →
+			</a>
+		</span>
+	)}
+</p>
+
+<style>
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-1) var(--space-3);
+		margin: var(--space-3) 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--font-size-1);
+		color: var(--color-text-muted);
+	}
+	.private {
+		font-size: 11px;
+		padding: 0 var(--space-1);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-xs);
+	}
+</style>

@@ -5,7 +5,7 @@
 
 import { loadRenderers } from "astro:container";
 import type { CollectionEntry } from "astro:content";
-import { getContainerRenderer as getSvelteRenderer } from "@astrojs/svelte";
+import { getContainerRenderer as getSvelteRenderer } from "@astrojs/svelte/container-renderer";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import { mf2 } from "microformats-parser";
 import { describe, expect, it } from "vitest";
@@ -38,6 +38,9 @@ const fakeWork = {
 		draft: false,
 		summary: undefined,
 		cover: undefined,
+		gallery: [],
+		links: [],
+		fixture: false,
 		stack: ["typescript"],
 		repo: undefined,
 	},

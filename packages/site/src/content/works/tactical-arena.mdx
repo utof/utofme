@@ -1,0 +1,37 @@
+---
+type: code
+title: "Tactical Arena"
+date: 2026-11-03 # src: git log -1 (last commit)
+started: 2026-10-11 # src: JOURNAL.md:13
+status: research
+lede: "Tactical Arena is a CS-like JAX shooter where 5v5 self-play agents gained +96 Elo." # src: JOURNAL.md:6090
+summary: "A Counter-Strike-like grid shooter in pure JAX for multi-agent RL. Self-play agents train on 2,048 generated maps and play 5 maps cut from CS2 radars. The 5v5 agent gained +96 Elo; first contact still comes at 9.6 s, pros take 22.8 s." # src: STATUS.md:43-44; STATUS.md:26; JOURNAL.md:6090; CS2_ROUNDS_REPORT.md:15
+tags: ["reinforcement-learning", "multi-agent", "jax", "game-ai"]
+stack: ["JAX", "JaxMARL", "Flax", "three.js"] # src: pyproject.toml:6-8; viewer/web/package.json:14
+links:
+  - label: "Code"
+    href: "https://github.com/utof/tactical-arena"
+    private: true
+cover:
+  src: "../../assets/loops/tactical-arena/poster.png"
+  alt: "3D replay view: smoke fills a corridor below bomb site A while a grenade arcs toward it"
+  loop: "tactical-arena"
+  focus: 40
+gallery:
+  - src: "../../assets/loops/tactical-arena-smokes/poster.png"
+    alt: "Top-down replay on a CS map: smoke clouds block two corridors and a molotov burns near site A"
+    loop: "tactical-arena-smokes"
+    caption: "Best attack round: 3 smokes cut 71 enemy firing lines and only 7 of their own" # src: JOURNAL.md:2034; JOURNAL.md:2049-2050
+  - src: "../../assets/works/tactical-arena/radar-dust2.png"
+    alt: "Dust2's CS2 radar with a 28 by 28 grid drawn over it, beside the game map compiled from it"
+    caption: "CS2 radars become 28×28 game maps; Mirage is held out for testing. CS2 map data © Valve" # src: STATUS.md:21; STATUS.md:26; STATUS.md:43-44
+  - src: "../../assets/works/tactical-arena/mesh-inferno.png"
+    alt: "3D replay of Inferno with the translucent CS2 map mesh drawn over the game's block walls"
+    caption: "The grid leaks sight: 30% of player pairs see each other vs 19% on the mesh. CS2 map data © Valve" # src: JOURNAL.md:5850
+---
+
+{/* src paths are relative to RL_playground/tactical-arena/ under UTOFME_MEDIA_ROOT; the repo is private (D12). */}
+
+A top-down grid shooter in pure JAX, modelled on Counter-Strike: 28×28 tiles, bomb defuse, fog of war, smokes and molotovs. {/* src: STATUS.md:21-23 */} Agents learn by PPO self-play on 2,048 generated maps and are scored on 5 maps cut from CS2 radars, with Mirage held out. {/* src: JOURNAL.md:15; STATUS.md:26; STATUS.md:43-44 */}
+
+After 28 training blocks the 5v5 agent sits +96 Elo (+94..+98) above its starting point. {/* src: JOURNAL.md:6082; JOURNAL.md:6090; JOURNAL.md:5413 */} It got stronger, not more CS-like: first contact still comes at 9.6 s, against 22.8 s for CS2 pros. {/* src: CS2_ROUNDS_REPORT.md:15; JOURNAL.md:6396 */} Closing that gap needs game changes, not more training. {/* src: JOURNAL.md:6399 */}

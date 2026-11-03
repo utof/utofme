@@ -65,12 +65,13 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import remarkCallout from "@r4ai/remark-callout";
-import { defineConfig, fontProviders } from "astro/config";
+import { defineConfig, envField, fontProviders } from "astro/config";
 import expressiveCode from "astro-expressive-code";
 import pagefind from "astro-pagefind";
 import fastGlob from "fast-glob";
@@ -101,6 +102,18 @@ export default defineConfig({
 	site: "https://utof.me/",
 	output: "static",
 	trailingSlash: "always",
+	// Why: Astro 7 flips the default to "jsx" (strips inter-element whitespace);
+	// pin the v6 behaviour so rendered text spacing is unchanged by the upgrade.
+	// See: packages/specs/adrs/0043-astro-7-upgrade.md
+	compressHTML: true,
+	// Why: P9-3 — `false` hides `fixture: true` works from the deployed build (deploy.yml sets it);
+	// dev/CI default true. Read only via src/lib/works-collection.ts.
+	// See: packages/specs/specs/09-project-view.md § P9-3
+	env: {
+		schema: {
+			UTOFME_FIXTURES: envField.boolean({ context: "server", access: "public", default: true }),
+		},
+	},
 	integrations: [
 		expressiveCode(),
 		mdx(),
@@ -120,13 +133,19 @@ export default defineConfig({
 		react(),
 	],
 	markdown: {
-		remarkPlugins: [
-			embedRemark,
-			[wikiLinks, { permalinks: computePermalinks() }],
-			remarkMath,
-			remarkCallout,
-		],
-		rehypePlugins: [rehypeKatex, brokenLinkRehype],
+		// Why: Astro 7 defaults to the Sätteri pipeline, which ignores remark/rehype
+		// plugins; this site's wikilink/embed/math/callout chain needs unified().
+		// Plugins are passed to unified() — the top-level options are deprecated.
+		// See: packages/specs/adrs/0043-astro-7-upgrade.md
+		processor: unified({
+			remarkPlugins: [
+				embedRemark,
+				[wikiLinks, { permalinks: computePermalinks() }],
+				remarkMath,
+				remarkCallout,
+			],
+			rehypePlugins: [rehypeKatex, brokenLinkRehype],
+		}),
 	},
 	vite: {
 		build: {

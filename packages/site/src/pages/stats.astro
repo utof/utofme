@@ -20,22 +20,21 @@ const siblings = slashSiblings("stats");
 			<header>
 				<h1 transition:name="slash-stats">Stats</h1>
 				<p class="updated">
-					snapshot generated <time datetime={snapshot.generatedAt}
-						>{snapshot.generatedAt.slice(0, 10)}</time
-					>
+					snapshot generated{" "}
+					<time datetime={snapshot.generatedAt}>{snapshot.generatedAt.slice(0, 10)}</time>
 				</p>
 			</header>
-			{sources.map((s) => <StatsSection source={s} />)}
+			{sources.map((s) => (
+				<StatsSection source={s} />
+			))}
 			<nav class="cross-link" aria-label="Other slash pages">
 				<h2>more about me</h2>
 				<ul>
-					{
-						siblings.map((s) => (
-							<li>
-								<a href={s.href}>{s.title}</a>
-							</li>
-						))
-					}
+					{siblings.map((s) => (
+						<li>
+							<a href={s.href}>{s.title}</a>
+						</li>
+					))}
 				</ul>
 			</nav>
 		</article>

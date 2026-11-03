@@ -36,7 +36,7 @@ jobs:
       # Source: packages/specs/specs/00-foundations.md § "Success criteria" LHCI note.
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.12"
+          node-version: "22.23"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -88,6 +88,10 @@ jobs:
       - name: check:docs
         run: bun run --cwd packages/site check:docs
 
+      # ── Loop media consistency (committed outputs ↔ src/data/loops.json; needs no ffmpeg) ──
+      - name: check:media
+        run: bun run --cwd packages/site check:media
+
       # ── Build (must precede vitest AND e2e) ────────────────────────────────────
       #    vitest's tests/unit/card-pagefind-attrs.test.ts reads dist/index.html for
       #    the Pagefind attribute snapshot test (Astro Container API can't render
@@ -105,6 +109,9 @@ jobs:
       #    aborts the run before browsers spin up) ────────────────────────────────
       - name: check:size (size-limit)
         run: bun run --cwd packages/site check:size
+
+      - name: check:budgets (per-route budgets)
+        run: bun run --cwd packages/site check:budgets
 
       # ── Playwright e2e (uses dist/ via `astro preview`) ────────────────────────
       - name: Install Playwright browsers

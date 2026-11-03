@@ -1,0 +1,31 @@
+---
+type: code
+title: "Modified Maxwell"
+date: 2026-02-10 # src: git log -1 (last commit)
+started: 2026-02-10 # src: git log --reverse (first commit)
+status: prototype
+lede: "Modified Maxwell is a real-time FDTD wave solver you steer with the mouse, in JAX."
+summary: "Real-time FDTD electromagnetics: a 2D Yee-grid solver with absorbing PML edges, a draggable source and dielectric blocks, plus a 3D mode. JAX runs the physics, pygfx draws it; a Taichi variant tries modified Maxwell equations."
+tags: ["physics", "simulation", "electromagnetics", "jax"]
+stack: ["JAX", "Taichi", "NVIDIA Warp", "pygfx"] # src: pyproject.toml:7-17
+links: []
+cover:
+  src: "../../assets/loops/modified-maxwell-taichi/poster.png"
+  alt: "Plot of the Ez field: a red and blue ring spreads from a point source inside a dashed PML boundary"
+  loop: "modified-maxwell-taichi"
+  focus: 50
+gallery:
+  - src: "../../assets/loops/modified-maxwell-taichi-pml/poster.png"
+    alt: "The outgoing ring reaches the dashed PML boundary and fades out toward the plot edges"
+    loop: "modified-maxwell-taichi-pml"
+    caption: "The ring runs into a 20-cell absorbing layer (PML) instead of bouncing off the walls" # src: fdtd_2d_2.py:5; fdtd_2d_2.py:124-125
+  - src: "../../assets/works/modified-maxwell-taichi/snapshot-step-298.png"
+    alt: "Final frame at step 298: faint red and blue arcs remain only in the corners of the PML region"
+    caption: "Step 298: after the pulse leaves, only faint ripples remain in the PML corners" # src: fdtd_2d_snapshot.png (plot title)
+---
+
+{/* src paths are relative to modified-maxwell-taichi/ under UTOFME_MEDIA_ROOT (local repo, no remote). README.md is empty, so every claim comes from code. */}
+
+Electromagnetic waves, simulated live. The main app runs a 2D finite-difference time-domain (FDTD) solver on a 400×400 Yee grid with absorbing PML edges. {/* src: fdtd_2d_2.py:5; fdtd_2d_2.py:59-60 */} Drag the source, right-click to drop dielectric blocks, or press Tab for a 64³ 3D scene with a slotted metal slab and a dielectric sphere. {/* src: fdtd_2d_2.py:6-19; fdtd_2d_2.py:61 */} JAX runs the physics and pygfx draws it. {/* src: fdtd_2d_2.py:33-35 */}
+
+A separate Taichi version on a 96³ grid cycles the update equations from normal to anisotropic to a flipped curl, which the code itself labels unstable. {/* src: test.py:12; test.py:39; test.py:57 */}

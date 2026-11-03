@@ -1,0 +1,33 @@
+---
+type: code
+title: "Gravity, from an idea to an orbit"
+date: 2026-09-26 # src: git log -1 (last commit)
+started: 2026-09-26 # src: git log --reverse (first commit)
+status: prototype
+lede: "A Julia + Pluto lab: drag a launch point and watch a black-hole orbit precess."
+summary: "A beginner-friendly general-relativity lab in Julia and Pluto: drag a launch point around a Schwarzschild black hole and scrub the solved orbit. SymPy and SciPy check the Julia results independently."
+tags: ["physics", "general-relativity", "julia", "education"]
+stack: ["Julia", "Pluto", "CairoMakie", "SymPy"] # src: Project.toml:2-7; README.md:48
+links: []
+cover:
+  src: "../../assets/loops/gr-demo-learn/poster.png"
+  alt: "A precessing orbit around a black hole with horizon, photon sphere and ISCO rings, beside a potential plot"
+  loop: "gr-demo-learn"
+  focus: 50
+gallery:
+  - src: "../../assets/works/gr-demo-learn/orbit.png"
+    alt: "A cyan orbit looping around a black hole with dashed reference rings, next to the effective potential curve"
+    caption: "Launched at 10M with 0.97 of circular angular momentum, the orbit precesses each pass" # src: README.md:28
+  - src: "../../assets/works/gr-demo-learn/launch-controls.png"
+    alt: "The notebook's launch section: a dark drag widget, sliders for mass and momentum, and the solved orbit below"
+    caption: "Circle, precession or plunge: angular momentum 1.00, 0.97 or 0 at a 10M launch" # src: README.md:27-29
+  - src: "../../assets/works/gr-demo-learn/launch-widget.png"
+    alt: "The cyan launch handle on a dark polar grid around the black hole, with sliders underneath"
+    caption: "The handle moves at once in the browser; the solved plots refresh as Pluto re-runs" # src: README.md:33-34
+---
+
+{/* src paths are relative to GR_demo_learn/ under UTOFME_MEDIA_ROOT (local repo, no remote). The full-page captures artifacts/pluto.png and current.png are not used: their first cell prints a local path. */}
+
+A beginner-friendly general-relativity lab in a Julia Pluto notebook. {/* src: README.md:3 */} You start with a straight worldline, then drag a launch point around a Schwarzschild black hole and scrub the solved orbit while the effective-potential marker moves. {/* src: README.md:4-6 */}
+
+SymPy derives the curvature again and SciPy solves a different reduced system; both agree with the Julia samples to about 10⁻¹². {/* src: README.md:48-49; artifacts/02_independent_check.executed.ipynb cell 7 output (max differences 1.29e-12 radius, 6.54e-13 angle) */} The scope is narrow on purpose: test particles in the equatorial plane, no spin, and integration stops at r = 2.02M. {/* src: README.md:89-92 */}

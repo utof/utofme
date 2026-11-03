@@ -1,0 +1,33 @@
+---
+type: code
+title: "THROAT"
+date: 2026-10-24 # src: git log -1 (last commit)
+started: 2026-10-15 # src: git log --reverse (first commit)
+status: prototype
+lede: "THROAT is a Godot playground where you drag equation symbols to bend wormholes and light."
+summary: "A desktop Godot playground for wormholes, light paths and causal loops. Each lab is driven by an equation card: drag a symbol and the scene changes. Sky and Rooms trace light per pixel through an Ellis wormhole."
+tags: ["physics", "general-relativity", "godot", "visualization"]
+stack: ["Godot", "GDScript", "Godot shaders"] # src: project.godot:16; README.md:8; shaders/
+links: []
+cover:
+  src: "../../assets/loops/godot-ctcs/poster.png"
+  alt: "View through an Ellis wormhole: a red-lit far sky inside a ring, framed by a blue swirl of the near sky"
+  loop: "godot-ctcs"
+  focus: 45
+gallery:
+  - src: "../../assets/works/godot-ctcs/rooms-green-room.png"
+    alt: "A green tiled room curving around a wormhole throat that shows the orange room as a sphere"
+    caption: "Every pixel follows its bent light ray, so the throat shows the other room as a ball" # src: README.md:159-161
+  - src: "../../assets/works/godot-ctcs/holes-kerr.png"
+    alt: "Diagrams of a spinning black hole's ring and a helix path that ends earlier than it began"
+    caption: "Inside a spinning hole, near the ring, circles around the axis are loops in time" # src: README.md:148-150
+  - src: "../../assets/works/godot-ctcs/sky-dneg-matter.png"
+    alt: "The wormhole sky view with an inset plot of the energy and tension the throat requires"
+    caption: "The neck stays open only with exotic matter: the total ∮(ρ−τ)dV comes out at −2a" # src: README.md:94
+---
+
+{/* src paths are relative to godot_ctcs/ under UTOFME_MEDIA_ROOT (local repo, no remote). */}
+
+A desktop Godot playground for wormholes, light paths and causal loops. {/* src: README.md:3 */} Eight labs run from Basics to Rooms, and in each one an equation card drives the scene: drag a cyan symbol to change the world, and amber results update as you go. {/* src: README.md:14-15; README.md:41-44 */}
+
+The Sky and Rooms views trace light per pixel on the GPU. {/* src: README.md:23 */} The Black holes lab runs from slow clocks and GPS to the inside of a spinning hole. {/* src: README.md:139-158 */} A badge in each lab says what is and isn't simulated. {/* src: README.md:53-54 */}

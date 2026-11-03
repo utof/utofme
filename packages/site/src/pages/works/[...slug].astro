@@ -5,8 +5,11 @@
  * @see packages/specs/plans/03-content-pipeline.md § Task 4
  * @see https://docs.astro.build/en/guides/content-collections/#rendering-body-content
  */
-import { getCollection, render } from "astro:content";
+import { render } from "astro:content";
+import { getWorksCollection } from "../../lib/works-collection";
 import WorkLayout from "../../layouts/_WorkLayout.astro";
+import { prevNext } from "../../lib/prev-next";
+import { projectFields } from "../../lib/project-fields";
 
 /**
  * Generates one static route per non-draft work entry.
@@ -17,9 +20,7 @@ import WorkLayout from "../../layouts/_WorkLayout.astro";
  * @see packages/specs/plans/03-content-pipeline.md § Task 4
  */
 export async function getStaticPaths() {
-	const entries = await getCollection("works", (e) =>
-		import.meta.env.PROD ? !e.data.draft : true,
-	);
+	const entries = await getWorksCollection((e) => (import.meta.env.PROD ? !e.data.draft : true));
 	return entries.map((entry) => ({
 		params: { slug: entry.id },
 		props: { entry },
@@ -28,8 +29,16 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+// Why: neighbours among non-fixture, non-draft works, newest first (P9-8 item 7).
+const siblings = (await getWorksCollection((e) => !e.data.draft)).filter(
+	(e) => projectFields(e.data).fixture !== true,
+);
+const neighbours = prevNext(
+	siblings.map((e) => ({ id: e.id, title: e.data.title, date: e.data.date })),
+	entry.id,
+);
 ---
 
-<WorkLayout entry={entry}>
+<WorkLayout entry={entry} neighbours={neighbours}>
 	<Content />
 </WorkLayout>

@@ -1,0 +1,35 @@
+---
+type: code
+title: "linsae"
+date: 2026-08-17 # src: git log -1 (last commit)
+started: 2026-05-26 # src: git log --reverse (first commit)
+status: prototype
+lede: "linsae is a local-first note app: a chat-style feed of Markdown files, plus a canvas."
+summary: "A local-first thinking tool: a chat-style feed of Markdown notes with wikilinks, a canvas to place them on, a PDF reader that captures excerpts and YouTube annotation. Notes are plain .md files; SQLite is a rebuilt index."
+tags: ["notes", "local-first", "electron", "react"]
+stack: ["Electron", "React", "TypeScript", "SQLite"] # src: README.md:28-31
+links:
+  - label: "Code"
+    href: "https://github.com/utof/linsae"
+cover:
+  src: "../../assets/loops/linsae/poster.png"
+  alt: "The linsae window: a column of note bubbles, amber question bubbles and a PDF card above the composer"
+  loop: "linsae"
+  focus: 50
+gallery:
+  - src: "../../assets/works/linsae/feed.png"
+    alt: "The feed: Markdown note bubbles, two amber questions in serif italic and a PDF card, with a composer below"
+    caption: "Every bubble is a plain .md file on disk; the feed is a view over them, newest last" # src: README.md:8-10
+  - src: "../../assets/works/linsae/canvas.png"
+    alt: "The canvas: white note cards on a pale surface joined by labelled arrows such as asks about and builds on"
+    caption: "The canvas is a second view of the same notes: cards, labelled edges, zoom held to 0.5–2×" # src: README.md:21
+  - src: "../../assets/works/linsae/pdf-reader.png"
+    alt: "A PDF of lecture notes docked on the right while the feed slides to the left"
+    caption: "Select text in the PDF reader to capture an excerpt that reopens at its exact page" # src: README.md:22
+---
+
+{/* src paths are relative to linsae/ under UTOFME_MEDIA_ROOT (public repo utof/linsae). Screens: a seeded 16-note vault, captured by the flinsa reference harness (linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/index.md). */}
+
+A personal thinking tool. It starts as a Telegram-style feed of Markdown notes with `[[wikilinks]]`, then grows sideways: a canvas to place the notes on, a PDF reader that captures excerpts, and YouTube videos you can annotate at a timestamp. {/* src: README.md:3-6 */}
+
+The notes are plain `.md` files on disk. SQLite with FTS5 is only an index, rebuilt from the files on every launch, so editing a note in another editor is supported. {/* src: README.md:8-11; README.md:20 */} It runs on Electron 42 and React 19, and reached version 0.8.1 in 702 commits. {/* src: README.md:28; package.json:3; git rev-list --count HEAD */}

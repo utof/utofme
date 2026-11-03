@@ -17,16 +17,16 @@ const year = new Date().getFullYear();
 	<p class="copy">© {year} utof</p>
 	<nav aria-label="Slash pages">
 		<ul>
-			{
-				SLASH_PAGES.map((p) => (
-					<li>
-						<a href={p.href}>{p.title}</a>
-					</li>
-				))
-			}
+			{SLASH_PAGES.map((p) => (
+				<li>
+					<a href={p.href}>{p.title}</a>
+				</li>
+			))}
 		</ul>
 	</nav>
-	<a class="repo" href="https://github.com/utof/utofme">source</a>
+	<a class="repo" href="https://github.com/utof/utofme">
+		source
+	</a>
 </footer>
 
 <style>

@@ -37,3 +37,77 @@
 		animation: none;
 	}
 }
+
+/* ─── Card → banner morph (spec P9-9) ─────────────────────────────────────
+ * Why: names are applied as attributes by src/lib/vt/hero-morph.ts at navigation
+ * time so only the clicked card's clipping frame is ever named `hero` (a duplicate
+ * name aborts the whole transition). `hero` sits on [data-vt-frame], never on the
+ * scaled <video>/<img>, so the snapshot carries clip + hover zoom as seen.
+ * Astro's own reduced-motion kill switch (animation: none !important on every
+ * ::view-transition-*) still applies; nothing here re-enables motion.
+ * @see packages/specs/specs/09-project-view.md § P9-9 */
+[data-vt-hero] {
+	view-transition-name: hero;
+}
+[data-vt-cap] {
+	view-transition-name: hero-cap;
+}
+/* biome-ignore lint/correctness/noUnknownTypeSelector: the argument is a view-transition-name (custom-ident), not a type selector */
+::view-transition-group(hero) {
+	animation-duration: 450ms;
+	animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+/* biome-ignore lint/correctness/noUnknownTypeSelector: the argument is a view-transition-name (custom-ident), not a type selector */
+::view-transition-old(hero) {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+/* biome-ignore lint/correctness/noUnknownTypeSelector: the argument is a view-transition-name (custom-ident), not a type selector */
+::view-transition-new(hero) {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+/* Frozen old frame leaves early: less ghosting at the crossfade. */
+/* biome-ignore lint/correctness/noUnknownTypeSelector: the argument is a view-transition-name (custom-ident), not a type selector */
+::view-transition-old(hero) {
+	animation-duration: 200ms;
+}
+/* Caption: its own group so it never stretches with the media. Forward: fades
+ * out fast (old-only). Back: returns late (new-only). */
+::view-transition-old(hero-cap) {
+	animation-duration: 120ms;
+}
+::view-transition-new(hero-cap) {
+	animation-duration: 160ms;
+	animation-delay: 300ms;
+	animation-fill-mode: backwards;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 200ms;
+}
+/* Hover-overlay canvases (dither / mosh) sit outside the card and would freeze
+ * into the snapshot; hidden from preparation until the transition finishes. */
+html[data-vt-morph] canvas[data-dither-backend],
+html[data-vt-morph] canvas[data-mosh-backend] {
+	/* biome-ignore lint/complexity/noImportantStyles: the overlay sets display inline */
+	display: none !important;
+}
+
+/* Reduced motion: same kill switch as Astro's viewtransitions.css, duplicated here.
+ * Why: Astro's copy lives in a per-page inline <style> that is absent on pages whose
+ * CSS is emitted as an external file (every /works/<slug>/ page, /garden/*, /search/);
+ * the stylesheet of the page being navigated TO is the one the transition uses, so
+ * without this copy reduced-motion users get the hero morph on arrival at a project.
+ * @see packages/specs/specs/09-project-view.md § P9-9 (AC9.5)
+ * @see node_modules/astro/components/viewtransitions.css */
+@media (prefers-reduced-motion: reduce) {
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the UA's pseudo-element animations */
+		animation: none !important;
+	}
+}

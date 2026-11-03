@@ -113,15 +113,13 @@ const {
 		     SoundToggle sits adjacent to HCard in the footer area — both are
 		     persistent UI controls that belong at page scope rather than per-route.
 		     @see packages/specs/specs/07-atmosphere.md § T2 -->
-		{
-			minimal ? (
-				<div hidden>
-					<HCard />
-				</div>
-			) : (
+		{minimal ? (
+			<div hidden>
 				<HCard />
-			)
-		}
+			</div>
+		) : (
+			<HCard />
+		)}
 		{!minimal && <SoundToggle />}
 		{!LIGHT_ONLY && <ThemeToggle />}
 		<SlashFooter />
@@ -164,6 +162,12 @@ const {
 		     @see packages/specs/specs/07-atmosphere.md § T4
 		     @see packages/specs/adrs/0039-easter-eggs-in-house.md -->
 		<KonamiListener />
+		<!-- Why: bundled module script (runs once; the document survives ClientRouter
+		     swaps) that names the card/banner frames for the card→banner morph.
+		     @see packages/specs/specs/09-project-view.md § P9-9 -->
+		<script>
+			import "../lib/vt/hero-morph.ts";
+		</script>
 	</body>
 </html>
 

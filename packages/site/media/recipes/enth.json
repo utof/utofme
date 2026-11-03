@@ -1,0 +1,40 @@
+{
+	"slug": "enth",
+	"kind": "slideshow",
+	"aspect": "16:9",
+	"fps": 10,
+	"sizes": ["card", "banner"],
+	"slides": [
+		{
+			"src": "enth/crates/enth-ui/tests/snapshots/editor_lanes_max.png",
+			"hold": 1.4,
+			"fit": "cover"
+		},
+		{
+			"src": "enth/crates/enth-ui/tests/snapshots/editor_dense_g2.png",
+			"hold": 1.0,
+			"fit": "cover"
+		},
+		{
+			"src": "enth/crates/enth-ui/tests/snapshots/recreate_before.png",
+			"hold": 1.0,
+			"fit": "cover"
+		},
+		{ "src": "enth/crates/enth-ui/tests/snapshots/recreate_hint.png", "hold": 1.0, "fit": "cover" },
+		{
+			"src": "enth/crates/enth-ui/tests/snapshots/recreate_results.png",
+			"hold": 1.4,
+			"fit": "cover"
+		},
+		{ "src": "enth/crates/enth-ui/tests/snapshots/learn_round.png", "hold": 1.2, "fit": "cover" }
+	],
+	"poster": { "at": 0.5 },
+	"stills": [
+		{
+			"src": "enth/crates/enth-ui/tests/snapshots/recreate_results.png",
+			"out": "recreate-results"
+		},
+		{ "src": "enth/crates/enth-ui/tests/snapshots/learn_browser.png", "out": "learn-browser" },
+		{ "src": "enth/crates/enth-ui/tests/snapshots/create_done.png", "out": "create-done" }
+	]
+}

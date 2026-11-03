@@ -8,7 +8,7 @@
  * @see packages/specs/specs/01-card-grid-mvp.md § URL routes added or changed
  * @see packages/specs/plans/02-interactivity.md § Task 6
  */
-import { getCollection } from "astro:content";
+import { getWorksCollection } from "../../lib/works-collection";
 import BaseLayout from "../../layouts/_BaseLayout.astro";
 import Stack from "../../components/Stack.astro";
 import Grid from "../../components/Grid.astro";
@@ -24,7 +24,7 @@ import FilterBar from "../../components/FilterBar.svelte";
 import Preview from "../../components/Preview.svelte";
 import { listWorks } from "../../lib/works";
 
-const all = await getCollection("works", ({ data }) =>
+const all = await getWorksCollection(({ data }) =>
 	import.meta.env.PROD ? data.draft !== true : true,
 );
 const works = listWorks(all);
@@ -50,23 +50,21 @@ const ThumbFor = {
 			<FilterBar client:load />
 
 			<Grid as="ul" class="works-grid" data-test="works-grid">
-				{
-					works.map((entry, i) => {
-						const Thumb = ThumbFor[entry.data.type];
-						return (
-							<li style={`--i: ${i}`}>
-								<Card data={entry.data} id={entry.id} body={entry.body}>
-									<header slot="header">
-										<TypeGlyph type={entry.data.type} />
-										<h2>{entry.data.title}</h2>
-									</header>
-									<Thumb slot="thumb" />
-									<MetaPills slot="meta" date={entry.data.date} tagCount={entry.data.tags.length} />
-								</Card>
-							</li>
-						);
-					})
-				}
+				{works.map((entry, i) => {
+					const Thumb = ThumbFor[entry.data.type];
+					return (
+						<li style={`--i: ${i}`}>
+							<Card data={entry.data} id={entry.id} body={entry.body}>
+								<header slot="header">
+									<TypeGlyph type={entry.data.type} />
+									<h2>{entry.data.title}</h2>
+								</header>
+								<Thumb slot="thumb" />
+								<MetaPills slot="meta" date={entry.data.date} tagCount={entry.data.tags.length} />
+							</Card>
+						</li>
+					);
+				})}
 			</Grid>
 		</Stack>
 	</main>
