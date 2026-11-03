@@ -9,10 +9,10 @@
  * @see packages/specs/plans/06-indieweb.md § Task 2
  */
 
-import { getCollection } from "astro:content";
 import rss from "@astrojs/rss";
 import type { APIRoute } from "astro";
 import { toRssItem } from "../../lib/feed.ts";
+import { getWorksCollection } from "../../lib/works-collection.ts";
 
 /**
  * Astro GET handler for the works-only RSS feed.
@@ -21,7 +21,7 @@ import { toRssItem } from "../../lib/feed.ts";
  * @see packages/specs/specs/06-indieweb.md § Architecture (RSS feed pipeline)
  */
 export const GET: APIRoute = async (context) => {
-	const works = await getCollection("works", (e) => e.data.draft !== true);
+	const works = await getWorksCollection((e) => e.data.draft !== true);
 
 	const siteStr = context.site?.toString() ?? "https://utof.me/";
 

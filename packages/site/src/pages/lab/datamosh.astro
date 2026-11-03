@@ -16,14 +16,14 @@
  * @see packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
  * @see packages/site/src/pages/index.astro
  */
-import { getCollection } from "astro:content";
+import { getWorksCollection } from "../../lib/works-collection";
 import BaseLayout from "../../layouts/_BaseLayout.astro";
 import Card from "../../components/Card.astro";
 import CoverImage from "../../components/CoverImage.astro";
 import MoshLab from "../../components/lab/MoshLab.svelte";
 import { listWorks } from "../../lib/works";
 
-const all = await getCollection("works", ({ data }) =>
+const all = await getWorksCollection(({ data }) =>
 	import.meta.env.PROD ? data.draft !== true : true,
 );
 // Why: `cover-fixture` is the Phase 3 pipeline test image (a flat blue rectangle): useless for judging a smear.

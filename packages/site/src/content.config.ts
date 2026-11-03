@@ -18,6 +18,12 @@ import { defineCollection, type SchemaContext } from "astro:content";
 import { file, glob } from "astro/loaders";
 import { z } from "astro/zod";
 
+/** Kebab-case key into `src/data/loops.json` (P9-4). Why: loop slugs double as file names. */
+const loopSlug = z
+	.string()
+	.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+	.max(64);
+
 /**
  * Discriminated-union schema factory over the five work types.
  *
@@ -30,6 +36,12 @@ import { z } from "astro/zod";
  * @see packages/specs/adrs/0007-single-collection-discriminated-union.md
  */
 export function worksSchema({ image }: SchemaContext) {
+	const media = z.object({
+		src: image(),
+		alt: z.string().min(1).max(200),
+		loop: loopSlug.optional(),
+		focus: z.number().int().min(0).max(100).default(50),
+	});
 	const baseFields = {
 		title: z.string(),
 		slug: z.string().optional(),
@@ -38,41 +50,74 @@ export function worksSchema({ image }: SchemaContext) {
 		tags: z.array(z.string()).default([]),
 		draft: z.boolean().default(false),
 		summary: z.string().max(240).optional(),
-		cover: z.object({ src: image(), alt: z.string() }).optional(),
+		cover: media.optional(),
+		gallery: z
+			.array(media.extend({ caption: z.string().min(1).max(100) }))
+			.max(5)
+			.default([]),
+		lede: z.string().min(1).max(120).optional(),
+		status: z.enum(["shipped", "prototype", "research", "archived"]).optional(),
+		started: z.coerce.date().optional(),
+		links: z
+			.array(
+				z.object({
+					label: z.string().min(1).max(24),
+					href: z.url(),
+					private: z.boolean().default(false),
+				}),
+			)
+			.max(5)
+			.default([]),
+		fixture: z.boolean().default(false),
 	};
+	const stack = z.array(z.string().min(1)).max(8).optional();
 
-	return z.discriminatedUnion("type", [
-		z.object({
-			type: z.literal("code"),
-			repo: z.url().optional(),
-			stack: z.array(z.string()),
-			...baseFields,
-		}),
-		z.object({
-			type: z.literal("video"),
-			duration: z.number(),
-			youtube: z.string().optional(),
-			...baseFields,
-		}),
-		z.object({
-			type: z.literal("music"),
-			bpm: z.number().optional(),
-			listen: z.url().optional(),
-			...baseFields,
-		}),
-		z.object({
-			type: z.literal("math"),
-			pdf: z.string().optional(),
-			arxiv: z.string().optional(),
-			...baseFields,
-		}),
-		z.object({
-			type: z.literal("writing"),
-			wordCount: z.number().optional(),
-			readingTime: z.number().optional(),
-			...baseFields,
-		}),
-	]);
+	return z
+		.discriminatedUnion("type", [
+			z.object({
+				type: z.literal("code"),
+				repo: z.url().optional(),
+				stack: z.array(z.string()),
+				...baseFields,
+			}),
+			z.object({
+				type: z.literal("video"),
+				stack,
+				duration: z.number(),
+				youtube: z.string().optional(),
+				...baseFields,
+			}),
+			z.object({
+				type: z.literal("music"),
+				stack,
+				bpm: z.number().optional(),
+				listen: z.url().optional(),
+				...baseFields,
+			}),
+			z.object({
+				type: z.literal("math"),
+				stack,
+				pdf: z.string().optional(),
+				arxiv: z.string().optional(),
+				...baseFields,
+			}),
+			z.object({
+				type: z.literal("writing"),
+				stack,
+				wordCount: z.number().optional(),
+				readingTime: z.number().optional(),
+				...baseFields,
+			}),
+		])
+		.superRefine((d, ctx) => {
+			if (d.started && d.started.getTime() > d.date.getTime()) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["started"],
+					message: "started must be on or before date",
+				});
+			}
+		});
 }
 
 /**

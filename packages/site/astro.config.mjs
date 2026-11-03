@@ -70,7 +70,7 @@ import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import remarkCallout from "@r4ai/remark-callout";
-import { defineConfig, fontProviders } from "astro/config";
+import { defineConfig, envField, fontProviders } from "astro/config";
 import expressiveCode from "astro-expressive-code";
 import pagefind from "astro-pagefind";
 import fastGlob from "fast-glob";
@@ -101,6 +101,14 @@ export default defineConfig({
 	site: "https://utof.me/",
 	output: "static",
 	trailingSlash: "always",
+	// Why: P9-3 — `false` hides `fixture: true` works from the deployed build (deploy.yml sets it);
+	// dev/CI default true. Read only via src/lib/works-collection.ts.
+	// See: packages/specs/specs/09-project-view.md § P9-3
+	env: {
+		schema: {
+			UTOFME_FIXTURES: envField.boolean({ context: "server", access: "public", default: true }),
+		},
+	},
 	integrations: [
 		expressiveCode(),
 		mdx(),

@@ -1,5 +1,6 @@
 ---
 type: music
+fixture: true
 title: "Production beat study"
 date: 2026-03-25
 tags: ["beat", "study"]

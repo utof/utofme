@@ -16,7 +16,7 @@
  * @see packages/specs/adrs/0040-light-only-masonry-home.md
  * @see packages/specs/specs/01-card-grid-mvp.md § URL routes added or changed
  */
-import { getCollection } from "astro:content";
+import { getWorksCollection } from "../lib/works-collection";
 import BaseLayout from "../layouts/_BaseLayout.astro";
 import Card from "../components/Card.astro";
 import CoverImage from "../components/CoverImage.astro";
@@ -27,7 +27,7 @@ import MathThumb from "../components/thumbs/MathThumb.astro";
 import WritingThumb from "../components/thumbs/WritingThumb.astro";
 import { listWorks } from "../lib/works";
 
-const all = await getCollection("works", ({ data }) =>
+const all = await getWorksCollection(({ data }) =>
 	import.meta.env.PROD ? data.draft !== true : true,
 );
 const works = listWorks(all);

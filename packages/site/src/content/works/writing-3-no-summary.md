@@ -1,5 +1,6 @@
 ---
 type: writing
+fixture: true
 title: "Writing without a summary"
 date: 2026-01-10
 tags: ["no-summary"]
