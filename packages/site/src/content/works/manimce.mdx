@@ -1,0 +1,36 @@
+---
+type: math
+title: "Manim Derivations"
+date: 2022-10-27 # src: media/videos/manimce/1080p60/evans.mp4 (newest render, file mtime)
+started: 2022-07-30 # src: media/videos/scene/1080p60/SquareToCircle.mp4 (oldest render, file mtime)
+status: archived
+lede: "Manim Derivations is a 2022 set of tensor-calculus steps animated in Jupyter with Manim." # src: file mtimes above
+summary: "Animated derivations from Cartan geometry, written as Manim cells in a Jupyter notebook: tetrads and the tetrad postulate, a covariant derivative with the spin connection, Jacobians, a tangent plane on a sphere."
+tags: ["math", "differential-geometry", "animation", "manim"]
+stack: ["Manim CE", "Python", "Jupyter", "LaTeX"] # src: media/images/manimce/evans_ManimCE_v0.16.0.post0.png (version in filename)
+links: []
+cover:
+  src: "../../assets/loops/manimce/poster.png"
+  alt: "A checkered blue sphere on black with an orange tangent vector drawn on its surface"
+  loop: "manimce"
+  focus: 50
+gallery:
+  - src: "../../assets/loops/manimce-tetrad/poster.png"
+    alt: "Three stacked equations for the connection Gamma, with the tetrad factors highlighted in green"
+    loop: "manimce-tetrad"
+    caption: "Multiplying both sides by the tetrad turns Γ into the tetrad postulate, one line at a time" # src: test.ipynb cell tetradpostulate34, lines 5-44
+  - src: "../../assets/loops/manimce-product-rule/poster.png"
+    alt: "The covariant derivative of V rewritten term by term, with the product rule written below it"
+    loop: "manimce-product-rule"
+    caption: "The product rule (xy)′ = x′y + xy′ splits ∂(qV) inside the covariant derivative" # src: test.ipynb cell cov_der2, lines 10-11
+  - src: "../../assets/loops/manimce-sphere/poster.png"
+    alt: "A checkered blue sphere where a green tangent plane fades in under a green vector"
+    loop: "manimce-sphere"
+    caption: "A vector on a sphere of radius 2 gives way to the tangent plane it lives in" # src: test.ipynb cell d1spherewtangentplane, lines 6, 24
+---
+
+{/* src paths are relative to manimce/ under UTOFME_MEDIA_ROOT. No git and no README: claims come from the notebooks and the rendered files. */}
+
+Animated derivations from Cartan geometry, made in 2022 {/* src: media/videos (file mtimes 2022-07-30 to 2022-10-27) */}. Each scene is a `%%manim` cell in a Jupyter notebook: the tetrad postulate, a covariant derivative expanded with the spin connection, the Jacobian from Cartesian to polar coordinates, a tangent plane on a sphere. Equations rewrite in place with `TransformMatchingTex`, so every step shows which symbols moved {/* src: test.ipynb cell cov_der2, lines 11, 31 */}.
+
+The main notebook holds 29 scenes, and the render folder holds 49 clips at 1080p60 from Manim Community v0.16 {/* src: test.ipynb (29 %%manim cells, counted); media/videos/manimce/1080p60 (49 .mp4, counted); media/images/manimce/evans_ManimCE_v0.16.0.post0.png */}. It has no repository.
