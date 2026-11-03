@@ -41,9 +41,31 @@ export interface Props {
 	 * `string | undefined` (not `string?`) for `exactOptionalPropertyTypes`.
 	 */
 	sizes?: string | undefined;
+	/**
+	 * Load eagerly (not `loading="lazy"`).
+	 *
+	 * Why: the first cards on `/` are above the fold (masonry is column-major, so
+	 * the first four DOM cards cover the top of both columns); lazy-loading the
+	 * LCP image is an anti-pattern. `| undefined` for `exactOptionalPropertyTypes`.
+	 *
+	 * @see https://web.dev/articles/optimize-lcp
+	 */
+	eager?: boolean | undefined;
+	/**
+	 * `fetchpriority="high"` + eager + sync decode; at most one per page (the LCP image).
+	 *
+	 * @see https://docs.astro.build/en/reference/modules/astro-assets/#picture-
+	 */
+	priority?: boolean | undefined;
 }
 
-const { src, alt, sizes = "(min-width: 800px) 800px, 100vw" } = Astro.props;
+const {
+	src,
+	alt,
+	sizes = "(min-width: 800px) 800px, 100vw",
+	eager = false,
+	priority = false,
+} = Astro.props;
 const isAnimatedFormat = src.format === "gif";
 ---
 
@@ -53,8 +75,9 @@ const isAnimatedFormat = src.format === "gif";
 		width={src.width}
 		height={src.height}
 		alt={alt}
-		loading="lazy"
+		loading={eager || priority ? "eager" : "lazy"}
 		decoding="async"
+		fetchpriority={priority ? "high" : undefined}
 		style="max-width:100%;max-height:80vh;width:auto;height:auto"
 	/>
 ) : (
@@ -64,8 +87,9 @@ const isAnimatedFormat = src.format === "gif";
 		widths={[320, 640, 960, 1280]}
 		sizes={sizes}
 		alt={alt}
-		loading="lazy"
+		loading={eager || priority ? "eager" : "lazy"}
 		decoding="async"
+		fetchpriority={priority ? "high" : undefined}
 		style="max-width:100%;max-height:80vh;width:auto;height:auto"
 	/>
 )}
