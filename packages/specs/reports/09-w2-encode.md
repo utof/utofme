@@ -73,7 +73,7 @@ check:media on a tree with one deleted file → "missing", exit 5; orphan / byte
 
 ## Tests and gates (packages/site)
 
-- New: `flash-lint` 23, `loops-core` 31, `check-media` 6, `flash-lint-ffmpeg` 2 (real ffmpeg round trip: a 3 Hz strobe H.264 fails; the committed fixture does not; skipped if `zscale` missing) = 64 tests, all pass.
+- New: `flash-lint` 23, `loops-core` 33, `check-media` 6, `flash-lint-ffmpeg` 2 (real ffmpeg round trip: a 3 Hz strobe H.264 fails; the committed fixture does not; skipped if `zscale` missing) = 64 tests, all pass.
   Detector tests: static, 1 Hz pass, 2 Hz (window 5, sustained fail), 3 Hz and 5 Hz fail, contrast reversal fail, localized flash pass/fail by size and by render width (same region flips pass→fail from 1200 → 5000 CSS px), seam case (cyclic max > linear max, linear alone not a fail), saturated-red flash with constant luminance, dark-rule on/off, closed-window edge, field geometry vs the appendix table.
   fast-check: adding a frame never decreases max events per window (non-cyclic); scaling luminances by c < 1 never creates events; manifest round trip; recipe-order-independent canonical JSON.
 - `biome check .`: 0 errors (25 pre-existing infos, none in my files). `astro check`: 0 errors / 0 warnings. `type-coverage --at-least 100 --strict`: 100.00 % (25137/25137). `knip`: clean (only the pre-existing "remove lefthook from ignoreDependencies" hint). `check:docs`: pass. `depcruise`: no violations.
