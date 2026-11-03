@@ -1,0 +1,22 @@
+{
+	"slug": "gr-demo-learn",
+	"kind": "slideshow",
+	"aspect": "16:9",
+	"fps": 10,
+	"sizes": ["card", "banner"],
+	"slides": [
+		{ "src": "GR_demo_learn/artifacts/orbit.png", "hold": 1.6, "fit": "cover" },
+		{ "src": "GR_demo_learn/artifacts/compact-final.png", "hold": 1.4, "fit": "cover" },
+		{ "src": "GR_demo_learn/artifacts/controls-viewport.png", "hold": 1.4, "fit": "cover" }
+	],
+	"poster": { "at": 0.5 },
+	"stills": [
+		{ "src": "GR_demo_learn/artifacts/orbit.png", "out": "orbit" },
+		{
+			"src": "GR_demo_learn/artifacts/compact-final.png",
+			"crop": { "x": 0, "y": 215, "w": 1440, "h": 810 },
+			"out": "launch-controls"
+		},
+		{ "src": "GR_demo_learn/artifacts/controls-viewport.png", "out": "launch-widget" }
+	]
+}
