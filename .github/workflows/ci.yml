@@ -106,6 +106,9 @@ jobs:
       - name: check:size (size-limit)
         run: bun run --cwd packages/site check:size
 
+      - name: check:budgets (per-route budgets)
+        run: bun run --cwd packages/site check:budgets
+
       # ── Playwright e2e (uses dist/ via `astro preview`) ────────────────────────
       - name: Install Playwright browsers
         run: cd packages/site && npx playwright install --with-deps chromium
