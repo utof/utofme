@@ -109,7 +109,16 @@ describe("buildMasterGraph", () => {
 			}),
 			"card",
 		);
-		expect(g.inputArgs).toEqual(["-loop", "1", "-framerate", "30", "-t", "1.2", "-i", "s/still.png"]);
+		expect(g.inputArgs).toEqual([
+			"-loop",
+			"1",
+			"-framerate",
+			"30",
+			"-t",
+			"1.2",
+			"-i",
+			"s/still.png",
+		]);
 		expect(g.filterComplex).not.toContain("trim=");
 	});
 	it("uses the banner frame for banner and looped stills for slideshows", () => {
