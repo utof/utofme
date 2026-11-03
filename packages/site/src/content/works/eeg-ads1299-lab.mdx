@@ -1,0 +1,35 @@
+---
+type: code
+title: "ADS1299 Learning Lab"
+date: 2026-11-01 # src: git log -1 (last commit)
+started: 2026-09-22 # src: git log --reverse (first commit)
+status: prototype
+lede: "ADS1299 Learning Lab is a Python sandbox for an EEG front end, before any hardware." # src: README.md:1; README.md:3
+summary: "A runnable Python lab for an EEG front end: synthetic EEG-like signals, an illustrative input circuit, signed 24-bit conversion, signal quality and a small ML experiment, plus a bench-only ADS1299-4 + ESP32-S3 baseline."
+tags: ["electronics", "eeg", "signal-processing", "python"]
+stack: ["Python", "ESP32-S3", "ngspice", "KiCad"] # src: README.md:5; README.md:27; README.md:67
+links:
+  - label: "Code"
+    href: "https://github.com/utof/eeg_ads1299_lab"
+cover:
+  src: "../../assets/loops/eeg-ads1299-lab/poster.png"
+  alt: "Plot of a synthetic EEG channel over 25 seconds with one large artifact spike near the start"
+  loop: "eeg-ads1299-lab"
+  focus: 50
+gallery:
+  - src: "../../assets/works/eeg-ads1299-lab/synthetic-psd.png"
+    alt: "Power spectra for eyes-open and eyes-closed labels, with peaks at 6, 10, 20 and 50 Hz"
+    caption: "Ground truth is planted: eyes-closed epochs carry deliberately stronger 10 Hz activity" # src: results/demo/synthetic_psd.png (plot title); docs/RESULTS.md:55
+  - src: "../../assets/works/eeg-ads1299-lab/filter-response.png"
+    alt: "Gain against frequency: a flat passive input network and an ADS1299 sinc³ curve falling to about −12 dB"
+    caption: "The ADS1299's own sinc³ decimation filter rolls off far more than the passive input network" # src: docs/LEARNING_GUIDE.md:146; results/demo/model_filter_response.png
+  - src: "../../assets/works/eeg-ads1299-lab/synthetic-ml.png"
+    alt: "Six bars at balanced accuracy 1.0, one per held-out synthetic session, above a dashed chance line at 0.5"
+    caption: "Balanced accuracy 1.0 on 6 held-out synthetic sessions: a plumbing test, not brain decoding" # src: results/demo/analysis_report.json:2, :16-81; results/demo/synthetic_ml.png (plot title)
+---
+
+{/* src paths are relative to eeg_ads1299_lab/ under UTOFME_MEDIA_ROOT (public repo utof/eeg_ads1299_lab). */}
+
+A Python lab for learning an EEG front end before buying anything {/* src: README.md:3 */}. It generates EEG-like signals, runs them through an illustrative electrode circuit and signed 24-bit conversion, checks signal quality and ends with a small machine-learning experiment {/* src: README.md:3 */}. A Rev A baseline picks an ADS1299-4 board with an ESP32-S3, and the firmware is a bench-only starter {/* src: README.md:5 */}.
+
+It is plain about what it is not: not a finished EEG recorder, not a validated PCB, and not permission to connect a circuit to a person {/* src: README.md:5 */}.

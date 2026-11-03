@@ -1,0 +1,23 @@
+{
+	"slug": "eeg-ads1299-lab",
+	"kind": "slideshow",
+	"aspect": "16:9",
+	"fps": 10,
+	"sizes": ["card", "banner"],
+	"slides": [
+		{ "src": "eeg_ads1299_lab/results/demo/synthetic_trace.png", "hold": 1.4, "fit": "cover" },
+		{ "src": "eeg_ads1299_lab/results/demo/synthetic_psd.png", "hold": 1.4, "fit": "cover" },
+		{
+			"src": "eeg_ads1299_lab/results/demo/model_filter_response.png",
+			"hold": 1.2,
+			"fit": "cover"
+		},
+		{ "src": "eeg_ads1299_lab/results/demo/synthetic_ml.png", "hold": 1.2, "fit": "cover" }
+	],
+	"poster": { "at": 0.5 },
+	"stills": [
+		{ "src": "eeg_ads1299_lab/results/demo/synthetic_psd.png", "out": "synthetic-psd" },
+		{ "src": "eeg_ads1299_lab/results/demo/model_filter_response.png", "out": "filter-response" },
+		{ "src": "eeg_ads1299_lab/results/demo/synthetic_ml.png", "out": "synthetic-ml" }
+	]
+}
