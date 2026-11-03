@@ -404,16 +404,17 @@ describe("R6 loop file sizes", () => {
 		expect(errors(r, "R6")).toHaveLength(1);
 	});
 
-	it("banner: ≤1,000,000 B, warn above 600 KB", () => {
+	it("banner (1080p): ≤2.5 MB, warn above 1.5 MB", () => {
+		const MAX = 2.5 * 1024 * KB;
 		const r = (bytes: number) =>
 			rule("/works/x/", "r6-banner.html", {
 				"loops/banner.av1.mp4": bytes,
 				"loops/banner.h264.mp4": 1,
 			});
-		expect(r(500 * KB).findings).toEqual([]);
-		expect(warns(r(700 * KB), "R6")).toHaveLength(1);
-		expect(errors(r(1_000_001), "R6")).toHaveLength(1);
-		expect(errors(r(1_000_000), "R6")).toEqual([]);
+		expect(r(1000 * KB).findings).toEqual([]);
+		expect(warns(r(1600 * KB), "R6")).toHaveLength(1);
+		expect(errors(r(MAX + 1), "R6")).toHaveLength(1);
+		expect(errors(r(MAX), "R6")).toEqual([]);
 	});
 
 	it("errors on a missing file and on an unknown data-loop-size", () => {
