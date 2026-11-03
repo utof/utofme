@@ -27,7 +27,7 @@ const sha8Schema = z.string().regex(/^[0-9a-f]{8}$/, "expected 8 hex chars (sha2
  * is derived from `ffprobe`, never hard-coded.
  * @see https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/codecs_parameter
  */
-export const loopSourceSchema = z.strictObject({
+const loopSourceSchema = z.strictObject({
 	url: z.string().regex(/^\/loops\/[a-z0-9-]+\/(?:card|banner)\.[0-9a-f]{8}\.(?:av1|h264)\.mp4$/),
 	type: z.string().regex(/^video\/mp4; codecs="(?:av01\.[^"]+|avc1\.[0-9A-Fa-f]{6})"$/),
 	bytes: z.number().int().positive(),
@@ -38,7 +38,7 @@ export const loopSourceSchema = z.strictObject({
  * `<source>` order (AV1 first, H.264 fallback second).
  * @see packages/specs/specs/09-project-view.md § P9-4
  */
-export const loopSizeSchema = z.strictObject({
+const loopSizeSchema = z.strictObject({
 	width: z.number().int().positive(),
 	height: z.number().int().positive(),
 	sources: z.array(loopSourceSchema).min(1),
@@ -55,7 +55,7 @@ export const loopSizeSchema = z.strictObject({
  * - `status`: `pass` or `warn` (a `fail` is never committed).
  * @see packages/specs/specs/09-appendix-flash-lint.md § 3
  */
-export const loopFlashSchema = z.strictObject({
+const loopFlashSchema = z.strictObject({
 	maxEventsPerWindow: z.number().int().nonnegative(),
 	maxPerSecond: z.number().nonnegative(),
 	renderWidthCss: z.strictObject({
