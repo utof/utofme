@@ -1,0 +1,29 @@
+---
+/**
+ * STUB — replaced by W4 (p09/w4-card). The coordinator takes W4's version at merge.
+ *
+ * Why: lets the project page and the morph compile before W4 lands. Renders the
+ * contract's outer frame only (no poster, no <video>), so there is nothing to
+ * persist yet.
+ *
+ * @see packages/specs/specs/09-project-view.md § P9-6
+ */
+export interface Props {
+	slug: string;
+	size: "card" | "banner" | "gallery";
+	alt: string;
+	eager?: boolean | undefined;
+	priority?: boolean | undefined;
+	persistId?: string | undefined;
+	class?: string | undefined;
+}
+const { slug, size, alt, class: className } = Astro.props;
+---
+
+<div
+	class:list={["loop-frame", className]}
+	data-loop-frame={size}
+	data-slug={slug}
+	role="img"
+	aria-label={alt}
+></div>

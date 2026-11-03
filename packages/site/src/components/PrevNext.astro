@@ -1,0 +1,49 @@
+---
+/**
+ * PrevNext.astro — text-only prev / all / next links at the foot of a project.
+ *
+ * Why: anatomy item 7. Text only (no media) so a link can never collide with a
+ * persisted `loop-<slug>` id.
+ *
+ * @see packages/specs/specs/09-project-view.md § P9-8
+ */
+import { detailUrl } from "../lib/works";
+
+export interface Props {
+	prev: { id: string; title: string } | null;
+	next: { id: string; title: string } | null;
+}
+const { prev, next } = Astro.props;
+---
+
+<nav class="prevnext" aria-label="More projects" data-test="prev-next">
+	{prev ? (
+		<a href={detailUrl(prev)} rel="prev" data-test="prev">
+			← {prev.title}
+		</a>
+	) : (
+		<span />
+	)}
+	<a href="/works/" data-test="all-projects">
+		All projects
+	</a>
+	{next ? (
+		<a href={detailUrl(next)} rel="next" data-test="next">
+			{next.title} →
+		</a>
+	) : (
+		<span />
+	)}
+</nav>
+
+<style>
+	.prevnext {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--space-4);
+		margin-block: var(--space-8) 0;
+		padding-top: var(--space-4);
+		border-top: 1px solid var(--color-border);
+		font-size: var(--font-size-ui);
+	}
+</style>

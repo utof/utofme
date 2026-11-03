@@ -118,21 +118,21 @@ test("7. axe clean on /works/code-2/", async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// Case 8 — transition:name="card-<id>" on exactly ONE element (the h1)
+// Case 8 — no static view-transition name on the detail page
+// Why (phase 9, P9-9): the h1 no longer carries `transition:name`; the card →
+// banner morph names its frames at navigation time (src/lib/vt/hero-morph.ts),
+// so a freshly loaded detail page must have NO element named card-*/hero.
 // ---------------------------------------------------------------------------
 
-test("8. transition:name=card-code-2 on exactly one element", async ({ page }) => {
+test("8. no static card-*/hero view-transition-name on a fresh detail page", async ({ page }) => {
 	await page.goto("/works/code-2/");
-	// Astro renders transition:name as a style attribute with view-transition-name
-	// OR as a data-astro-transition attribute; check all elements for the style value.
 	const count = await page.evaluate(() => {
-		const all = Array.from(document.querySelectorAll("*"));
-		return all.filter((el) => {
+		return Array.from(document.querySelectorAll("*")).filter((el) => {
 			const vtn = getComputedStyle(el).getPropertyValue("view-transition-name").trim();
-			return vtn === "card-code-2";
+			return vtn === "card-code-2" || vtn === "hero";
 		}).length;
 	});
-	expect(count).toBe(1);
+	expect(count).toBe(0);
 });
 
 // ---------------------------------------------------------------------------

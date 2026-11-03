@@ -93,10 +93,16 @@ test("5. original JPEG not in dist/assets/; optimised variants in dist/_astro/",
 // Case 6 — loading="lazy" on the <img> fallback inside <picture>
 // ---------------------------------------------------------------------------
 
-test("6. <img> inside <picture> has loading='lazy'", async ({ page }) => {
+test("6. banner <img> inside <picture> loads eagerly (LCP) with high priority", async ({
+	page,
+}) => {
+	// Why (phase 9, P9-8): the detail-page cover is now the banner, the page's LCP
+	// element, so it is eager + fetchpriority=high instead of lazy. Lazy loading of
+	// below-the-fold stills is covered by the gallery.
 	await page.goto("/works/cover-fixture/");
 	const img = page.locator("picture img");
-	await expect(img).toHaveAttribute("loading", "lazy");
+	await expect(img).toHaveAttribute("loading", "eager");
+	await expect(img).toHaveAttribute("fetchpriority", "high");
 });
 
 // ---------------------------------------------------------------------------
