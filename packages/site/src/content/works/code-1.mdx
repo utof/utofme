@@ -5,7 +5,7 @@ date: 2026-04-01
 tags: ["demo", "expressive-code"]
 stack: ["typescript", "astro"]
 repo: "https://github.com/utof/demo-alpha"
-summary: "A demo code work showcasing Expressive Code rendering with title, copy button, and dual-theme support."
+summary: "A demo code work showcasing Expressive Code rendering with title, copy button, and the light github theme."
 cover:
   src: "../../assets/works/mock/hilbert-curve.gif"
   alt: "Animated Hilbert space-filling curve with a rainbow gradient"
@@ -13,8 +13,8 @@ cover:
 
 This project demonstrates how Expressive Code renders syntax-highlighted code blocks
 on the site. The integration runs at build time via `astro-expressive-code`, producing
-static HTML with embedded CSS for both light and dark themes — no client JS required
-for the highlight itself.
+static HTML with the highlighting styles embedded — no client JS required for the
+highlight itself.
 
 The following snippet shows a minimal usage pattern. The `title="example.js"` directive
 in the fence's meta-string drives EC's frame-title rendering; the copy button is enabled
@@ -25,6 +25,7 @@ globally via `ec.config.mjs`.
 console.log("hello");
 ```
 
-Each code block ships two theme variants (`github-light` and `github-dark`), toggled by
-a `prefers-color-scheme` media query injected by EC. No JavaScript is needed to switch
-themes — the browser applies the correct CSS block automatically.
+The site is light-only, so every code block renders with the `github-light` theme
+regardless of the visitor's operating-system colour scheme. `ec.config.mjs` still
+lists `github-dark`, but with `useDarkModeMediaQuery: false` its styles only apply under
+a `[data-theme='github-dark']` attribute that nothing sets.

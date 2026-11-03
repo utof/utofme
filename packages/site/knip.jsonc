@@ -27,12 +27,13 @@
 	// src/pages/garden/index.astro + [slug].astro — both files are now
 	// consumed and no longer need suppression.
 	// See packages/specs/plans/05-garden.md § Task 9
-	// Why (masonry MVP): Cluster + Frame were only rendered by the Phase-0
-	// typography sentinel on `/`, which the light-only masonry home no longer
-	// renders ("hide, don't delete"). Kept for the primitives e2e + later pages.
-	// Drop these entries once they are used again or deliberately deleted.
+	// Note (masonry MVP): Cluster + Frame were only rendered by the Phase-0
+	// typography sentinel on `/`, which the light-only masonry home no longer renders
+	// ("hide, don't delete"). They used to be listed in `ignoreFiles` for that reason;
+	// tests/unit/primitives.test.ts now imports them (Container API contract test), so
+	// knip traces them and the entries are gone. If that test is removed, re-add them or
+	// delete the components.
 	// See packages/specs/adrs/0040-light-only-masonry-home.md
-	"ignoreFiles": ["src/components/Cluster.astro", "src/components/Frame.astro"],
 	"ignoreDependencies": [
 		// Why: wrangler is a CLI-only dev dep (no `import` from source). It powers
 		// the deploy step (cloudflare/wrangler-action@v3 in deploy.yml) and gives

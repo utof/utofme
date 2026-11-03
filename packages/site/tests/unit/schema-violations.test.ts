@@ -9,7 +9,12 @@ import { describe, expect, it } from "vitest";
 // Why: bumped from 30s to 60s in Phase 3 — function-form schema + new deps
 //      (astro-expressive-code, @astrojs/react, sandpack-react, sharp) made
 //      `astro check` cold-start slower on CI. Local runs land in ~30-40s.
-const ASTRO_CHECK_TIMEOUT_MS = 60_000;
+// Why: bumped from 60s to 240s — on the vboxsf-mounted checkout `astro check` took
+//      ~120s inside the parallel full-suite run (77s alone under load, 36s with the
+//      staged invalid fixture on a quieter machine), so 60s failed on timing alone
+//      while the assertions held (exit code 1, error names `_invalid-test.mdx`,
+//      message mentions the schema).
+const ASTRO_CHECK_TIMEOUT_MS = 240_000;
 
 describe("astro check fails on schema violation", () => {
 	it(

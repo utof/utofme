@@ -8,6 +8,7 @@
 // data-test card-link-* assertions: see packages/specs/plans/03-content-pipeline.md § Task 6
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { waitForImagesSettled } from "./support";
 
 const ROUTES = ["/", "/works/"] as const;
 
@@ -40,6 +41,8 @@ for (const route of ROUTES) {
 
 		test("visual regression", async ({ page }) => {
 			await page.goto(route);
+			// Why: the masonry home's lazy covers change <main>'s height until loaded.
+			await waitForImagesSettled(page);
 			// Mask the entire works-grid to absorb subpixel font-rendering drift in
 			// card titles, date pills, and tag pills across browser/OS patch cycles.
 			// Structural regressions (missing grid, wrong layout) remain detectable

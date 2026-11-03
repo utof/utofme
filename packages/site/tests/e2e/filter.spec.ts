@@ -45,91 +45,111 @@ async function visibleCardCount(page: import("@playwright/test").Page): Promise<
 
 // ---------------------------------------------------------------------------
 // Parameterised tests — run identical filter scenarios on / and /works/
+//
+// Why the split: the light-only masonry home no longer renders <FilterBar>
+// (ADR 0040), so the chip-driven scenarios (1–5a) run only where the UI still
+// exists (/works/). The URL-driven scenarios (6 and no-JS) still hold on `/`
+// because the inline `applyFilter` script was kept for `/?type=…&tag=…` deep
+// links, and run on both routes. A dedicated case pins that `/` has no chrome.
 // ---------------------------------------------------------------------------
+
+test.describe("FilterBar — absent from the masonry home (/)", () => {
+	test(`0. no filter bar or toolbar is rendered on /`, async ({ page }) => {
+		// @see packages/specs/adrs/0040-light-only-masonry-home.md
+		await page.goto("/");
+		await expect(page.locator('[data-test="works-grid"]')).toBeVisible();
+		await expect(page.locator("[data-filter-bar]")).toHaveCount(0);
+		await expect(page.getByRole("toolbar")).toHaveCount(0);
+	});
+});
 
 for (const route of ["/", "/works/"] as const) {
 	test.describe(`FilterBar — JS enabled (${route})`, () => {
-		test(`1. type=video chip → URL + only video cards visible`, async ({ page }) => {
-			await page.goto(route);
-			// Wait for the filter bar to hydrate
-			await page.waitForSelector("[data-filter-bar]");
+		// Chip-driven scenarios need the FilterBar UI, which only /works/ renders.
+		if (route === "/works/") {
+			test(`1. type=video chip → URL + only video cards visible`, async ({ page }) => {
+				await page.goto(route);
+				// Wait for the filter bar to hydrate
+				await page.waitForSelector("[data-filter-bar]");
 
-			// Click the video type chip
-			await page.click('[data-filter-bar] button[data-type="video"]');
+				// Click the video type chip
+				await page.click('[data-filter-bar] button[data-type="video"]');
 
-			// URL should contain type=video
-			await expect(page).toHaveURL(/[?&]type=video/);
+				// URL should contain type=video
+				await expect(page).toHaveURL(/[?&]type=video/);
 
-			// Only the one video production card should be visible
-			const count = await visibleCardCount(page);
-			expect(count).toBe(1);
-		});
+				// Only the one video production card should be visible
+				const count = await visibleCardCount(page);
+				expect(count).toBe(1);
+			});
 
-		test(`2. add tag=overview → URL has both params, still 1 card`, async ({ page }) => {
-			await page.goto(route);
-			await page.waitForSelector("[data-filter-bar]");
+			test(`2. add tag=overview → URL has both params, still 1 card`, async ({ page }) => {
+				await page.goto(route);
+				await page.waitForSelector("[data-filter-bar]");
 
-			// Select type=video first
-			await page.click('[data-filter-bar] button[data-type="video"]');
-			await expect(page).toHaveURL(/[?&]type=video/);
+				// Select type=video first
+				await page.click('[data-filter-bar] button[data-type="video"]');
+				await expect(page).toHaveURL(/[?&]type=video/);
 
-			// Add the overview tag chip
-			await page.click('[data-filter-bar] button[data-tag="overview"]');
-			await expect(page).toHaveURL(/[?&]type=video/);
-			await expect(page).toHaveURL(/[?&]tag=overview/);
+				// Add the overview tag chip
+				await page.click('[data-filter-bar] button[data-tag="overview"]');
+				await expect(page).toHaveURL(/[?&]type=video/);
+				await expect(page).toHaveURL(/[?&]tag=overview/);
 
-			const count = await visibleCardCount(page);
-			expect(count).toBe(1);
-		});
+				const count = await visibleCardCount(page);
+				expect(count).toBe(1);
+			});
 
-		test(`3. reset button → URL strips params, all 9 cards visible`, async ({ page }) => {
-			await page.goto(route);
-			await page.waitForSelector("[data-filter-bar]");
+			test(`3. reset button → URL strips params, all 9 cards visible`, async ({ page }) => {
+				await page.goto(route);
+				await page.waitForSelector("[data-filter-bar]");
 
-			// Set a filter first
-			await page.click('[data-filter-bar] button[data-type="video"]');
-			await page.click('[data-filter-bar] button[data-tag="overview"]');
-			await expect(page).toHaveURL(/[?&]type=video/);
+				// Set a filter first
+				await page.click('[data-filter-bar] button[data-type="video"]');
+				await page.click('[data-filter-bar] button[data-tag="overview"]');
+				await expect(page).toHaveURL(/[?&]type=video/);
 
-			// Click reset
-			await page.click("[data-filter-bar] button[data-reset]");
+				// Click reset
+				await page.click("[data-filter-bar] button[data-reset]");
 
-			// URL should be clean (no type/tag params)
-			const url = new URL(page.url());
-			expect(url.searchParams.get("type")).toBeNull();
-			expect(url.searchParams.getAll("tag")).toHaveLength(0);
+				// URL should be clean (no type/tag params)
+				const url = new URL(page.url());
+				expect(url.searchParams.get("type")).toBeNull();
+				expect(url.searchParams.getAll("tag")).toHaveLength(0);
 
-			const count = await visibleCardCount(page);
-			// Why: code-sandbox (Task 10) added the 12th production entry.
-			expect(count).toBe(12);
-		});
+				const count = await visibleCardCount(page);
+				// Why: code-sandbox (Task 10) added the 12th production entry.
+				expect(count).toBe(12);
+			});
 
-		test(`4. back button restores prior filter`, async ({ page }) => {
-			// Note: writeState uses replaceState (not pushState) so individual filter
-			// changes don't add history entries. We navigate to a filtered URL as the
-			// starting point, then navigate away, then go back to verify restoration.
-			await page.goto(`${route === "/" ? "" : route}?type=video&tag=overview`);
-			await page.waitForSelector("[data-filter-bar]");
-			const filteredCount = await visibleCardCount(page);
-			expect(filteredCount).toBe(1);
+			test(`4. back button restores prior filter`, async ({ page }) => {
+				// Note: writeState uses replaceState (not pushState) so individual filter
+				// changes don't add history entries. We navigate to a filtered URL as the
+				// starting point, then navigate away, then go back to verify restoration.
+				await page.goto(`${route}?type=video&tag=overview`);
+				await page.waitForSelector("[data-filter-bar]");
+				const filteredCount = await visibleCardCount(page);
+				expect(filteredCount).toBe(1);
 
-			// Navigate to a different page and come back
-			await page.goto(route === "/" ? "/works/" : "/");
-			await page.goBack();
+				// Navigate to a different page and come back
+				// Why: `route` is narrowed to "/works/" in this block; leave to the home and return.
+				await page.goto("/");
+				await page.goBack();
 
-			await page.waitForSelector("[data-filter-bar]");
-			// Filter state should be restored from URL
-			await expect(page).toHaveURL(/[?&]type=video/);
-			const restoredCount = await visibleCardCount(page);
-			expect(restoredCount).toBe(1);
-		});
+				await page.waitForSelector("[data-filter-bar]");
+				// Filter state should be restored from URL
+				await expect(page).toHaveURL(/[?&]type=video/);
+				const restoredCount = await visibleCardCount(page);
+				expect(restoredCount).toBe(1);
+			});
 
-		test(`5a. axe-core clean with FilterBar visible`, async ({ page }) => {
-			await page.goto(route);
-			await page.waitForSelector("[data-filter-bar]");
-			const results = await new AxeBuilder({ page }).analyze();
-			expect(results.violations).toEqual([]);
-		});
+			test(`5a. axe-core clean with FilterBar visible`, async ({ page }) => {
+				await page.goto(route);
+				await page.waitForSelector("[data-filter-bar]");
+				const results = await new AxeBuilder({ page }).analyze();
+				expect(results.violations).toEqual([]);
+			});
+		}
 
 		test(`6. hard-refresh ?type=video → only video cards visible before interaction`, async ({
 			page,
