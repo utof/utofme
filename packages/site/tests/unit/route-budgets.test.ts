@@ -317,6 +317,12 @@ describe("R4 posters and fetchpriority", () => {
 		);
 	});
 
+	it("a still-cover banner frame (no loop) counts as a banner, not as a cover-less route", () => {
+		expect(
+			errors(rule("/works/x/", "r4-banner-still-pass.html", { "img/b-1280.avif": 150 * KB }), "R4"),
+		).toEqual([]);
+	});
+
 	it("banner pages need exactly one high element; the banner poster is sized at 1280 w", () => {
 		const big = { "img/b-1280.avif": 250 * KB };
 		expect(

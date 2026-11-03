@@ -73,6 +73,19 @@ export const budgets: BudgetsConfig = {
 			reason: "Sandpack mounts client:only; facade (P9-12) deferred by the spec review",
 		},
 	],
-	unreferencedChunks: [],
+	// Why: with UTOFME_FIXTURES=false (the deploy) the fixture works are filtered from the
+	// collection but their island/EC/Sandpack chunks are still emitted by the bundler and
+	// no route reaches them (ADR 0049). With fixtures on, every chunk is reachable.
+	unreferencedChunks:
+		process.env.UTOFME_FIXTURES === "false"
+			? [
+					{
+						pattern:
+							/^_astro\/(?:SandboxIsland|Counter|react|client|runtime|node|utils|index|consoleHook|base|ec)[.-]/,
+						reason:
+							"fixture-only islands (Sandpack, Counter, expressive-code) when fixtures are hidden",
+					},
+				]
+			: [],
 	loops: { cardMax: 300 * KB, cardWarn: 150 * KB, bannerMax: 1_000_000, bannerWarn: 600 * KB },
 };
