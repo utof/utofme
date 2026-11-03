@@ -20,7 +20,6 @@ module.exports = {
 			staticDistDir: "./dist",
 			url: [
 				"http://localhost:4321/",
-				"http://localhost:4321/works/",
 				"http://localhost:4321/search/",
 				// Why: representative no-island detail page added in Phase 3 Task 11
 				// to exercise the detail-page LHCI gate. /works/code-2/ has body text
@@ -29,7 +28,7 @@ module.exports = {
 				"http://localhost:4321/works/code-2/",
 				// Phase 4 slash pages. /tops/ is intentionally omitted — see spec line 17:
 				// /tops/ is a static list page with no external data dependencies, so its
-				// performance profile is equivalent to /works/ (already gated above).
+				// performance profile is equivalent to /garden/ and the other slash pages gated here.
 				"http://localhost:4321/now/",
 				"http://localhost:4321/uses/",
 				"http://localhost:4321/colophon/",

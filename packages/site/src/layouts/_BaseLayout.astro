@@ -113,14 +113,20 @@ const {
 		     SoundToggle sits adjacent to HCard in the footer area — both are
 		     persistent UI controls that belong at page scope rather than per-route.
 		     @see packages/specs/specs/07-atmosphere.md § T2 -->
+		<!-- Why .footer-meta: HCard + SoundToggle were bare children of <body> and sat flush
+		     at x=0; the wrapper gives them the footer's own inset (--footer-inset) so
+		     they line up with the "© utof" row below. The h-card markup is unchanged.
+		     @see packages/specs/reports/09-close.md (footer layout) -->
 		{minimal ? (
 			<div hidden>
 				<HCard />
 			</div>
 		) : (
-			<HCard />
+			<div class="footer-meta">
+				<HCard />
+				<SoundToggle />
+			</div>
 		)}
-		{!minimal && <SoundToggle />}
 		{!LIGHT_ONLY && <ThemeToggle />}
 		<SlashFooter />
 		<!-- Why: CommandPalette mounted here (not per-page) so it is available on
@@ -175,7 +181,7 @@ const {
 	/* Import design tokens globally so every page / component can use var(--space-*) etc. */
 	@import "../styles/tokens.css";
 
-	/* Import stagger animation for grid cards (Task 12: ClientRouter + transitions). */
+	/* View-transition styles (card → banner morph, reduced-motion kill switch). */
 	@import "../styles/transitions.css";
 
 	/* Apply font variables from the Astro Fonts API to the document root.
@@ -260,5 +266,22 @@ const {
 	 * margin; see SlashFooter.astro --footer-inset. */
 	body[data-minimal] {
 		--footer-inset: var(--page-margin);
+	}
+
+	/* Footer identity block: same side inset as <footer>, h-card left, sound toggle right. */
+	.footer-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: var(--space-3);
+		margin-top: var(--space-6);
+		padding-inline: var(--footer-inset, var(--space-3));
+	}
+	.footer-meta + footer {
+		margin-top: var(--space-3);
+	}
+	.footer-meta .h-card p {
+		margin-block: var(--space-1);
 	}
 </style>

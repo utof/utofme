@@ -1,10 +1,9 @@
 /**
  * Card → banner morph (spec P9-9), e2e.
  *
- * Why: the home cards get their `data-work-slug` / `data-vt-frame` / `data-cap`
- * hooks from worker W4's Card.astro, which is not on this branch; the test adds
- * the same hooks to the live DOM (and to the incoming document on Back) so the
- * router → hero-morph wiring is exercised end to end. `ready` is captured from
+ * Why: the home cards carry their own `data-work-slug` / `data-vt-frame` / `data-cap`
+ * hooks (Card.astro), so the router → hero-morph wiring is exercised end to end
+ * against the real markup. `ready` is captured from
  * `astro:before-swap`'s `viewTransition` (review finding 10):
  * `document.activeViewTransition` is still null at `astro:after-preparation`.
  *
@@ -26,7 +25,7 @@ declare global {
 	}
 }
 async function armCard(page: Page) {
-	await page.evaluate((slug) => {
+	await page.evaluate(() => {
 		// Why inline: everything inside evaluate() is serialised into the page, so helpers
 		// declared outside this callback are not in scope there.
 		interface SwapLike extends Event {
@@ -34,14 +33,6 @@ async function armCard(page: Page) {
 			viewTransition: { ready: Promise<unknown> };
 		}
 		const isSwap = (e: Event): e is SwapLike => "newDocument" in e && "viewTransition" in e;
-		const decorate = (root: ParentNode) => {
-			const a = root.querySelector<HTMLElement>(`a.card[href="/works/${slug}/"]`);
-			if (!a) return;
-			a.dataset.workSlug = slug;
-			a.querySelector("picture, img")?.setAttribute("data-vt-frame", "");
-			a.querySelector("header")?.setAttribute("data-cap", "");
-		};
-		decorate(document);
 		const probe: VtProbe = { marks: [], ready: "unset", anims: 0 };
 		window.__vt = probe;
 		document.addEventListener("astro:after-preparation", () => {
@@ -50,15 +41,6 @@ async function armCard(page: Page) {
 			);
 			probe.marks.push(named.map((e) => e.hasAttribute("data-vt-frame")));
 		});
-		// Why capture: the Back navigation swaps in a fresh home document without
-		// W4's hooks; decorate it before hero-morph's own before-swap listener runs.
-		document.addEventListener(
-			"astro:before-swap",
-			(e) => {
-				if (isSwap(e)) decorate(e.newDocument);
-			},
-			{ capture: true },
-		);
 		document.addEventListener("astro:before-swap", (e) => {
 			if (!isSwap(e)) return;
 			e.viewTransition.ready.then(
@@ -81,7 +63,7 @@ async function armCard(page: Page) {
 					).length;
 			}, 50);
 		});
-	}, SLUG);
+	});
 }
 
 const card = (page: Page) => page.locator(`a.card[href="/works/${SLUG}/"]`);

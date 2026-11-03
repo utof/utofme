@@ -55,9 +55,9 @@ export function slugFromWorkPath(pathname: string): string | null {
 	}
 }
 
-/** True for the two grid pages that contain cards (`/` and `/works/`). */
+/** True for the grid page that contains cards (`/`; `/works/` only redirects there). */
 function isGridPath(pathname: string): boolean {
-	return pathname === "/" || pathname === "/works" || pathname === "/works/";
+	return pathname === "/";
 }
 
 /** `[data-work-slug]` selector value-safe for any slug. */

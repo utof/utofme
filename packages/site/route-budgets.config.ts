@@ -39,7 +39,6 @@ export const budgets: BudgetsConfig = {
 	eagerCardCount: 4,
 	classes: {
 		home: listing,
-		archive: listing,
 		project: {
 			firstViewJs: 40 * KB,
 			html: 30 * KB,
@@ -55,7 +54,6 @@ export const budgets: BudgetsConfig = {
 	},
 	routes: [
 		{ match: "/", class: "home" },
-		{ match: "/works/", class: "archive" },
 		{ match: "/search/", class: "search" },
 		{ match: "/garden/graph/", class: "graph" },
 		{ match: /^\/lab\//, class: "lab" },
@@ -73,6 +71,28 @@ export const budgets: BudgetsConfig = {
 			reason: "Sandpack mounts client:only; facade (P9-12) deferred by the spec review",
 		},
 	],
+	// Why: with UTOFME_FIXTURES=false (the deploy) the fixture works are filtered from the
+	// collection but their island/EC/Sandpack chunks are still emitted by the bundler and
+	// no route reaches them (ADR 0049). With fixtures on, every chunk is reachable.
+	unreferencedChunks:
+		process.env.UTOFME_FIXTURES === "false"
+			? [
+					{
+						pattern:
+							/^_astro\/(?:SandboxIsland|Counter|react|client|runtime|node|utils|index|consoleHook|base|ec)[.-]/,
+						reason:
+							"fixture-only islands (Sandpack, Counter, expressive-code) when fixtures are hidden",
+					},
+				]
+			: [],
 	unreferencedChunks: [],
-	loops: { cardMax: 300 * KB, cardWarn: 150 * KB, bannerMax: 1_000_000, bannerWarn: 600 * KB },
+	// Why: banner files were ≤ 1,000,000 B (warn 600 KB) at 1280x720; the banner is now 1920x1080
+	// (owner: "banner too low quality"), so the limits are the encoder's: fail > 2.5 MB, warn > 1.5 MB.
+	// Keep in sync with SIZE_SPECS.banner in scripts/lib/loops-core.ts (ADR 0044 addendum).
+	loops: {
+		cardMax: 300 * KB,
+		cardWarn: 150 * KB,
+		bannerMax: 2.5 * 1024 * KB,
+		bannerWarn: 1.5 * 1024 * KB,
+	},
 };

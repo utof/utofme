@@ -22,11 +22,17 @@ export type CodecName = "av1" | "h264";
 
 /**
  * Per-size encode settings and flash-lint geometry.
- * Card/gallery is 768x432 (720x405 has an odd height; neither encoder accepts it), banner 1280x720.
+ * Card/gallery is 768x432 (720x405 has an odd height; neither encoder accepts it), banner 1920x1080.
+ * `av1Crf` / `x264Crf` apply to montage and transcode loops; `slideshowAv1Crf` / `slideshowX264Crf`
+ * to slideshows (UI screenshots: thin text and hard edges show quantisation first, so they get a lower CRF).
  * `renderWidthCss` is the largest CSS width the size may be rendered at (the lint's field scale).
- * `cellPx` is the flash-lint cell edge in video px (appendix §3.1).
- * Why: values come from the spec's encode table with the review's 768x432 override.
+ * `cellPx` is the flash-lint cell edge in video px (appendix §3.1); banner 12 px at 1920 wide is the same
+ * 8 CSS px cell (160x90 grid) the 1280 encode used.
+ * Why: values come from the spec's encode table with the review's 768x432 override; the banner was raised
+ * from 1280x720 to 1920x1080 (and the CRFs and budgets with it) because the owner found it too soft on
+ * DPR-2 screens (ADR 0044 addendum).
  * @see packages/specs/specs/09-project-view.md § P9-4
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
 export const SIZE_SPECS = {
 	card: {
@@ -34,6 +40,8 @@ export const SIZE_SPECS = {
 		height: 432,
 		av1Crf: 38,
 		x264Crf: 26,
+		slideshowAv1Crf: 38,
+		slideshowX264Crf: 26,
 		x264Level: "3.0",
 		renderWidthCss: 1200,
 		cellPx: 4,
@@ -41,15 +49,17 @@ export const SIZE_SPECS = {
 		warnBytes: 150 * 1024,
 	},
 	banner: {
-		width: 1280,
-		height: 720,
-		av1Crf: 36,
-		x264Crf: 24,
-		x264Level: "3.1",
+		width: 1920,
+		height: 1080,
+		av1Crf: 30,
+		x264Crf: 22,
+		slideshowAv1Crf: 28,
+		slideshowX264Crf: 20,
+		x264Level: "4.0",
 		renderWidthCss: 1280,
-		cellPx: 8,
-		failBytes: 1024 * 1024,
-		warnBytes: 600 * 1024,
+		cellPx: 12,
+		failBytes: 2.5 * 1024 * 1024,
+		warnBytes: 1.5 * 1024 * 1024,
 	},
 } as const satisfies Record<SizeName, unknown>;
 
@@ -57,8 +67,9 @@ export const SIZE_SPECS = {
  * Bump when the encoder settings, filtergraph or colour tagging change, so the recipe hash
  * changes and every loop is re-encoded.
  * Why: the manifest `recipe` hash must cover the settings, not just the recipe JSON.
+ * History: 3 = banner 1920x1080, lower CRFs, poster cut from the banner master (ADR 0044 addendum).
  */
-export const ENCODER_VERSION = 2;
+export const ENCODER_VERSION = 3;
 
 /** A relative path under the media root: no absolute path, no `..`, no backslash, no drive letter. */
 const relPath = z
@@ -391,10 +402,22 @@ export function masterArgs(g: MasterGraph, outFile: string): string[] {
 }
 
 /**
+ * The CRF for one encode: slideshows use the lower `slideshow*Crf`, everything else the plain `*Crf`.
+ * Why: UI-screenshot slideshows show quantisation (ringing around text) long before footage does.
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export function crfFor(kind: Recipe["kind"], size: SizeName, codec: CodecName): number {
+	const s = SIZE_SPECS[size];
+	if (codec === "av1") return kind === "slideshow" ? s.slideshowAv1Crf : s.av1Crf;
+	return kind === "slideshow" ? s.slideshowX264Crf : s.x264Crf;
+}
+
+/**
  * ffmpeg args for one lossy encode from the master.
- * AV1: `libsvtav1 -preset 4 -crf 38|36`; H.264: `libx264 -preset veryslow -crf 26|24 -profile:v high`
- * (+`-tune stillimage` for slideshows). All: `-an -pix_fmt yuv420p -movflags +faststart`.
- * Why: values from the spec's encode table; colour tagged explicitly.
+ * AV1: `libsvtav1 -preset 4 -crf <crfFor>`; H.264: `libx264 -preset veryslow -crf <crfFor> -profile:v high
+ * -level:v <3.0 card | 4.0 banner>` (+`-tune stillimage` for slideshows).
+ * All: `-an -pix_fmt yuv420p -movflags +faststart`.
+ * Why: values from the spec's encode table (banner raised to 1080p, see ADR 0044 addendum); colour tagged explicitly.
  * @see packages/specs/specs/09-project-view.md § P9-4
  */
 export function encodeArgs(
@@ -405,16 +428,17 @@ export function encodeArgs(
 	output: string,
 ): string[] {
 	const s = SIZE_SPECS[size];
+	const crf = String(crfFor(kind, size, codec));
 	const video =
 		codec === "av1"
-			? ["-c:v", "libsvtav1", "-preset", "4", "-crf", String(s.av1Crf)]
+			? ["-c:v", "libsvtav1", "-preset", "4", "-crf", crf]
 			: [
 					"-c:v",
 					"libx264",
 					"-preset",
 					"veryslow",
 					"-crf",
-					String(s.x264Crf),
+					crf,
 					"-profile:v",
 					"high",
 					"-level:v",
@@ -450,8 +474,8 @@ export interface VideoProbe {
 
 /**
  * Derives the `<source type>` value from an ffprobe result (measured, not assumed):
- * H.264 High@3.0 → `avc1.64001E`, @3.1 → `avc1.64001F`;
- * AV1 Main, `seq_level_idx` n, 8-bit → `av01.0.<nn>M.08`.
+ * H.264 High@3.0 → `avc1.64001E`, @4.0 → `avc1.640028`;
+ * AV1 Main, `seq_level_idx` n, 8-bit → `av01.0.<nn>M.08` (card 768x432 → `04`, banner 1920x1080 → `08`).
  * Throws on anything else (unexpected profile, bit depth).
  * Why: wrong codecs strings make browsers skip a source, so they come from the real file.
  * @see https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/codecs_parameter
@@ -496,9 +520,10 @@ export function outputUrl(slug: string, name: string): string {
 export type BudgetVerdict = "ok" | "warn" | "fail";
 
 /**
- * Encode-time size budget: card/gallery fail > 300 KB, warn > 150 KB; banner fail > 1 MB, warn > 600 KB
- * (KB = 1024 bytes).
- * Why: loops ship in the home page's critical path; the budget keeps them small.
+ * Encode-time size budget: card/gallery fail > 300 KB, warn > 150 KB; banner (1080p) fail > 2.5 MB,
+ * warn > 1.5 MB (KB = 1024 bytes).
+ * Why: loops ship in the home page's critical path; the budget keeps them small. The banner limits were
+ * raised from 1 MB / 600 KB with the move to 1920x1080 (ADR 0044 addendum); `route-budgets.config.ts` R6 matches.
  * @see packages/specs/specs/09-project-view.md § P9-4
  */
 export function budgetVerdict(size: SizeName, bytes: number): BudgetVerdict {

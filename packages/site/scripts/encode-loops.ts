@@ -400,7 +400,9 @@ function encodeSlug(
 			}
 		const posterRel = `src/assets/loops/${r.slug}/poster.png`;
 		const cardB = must(built.get("card"), "card build");
-		const cardMaster = cardB.master;
+		// Why: the poster is the banner's underlay (and the no-JS / reduced-motion picture), so it
+		// is cut from the largest master: the 1920x1080 banner when the recipe has one, else the card.
+		const posterMaster = (built.get("banner") ?? cardB).master;
 		mkdirSync(dirname(join(o.siteRoot, posterRel)), { recursive: true });
 		run("ffmpeg", [
 			"-v",
@@ -409,7 +411,7 @@ function encodeSlug(
 			"-ss",
 			String(r.poster.at),
 			"-i",
-			cardMaster,
+			posterMaster,
 			"-frames:v",
 			"1",
 			join(o.siteRoot, posterRel),

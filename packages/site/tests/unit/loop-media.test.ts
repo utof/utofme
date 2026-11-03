@@ -85,6 +85,27 @@ describe("LoopMedia.astro markup contract", () => {
 		expect(html).toMatch(/<video\b[^>]*data-astro-transition-persist="loop-demo"/);
 	});
 
+	it("banner poster offers srcset widths up to the 1920 px source, never above it", async () => {
+		const bannerEntry = { ...entry, banner: { ...entry.card, width: 1920, height: 1080 } };
+		const big = { src: "/poster.png", width: 1920, height: 1080, format: "png" } as const;
+		const html = await render({ size: "banner", entry: bannerEntry, poster: big });
+		const widths = [...html.matchAll(/\s(\d+)w[",]/g)].map((m) => Number(m[1]));
+		expect(Math.max(...widths)).toBe(1920);
+		expect(widths).toEqual(expect.arrayContaining([640, 960, 1280, 1920]));
+		expect(widths).not.toContain(2560);
+		expect(html).toContain('sizes="(min-width: 1280px) 1280px, 100vw"');
+		expect(html).toContain('data-loop-size="banner"');
+		expect(html).toContain('width="1920"');
+	});
+
+	it("banner poster that is narrower than 2560 px still offers its own width", async () => {
+		const bannerEntry = { ...entry, banner: { ...entry.card, width: 1920, height: 1080 } };
+		const html = await render({ size: "banner", entry: bannerEntry });
+		const widths = [...html.matchAll(/\s(\d+)w[",]/g)].map((m) => Number(m[1]));
+		expect(Math.max(...widths)).toBe(768);
+		expect(widths).toContain(640);
+	});
+
 	it("alt text lands on the poster image", async () => {
 		const html = await render({ alt: "A demo" });
 		expect(html).toMatch(/<img\b[^>]*alt="A demo"/);

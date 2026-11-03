@@ -2,20 +2,20 @@
 	"eeg-ads1299-lab": {
 		"aspect": "16:9",
 		"banner": {
-			"height": 720,
+			"height": 1080,
 			"sources": [
 				{
-					"bytes": 94107,
-					"type": "video/mp4; codecs=\"av01.0.05M.08\"",
-					"url": "/loops/eeg-ads1299-lab/banner.ea997391.av1.mp4"
+					"bytes": 179640,
+					"type": "video/mp4; codecs=\"av01.0.08M.08\"",
+					"url": "/loops/eeg-ads1299-lab/banner.db2ae048.av1.mp4"
 				},
 				{
-					"bytes": 133627,
-					"type": "video/mp4; codecs=\"avc1.64001F\"",
-					"url": "/loops/eeg-ads1299-lab/banner.de1b6616.h264.mp4"
+					"bytes": 234780,
+					"type": "video/mp4; codecs=\"avc1.640028\"",
+					"url": "/loops/eeg-ads1299-lab/banner.7e20b33e.h264.mp4"
 				}
 			],
-			"width": 1280
+			"width": 1920
 		},
 		"card": {
 			"height": 432,
@@ -45,25 +45,25 @@
 		},
 		"fps": 10,
 		"posterPath": "src/assets/loops/eeg-ads1299-lab/poster.png",
-		"recipe": "f2edca47"
+		"recipe": "7f198ff2"
 	},
 	"enth": {
 		"aspect": "16:9",
 		"banner": {
-			"height": 720,
+			"height": 1080,
 			"sources": [
 				{
-					"bytes": 207678,
-					"type": "video/mp4; codecs=\"av01.0.05M.08\"",
-					"url": "/loops/enth/banner.34017633.av1.mp4"
+					"bytes": 353433,
+					"type": "video/mp4; codecs=\"av01.0.08M.08\"",
+					"url": "/loops/enth/banner.5f7787e9.av1.mp4"
 				},
 				{
-					"bytes": 386580,
-					"type": "video/mp4; codecs=\"avc1.64001F\"",
-					"url": "/loops/enth/banner.59a24628.h264.mp4"
+					"bytes": 783295,
+					"type": "video/mp4; codecs=\"avc1.640028\"",
+					"url": "/loops/enth/banner.125a1658.h264.mp4"
 				}
 			],
-			"width": 1280
+			"width": 1920
 		},
 		"card": {
 			"height": 432,
@@ -93,38 +93,38 @@
 		},
 		"fps": 10,
 		"posterPath": "src/assets/loops/enth/poster.png",
-		"recipe": "3bc62984"
+		"recipe": "01ece326"
 	},
 	"fixture-testsrc": {
 		"aspect": "16:9",
 		"banner": {
-			"height": 720,
+			"height": 1080,
 			"sources": [
 				{
-					"bytes": 99713,
-					"type": "video/mp4; codecs=\"av01.0.05M.08\"",
-					"url": "/loops/fixture-testsrc/banner.9e51ee43.av1.mp4"
+					"bytes": 223449,
+					"type": "video/mp4; codecs=\"av01.0.08M.08\"",
+					"url": "/loops/fixture-testsrc/banner.59e851a8.av1.mp4"
 				},
 				{
-					"bytes": 149567,
-					"type": "video/mp4; codecs=\"avc1.64001F\"",
-					"url": "/loops/fixture-testsrc/banner.af89743e.h264.mp4"
+					"bytes": 370022,
+					"type": "video/mp4; codecs=\"avc1.640028\"",
+					"url": "/loops/fixture-testsrc/banner.0461fcae.h264.mp4"
 				}
 			],
-			"width": 1280
+			"width": 1920
 		},
 		"card": {
 			"height": 432,
 			"sources": [
 				{
-					"bytes": 62083,
+					"bytes": 62527,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/fixture-testsrc/card.3848e677.av1.mp4"
+					"url": "/loops/fixture-testsrc/card.a0afccf4.av1.mp4"
 				},
 				{
-					"bytes": 69703,
+					"bytes": 70605,
 					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/fixture-testsrc/card.6ee9a96a.h264.mp4"
+					"url": "/loops/fixture-testsrc/card.7c5bb9ec.h264.mp4"
 				}
 			],
 			"width": 768
@@ -141,25 +141,25 @@
 		},
 		"fps": 30,
 		"posterPath": "src/assets/loops/fixture-testsrc/poster.png",
-		"recipe": "cb1a039d"
+		"recipe": "c2b7051e"
 	},
 	"godot-ctcs": {
 		"aspect": "16:9",
 		"banner": {
-			"height": 720,
+			"height": 1080,
 			"sources": [
 				{
-					"bytes": 224844,
-					"type": "video/mp4; codecs=\"av01.0.05M.08\"",
-					"url": "/loops/godot-ctcs/banner.3ddbdcfa.av1.mp4"
+					"bytes": 476468,
+					"type": "video/mp4; codecs=\"av01.0.08M.08\"",
+					"url": "/loops/godot-ctcs/banner.7192caa9.av1.mp4"
 				},
 				{
-					"bytes": 478810,
-					"type": "video/mp4; codecs=\"avc1.64001F\"",
-					"url": "/loops/godot-ctcs/banner.1b010dcf.h264.mp4"
+					"bytes": 1069186,
+					"type": "video/mp4; codecs=\"avc1.640028\"",
+					"url": "/loops/godot-ctcs/banner.47f9be97.h264.mp4"
 				}
 			],
-			"width": 1280
+			"width": 1920
 		},
 		"card": {
 			"height": 432,
@@ -189,25 +189,25 @@
 		},
 		"fps": 10,
 		"posterPath": "src/assets/loops/godot-ctcs/poster.png",
-		"recipe": "a100e8f0"
+		"recipe": "af800a5d"
 	},
 	"gr-demo-learn": {
 		"aspect": "16:9",
 		"banner": {
-			"height": 720,
+			"height": 1080,
 			"sources": [
 				{
-					"bytes": 112190,
-					"type": "video/mp4; codecs=\"av01.0.05M.08\"",
-					"url": "/loops/gr-demo-learn/banner.a76638c8.av1.mp4"
+					"bytes": 265623,
+					"type": "video/mp4; codecs=\"av01.0.08M.08\"",
+					"url": "/loops/gr-demo-learn/banner.c1581d6c.av1.mp4"
 				},
 				{
-					"bytes": 180118,
-					"type": "video/mp4; codecs=\"avc1.64001F\"",
-					"url": "/loops/gr-demo-learn/banner.bb9996f8.h264.mp4"
+					"bytes": 371135,
+					"type": "video/mp4; codecs=\"avc1.640028\"",
+					"url": "/loops/gr-demo-learn/banner.e664230f.h264.mp4"
 				}
 			],
-			"width": 1280
+			"width": 1920
 		},
 		"card": {
 			"height": 432,
@@ -237,25 +237,25 @@
 		},
 		"fps": 10,
 		"posterPath": "src/assets/loops/gr-demo-learn/poster.png",
-		"recipe": "700e87cf"
+		"recipe": "b90c7ae4"
 	},
 	"linsae": {
 		"aspect": "16:9",
 		"banner": {
-			"height": 720,
+			"height": 1080,
 			"sources": [
 				{
-					"bytes": 201834,
-					"type": "video/mp4; codecs=\"av01.0.05M.08\"",
-					"url": "/loops/linsae/banner.8845a590.av1.mp4"
+					"bytes": 401165,
+					"type": "video/mp4; codecs=\"av01.0.08M.08\"",
+					"url": "/loops/linsae/banner.45f883d5.av1.mp4"
 				},
 				{
-					"bytes": 326551,
-					"type": "video/mp4; codecs=\"avc1.64001F\"",
-					"url": "/loops/linsae/banner.ed3959cd.h264.mp4"
+					"bytes": 687466,
+					"type": "video/mp4; codecs=\"avc1.640028\"",
+					"url": "/loops/linsae/banner.d89de7ce.h264.mp4"
 				}
 			],
-			"width": 1280
+			"width": 1920
 		},
 		"card": {
 			"height": 432,
@@ -285,25 +285,25 @@
 		},
 		"fps": 10,
 		"posterPath": "src/assets/loops/linsae/poster.png",
-		"recipe": "f7ec00b9"
+		"recipe": "1854eac0"
 	},
 	"modified-maxwell-taichi": {
 		"aspect": "16:9",
 		"banner": {
-			"height": 720,
+			"height": 1080,
 			"sources": [
 				{
-					"bytes": 44439,
-					"type": "video/mp4; codecs=\"av01.0.05M.08\"",
-					"url": "/loops/modified-maxwell-taichi/banner.3686a8ba.av1.mp4"
+					"bytes": 92786,
+					"type": "video/mp4; codecs=\"av01.0.08M.08\"",
+					"url": "/loops/modified-maxwell-taichi/banner.c37e03f2.av1.mp4"
 				},
 				{
-					"bytes": 105288,
-					"type": "video/mp4; codecs=\"avc1.64001F\"",
-					"url": "/loops/modified-maxwell-taichi/banner.0a49c9c3.h264.mp4"
+					"bytes": 233540,
+					"type": "video/mp4; codecs=\"avc1.640028\"",
+					"url": "/loops/modified-maxwell-taichi/banner.462c46e1.h264.mp4"
 				}
 			],
-			"width": 1280
+			"width": 1920
 		},
 		"card": {
 			"height": 432,
@@ -333,7 +333,7 @@
 		},
 		"fps": 30,
 		"posterPath": "src/assets/loops/modified-maxwell-taichi/poster.png",
-		"recipe": "e1091b9f"
+		"recipe": "fb8b2a6b"
 	},
 	"modified-maxwell-taichi-pml": {
 		"aspect": "16:9",
@@ -371,20 +371,20 @@
 	"tactical-arena": {
 		"aspect": "16:9",
 		"banner": {
-			"height": 720,
+			"height": 1080,
 			"sources": [
 				{
-					"bytes": 113948,
-					"type": "video/mp4; codecs=\"av01.0.05M.08\"",
-					"url": "/loops/tactical-arena/banner.ef34f28a.av1.mp4"
+					"bytes": 203742,
+					"type": "video/mp4; codecs=\"av01.0.08M.08\"",
+					"url": "/loops/tactical-arena/banner.7afcad36.av1.mp4"
 				},
 				{
-					"bytes": 137543,
-					"type": "video/mp4; codecs=\"avc1.64001F\"",
-					"url": "/loops/tactical-arena/banner.bc604abb.h264.mp4"
+					"bytes": 251355,
+					"type": "video/mp4; codecs=\"avc1.640028\"",
+					"url": "/loops/tactical-arena/banner.9aa7d47e.h264.mp4"
 				}
 			],
-			"width": 1280
+			"width": 1920
 		},
 		"card": {
 			"height": 432,
@@ -414,7 +414,7 @@
 		},
 		"fps": 30,
 		"posterPath": "src/assets/loops/tactical-arena/poster.png",
-		"recipe": "02f5d77a"
+		"recipe": "fa8c823f"
 	},
 	"tactical-arena-smokes": {
 		"aspect": "16:9",

@@ -29,7 +29,7 @@ declare global {
 // Case 1 — SPA navigation does not produce a new PerformanceNavigationTiming
 // ---------------------------------------------------------------------------
 
-test("1. / → /works/ SPA nav: no new PerformanceNavigationTiming entry", async ({ page }) => {
+test("1. / → /now/ SPA nav: no new PerformanceNavigationTiming entry", async ({ page }) => {
 	// Inject counter before page load so it is available during nav
 	await page.addInitScript(() => {
 		window.__navEntryCount = 0;
@@ -44,14 +44,14 @@ test("1. / → /works/ SPA nav: no new PerformanceNavigationTiming entry", async
 	// Why: ClientRouter intercepts same-origin <a> clicks; page.goto() bypasses it.
 	await page.evaluate(() => {
 		const a = document.createElement("a");
-		a.href = "/works/";
+		a.href = "/now/";
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
 	});
 
 	// Wait for URL to update — ClientRouter swaps body without full navigation
-	await page.waitForURL(/\/works/, { timeout: 8000 });
+	await page.waitForURL(/\/now/, { timeout: 8000 });
 
 	// After SPA nav, there should be no NEW PerformanceNavigationTiming entries
 	// (SPA swaps are history.pushState transitions, not navigation events)
@@ -84,89 +84,18 @@ test("2. astro:page-load fires once per SPA nav", async ({ page }) => {
 	// Navigate via anchor click (ClientRouter SPA swap)
 	await page.evaluate(() => {
 		const a = document.createElement("a");
-		a.href = "/works/";
+		a.href = "/now/";
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
 	});
 
-	await page.waitForURL(/\/works/, { timeout: 5000 });
+	await page.waitForURL(/\/now/, { timeout: 5000 });
 
 	// Wait for astro:page-load to fire again
 	await page.waitForFunction(() => window.__astroPageLoadCount >= 2, { timeout: 5000 });
 	const countAfterNav = await page.evaluate(() => window.__astroPageLoadCount);
 	expect(countAfterNav).toBe(2);
-});
-
-// ---------------------------------------------------------------------------
-// Cases 3–4 — card stagger (transitions.css keys on `[data-component="grid"] > *`)
-//
-// Why /works/: the light-only masonry home is a CSS multi-column <ul>, not a
-// <Grid>, so it carries no stagger (ADR 0040); /works/ still renders <Grid> and
-// is where the stagger contract is exercised.
-// @see packages/specs/adrs/0040-light-only-masonry-home.md
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Case 3 — reduced-motion: all card animation-delays are "0s"
-// ---------------------------------------------------------------------------
-
-test("3. prefers-reduced-motion: all card animation-delays are 0s", async ({ page }) => {
-	await page.emulateMedia({ reducedMotion: "reduce" });
-	await page.goto("/works/");
-
-	const delays = await page.evaluate(() => {
-		const grid = document.querySelector('[data-component="grid"]');
-		if (!grid) return [] as string[];
-		const items = Array.from(grid.querySelectorAll(":scope > *"));
-		return items.map((item) => getComputedStyle(item).animationDelay);
-	});
-
-	expect(delays.length).toBeGreaterThan(0);
-	for (const delay of delays) {
-		// With reduced-motion the animation is set to none; delay should be 0s
-		expect(delay).toBe("0s");
-	}
-});
-
-// ---------------------------------------------------------------------------
-// Case 4 — without reduced-motion, third card delay ≈ 60 ms
-// ---------------------------------------------------------------------------
-
-test("4. without reduced-motion, third card animation-delay ≈ 60 ms", async ({ page }) => {
-	await page.emulateMedia({ reducedMotion: "no-preference" });
-	await page.goto("/works/");
-
-	// The third card (index 2) should have --i: 2, delay = 2 * 30ms = 60ms
-	const delay = await page.evaluate(() => {
-		const grid = document.querySelector('[data-component="grid"]');
-		if (!grid) return null;
-		// Use querySelectorAll for typed Element results (avoids HTMLElement cast)
-		const items = Array.from(grid.querySelectorAll(":scope > *"));
-		const thirdItem = items[2];
-		if (!thirdItem) return null;
-		return getComputedStyle(thirdItem).animationDelay;
-	});
-
-	expect(delay).not.toBeNull();
-	// Tolerate "60ms" or "0.06s"
-	const delayStr = delay ?? "";
-	if (delayStr.endsWith("ms")) {
-		const ms = parseFloat(delayStr);
-		expect(ms).toBeCloseTo(60, 0);
-	} else if (delayStr.endsWith("s")) {
-		const s = parseFloat(delayStr);
-		expect(s).toBeCloseTo(0.06, 3);
-	} else {
-		throw new Error(`Unexpected animation-delay format: ${delayStr}`);
-	}
-});
-
-// Case 4b — the masonry home has no stagger (it is not a <Grid>)
-test("4b. the masonry home has no Grid stagger wrapper", async ({ page }) => {
-	await page.goto("/");
-	await expect(page.locator('[data-test="works-grid"] > li').first()).toBeVisible();
-	await expect(page.locator('[data-component="grid"]')).toHaveCount(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -181,16 +110,16 @@ test("4b. the masonry home has no Grid stagger wrapper", async ({ page }) => {
 test("5. view-transition CSS injected after SPA navigation (best-effort)", async ({ page }) => {
 	await page.goto("/");
 
-	// Trigger SPA nav to /works
+	// Trigger SPA nav to /now
 	await page.evaluate(() => {
 		const a = document.createElement("a");
-		a.href = "/works/";
+		a.href = "/now/";
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
 	});
 
-	await page.waitForURL(/\/works/, { timeout: 5000 });
+	await page.waitForURL(/\/now/, { timeout: 5000 });
 
 	// Assert that at least one <style> with data-astro-transition-scope attribute
 	// exists in the document (injected by ClientRouter for transition:name elements)
@@ -217,7 +146,7 @@ test("5. view-transition CSS injected after SPA navigation (best-effort)", async
 });
 
 // ---------------------------------------------------------------------------
-// Case 6 — visual-regression rebaseline: /, /works, /search
+// Case 6 — visual-regression rebaseline: /, /search
 // ---------------------------------------------------------------------------
 
 test("6a. visual regression / (post-ClientRouter baseline)", async ({ page }) => {
@@ -227,16 +156,6 @@ test("6a. visual regression / (post-ClientRouter baseline)", async ({ page }) =>
 	// Clip to <main> so the footer (added in Task 4) does not affect
 	// this baseline. Footer has its own footer.spec.ts coverage.
 	await expect(page.locator("main")).toHaveScreenshot("transitions-home.png", {
-		maxDiffPixelRatio: 0.02,
-		mask: [page.locator('[data-test="works-grid"]')],
-	});
-});
-
-test("6b. visual regression /works/ (post-ClientRouter baseline)", async ({ page }) => {
-	await page.goto("/works/");
-	// Clip to <main> so the footer (added in Task 4) does not affect
-	// this baseline. Footer has its own footer.spec.ts coverage.
-	await expect(page.locator("main")).toHaveScreenshot("transitions-works.png", {
 		maxDiffPixelRatio: 0.02,
 		mask: [page.locator('[data-test="works-grid"]')],
 	});
@@ -259,7 +178,7 @@ test("6c. visual regression /search (post-ClientRouter baseline)", async ({ page
 
 // Why: skipped on firefox/webkit — CDP DOMDebugger only available on Chromium.
 // Uses monkey-patch approach to count document.addEventListener calls across
-// 5 round-trips between / and /works, asserting the count is bounded.
+// 5 round-trips between / and /now, asserting the count is bounded.
 // @see packages/specs/plans/02-interactivity.md § Task 12 case 7
 test("7. FilterBar event-listener count bounded after 5 round-trip navs", async ({
 	page,
@@ -287,16 +206,16 @@ test("7. FilterBar event-listener count bounded after 5 round-trip navs", async 
 
 	const initialCount = await page.evaluate(() => window.__filterListenerCount);
 
-	// Perform 5 round-trips / ↔ /works via SPA nav
+	// Perform 5 round-trips / ↔ /now via SPA nav
 	for (let i = 0; i < 5; i++) {
 		await page.evaluate(() => {
 			const a = document.createElement("a");
-			a.href = "/works/";
+			a.href = "/now/";
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
 		});
-		await page.waitForURL(/\/works/, { timeout: 5000 });
+		await page.waitForURL(/\/now/, { timeout: 5000 });
 
 		await page.evaluate(() => {
 			const a = document.createElement("a");

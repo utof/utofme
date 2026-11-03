@@ -1,2 +1,5 @@
 # Production-only build artifact — fetched at prebuild time. Fixture is committed.
 src/content/stats/snapshot.json
+
+# Mini built trees used by tests/unit/route-budgets.test.ts (must be committed)
+!tests/fixtures/budgets/**/dist/

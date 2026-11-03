@@ -395,7 +395,10 @@ export function analyzeHtml(html: string, eagerCardCount: number): RouteDoc {
 		fetchpriorityHigh: high.length,
 		cardPosters,
 		highPoster: highEl?.tagName === "IMG" ? posterOf(highEl) : null,
-		hasBanner: document.querySelector('.loop-media[data-loop-frame="banner"]') !== null,
+		// Why: no-loop projects render a still cover inside the same `.banner[data-vt-frame]` frame (no `.loop-media`).
+		hasBanner:
+			document.querySelector('.loop-media[data-loop-frame="banner"], .banner[data-vt-frame]') !==
+			null,
 		videos,
 	};
 }

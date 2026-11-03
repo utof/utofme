@@ -33,9 +33,9 @@ async function canvasBackground(page: Page): Promise<string> {
 test("light-only: <html data-theme=light> is static and no theme toggle is rendered", async ({
 	page,
 }) => {
-	// Why both routes: `/` is the minimal masonry home, `/works/` the full-chrome
+	// Why both routes: `/` is the minimal masonry home, `/now/` a full-chrome
 	// layout where ThemeToggle used to sit next to SoundToggle.
-	for (const route of ["/", "/works/"] as const) {
+	for (const route of ["/", "/now/"] as const) {
 		await page.goto(route);
 		await expect(page.locator("[data-theme-toggle]")).toHaveCount(0);
 		expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe("light");
@@ -86,13 +86,13 @@ test("stays light after SPA navigation (forced-light script has data-astro-rerun
 	// `data-astro-rerun` so it re-runs on each swap. Seed a stored dark choice so a
 	// swap that fell back to the original theme script would visibly flip the page.
 	//
-	// Why start at a work-detail page: the breadcrumb `<a href="/works/">` is the
+	// Why start at a work-detail page: the breadcrumb `<a href="/">` is the
 	// only stable cross-route link on the site, so it's the safest source of a
 	// real ClientRouter <a> click.
 	await context.addInitScript((k) => localStorage.setItem(k, "dark"), THEME_STORAGE_KEY);
 	await page.goto("/works/code-1/");
-	await page.click("a[href='/works/']");
-	await page.waitForURL("**/works/");
+	await page.click("a[data-test='breadcrumb']");
+	await page.waitForURL((url) => url.pathname === "/");
 
 	await expect(page.locator("[data-theme-toggle]")).toHaveCount(0);
 	expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe("light");

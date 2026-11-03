@@ -3,10 +3,8 @@
  * Home — light-only, image-first masonry of the `works` collection.
  *
  * Why: the MVP strips the home page to "site name + masonry + footer" so the
- * media does the talking. FilterBar, TypeGlyph, MetaPills, Preview, ClickCounter
- * and the Phase-0 typography sentinel are intentionally NOT rendered here (hide,
- * don't delete — the components, the Zod `type` field and their tests remain;
- * `/works/` still renders the full filterable grid). The ~350 px gap under the
+ * media does the talking. The `/works/` index page was removed (it redirects to `/`),
+ * so this masonry is the only listing. The ~350 px gap under the
  * header came from the sentinel's `<Frame>` (aspect-ratio 16/9), now gone.
  *
  * Masonry = CSS multi-column: items keep their natural aspect ratio and pack
@@ -109,7 +107,7 @@ const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 
 <!--
   Inline filter script — applies URL params to the DOM grid on initial load
-  and on every works:filter event dispatched by FilterBar.
+  and on every works:filter event dispatched by the (removed) FilterBar.
 
   MVP note: FilterBar is not rendered on `/` any more, so no UI dispatches
   works:filter; the script is kept so `/?type=…&tag=…` deep links still filter.

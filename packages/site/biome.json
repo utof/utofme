@@ -5,6 +5,7 @@
 		"includes": [
 			"src/**/*.{ts,mts,cts,tsx,mjs,cjs,js,jsx,json,jsonc,css}",
 			"tests/**/*.{ts,mts,cts,tsx,js,json,jsonc}",
+			"!tests/fixtures/budgets/**/dist",
 			"scripts/**/*.{ts,mts,cts,tsx,mjs,cjs,js,jsx}",
 			"*.{ts,mts,cts,mjs,cjs,js,json,jsonc}"
 		]

@@ -54,10 +54,10 @@ test("cursor: no JS downloaded on coarse pointer", async ({ page }) => {
 // T2 — Sound toggle
 // ---------------------------------------------------------------------------
 
-// Why /works/: the masonry home renders `_BaseLayout` with `minimal`, which drops
-// SoundToggle (ADR 0040), so the toggle is exercised on /works/ — a full-chrome
+// Why /now/: the masonry home renders `_BaseLayout` with `minimal`, which drops
+// SoundToggle (ADR 0040), so the toggle is exercised on /now/ — a full-chrome
 // page that still mounts it. The home gets its own negative case below.
-const SOUND_ROUTE = "/works/";
+const SOUND_ROUTE = "/now/";
 
 test("sound: the minimal masonry home does not mount the toggle", async ({ page }) => {
 	// @see packages/specs/adrs/0040-light-only-masonry-home.md
