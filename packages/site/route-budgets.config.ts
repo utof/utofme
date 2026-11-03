@@ -39,7 +39,6 @@ export const budgets: BudgetsConfig = {
 	eagerCardCount: 4,
 	classes: {
 		home: listing,
-		archive: listing,
 		project: {
 			firstViewJs: 40 * KB,
 			html: 30 * KB,
@@ -55,7 +54,6 @@ export const budgets: BudgetsConfig = {
 	},
 	routes: [
 		{ match: "/", class: "home" },
-		{ match: "/works/", class: "archive" },
 		{ match: "/search/", class: "search" },
 		{ match: "/garden/graph/", class: "graph" },
 		{ match: /^\/lab\//, class: "lab" },

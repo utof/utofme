@@ -7,7 +7,7 @@ import { expect, test } from "@playwright/test";
 
 // Why: trailing slash required — astro.config.mjs sets trailingSlash: "always";
 // without it the preview server returns 404 instead of the page.
-const ROUTES = ["/", "/works/", "/search/", "/works/code-2/"];
+const ROUTES = ["/", "/now/", "/search/", "/works/code-2/"];
 
 for (const route of ROUTES) {
 	test(`footer renders on ${route}`, async ({ page }) => {

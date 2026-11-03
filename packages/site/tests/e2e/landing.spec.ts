@@ -17,18 +17,9 @@ test("home page loads with no Axe violations", async ({ page }) => {
 	expect(results.violations).toEqual([]);
 });
 
-// Why: Phase 2 sentinel — verifies FilterBar hydrates and is visible on cold
-// load; queries by accessible role so the assertion doubles as an a11y check.
-// RED until FilterBar is mounted with role="toolbar" aria-label="filter".
-// The light-only masonry home no longer renders FilterBar (ADR 0040), so the
-// positive case now runs on /works/, which still mounts it; `/` gets a negative.
-// @see packages/specs/plans/02-interactivity.md § Task 6
+// Why: the light-only masonry home renders no FilterBar (ADR 0040) and the /works/
+// index that mounted it was deleted, so only the negative case remains.
 // @see packages/specs/adrs/0040-light-only-masonry-home.md
-test("FilterBar toolbar is visible on cold load of /works/", async ({ page }) => {
-	await page.goto("/works/");
-	await expect(page.getByRole("toolbar", { name: "filter" })).toBeVisible();
-});
-
 test("masonry home renders no FilterBar toolbar", async ({ page }) => {
 	await page.goto("/");
 	await expect(page.getByRole("heading", { level: 1, name: "utofme" })).toBeVisible();

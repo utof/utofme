@@ -34,8 +34,8 @@
  * the media children scale 1.05 and the bar content slides up to reveal the meta
  * line (transform/opacity only). Every glyph is #fff on `--caption-bg`; contrast
  * is proven in `tests/unit/contrast.test.ts`. The `header`/`meta` slots are not
- * rendered. Why a variant and not a restyle: `/works/` still uses the bordered
- * default card. The link mechanism is shared.
+ * rendered. Why a variant and not a restyle: the bordered
+ * default card is kept for the lab pages. The link mechanism is shared.
  *
  * @see packages/specs/specs/09-project-view.md § P9-7
  *
@@ -68,7 +68,7 @@ interface Props {
 	 */
 	body?: string | undefined;
 	/**
-	 * Visual variant: bordered `default` (works archive) or image-first `media`
+	 * Visual variant: bordered `default` (lab pages) or image-first `media`
 	 * (masonry home).
 	 *
 	 * Why: keeps one link/Pagefind/preview implementation for both layouts.

@@ -36,12 +36,6 @@ describe("MetaHead.astro", () => {
 		expect(html).toMatch(/href="\/feed\/works\.xml"/);
 	});
 
-	it("emits works rel=alternate on /works/", async () => {
-		const container = await AstroContainer.create();
-		const html = await container.renderToString(MetaHead, { props: { route: "/works/" } });
-		expect(html).toMatch(/href="\/feed\/works\.xml"/);
-	});
-
 	it("does NOT emit works rel=alternate on a works detail page", async () => {
 		const container = await AstroContainer.create();
 		const html = await container.renderToString(MetaHead, { props: { route: "/works/code-2/" } });

@@ -80,14 +80,14 @@ test("4. <time datetime> matches date for code-2", async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// Case 5 — breadcrumb "← All works" links to /works/
+// Case 5 — breadcrumb "← All works" links to /
 // ---------------------------------------------------------------------------
 
-test("5. breadcrumb ← All works links to /works/", async ({ page }) => {
+test("5. breadcrumb ← All works links to /", async ({ page }) => {
 	await page.goto("/works/code-2/");
 	const breadcrumb = page.locator('[data-test="breadcrumb"]');
 	await expect(breadcrumb).toBeVisible();
-	await expect(breadcrumb).toHaveAttribute("href", "/works/");
+	await expect(breadcrumb).toHaveAttribute("href", "/");
 });
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
-// Why: e2e tests for FilterBar.svelte island on `/` and `/works/`.
-// Covers URL-driven filter state, chip interactions, reset, back-button,
-// no-JS fallback, and hard-refresh pre-interaction rendering.
+// Why: e2e tests for the URL-driven filter on `/` (the FilterBar island and the /works/
+// index that mounted it were removed). Covers the no-JS fallback and hard-refresh
+// pre-interaction rendering of `/?type=…` deep links.
 //
 // Fixture data (PROD — non-drafts only):
 //   video-2:                 type=video,   tags=["overview","video"]
@@ -19,7 +19,6 @@
 // Total production cards: 12
 //
 // @see packages/specs/plans/02-interactivity.md § Task 5, § Task 6, § Task 7
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
@@ -44,13 +43,11 @@ async function visibleCardCount(page: import("@playwright/test").Page): Promise<
 }
 
 // ---------------------------------------------------------------------------
-// Parameterised tests — run identical filter scenarios on / and /works/
+// URL-driven tests on `/` only
 //
-// Why the split: the light-only masonry home no longer renders <FilterBar>
-// (ADR 0040), so the chip-driven scenarios (1–5a) run only where the UI still
-// exists (/works/). The URL-driven scenarios (6 and no-JS) still hold on `/`
-// because the inline `applyFilter` script was kept for `/?type=…&tag=…` deep
-// links, and run on both routes. A dedicated case pins that `/` has no chrome.
+// Why: the light-only masonry home renders no <FilterBar> (ADR 0040) and the
+// /works/ index that mounted it was deleted. The inline `applyFilter` script was
+// kept for `/?type=…&tag=…` deep links. A dedicated case pins that `/` has no chrome.
 // ---------------------------------------------------------------------------
 
 test.describe("FilterBar — absent from the masonry home (/)", () => {
@@ -63,100 +60,14 @@ test.describe("FilterBar — absent from the masonry home (/)", () => {
 	});
 });
 
-for (const route of ["/", "/works/"] as const) {
+for (const route of ["/"] as const) {
 	test.describe(`FilterBar — JS enabled (${route})`, () => {
-		// Chip-driven scenarios need the FilterBar UI, which only /works/ renders.
-		if (route === "/works/") {
-			test(`1. type=video chip → URL + only video cards visible`, async ({ page }) => {
-				await page.goto(route);
-				// Wait for the filter bar to hydrate
-				await page.waitForSelector("[data-filter-bar]");
-
-				// Click the video type chip
-				await page.click('[data-filter-bar] button[data-type="video"]');
-
-				// URL should contain type=video
-				await expect(page).toHaveURL(/[?&]type=video/);
-
-				// Only the one video production card should be visible
-				const count = await visibleCardCount(page);
-				expect(count).toBe(1);
-			});
-
-			test(`2. add tag=overview → URL has both params, still 1 card`, async ({ page }) => {
-				await page.goto(route);
-				await page.waitForSelector("[data-filter-bar]");
-
-				// Select type=video first
-				await page.click('[data-filter-bar] button[data-type="video"]');
-				await expect(page).toHaveURL(/[?&]type=video/);
-
-				// Add the overview tag chip
-				await page.click('[data-filter-bar] button[data-tag="overview"]');
-				await expect(page).toHaveURL(/[?&]type=video/);
-				await expect(page).toHaveURL(/[?&]tag=overview/);
-
-				const count = await visibleCardCount(page);
-				expect(count).toBe(1);
-			});
-
-			test(`3. reset button → URL strips params, all 9 cards visible`, async ({ page }) => {
-				await page.goto(route);
-				await page.waitForSelector("[data-filter-bar]");
-
-				// Set a filter first
-				await page.click('[data-filter-bar] button[data-type="video"]');
-				await page.click('[data-filter-bar] button[data-tag="overview"]');
-				await expect(page).toHaveURL(/[?&]type=video/);
-
-				// Click reset
-				await page.click("[data-filter-bar] button[data-reset]");
-
-				// URL should be clean (no type/tag params)
-				const url = new URL(page.url());
-				expect(url.searchParams.get("type")).toBeNull();
-				expect(url.searchParams.getAll("tag")).toHaveLength(0);
-
-				const count = await visibleCardCount(page);
-				// Why: code-sandbox (Task 10) added the 12th production entry.
-				expect(count).toBe(12);
-			});
-
-			test(`4. back button restores prior filter`, async ({ page }) => {
-				// Note: writeState uses replaceState (not pushState) so individual filter
-				// changes don't add history entries. We navigate to a filtered URL as the
-				// starting point, then navigate away, then go back to verify restoration.
-				await page.goto(`${route}?type=video&tag=overview`);
-				await page.waitForSelector("[data-filter-bar]");
-				const filteredCount = await visibleCardCount(page);
-				expect(filteredCount).toBe(1);
-
-				// Navigate to a different page and come back
-				// Why: `route` is narrowed to "/works/" in this block; leave to the home and return.
-				await page.goto("/");
-				await page.goBack();
-
-				await page.waitForSelector("[data-filter-bar]");
-				// Filter state should be restored from URL
-				await expect(page).toHaveURL(/[?&]type=video/);
-				const restoredCount = await visibleCardCount(page);
-				expect(restoredCount).toBe(1);
-			});
-
-			test(`5a. axe-core clean with FilterBar visible`, async ({ page }) => {
-				await page.goto(route);
-				await page.waitForSelector("[data-filter-bar]");
-				const results = await new AxeBuilder({ page }).analyze();
-				expect(results.violations).toEqual([]);
-			});
-		}
-
 		test(`6. hard-refresh ?type=video → only video cards visible before interaction`, async ({
 			page,
 		}) => {
 			// Hard navigate directly to a pre-filtered URL — the inline is:inline
 			// script must apply the filter before paint, not just on user interaction.
-			await page.goto(`${route === "/" ? "" : route}?type=video`);
+			await page.goto(`?type=video`);
 			// No user interaction — just check the DOM immediately after load
 			const count = await visibleCardCount(page);
 			expect(count).toBe(1);
@@ -191,7 +102,8 @@ for (const route of ["/", "/works/"] as const) {
 			// code-sandbox (Task 10 fixture) is the 12th.
 			const grid = page.locator('[data-test="works-grid"] > li');
 			const count = await grid.count();
-			expect(count).toBe(12);
+			// Why >=: the build includes the real works next to the 12 fixture cards.
+			expect(count).toBeGreaterThanOrEqual(12);
 
 			// No JS console errors (can't run anyway, but ensure no inline script errors)
 			expect(consoleErrors).toHaveLength(0);

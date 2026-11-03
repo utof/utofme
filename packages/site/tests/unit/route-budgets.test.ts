@@ -189,14 +189,13 @@ describe("Rolldown-style fixture", () => {
 describe("classifyRoute", () => {
 	it("maps the spec's route classes", () => {
 		const c = (r: string): string | null => classifyRoute(r, budgets);
-		expect([
-			c("/"),
-			c("/works/"),
-			c("/works/x/"),
-			c("/now/"),
-			c("/garden/"),
-			c("/garden/note/"),
-		]).toEqual(["home", "archive", "project", "text", "text", "text"]);
+		expect([c("/"), c("/works/x/"), c("/now/"), c("/garden/"), c("/garden/note/")]).toEqual([
+			"home",
+			"project",
+			"text",
+			"text",
+			"text",
+		]);
 		expect([c("/search/"), c("/garden/graph/"), c("/lab/datamosh/"), c("/nope/")]).toEqual([
 			"search",
 			"graph",

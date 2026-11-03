@@ -48,7 +48,6 @@
 	/** Phase 2 stub — navigate actions + copy-URL. Theme toggle deferred to Phase 6. */
 	const allActions: Action[] = [
 		{ id: "goto-home", label: "Go to home", kind: "navigate", target: "/" },
-		{ id: "goto-works", label: "Go to /works/", kind: "navigate", target: "/works/" },
 		{ id: "goto-search", label: "Go to search", kind: "navigate", target: "/search/" },
 		{ id: "goto-now", label: "Go to /now/", kind: "navigate", target: "/now/" },
 		{ id: "goto-uses", label: "Go to /uses/", kind: "navigate", target: "/uses/" },

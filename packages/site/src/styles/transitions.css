@@ -1,42 +1,12 @@
 /**
- * transitions.css — CSS stagger animation for grid cards.
+ * transitions.css — view-transition styles (card → banner morph + reduced-motion kill switch).
  *
- * Why: staggered card-in animation (30 ms per card) provides perceived
- * performance by revealing cards sequentially rather than all at once.
- * The animation is applied to direct children of any [data-component="grid"]
- * element, driven by the CSS custom property `--i` (set inline per card).
+ * Why: the card stagger that used to live here keyed on `[data-component="grid"]`, which
+ * only the deleted /works/ index rendered, so it was removed with that page.
  *
- * prefers-reduced-motion: respects the user's motion preference by disabling
- * the animation entirely when reduced-motion is requested.
- *
- * @see packages/specs/plans/02-interactivity.md § Task 12
- * @see https://web.dev/prefers-reduced-motion/ (motion accessibility)
+ * @see packages/specs/specs/09-project-view.md § P9-9
+ * @see packages/specs/adrs/0046-card-banner-morph.md
  */
-
-[data-component="grid"] > * {
-	animation: card-in 200ms ease-out backwards;
-	animation-delay: calc(var(--i) * 30ms);
-}
-
-@keyframes card-in {
-	from {
-		/* Why: opacity removed — opacity:0 in the from keyframe with fill-mode:backwards
-		 * caused axe-core to compute near-zero effective opacity during the animation
-		 * delay, producing false color-contrast violations (WCAG 2.1 §1.4.3).
-		 * The translate entrance still provides the stagger visual without hiding text.
-		 * See: packages/specs/adrs/ (contrast fixup, Task 8 follow-up) */
-		transform: translateY(4px);
-	}
-	to {
-		transform: none;
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	[data-component="grid"] > * {
-		animation: none;
-	}
-}
 
 /* ─── Card → banner morph (spec P9-9) ─────────────────────────────────────
  * Why: names are applied as attributes by src/lib/vt/hero-morph.ts at navigation

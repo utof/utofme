@@ -80,7 +80,7 @@ test.describe("CommandPalette — /", () => {
 		await expect(dialog).toBeHidden({ timeout: 300 });
 	});
 
-	test("3. typing 'wor' filters list to match 'Go to /works/'", async ({ page }) => {
+	test("3. typing 'now' filters list to match 'Go to /now/'", async ({ page }) => {
 		await page.goto("/");
 		await waitForPalette(page);
 		await openPalette(page);
@@ -89,10 +89,10 @@ test.describe("CommandPalette — /", () => {
 		await expect(dialog).toBeVisible({ timeout: 100 });
 
 		// Type into the search input
-		await page.keyboard.type("wor");
+		await page.keyboard.type("now");
 
-		// "Go to /works/" action should be visible
-		const item = dialog.locator("[data-palette-item]").filter({ hasText: "Go to /works/" });
+		// "Go to /now/" action should be visible
+		const item = dialog.locator("[data-palette-item]").filter({ hasText: "Go to /now/" });
 		await expect(item).toBeVisible({ timeout: 300 });
 
 		// Other actions should be hidden (not rendered when filtered out)
@@ -144,16 +144,16 @@ test.describe("CommandPalette — /", () => {
 		await expect(dialog).toBeVisible({ timeout: 100 });
 
 		// Filter to "works" to get a known navigate action
-		await page.keyboard.type("wor");
-		const item = dialog.locator("[data-palette-item]").filter({ hasText: "Go to /works" });
+		await page.keyboard.type("now");
+		const item = dialog.locator("[data-palette-item]").filter({ hasText: "Go to /now" });
 		await expect(item).toBeVisible({ timeout: 300 });
 
 		// Press ⌘+Enter (ControlOrMeta+Enter) to open in new tab
 		await page.keyboard.press("ControlOrMeta+Enter");
 
-		// Assert window.open was called with target="/works/" and name="_blank"
+		// Assert window.open was called with target="/now/" and name="_blank"
 		const call = await page.evaluate(() => window.__lastOpenCall);
-		expect(call).toMatchObject({ target: "/works/", name: "_blank" });
+		expect(call).toMatchObject({ target: "/now/", name: "_blank" });
 	});
 
 	test("6. outside click closes palette", async ({ page }) => {
@@ -259,22 +259,22 @@ test.describe("CommandPalette — /", () => {
 		await expect(dialog).toBeVisible({ timeout: 100 });
 
 		// Type a query so we can verify state is preserved after nav
-		await page.keyboard.type("wor");
+		await page.keyboard.type("now");
 		const input = dialog.locator("input");
-		await expect(input).toHaveValue("wor", { timeout: 300 });
+		await expect(input).toHaveValue("now", { timeout: 300 });
 
-		// Navigate to /works/ via in-page anchor click so ClientRouter intercepts it.
+		// Navigate to /search/ via in-page anchor click so ClientRouter intercepts it.
 		// Why: page.goto() is a full browser navigation and bypasses ClientRouter;
 		// transition:persist only works when ClientRouter handles the swap.
 		// Clicking a synthetic same-origin anchor triggers the SPA swap path.
 		await page.evaluate(() => {
 			const a = document.createElement("a");
-			a.href = "/works/";
+			a.href = "/search/";
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
 		});
-		await page.waitForURL(/\/works/, { timeout: 5000 });
+		await page.waitForURL(/\/search/, { timeout: 5000 });
 		// Why: paletteReady flag is already set before nav; transition:persist keeps
 		// the CommandPalette island alive — onMount does not re-fire. We wait a beat
 		// for the SPA swap to settle then assert directly on the existing DOM.
@@ -284,6 +284,6 @@ test.describe("CommandPalette — /", () => {
 		const dialogAfterNav = page.locator('[role="dialog"][data-palette]');
 		await expect(dialogAfterNav).toBeVisible({ timeout: 1000 });
 		const inputAfterNav = dialogAfterNav.locator("input");
-		await expect(inputAfterNav).toHaveValue("wor", { timeout: 500 });
+		await expect(inputAfterNav).toHaveValue("now", { timeout: 500 });
 	});
 });
