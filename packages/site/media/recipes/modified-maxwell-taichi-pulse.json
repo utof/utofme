@@ -1,0 +1,18 @@
+{
+	"slug": "modified-maxwell-taichi-pulse",
+	"kind": "transcode",
+	"aspect": "16:9",
+	"fps": 30,
+	"sizes": ["card"],
+	"shots": [
+		{
+			"src": "modified-maxwell-taichi/fdtd_2d.gif",
+			"start": 1.6,
+			"duration": 1.6,
+			"fit": "cover",
+			"crop": { "x": 108, "y": 269, "w": 480, "h": 270 }
+		}
+	],
+	"poster": { "at": 0.9 },
+	"stills": []
+}

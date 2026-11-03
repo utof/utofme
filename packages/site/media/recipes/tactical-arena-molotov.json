@@ -1,0 +1,18 @@
+{
+	"slug": "tactical-arena-molotov",
+	"kind": "transcode",
+	"aspect": "16:9",
+	"fps": 30,
+	"sizes": ["card"],
+	"shots": [
+		{
+			"src": "RL_playground/tactical-arena/runs/m21/gifs_best_molly/self_T_vs_molly_CT_0.gif",
+			"start": 2.4,
+			"duration": 2.0,
+			"fit": "cover",
+			"crop": { "x": 0, "y": 90, "w": 560, "h": 315 }
+		}
+	],
+	"poster": { "at": 0.8 },
+	"stills": []
+}

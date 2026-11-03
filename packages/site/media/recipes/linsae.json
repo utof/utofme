@@ -1,0 +1,49 @@
+{
+	"slug": "linsae",
+	"kind": "slideshow",
+	"aspect": "16:9",
+	"fps": 10,
+	"sizes": ["card", "banner"],
+	"slides": [
+		{
+			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K1-main-window-feed.png",
+			"hold": 1.4,
+			"fit": "cover"
+		},
+		{
+			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K4-thread-view.png",
+			"hold": 1.0,
+			"fit": "cover"
+		},
+		{
+			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K8-canvas.png",
+			"hold": 1.4,
+			"fit": "cover"
+		},
+		{
+			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K9-pdf-reader-docked.png",
+			"hold": 1.2,
+			"fit": "cover"
+		},
+		{
+			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K7-command-palette.png",
+			"hold": 1.0,
+			"fit": "cover"
+		}
+	],
+	"poster": { "at": 0.5 },
+	"stills": [
+		{
+			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K1-main-window-feed.png",
+			"out": "feed"
+		},
+		{
+			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K8-canvas.png",
+			"out": "canvas"
+		},
+		{
+			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K9-pdf-reader-docked.png",
+			"out": "pdf-reader"
+		}
+	]
+}
