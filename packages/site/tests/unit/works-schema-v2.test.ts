@@ -185,3 +185,72 @@ describe("fixture filtering and prevNext (AC3.3)", () => {
 		expect(prevNext(entries, "\u0000missing")).toEqual({ prev: undefined, next: undefined });
 	});
 });
+
+const sectionArb = fc.record({
+	id: fc.stringMatching(/^[a-z0-9]+(-[a-z0-9]+)*$/).filter((s) => s.length <= 40),
+	title: textArb(60),
+});
+const articleArb = fc.record({
+	headline: textArb(80),
+	dek: textArb(120),
+	sections: fc.array(sectionArb, { minLength: 3, maxLength: 12 }),
+	math: fc.boolean(),
+});
+const sections3 = [
+	{ id: "a", title: "A" },
+	{ id: "b", title: "B" },
+	{ id: "c", title: "C" },
+];
+const goodArticle = { headline: "H", dek: "D", sections: sections3 };
+
+describe("works schema article variant (AC1.1)", () => {
+	test.prop([articleArb])("valid article objects parse", (article) => {
+		expect(schema.safeParse({ ...base, article }).success).toBe(true);
+	});
+
+	it("math defaults to false; article is optional", () => {
+		const r = schema.parse({ ...base, article: goodArticle });
+		expect(r.article?.math).toBe(false);
+		expect(schema.parse(base).article).toBeUndefined();
+	});
+
+	const corruptions: [string, unknown, (string | number)[]][] = [
+		["headline > 80", { ...goodArticle, headline: "x".repeat(81) }, ["article", "headline"]],
+		["dek > 120", { ...goodArticle, dek: "x".repeat(121) }, ["article", "dek"]],
+		[
+			"bad section id",
+			{ ...goodArticle, sections: [{ id: "Bad_Id", title: "A" }, ...sections3.slice(1)] },
+			["article", "sections", 0, "id"],
+		],
+		["< 3 sections", { ...goodArticle, sections: sections3.slice(0, 2) }, ["article", "sections"]],
+		[
+			"> 12 sections",
+			{
+				...goodArticle,
+				sections: Array.from({ length: 13 }, (_, i) => ({ id: `s${i}`, title: "t" })),
+			},
+			["article", "sections"],
+		],
+		["non-boolean math", { ...goodArticle, math: "yes" }, ["article", "math"]],
+	];
+	it.each(corruptions)("corruption %s fails at its path", (_n, article, path) => {
+		const r = schema.safeParse({ ...base, article });
+		expect(r.success).toBe(false);
+		expect(r.error?.issues.some((i) => JSON.stringify(i.path) === JSON.stringify(path))).toBe(true);
+	});
+
+	it("a public link without href fails at links.N.href", () => {
+		const r = schema.safeParse({
+			...base,
+			links: [{ label: "A" }, { label: "B", private: false }],
+		});
+		expect(r.success).toBe(false);
+		expect(r.error?.issues.map((i) => i.path.join("."))).toContain("links.0.href");
+	});
+
+	it("a private link without href parses", () => {
+		expect(schema.safeParse({ ...base, links: [{ label: "Code", private: true }] }).success).toBe(
+			true,
+		);
+	});
+});
