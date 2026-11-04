@@ -24,5 +24,6 @@ describe("check-docs @see existence", () => {
 		expect(r.stderr).toContain("9999-does-not-exist.md");
 		expect(r.stderr).not.toContain("okLocal");
 		expect(r.stderr).not.toContain("okUrl");
-	});
+		// Why: spawns bun + ts-morph; ~6 s on a CI runner, over Vitest's 5 s default.
+	}, 30_000);
 });
