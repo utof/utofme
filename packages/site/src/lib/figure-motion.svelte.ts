@@ -18,6 +18,9 @@ import { isMotionPaused, MOTION_EVENT } from "./motion";
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-4 (AC4.5)
  */
 export function motionState(): { readonly paused: boolean; dispose(): void } {
+	// Why: islands also render on the server, where `document` does not exist; a server
+	// render never animates, so it reports paused and binds nothing.
+	if (typeof document === "undefined") return { paused: true, dispose() {} };
 	let paused = $state(isMotionPaused());
 	const refresh = (): void => {
 		paused = isMotionPaused();

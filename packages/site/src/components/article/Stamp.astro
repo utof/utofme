@@ -27,6 +27,7 @@ const where = typeof measuredOn === "number" ? `block ${measuredOn}` : measuredO
 		font-family: var(--font-mono);
 		font-size: var(--font-size-1);
 		color: var(--color-text-muted);
-		white-space: nowrap;
+		/* Why: long stamps ("…, self-play, recorded 2026-11-04") must wrap on a 393 px phone. */
+		overflow-wrap: anywhere;
 	}
 </style>
