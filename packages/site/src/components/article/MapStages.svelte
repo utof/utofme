@@ -25,7 +25,6 @@
 	import { motionState } from "../../lib/figure-motion.svelte";
 	import { formatNumber } from "../../lib/figure-scale";
 	import {
-		centroid,
 		closedTiles,
 		DEFAULT_MAP,
 		mapTitle,
@@ -36,6 +35,7 @@
 		stageSummary,
 		wallness,
 	} from "../../lib/figures/map-stages";
+	import { centroid } from "../../lib/figures/square-paths";
 	import { parseRows, siteRects, spawnTiles } from "../../lib/grid";
 	import "./MapStages.css";
 

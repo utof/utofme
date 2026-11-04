@@ -11,7 +11,7 @@
 import type { MapsGeneratedData } from "../article-data/maps_generated";
 import { formatNumber } from "../figure-scale";
 import { isWall, parseRows, type SiteRect, siteRects, spawnTiles } from "../grid";
-import { mergedPath } from "./map-stages";
+import { mergedPath } from "./square-paths";
 
 /**
  * A map generator version shipped in the dataset.

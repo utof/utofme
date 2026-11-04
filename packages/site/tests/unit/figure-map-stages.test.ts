@@ -9,12 +9,10 @@ import { fc, test } from "@fast-check/vitest";
 import { describe, expect, it } from "vitest";
 import { dataset, type MapStagesData } from "../../src/lib/article-data/map_stages";
 import {
-	centroid,
 	checkCounts,
 	closedTiles,
 	DEFAULT_MAP,
 	mapTitle,
-	mergedPath,
 	reopenedTiles,
 	STAGES,
 	type StageMap,
@@ -24,6 +22,7 @@ import {
 	stageSummary,
 	wallness,
 } from "../../src/lib/figures/map-stages";
+import { centroid, mergedPath } from "../../src/lib/figures/square-paths";
 
 const data: MapStagesData = dataset.projected.parse(
 	JSON.parse(readFileSync("src/data/article/map_stages.json", "utf8")),
