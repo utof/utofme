@@ -74,6 +74,15 @@ describe("denylist", () => {
 		expect(scanText("zorblax", "core", [])).toEqual([]);
 		expect(scanText("nothing", "core", denylist)).toEqual([]);
 	});
+	it("paths redact keys that hit a rule, for the key and everything under it", () => {
+		const f = scanJson({ zorblax_id: { b: "192.0.2.7" }, "192.0.2.8": 1 }, "core", denylist);
+		expect(f.length).toBeGreaterThanOrEqual(3);
+		for (const x of f) {
+			const s = JSON.stringify(x).toLowerCase();
+			for (const bad of ["zorblax", "192.0.2.8"]) expect(s).not.toContain(bad);
+		}
+		expect(f).toContainEqual({ rule: "ipv4", where: "$.<redacted>.b" });
+	});
 	it("messages never contain the matched text", () => {
 		const f = scanJson({ k: "zorblax 192.0.2.7 a@example.invalid" }, "shipped", denylist);
 		expect(f.length).toBeGreaterThan(0);

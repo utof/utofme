@@ -199,8 +199,16 @@ export function scanJson(value: unknown, set: RuleSet, denylist: readonly string
 			for (const [i, x] of (v as unknown[]).entries()) walk(x, `${path}[${i}]`);
 		} else if (v !== null && typeof v === "object") {
 			for (const [k, x] of Object.entries(Object(v) as Record<string, unknown>)) {
-				const kp = /^[A-Za-z_]\w*$/.test(k) ? `${path}.${k}` : `${path}[${JSON.stringify(k)}]`;
-				out.push(...scanString(k, set, denylist, false, kp));
+				// Why: a key that hits a rule is matched text; it never appears in a path, its own or
+				// any path below it, so a log line cannot reproduce it.
+				const hits = scanString(k, set, denylist, false, undefined);
+				const kp =
+					hits.length > 0
+						? `${path}.<redacted>`
+						: /^[A-Za-z_]\w*$/.test(k)
+							? `${path}.${k}`
+							: `${path}[${JSON.stringify(k)}]`;
+				out.push(...hits.map((f) => ({ ...f, where: kp })));
 				walk(x, kp);
 			}
 		}
