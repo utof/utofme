@@ -124,7 +124,10 @@ test("AC10.2: no-JS shows the diagram keyframe, 18 blurbs and the 9 stages", asy
 	});
 	const page = await context.newPage();
 	await page.goto(URL);
-	await expect(page.locator("figure#f6 svg[role='img']")).toBeVisible();
+	// Why: the keyframe draws a wide and a narrow layout; CSS shows exactly one per viewport.
+	const shown = page.locator("figure#f6 svg[role='img']").filter({ visible: true });
+	await expect(shown).toHaveCount(1);
+	await expect(shown).toHaveClass(/\bmc-wide\b/);
 	await expect(count(page)).toHaveText("4 / 9");
 	await expect(page.locator("figure#f6 details dl dt")).toHaveCount(18);
 	await expect(page.locator("figure#f6 details ol li")).toHaveCount(9);

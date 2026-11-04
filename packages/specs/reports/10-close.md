@@ -182,10 +182,10 @@ These tests are written but not rendered here. `update-visual-baselines.yml` ren
 
 - [x] The `PRIVACY_DENYLIST` Actions secret is set.
 - [x] The article HTML budget is decided: 60 KB, ADR 0057.
-- [ ] Sign off on the ten starred notebook highlights (lane FE's report lists them) and the F6 public copy.
-- [ ] A fresh read of the copy by someone who did not write it: voice, claims, the number words lane P lists, the F1 text equivalent, the F6 and F7 copy, and the rounded `alt` wordings in section 1.
-- [ ] F5 stage 2 ships the project's floor-fraction grid. The source data's licence note asks for a check before floor masks are published.
-- [ ] Keep or drop the credits line naming figure influences.
-- [ ] The `tactical-arena` recipe hash is stale after the stills were removed. The next `media:encode` re-encodes the slug.
-- [ ] Render the visual baselines, inspect the new PNGs, and re-run CI. CI's e2e and Lighthouse jobs are the first runs that include F6 and F7.
+- [x] Sign off on the ten starred notebook highlights (lane FE's report lists them) and the F6 public copy. Owner approved the ten highlights.
+- [ ] A fresh read of the copy by someone who did not write it: voice, claims, the number words lane P lists, the F1 text equivalent, the F6 and F7 copy, and the rounded `alt` wordings in section 1. Deferred: the owner reads the live page.
+- [x] F5 stage 2 ships the project's floor-fraction grid. The source data's licence note asks for a check before floor masks are published. Owner approved shipping it.
+- [x] Keep or drop the credits line naming figure influences. Kept (default; owner may drop it later).
+- [ ] The `tactical-arena` recipe hash is stale after the stills were removed. The next `media:encode` re-encodes the slug. Deferred: `check:media` passes as is.
+- [x] Render the visual baselines, inspect the new PNGs, and re-run CI. CI's e2e and Lighthouse jobs are the first runs that include F6 and F7. The baselines run found one failure: AC10.2 matched both F6 layouts. Fixed: the test now asserts exactly one visible layout.
 - [ ] Merge with a merge commit, tag `phase-10`, watch the deploy (the denylist step now runs), and file the deferred issues.
