@@ -46,16 +46,16 @@ const ThumbFor = {
  * How many leading DOM cards load eagerly.
  *
  * Why: the masonry is column-major (CSS multi-column), so the first DOM cards
- * fill column 1 top-to-bottom and the top of column 2 is a later DOM card. The
- * first 4 cover the above-the-fold cards of both columns; only card 1 gets
- * `fetchpriority="high"` (the LCP candidate).
+ * fill column 1 top-to-bottom and the tops of columns 2-3 are later DOM cards.
+ * 4 matches the `eagerCardCount` budget; the rest lazy-load as they enter the
+ * viewport. Only card 1 gets `fetchpriority="high"` (the LCP candidate).
  *
  * @see packages/specs/reviews/09-spec-review.md finding 5
  */
 const EAGER_CARDS = 4;
 
-/** Mirrors the column breakpoints in the stylesheet below (--masonry-cols / 2 / 1 columns). */
-const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
+/** Mirrors the column breakpoints in the stylesheet below (3 / 2 / 1 columns). */
+const COVER_SIZES = "(min-width: 1100px) 33vw, (min-width: 560px) 50vw, 100vw";
 ---
 
 <BaseLayout title="utofme" minimal wordmarkHeading>
@@ -226,11 +226,10 @@ const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 		}
 	}
 
-	/* --masonry-cols: desktop column count (trying 2; was 3). */
-	@media (min-width: 1000px) {
+	/* Desktop: three narrower columns inside the 1340 px page column. */
+	@media (min-width: 1100px) {
 		.masonry {
-			--masonry-cols: 2;
-			column-count: var(--masonry-cols);
+			column-count: 3;
 		}
 	}
 </style>

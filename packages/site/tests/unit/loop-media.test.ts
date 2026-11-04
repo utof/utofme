@@ -93,7 +93,7 @@ describe("LoopMedia.astro markup contract", () => {
 		expect(Math.max(...widths)).toBe(1920);
 		expect(widths).toEqual(expect.arrayContaining([640, 960, 1280, 1920]));
 		expect(widths).not.toContain(2560);
-		expect(html).toContain('sizes="(min-width: 700px) 85vw, 100vw"');
+		expect(html).toContain('sizes="(min-width: 1580px) 1340px, (min-width: 700px) 85vw, 100vw"');
 		expect(html).toContain('data-loop-size="banner"');
 		expect(html).toContain('width="1920"');
 	});
