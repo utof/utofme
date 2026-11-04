@@ -169,7 +169,7 @@ Figure 6 is the result for the five-against-five line. After block 28, the agent
 
 That interval covers the tournament's own noise and nothing else. The two training seeds land at <N k="elo.head.block2.seed1" /> and <N k="elo.head.block2.seed2" />, a gap of <N k="elo.head.seedgap" />, wider than the interval itself. On the <N k="maps.generator.heldout" /> generated test maps the same agent reads <N k="elo.head.generated" />, and on maps compiled from CS2's own navigation data, <N k="elo.head.compiled" />.
 
-Before the agents played five against five, they played three against three. That line peaked at <N k="elo.3v3.peak" /> Elo over its own start. It is tempting to add the two numbers. Don't. The game, the starting agent and the opponents were all different, and an Elo number only means something inside the tournament that produced it.
+Before the agents played five against five, they played three against three; the small panel under Figure 6 shows that line climbing too, measured from its own start. It is tempting to stack the two climbs. Don't. The game, the starting agent and the opponents were all different, and an Elo number only means something inside the tournament that produced it.
 
 How big must a difference be before I believe it? Training is noisy. The same recipe, started from two different seeds, lands about <N k="noise.seed.cs.low" /> to <N k="noise.seed.cs.high" /> Elo apart on the real maps; under an earlier, looser protocol, identical recipes came out <N k="noise.seed.aa.low" /> to <N k="noise.seed.aa.high" /> apart. Most changes I want to test are smaller than that. The tournament, by comparison, wobbles by about <N k="eval.noise.tournament" /> Elo, close to the <N k="eval.noise.binomial" /> that coin-flip arithmetic predicts.
 
@@ -189,7 +189,7 @@ Put the agents and the pros side by side, with the same definitions, and the age
   <span slot="try">Drag the marker to your guess, then press Reveal.</span>
 </TempoBlock>
 
-The agents' rounds pile up early: <N k="tempo.contact.before12.agents" /> of them reach first contact within twelve seconds — <Stamp measuredOn={on("tempo.contact.before12.agents")} /> — and among pros, <N k="tempo.contact.before12.pros" />. Every other clock agrees. The agents plant at a median of <N k="tempo.b28.plant.median" />, the pros at <N k="tempo.pros.plant.median" ci />.
+The agents' rounds pile up early: most of them reach first contact within twelve seconds, and among pros only <N k="tempo.contact.before12.pros" /> do. Once you reveal, Figure 8 prints both shares for the block you pick. Every other clock agrees. The agents plant at a median of <N k="tempo.b28.plant.median" />, the pros at <N k="tempo.pros.plant.median" ci />.
 
 Utility tells the same story, though my best numbers here come from the earlier three-against-three agent — <Stamp measuredOn={on("util.agent.grenades")} /> — which threw <N k="util.agent.grenades" /> grenades per player-round, against <N k="util.pros.grenades" /> for pros, and <N k="util.agent.selfblind" /> of its flashes blinded the thrower; for pros, <N k="util.pros.selfblind" />. Some things do match. <N k="match.smokekills.agent" /> of the agent's kills go through smoke, and <N k="match.smokekills.pros" /> of the pros'. A team saving money wins against a full buy in <N k="match.eco.agent" /> of rounds in my game and <N k="match.eco.pros" /> in pro matches.
 
