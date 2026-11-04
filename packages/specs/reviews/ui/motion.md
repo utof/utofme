@@ -7,3 +7,7 @@
 
 ## Findings
 (in progress)
+
+## Progress notes (work in progress, partial)
+- Morph forward (tactical-arena, enth, godot-ctcs, linsae): VT starts ~150-220 ms after click; hero group 450 ms; old(hero) fades 200 ms while new(hero) uses UA default 450 ms ease fade, so mid-flight the media is semi-transparent over white (see morph-fwd-tactical-08..10.png).
+- Pause motion: instant (50 ms), persisted, reload shows poster; loops pause off-screen.
