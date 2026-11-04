@@ -156,12 +156,13 @@ const cover = data.cover;
 	}
 
 	/* Banner: 16:9 below 700 px, 3:1 above; clipping frame for the morph. */
+	/* Why: the banner spans the shared page column so its edges line up with the
+	 * header, text and footer at every width. */
 	.banner {
 		position: relative;
 		width: 100%;
-		max-width: 1280px;
 		max-height: 60vh;
-		margin: 0 auto var(--space-4);
+		margin: 0 0 var(--space-4);
 		aspect-ratio: 16 / 9;
 		overflow: hidden;
 		background: var(--color-surface);

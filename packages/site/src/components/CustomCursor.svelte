@@ -13,12 +13,8 @@
 	let target = $state({ x: 0, y: 0 });
 	let pos = $state({ x: 0, y: 0 });
 	let raf: number | undefined;
-	/** True once hydrated; the server-rendered markup stays invisible (never hydrates on coarse pointers). */
+	/** True after the first pointer move; until then the ring would sit at (0,0). The SSR markup stays invisible (never hydrates on coarse pointers). */
 	let ready = $state(false);
-
-	$effect(() => {
-		ready = true;
-	});
 
 	$effect(() => {
 		const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -26,6 +22,10 @@
 
 		const onMove = (e: PointerEvent) => {
 			target = { x: e.clientX, y: e.clientY };
+			if (!ready) {
+				pos = target;
+				ready = true;
+			}
 		};
 		window.addEventListener("pointermove", onMove, { passive: true });
 
