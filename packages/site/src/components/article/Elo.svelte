@@ -196,7 +196,7 @@
 			<!-- svelte-ignore a11y_no_noninteractive_tabindex a11y_no_noninteractive_element_interactions -->
 			<svg
 				bind:this={svgEl}
-				class="el-svg"
+				class="el-chart"
 				viewBox="0 0 {layout.w} {layout.h}"
 				role="group"
 				tabindex="0"
@@ -301,7 +301,7 @@
 	}
 	.el-chip:focus-visible,
 	.el-mark:focus-visible,
-	.el-svg:focus-visible,
+	.el-chart:focus-visible,
 	.el-card a:focus-visible,
 	.el-x:focus-visible,
 	.el-fail button:focus-visible {
@@ -312,7 +312,7 @@
 		position: relative;
 		inline-size: 100%;
 	}
-	.el-svg {
+	.el-chart {
 		display: block;
 		inline-size: 100%;
 		block-size: 100%;

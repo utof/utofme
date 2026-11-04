@@ -71,7 +71,7 @@ describe("Elo island", () => {
 	async function ready(): Promise<void> {
 		app = mountElo(host, freshProps());
 		flushSync();
-		await vi.waitFor(() => expect(q("svg.el-svg")).not.toBeNull(), { timeout: 2000 });
+		await vi.waitFor(() => expect(q("svg.el-chart")).not.toBeNull(), { timeout: 2000 });
 		flushSync();
 	}
 
@@ -79,20 +79,20 @@ describe("Elo island", () => {
 		app = mountElo(host, freshProps());
 		flushSync();
 		expect(q(".fig-box")).not.toBeNull();
-		expect(q("svg.el-svg")).toBeNull();
-		await vi.waitFor(() => expect(q("svg.el-svg")).not.toBeNull(), { timeout: 2000 });
+		expect(q("svg.el-chart")).toBeNull();
+		await vi.waitFor(() => expect(q("svg.el-chart")).not.toBeNull(), { timeout: 2000 });
 		expect(fetchMock).toHaveBeenCalledTimes(1);
-		expect(q("svg.el-svg")?.getAttribute("role")).toBe("group");
-		expect(q("svg.el-svg")?.getAttribute("aria-labelledby")).toBe("f3-cap");
+		expect(q("svg.el-chart")?.getAttribute("role")).toBe("group");
+		expect(q("svg.el-chart")?.getAttribute("aria-labelledby")).toBe("f3-cap");
 	});
 
 	it("default state: hand-made maps pressed, block 28 labelled +96 (+94 to +98), two bands", async () => {
 		await ready();
 		expect(chip("Hand-made CS maps")?.getAttribute("aria-pressed")).toBe("true");
 		expect(chip("Generated test maps")?.getAttribute("aria-pressed")).toBe("false");
-		expect(q("svg.el-svg")?.textContent).toContain("+96 (+94 to +98)");
-		expect(qa("svg.el-svg [data-band]")).toHaveLength(2);
-		expect(qa("svg.el-svg [data-point]")).toHaveLength(10);
+		expect(q("svg.el-chart")?.textContent).toContain("+96 (+94 to +98)");
+		expect(qa("svg.el-chart [data-band]")).toHaveLength(2);
+		expect(qa("svg.el-chart [data-point]")).toHaveLength(10);
 	});
 
 	it("AC7.5: the compiled toggle shows three points, the block-28 one reading +86", async () => {
@@ -100,8 +100,8 @@ describe("Elo island", () => {
 		chip("Compiled CS maps")?.click();
 		flushSync();
 		expect(chip("Compiled CS maps")?.getAttribute("aria-pressed")).toBe("true");
-		expect(qa("svg.el-svg [data-point]")).toHaveLength(3);
-		expect(q("svg.el-svg")?.textContent).toContain("+86 (+84 to +89)");
+		expect(qa("svg.el-chart [data-point]")).toHaveLength(3);
+		expect(q("svg.el-chart")?.textContent).toContain("+86 (+84 to +89)");
 		expect(q("#f3-live")?.textContent).toContain("3 readouts");
 	});
 
@@ -109,12 +109,12 @@ describe("Elo island", () => {
 		await ready();
 		chip("Generated test maps")?.click();
 		flushSync();
-		expect(qa("svg.el-svg [data-band], svg.el-svg [data-whisker]")).toHaveLength(0);
+		expect(qa("svg.el-chart [data-band], svg.el-chart [data-whisker]")).toHaveLength(0);
 	});
 
 	it("keyboard: focus reads block 28, ← steps to block 24 with its seeds, Home goes to block 2", async () => {
 		await ready();
-		const svg = q("svg.el-svg");
+		const svg = q("svg.el-chart");
 		svg?.dispatchEvent(new FocusEvent("focus"));
 		flushSync();
 		expect(svg?.textContent).toContain("Block 28: +96 Elo (90 % interval +94 to +98)");
@@ -157,7 +157,7 @@ describe("Elo island", () => {
 		await vi.waitFor(() => expect(q(".el-fail")).not.toBeNull(), { timeout: 2000 });
 		expect(q(".el-fail")?.textContent).toContain("Interactive version failed to load");
 		q<HTMLButtonElement>(".el-fail button")?.click();
-		await vi.waitFor(() => expect(q("svg.el-svg")).not.toBeNull(), { timeout: 2000 });
+		await vi.waitFor(() => expect(q("svg.el-chart")).not.toBeNull(), { timeout: 2000 });
 		expect(q(".el-fail")).toBeNull();
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});

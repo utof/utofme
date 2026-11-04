@@ -51,7 +51,9 @@ const sets = MAP_SETS.map((m) => ({
 	</Elo>
 	<div class="el-extras">
 		<section class="el-after" aria-labelledby="el-after-h">
-			<h3 id="el-after-h">After block 28 the game changed</h3>
+			<p id="el-after-h" class="el-h">
+				After block 28 the game changed
+			</p>
 			<p class="el-hint">Each number is measured in its own game, not on the scale above.</p>
 			<ul>
 				{after.map((r) => (
@@ -62,7 +64,9 @@ const sets = MAP_SETS.map((m) => ({
 			</ul>
 		</section>
 		<section class="el-panel" aria-labelledby="el-panel-h">
-			<h3 id="el-panel-h">3v3 era (different game; not on this scale)</h3>
+			<p id="el-panel-h" class="el-h">
+				3v3 era (different game; not on this scale)
+			</p>
 			<svg
 				viewBox={`0 0 ${PANEL.w} ${PANEL.h}`}
 				role="img"
@@ -81,7 +85,7 @@ const sets = MAP_SETS.map((m) => ({
 		</p>
 		{sets.map((s) => (
 			<>
-				<h4>{s.label}</h4>
+				<p class="el-h">{s.label}</p>
 				<table class="el-table">
 					<thead>
 						<tr>
@@ -121,9 +125,11 @@ const sets = MAP_SETS.map((m) => ({
 			grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
 		}
 	}
-	h3 {
+	/* Why: plain paragraphs, not headings, so the figure never skips a heading level wherever it sits. */
+	.el-h {
 		margin: 0 0 var(--space-1);
 		font-size: var(--font-size-2);
+		font-weight: 600;
 		color: var(--color-text);
 	}
 	.el-hint {
@@ -150,9 +156,5 @@ const sets = MAP_SETS.map((m) => ({
 		padding: 2px var(--space-3);
 		text-align: start;
 		border-block-end: 1px solid var(--color-border);
-	}
-	h4 {
-		margin: var(--space-3) 0 var(--space-1);
-		font-size: var(--font-size-ui);
 	}
 </style>
