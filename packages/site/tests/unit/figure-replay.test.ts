@@ -12,6 +12,7 @@ import {
 	buildFog,
 	contactSight,
 	firstContactTick,
+	fogSummary,
 	initialPlayback,
 	keyframeTicks,
 	markers,
@@ -211,6 +212,19 @@ describe("visiblePairs and contactSight", () => {
 	it("the contact sight is the first pair at the first contact tick", () => {
 		expect(contactSight(real)).toEqual(real.sees[9]?.[0]);
 		expect(contactSight(tiny({ sees: [[], [], [], []] }))).toBeNull();
+	});
+});
+
+describe("fogSummary", () => {
+	const fog = buildFog(real);
+	it("is empty for All and counts seen enemies and ghosts for a team", () => {
+		expect(fogSummary(real, fog, "all", 9)).toBe("");
+		const g = fog.CT.findIndex((f) => f.ghosts.length > 0);
+		const s = fogSummary(real, fog, "CT", g);
+		expect(s).toMatch(/^Defenders see \d of \d attackers; \d last-seen places? shown$/);
+		const seen = fog.CT[g]?.visible.filter((v, pid) => v && real.players[pid]?.side === "T").length;
+		expect(s).toContain(`see ${seen} of`);
+		expect(fogSummary(real, fog, "T", 0)).toMatch(/^Attackers see 0 of 5 defenders$/);
 	});
 });
 

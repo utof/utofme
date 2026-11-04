@@ -148,6 +148,37 @@ export function buildFog(data: ReplayLike): Readonly<Record<Side, readonly TeamF
 }
 
 /**
+ * One sentence on what a team's view hides at a tick, e.g. "Defenders see 2 of 5 attackers; 1
+ * last-seen place shown"; empty for the "all" view.
+ *
+ * Why: the fog is drawn on a canvas, so the same facts must exist as text (spec: text equivalent).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-5 (See as, text equivalent)
+ */
+export function fogSummary(
+	data: ReplayLike,
+	fog: Readonly<Record<Side, readonly TeamFog[]>>,
+	view: View,
+	tick: number,
+): string {
+	if (view === "all") return "";
+	const f = fog[view][tick];
+	if (!f) return "";
+	let alive = 0;
+	let seen = 0;
+	data.players.forEach((p, pid) => {
+		if (p.side === view || p.alive[tick] !== 1) return;
+		alive += 1;
+		if (f.visible[pid]) seen += 1;
+	});
+	const us = view === "T" ? "Attackers" : "Defenders";
+	const them = view === "T" ? "defenders" : "attackers";
+	const n = f.ghosts.length;
+	const tail = n > 0 ? `; ${n} last-seen ${n === 1 ? "place" : "places"} shown` : "";
+	return `${us} see ${seen} of ${alive} ${them}${tail}`;
+}
+
+/**
  * The sightlines to draw at a tick: every pair for "all", else the pairs whose observer is on
  * the chosen team (a team does not know who sees it).
  *
