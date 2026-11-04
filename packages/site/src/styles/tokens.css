@@ -140,6 +140,30 @@
 	 * which nothing does while LIGHT_ONLY is true (src/lib/theme.ts). */
 	color-scheme: light;
 
+	/* Figures */
+	/* Why: research-article figure palette (P10-2). Every label colour is >= 4.5:1 on #fff and
+	 * #fafafa, every mark >= 3:1; colour is never the only channel (marks in lib/figure-marks.ts).
+	 * --color-accent never encodes data: it shifts with time of day (ADR 0038).
+	 * Dark values are TODO while the site is light-only (ADR 0040).
+	 * @see packages/specs/specs/10-tactical-arena-article.md § P10-2 */
+	--color-ct: #1f5fbf; /* CT marks and labels */
+	--color-t: #a85b00; /* T marks and labels */
+	--color-smoke: #6b7280; /* smoke disc edge and labels */
+	--color-smoke-fill: rgb(156 163 175 / 0.55); /* smoke fill (decorative) */
+	--color-fire: #c2410c; /* molotov edge + hatch */
+	--color-map-wall: #3a3a3a;
+	--color-map-floor: var(--color-bg);
+	--color-map-site: #e8e8e8; /* bomb-site fill (decorative; the letter carries meaning) */
+	--color-pro: #1e1e1e; /* pros' series */
+	--color-bot: #6f6f6f; /* scripted bots' series */
+	--color-outcome-kept: #1f5fbf;
+	--color-outcome-reverted: #b42318;
+	--color-outcome-inconclusive: #6f6f6f;
+	--color-outcome-parked: #7a4fb5;
+	--color-outcome-infra: #3f6b5a;
+	--ci-band-alpha: 0.18; /* CI band = series colour at this alpha over white */
+	/* TODO(dark): re-derive the figure tokens for dark when light-only is lifted. */
+
 	/* Masonry home (light-only MVP).
 	 * Why: one gutter token drives both the column gap and the vertical gap
 	 * between items — set it to 0 for an edge-to-edge mosaic. --page-margin is

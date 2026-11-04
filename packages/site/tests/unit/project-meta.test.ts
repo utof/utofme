@@ -33,6 +33,22 @@ describe("ProjectMeta", () => {
 		expect(html).toContain("2025–");
 		expect(html).toContain("prototype");
 	});
+	it("renders no anchor for a link without href (P10-1)", async () => {
+		const html = await render({
+			date: new Date("2026-01-01"),
+			links: [{ label: "Code", private: true }],
+		});
+		expect(html).not.toContain("<a ");
+		expect(html).toContain("Code");
+	});
+	it("renders 'Updated <date>' in a time element when updated is set (P10-1)", async () => {
+		const html = await render({
+			date: new Date("2026-01-01"),
+			updated: new Date("2026-03-05T00:00:00Z"),
+		});
+		expect(html).toMatch(/Updated\s*<time[^>]*datetime="2026-03-05T00:00:00.000Z"/);
+		expect(await render({ date: new Date("2026-01-01") })).not.toContain("Updated");
+	});
 	it("falls back to the legacy external link when links is empty", async () => {
 		const html = await render({ date: new Date("2026-01-01"), externalUrl: "https://e.test/x" });
 		expect(html).toContain('data-test="detail-external"');

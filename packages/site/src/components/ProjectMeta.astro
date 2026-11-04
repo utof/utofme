@@ -6,7 +6,7 @@
  * stack items) and, below it, a link row at UI size in the link colour with
  * 44 px hit areas (P-15).
  * The year is the page's single `<time class="dt-published">` (microformats).
- * A `private: true` link renders its label as plain text plus a "private for
+ * A link with no `href` (private, P10-1) or `private: true` renders its label as plain text plus a "private for
  * now" note (D12): the URL is not yet public, so it must not be a live link.
  * With no `links`, the legacy "Open external →" link is kept.
  *
@@ -20,10 +20,12 @@ export interface Props {
 	status?: string | undefined;
 	stack?: string[] | undefined;
 	links?: ProjectLink[] | undefined;
+	/** Last-updated date; renders "Updated <date>" (P10-1). */
+	updated?: Date | undefined;
 	/** Legacy primary external URL (repo / youtube / listen / arxiv / pdf). */
 	externalUrl?: string | undefined;
 }
-const { date, started, status, stack = [], links = [], externalUrl } = Astro.props;
+const { date, started, status, stack = [], links = [], updated, externalUrl } = Astro.props;
 const year = date.getUTCFullYear();
 const startYear = started?.getUTCFullYear();
 const showRange = startYear !== undefined && startYear !== year;
@@ -41,6 +43,14 @@ const hasLinks = links.length > 0 || externalUrl !== undefined;
 				{year}
 			</time>
 		</span>
+		{updated && (
+			<span class="m" data-test="meta-updated">
+				Updated{" "}
+				<time class="dt-updated" datetime={updated.toISOString()}>
+					{updated.toISOString().slice(0, 10)}
+				</time>
+			</span>
+		)}
 		{status && (
 			<span class="m" data-test="meta-status">
 				{status}
@@ -54,7 +64,7 @@ const hasLinks = links.length > 0 || externalUrl !== undefined;
 		<p class="links">
 			{links.map((l) => (
 				<span class="l" data-test="meta-link">
-					{l.private ? (
+					{l.private || l.href === undefined ? (
 						<>
 							<span>{l.label} ↗</span>{" "}
 							<span class="private" data-test="private-label">
