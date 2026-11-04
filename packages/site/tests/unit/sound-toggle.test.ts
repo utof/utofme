@@ -276,6 +276,12 @@ async function runInlineScript(opts: { soundOn?: boolean } = {}): Promise<{
 	// controlled fakes rather than any global scope.
 	// Function constructor is intentional here: we need to inject the sandboxed
 	// globals as parameters without polluting the test's own global scope.
+	// Divergence from a real browser (#100): this harness does NOT cover (a) the
+	// capture-phase ordering of `pointerover` listeners relative to other
+	// handlers, (b) cross-tab `storage` event semantics (only same-document
+	// get/set on a Map-backed fake), or (c) real localStorage throwing in
+	// private mode / quota errors. Those paths are exercised by the e2e specs
+	// (tests/e2e/chrome.spec.ts); treat green here as logic-only coverage.
 	const fn = new Function(
 		"window",
 		"document",

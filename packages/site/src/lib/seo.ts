@@ -5,7 +5,7 @@
  * "Datamosh lab"), and the head carried no `og:*` tags; deriving both from one
  * pure module keeps them consistent and unit-testable without Astro.
  *
- * @see packages/specs/reviews/ui/polish.md (P-11)
+ * @see UI polish review, branch review/ui2-polish (P-11)
  * @see https://ogp.me/
  */
 
@@ -45,7 +45,7 @@ const SUFFIX = ` · ${SITE_NAME}`;
  * Why: pages may pass a bare title or one that already carries the suffix; both
  * normalise to the same string so the template cannot double up.
  *
- * @see packages/specs/reviews/ui/polish.md (P-11)
+ * @see UI polish review, branch review/ui2-polish (P-11)
  */
 export function pageTitle(title: string): string {
 	const bare = title.endsWith(SUFFIX) ? title.slice(0, -SUFFIX.length) : title;

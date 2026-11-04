@@ -45,12 +45,6 @@
 	// delete the components.
 	// See packages/specs/adrs/0040-light-only-masonry-home.md
 	"ignoreDependencies": [
-		// Why: wrangler is a CLI-only dev dep (no `import` from source). It powers
-		// the deploy step (cloudflare/wrangler-action@v3 in deploy.yml) and gives
-		// IDE-resolvable schema validation for wrangler.jsonc. Spec § "Pinned dev
-		// deps" (line 68) lists it explicitly. Knip can't see CLI usage, so the
-		// dep would otherwise be flagged as unused.
-		"wrangler",
 		// Why: pagefind is invoked at build time by astro-pagefind integration, not
 		// imported directly by any source file. The integration calls the pagefind
 		// binary via its Node API internally during `astro build`. Knip can't trace
@@ -67,9 +61,11 @@
 		// `bun run check:knip` script). The lefthook plugin doesn't walk up to
 		// the workspace root, so the dep registers as unused in CI. Locally it
 		// can pass via cache state, but CI's frozen-lockfile install scrubs that.
-		// Re-added in Task 12 fixup; remove only after migrating lefthook.yml to
-		// packages/site/ or wiring an explicit `entry: ["../../lefthook.yml"]`.
+		// Remove only after migrating lefthook.yml to packages/site/ or wiring
+		// an explicit `entry: ["../../lefthook.yml"]`.
 		"lefthook"
+		// wrangler was dropped from this list (#103): knip reports it as used via the
+		// wrangler.jsonc plugin, so the entry only produced a hint.
 		// Removed in Phase 5 Task 12 (knip hints fired after Task 11 landed):
 		//   katex        — knip now traces the `katex/dist/katex.min.css?url`
 		//                  import in src/layouts/_NoteLayout.astro.

@@ -7,7 +7,7 @@
  * caller passes the already-filtered `getWorksCollection()` result.
  *
  * @see packages/specs/specs/09-project-view.md § P9-3
- * @see packages/specs/reviews/ui/breaker-desktop.md (B-04)
+ * @see desktop breaker review, branch review/ui-breaker-desktop (B-04)
  */
 
 /** A titled palette destination. */
