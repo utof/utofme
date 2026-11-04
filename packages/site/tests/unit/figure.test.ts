@@ -89,4 +89,9 @@ describe("Stamp", () => {
 		const html = await c.renderToString(Stamp, { props: { measuredOn: 20 } });
 		expect(html).toContain("as measured on block 20");
 	});
+	it("has no whitespace inside the span, so it sits flush in parentheses", async () => {
+		const c = await AstroContainer.create({ renderers: await loadRenderers([]) });
+		const html = await c.renderToString(Stamp, { props: { measuredOn: 20 } });
+		expect(html).toMatch(/<span[^>]*data-stamp[^>]*>as measured on block 20<\/span>/);
+	});
 });

@@ -19,9 +19,8 @@ const { measuredOn } = Astro.props;
 const where = typeof measuredOn === "number" ? `block ${measuredOn}` : measuredOn;
 ---
 
-<span class="stamp" data-stamp>
-	as measured on {where}
-</span>
+{/* Why: set:text keeps the span free of template whitespace, so "(<Stamp/>)" renders without inner spaces. */}
+<span class="stamp" data-stamp set:text={`as measured on ${where}`} />
 
 <style>
 	.stamp {
