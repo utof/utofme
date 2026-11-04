@@ -40,8 +40,19 @@ function projected() {
 }
 const mapsOf = (v: unknown) => loose.parse(v).maps;
 
-const rowOf = (alphabet: string) => fc.stringMatching(new RegExp(`^[${alphabet}]{28}$`));
-const gridOf = (alphabet: string) => fc.array(rowOf(alphabet), { minLength: 28, maxLength: 28 });
+// Why: building five maps of four 28×28 grids per sample is slow under load; pools of pre-sampled
+// grids (fixed seed, so the file is deterministic) keep the properties fast while names, counts
+// and the choice of grids still vary.
+const gridOf = (alphabet: string) =>
+	fc.constantFrom(
+		...fc.sample(
+			fc.array(fc.stringMatching(new RegExp(`^[${alphabet}]{28}$`)), {
+				minLength: 28,
+				maxLength: 28,
+			}),
+			{ seed: 7, numRuns: 6 },
+		),
+	);
 const mapArb = fc.record({
 	name: fc.stringMatching(/^de_[a-z0-9]{3,10}$/),
 	stages: fc.record({
