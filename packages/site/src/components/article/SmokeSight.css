@@ -1,0 +1,332 @@
+/*
+ * Shared layout and drawing styles of figure F2 (SmokeSight.svelte and SmokeSightKeyframe.astro).
+ *
+ * Why: the SSR keyframe and the hydrated island must lay out identically (no layout shift on
+ * hydration), and Svelte's scoped styles do not reach slotted Astro markup, so both import this
+ * one file. Every colour is a figure token (P10-2); no hex literals.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-6
+ */
+.ss-box {
+	container: ss / inline-size;
+	position: relative;
+}
+.ss {
+	display: grid;
+	align-content: start;
+	gap: var(--space-3) var(--space-5);
+	grid-template-areas: "readout" "board" "controls" "legend";
+	padding: var(--space-3);
+	/* Why: reserved height at narrow widths, equal for the keyframe and the island (CLS): a
+	 * square board plus a stack of fixed rows. */
+	min-block-size: calc(100cqw + 20rem);
+}
+@container ss (min-width: 44rem) {
+	.ss {
+		grid-template-columns: minmax(0, 36rem) minmax(14rem, 1fr);
+		grid-template-areas: "board readout" "board controls" "board legend";
+		grid-template-rows: auto auto 1fr;
+		align-items: start;
+		min-block-size: 0;
+	}
+	.ss-controls {
+		min-block-size: 0;
+	}
+}
+.ss-readout {
+	grid-area: readout;
+	margin: 0;
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-4);
+	line-height: var(--leading-snug);
+	color: var(--color-text);
+}
+.ss-readout .ss-was {
+	display: block;
+	font-size: var(--font-size-ui);
+	color: var(--color-text-muted);
+}
+.ss-controls {
+	grid-area: controls;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	align-items: center;
+	min-block-size: 6rem;
+	align-content: start;
+}
+.ss-legend {
+	grid-area: legend;
+	display: grid;
+	gap: var(--space-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--font-size-ui);
+	line-height: var(--leading-snug);
+	color: var(--color-text-body);
+}
+.ss-legend .ss-ct {
+	color: var(--color-ct);
+}
+.ss-legend .ss-t {
+	color: var(--color-t);
+}
+.ss-legend .ss-sm {
+	color: var(--color-smoke);
+}
+.ss-hint {
+	margin: 0;
+	font-size: var(--font-size-ui);
+	line-height: var(--leading-snug);
+	color: var(--color-text-muted);
+}
+.ss-btn,
+.ss-check {
+	min-block-size: 2.75rem;
+	font-size: var(--font-size-ui);
+	color: var(--color-text);
+}
+.ss-btn {
+	padding: 0 var(--space-4);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-bg);
+	cursor: pointer;
+}
+.ss-btn:hover:not(:disabled) {
+	background: var(--color-surface-hover);
+}
+.ss-btn:focus-visible,
+.ss-check input:focus-visible {
+	outline: none;
+	box-shadow: var(--shadow-focus);
+}
+.ss-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.ss-check {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	cursor: pointer;
+}
+.ss-check input {
+	inline-size: 1.125rem;
+	block-size: 1.125rem;
+	margin: 0;
+}
+.ss-live {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+.ss-fail {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-3);
+	margin: 0;
+	padding: 0 var(--space-3) var(--space-3);
+	font-size: var(--font-size-ui);
+	color: var(--color-text-body);
+}
+
+/* The board. */
+.ss-board {
+	grid-area: board;
+	display: block;
+	inline-size: 100%;
+	aspect-ratio: 1;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-map-floor);
+	user-select: none;
+	-webkit-user-select: none;
+}
+.ss-wall {
+	fill: var(--color-map-wall);
+}
+.ss-site {
+	fill: var(--color-map-site);
+}
+.ss-site-label {
+	fill: var(--color-text-muted);
+	font-size: 1.3px;
+	font-weight: 600;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+.ss-spawn-ct {
+	fill: color-mix(in srgb, var(--color-ct) 14%, transparent);
+}
+.ss-spawn-t {
+	fill: color-mix(in srgb, var(--color-t) 14%, transparent);
+}
+.ss-smoke-fill {
+	fill: var(--color-smoke-fill);
+}
+.ss-smoke-edge {
+	fill: none;
+	stroke: var(--color-smoke);
+	stroke-width: 0.1px;
+	stroke-dasharray: 0.35 0.22;
+}
+.ss-ghost-disc {
+	fill: color-mix(in srgb, var(--color-smoke) 14%, transparent);
+	stroke: var(--color-smoke);
+	stroke-width: 0.12px;
+	stroke-dasharray: 0.14 0.26;
+	stroke-linecap: round;
+}
+.ss-ghost-hit {
+	fill: transparent;
+	cursor: pointer;
+}
+.ss-ghost-label {
+	fill: var(--color-smoke);
+	font-size: 0.85px;
+	font-weight: 600;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+.ss-line,
+.ss-cut,
+.ss-dots,
+.ss-cross {
+	pointer-events: none;
+	fill: none;
+}
+.ss-line {
+	stroke-width: 0.12px;
+	stroke-linecap: round;
+	animation: ss-in var(--motion-base) ease-out;
+}
+.ss-line--ct {
+	stroke: var(--color-ct);
+	marker-end: url("#ss-arrow-ct");
+}
+.ss-line--t {
+	stroke: var(--color-t);
+	marker-end: url("#ss-arrow-t");
+}
+.ss-arrow-ct {
+	fill: var(--color-ct);
+}
+.ss-arrow-t {
+	fill: var(--color-t);
+}
+.ss-cut {
+	stroke: var(--color-text-muted);
+	stroke-width: 0.08px;
+	stroke-dasharray: 0.1 0.2;
+	stroke-linecap: round;
+	opacity: 0.55;
+}
+.ss-dots {
+	stroke-width: 0.26px;
+	stroke-linecap: round;
+}
+.ss-dots--ct {
+	stroke: var(--color-ct);
+}
+.ss-dots--t {
+	stroke: var(--color-t);
+}
+.ss-dots--blocked {
+	stroke: var(--color-text-muted);
+	opacity: 0.7;
+}
+.ss-cross {
+	stroke: var(--color-text);
+	stroke-width: 0.14px;
+	stroke-linecap: round;
+}
+.ss-tok,
+.ss-smoke-handle,
+.ss-ghost-handle {
+	cursor: grab;
+	touch-action: none;
+	outline: none;
+}
+.ss-ghost-handle {
+	cursor: pointer;
+}
+.ss-dragging .ss-tok,
+.ss-dragging .ss-smoke-handle {
+	cursor: grabbing;
+}
+.ss-hit {
+	fill: transparent;
+}
+.ss-mark {
+	stroke: var(--color-bg);
+	stroke-width: 0.08px;
+	stroke-linejoin: round;
+}
+.ss-tok--ct .ss-mark {
+	fill: var(--color-ct);
+}
+.ss-tok--t .ss-mark {
+	fill: var(--color-t);
+}
+.ss-nose {
+	stroke-width: 0.16px;
+	stroke-linecap: round;
+	pointer-events: none;
+}
+.ss-tok--ct .ss-nose {
+	stroke: var(--color-ct);
+}
+.ss-tok--t .ss-nose {
+	stroke: var(--color-t);
+}
+.ss-handle-mark {
+	fill: var(--color-bg);
+	stroke: var(--color-smoke);
+	stroke-width: 0.14px;
+}
+.ss-handle-dot {
+	fill: var(--color-smoke);
+}
+.ss-ring {
+	fill: none;
+	stroke: var(--color-text);
+	stroke-width: 0.12px;
+	opacity: 0;
+	pointer-events: none;
+}
+.ss-halo {
+	fill: none;
+	stroke: var(--color-focus);
+	stroke-width: 0.3px;
+	opacity: 0;
+	pointer-events: none;
+}
+.ss-tok:focus-visible .ss-ring,
+.ss-tok:focus-visible .ss-halo,
+.ss-smoke-handle:focus-visible .ss-ring,
+.ss-smoke-handle:focus-visible .ss-halo,
+.ss-ghost-handle:focus-visible .ss-ring,
+.ss-ghost-handle:focus-visible .ss-halo {
+	opacity: 1;
+}
+@keyframes ss-in {
+	from {
+		opacity: 0;
+	}
+}
+[data-still] .ss-line {
+	animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	.ss-line {
+		animation: none;
+	}
+}

@@ -1,0 +1,172 @@
+---
+/**
+ * SmokeSightKeyframe.astro: the no-JS fallback of figure F2, drawn at build time with the same
+ * `sight.ts` the island uses: Mirage with the ten tokens, the suggested smoke placed, the
+ * sightlines that remain (solid) and the ones the smoke cut (faint dotted), and both counts as
+ * text. It sits inside the island until the interactive board is ready.
+ *
+ * Why: AC6.4 wants the no-JS reader to see the figure's claim and both numbers; computing them
+ * here with the shared rule means the picture and the island cannot disagree.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-6 (Fallback, AC6.4)
+ */
+import "./SmokeSight.css";
+import type { MapsCsData } from "../../lib/article-data/maps_cs";
+import { markPath } from "../../lib/figure-marks";
+import {
+	addSmoke,
+	lineSegments,
+	MAP_NAME,
+	readout,
+	sightlines,
+	smokeSet,
+	startBoard,
+	SUGGESTED_SMOKE,
+	tilesPath,
+} from "../../lib/figures/smoke-sight";
+import { parseRows, siteRects, spawnTiles, wallPath } from "../../lib/grid";
+import { SIGHT } from "../../lib/sight";
+
+/** Props for SmokeSightKeyframe. */
+export interface Props {
+	/** The parsed `maps_cs` dataset (server only). */
+	data: MapsCsData;
+}
+
+const { data } = Astro.props;
+const rows = data.maps.find((m) => m.name === MAP_NAME)?.rows;
+if (!rows) throw new Error(`maps_cs has no ${MAP_NAME}`);
+const map = parseRows(rows);
+const board = addSmoke(map, startBoard(), SUGGESTED_SMOKE);
+const counts = readout(map, board);
+const lines = sightlines(map, board.tokens, board.smokes);
+const cut = lineSegments(sightlines(map, board.tokens, []), board.tokens).filter(
+	(s) => !lines.some((l) => l.from === s.from && l.to === s.to),
+);
+const segs = lineSegments(lines, board.tokens);
+const covered = smokeSet(map, board.smokes);
+const label = `Mirage with five defenders (circles) and five attackers (triangles). With one smoke on the ramp to the A site there are ${counts.count} enemy sightlines instead of ${counts.base}.`;
+---
+
+<div class="ss">
+	<p class="ss-readout">
+		<span>
+			Enemy sightlines: <span class="ss-n">{counts.count}</span>
+		</span>
+		<span class="ss-was">(was {counts.base} with no smoke)</span>
+	</p>
+	<svg class="ss-board" viewBox="0 0 28 28" role="img" aria-label={label}>
+		<defs>
+			{(["ct", "t"] as const).map((s) => (
+				<marker
+					id={`ss-arrow-${s}`}
+					viewBox="0 0 4 4"
+					refX="3.4"
+					refY="2"
+					markerWidth="0.62"
+					markerHeight="0.62"
+					markerUnits="userSpaceOnUse"
+					orient="auto"
+				>
+					<path class={`ss-arrow-${s}`} d="M0 0L4 2L0 4z" />
+				</marker>
+			))}
+		</defs>
+		{(["a", "b"] as const).flatMap((k) =>
+			siteRects(map, k).map((r) => (
+				<>
+					<rect
+						class="ss-site"
+						x={r.c0}
+						y={r.r0}
+						width={r.c1 - r.c0 + 1}
+						height={r.r1 - r.r0 + 1}
+					/>
+					<text
+						class="ss-site-label"
+						aria-hidden="true"
+						x={(r.c0 + r.c1 + 1) / 2}
+						y={(r.r0 + r.r1 + 1) / 2}
+						set:text={k.toUpperCase()}
+					/>
+				</>
+			)),
+		)}
+		<path
+			class="ss-spawn-t"
+			d={tilesPath(
+				map.w,
+				spawnTiles(map, "t").map(([r, c]) => r * map.w + c),
+			)}
+		/>
+		<path
+			class="ss-spawn-ct"
+			d={tilesPath(
+				map.w,
+				spawnTiles(map, "ct").map(([r, c]) => r * map.w + c),
+			)}
+		/>
+		<path class="ss-wall" d={wallPath(map, 1)} />
+		<path class="ss-smoke-fill" d={tilesPath(map.w, [...covered])} />
+		{board.smokes.map((s) => (
+			<circle
+				class="ss-smoke-edge"
+				data-smoke-disc
+				cx={s[1] + 0.5}
+				cy={s[0] + 0.5}
+				r={SIGHT.smokeRadius}
+			/>
+		))}
+		{cut.map((s) => (
+			<line class="ss-cut" x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} />
+		))}
+		{segs.map((s) => (
+			<line class={`ss-line ss-line--${s.side}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} />
+		))}
+		{board.tokens.map((t) => {
+			const cx = t.c + 0.5;
+			const cy = t.r + 0.5;
+			const a = (t.facing * Math.PI) / 4;
+			return (
+				<g class={`ss-tok ss-tok--${t.side}`} data-token>
+					<path
+						class="ss-mark"
+						data-shape={t.side === "ct" ? "circle" : "triangle"}
+						d={markPath(t.side, cx, cy, 0.42)}
+					/>
+					<line
+						class="ss-nose"
+						x1={cx + Math.sin(a) * 0.5}
+						y1={cy - Math.cos(a) * 0.5}
+						x2={cx + Math.sin(a) * 0.95}
+						y2={cy - Math.cos(a) * 0.95}
+					/>
+				</g>
+			);
+		})}
+	</svg>
+	<p class="ss-controls ss-hint">
+		The interactive board loads as you scroll here: drag any player or smoke and the count redraws.
+	</p>
+	<ul class="ss-legend">
+		<li>
+			<span class="ss-ct" aria-hidden="true">
+				●
+			</span>{" "}
+			CT defender (circle)
+		</li>
+		<li>
+			<span class="ss-t" aria-hidden="true">
+				▲
+			</span>{" "}
+			T attacker (triangle)
+		</li>
+		<li>
+			<span class="ss-sm" aria-hidden="true">
+				◌
+			</span>{" "}
+			Smoke: the dashed ring; the short bar on each player shows where they look
+		</li>
+		<li>Lines point at whoever is seen. Faint dotted lines: sightlines the smoke cut.</li>
+	</ul>
+</div>
