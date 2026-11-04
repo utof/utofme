@@ -48,7 +48,8 @@
 <!-- Why data-astro-rerun: ClientRouter swaps <body> on SPA navigation and re-runs only
      inline scripts that carry this attribute; without it the new button would have no
      click handler. The script has no define:vars, so rerun is the only reason for it.
-     Re-runs rebind the button via `onclick=` (overwrites, no stacking).
+     Re-runs rebind the button via `onclick=` (overwrites, no stacking); the document and
+     window listeners are bound once behind a `window.__utofmeSound` guard (#147).
      @see https://docs.astro.build/en/guides/view-transitions/#script-behavior-with-view-transitions
      @issue utof/utofme#102 -->
 <script is:inline data-astro-rerun>
@@ -56,70 +57,73 @@
 		var KEY = "utofme:sound";
 		var btn = document.querySelector("[data-sound-toggle]");
 		if (!btn) return;
-		var on = localStorage.getItem(KEY) === "on";
-		btn.setAttribute("aria-pressed", on ? "true" : "false");
-
-		var ctx;
-		var buffers = {};
-		var ready;
-		var fmt =
-			typeof Audio !== "undefined" && new Audio().canPlayType("audio/webm") ? "webm" : "mp3";
-
-		function ensure() {
-			if (ready) return ready;
-			ctx = new (window.AudioContext || window.webkitAudioContext)();
-			ready = Promise.all(
-				["cmd-k", "hover"].map(function (n) {
-					return fetch("/audio/" + n + "." + fmt)
-						.then(function (r) {
-							return r.arrayBuffer();
-						})
-						.then(function (a) {
-							return ctx.decodeAudioData(a);
-						})
-						.then(function (b) {
-							buffers[n] = b;
-						});
-				}),
-			);
-			return ready;
+		function isOn() {
+			return localStorage.getItem(KEY) === "on";
 		}
+		btn.setAttribute("aria-pressed", isOn() ? "true" : "false");
 
-		function play(name) {
-			if (!ctx || !buffers[name]) return;
-			var s = ctx.createBufferSource();
-			s.buffer = buffers[name];
-			s.connect(ctx.destination);
-			s.start();
+		// Why: one audio state and one pair of listeners per page lifetime; reruns only
+		// rebind the button. @issue utof/utofme#147
+		var s = window.__utofmeSound;
+		if (!s) {
+			s = window.__utofmeSound = { ctx: null, buffers: {}, ready: null };
+			var fmt =
+				typeof Audio !== "undefined" && new Audio().canPlayType("audio/webm") ? "webm" : "mp3";
+			s.ensure = function () {
+				if (s.ready) return s.ready;
+				s.ctx = new (window.AudioContext || window.webkitAudioContext)();
+				s.ready = Promise.all(
+					["cmd-k", "hover"].map(function (n) {
+						return fetch("/audio/" + n + "." + fmt)
+							.then(function (r) {
+								return r.arrayBuffer();
+							})
+							.then(function (a) {
+								return s.ctx.decodeAudioData(a);
+							})
+							.then(function (b) {
+								s.buffers[n] = b;
+							});
+					}),
+				);
+				return s.ready;
+			};
+			s.play = function (name) {
+				if (!s.ctx || !s.buffers[name]) return;
+				var src = s.ctx.createBufferSource();
+				src.buffer = s.buffers[name];
+				src.connect(s.ctx.destination);
+				src.start();
+			};
+
+			document.addEventListener("pointerover", function (e) {
+				if (!isOn() || !(e.target instanceof Element) || !e.target.closest("[data-sound]")) return;
+				s.ensure().then(function () {
+					s.play("hover");
+				});
+			});
+
+			window.addEventListener(
+				"keydown",
+				function (e) {
+					if (!isOn()) return;
+					if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")
+						s.ensure().then(function () {
+							s.play("cmd-k");
+						});
+				},
+				{ capture: true },
+			);
 		}
 
 		btn.onclick = function () {
-			on = !on;
+			var on = !isOn();
 			localStorage.setItem(KEY, on ? "on" : "off");
 			btn.setAttribute("aria-pressed", on ? "true" : "false");
-			if (on) ensure();
+			if (on) s.ensure();
 		};
 
-		document.addEventListener("pointerover", function (e) {
-			if (!on || !(e.target instanceof Element) || !e.target.closest("[data-sound]")) return;
-			ensure().then(function () {
-				play("hover");
-			});
-		});
-
-		window.addEventListener(
-			"keydown",
-			function (e) {
-				if (!on) return;
-				if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")
-					ensure().then(function () {
-						play("cmd-k");
-					});
-			},
-			{ capture: true },
-		);
-
-		if (on) ensure();
+		if (isOn()) s.ensure();
 	})();
 </script>
 
