@@ -1,0 +1,4 @@
+# fixture denylist (stand-in words; the real list is never committed)
+zorblax
+quuxington
+two words
