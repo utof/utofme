@@ -1,14 +1,26 @@
 ---
 /**
- * MachineBlock.astro — MDX-facing block for figure F6 (The machine, as boxes you can poke).
+ * MachineBlock.astro — MDX-facing block of figure F6 (the machine, as boxes you can poke).
  *
- * Why: stub from the layout lane so every later lane has a lab page and an MDX
- * entry point; the owning figure lane replaces the placeholder with the keyframe
- * and the `client:visible` island.
+ * Imports the dataset twice, statically (parsed JSON for the keyframe, hashed URL for the island).
+ * The `<details>` carries the no-JS fallback: a `<dl>` of the 18 boxes' blurbs and an `<ol>` of the
+ * nine stages of one training block.
  *
- * @see packages/specs/specs/10-tactical-arena-article.md § Figures: common contract
+ * Why: ADR 0054 keeps data out of the page; the island gets a URL, the shape and a label id (props
+ * far below 2 KB, AC16.3). The reserved box is content-sized (diagram plus a fixed-height footer),
+ * identical in the keyframe and the island, so hydration moves nothing.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-10
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
  */
+import rawData from "../../data/article/architecture.json";
+import url from "../../data/article/architecture.json?url&no-inline";
+import { dataset } from "../../lib/article-data/architecture";
+import { shapeOf } from "../../lib/article-data/types";
+import { NODE_COPY, readingOrder, STAGES } from "../../lib/figures/machine";
 import Figure from "./Figure.astro";
+import Machine from "./Machine.svelte";
+import MachineKeyframe from "./MachineKeyframe.astro";
 
 /** Props for MachineBlock. */
 export interface Props {
@@ -17,10 +29,52 @@ export interface Props {
 }
 
 const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
+const order = readingOrder(data);
+const byId = new Map(data.nodes.map((n) => [n.id, n]));
 ---
 
-<Figure id="f6" number={number} width="wide" aspect="16 / 9" minBlock="22rem">
-	<p data-stub>The machine, as boxes you can poke (placeholder)</p>
+<Figure id="f6" number={number} width="full">
+	<Machine
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		labelId="f6-cap"
+	>
+		<MachineKeyframe data={data} />
+	</Machine>
 	<slot name="caption" slot="caption" />
 	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<dl class="mc-dl">
+			{order.map((id) => (
+				<>
+					<dt>{byId.get(id)?.label}</dt>
+					<dd>{NODE_COPY[id]}</dd>
+				</>
+			))}
+		</dl>
+		<ol class="mc-ol">
+			{STAGES.map((s) => (
+				<li>
+					<strong>{s.title}.</strong> {s.text}
+				</li>
+			))}
+		</ol>
+	</Fragment>
 </Figure>
+
+<style is:global>
+	.mc-dl dt {
+		margin-block-start: var(--space-2);
+		font-weight: 600;
+		color: var(--color-text);
+	}
+	.mc-dl dd {
+		margin: 0;
+	}
+	.mc-ol {
+		padding-inline-start: var(--space-5);
+	}
+</style>
