@@ -51,7 +51,7 @@ describe.skipIf(!hasZscale)("flash lint on real encodes", () => {
 				"-f",
 				"lavfi",
 				"-i",
-				"color=c=black:s=768x432:r=30:d=3",
+				`color=c=black:s=${SIZE_SPECS.card.width}x${SIZE_SPECS.card.height}:r=30:d=3`,
 				"-vf",
 				"geq=lum='if(lt(mod(floor(T*6),2),1),235,16)':cb=128:cr=128",
 				"-c:v",

@@ -283,7 +283,7 @@ export function parseBannerSources(raw: string | null | undefined): BannerRendit
 }
 
 /**
- * After a card → banner morph, replace the persisted 768 px card `<video>` with the
+ * After a card → banner morph, replace the persisted card `<video>` (at most 1024 px) with the
  * 1920 px banner rendition.
  *
  * Why: `transition:persist` keeps the card node (and its card sources) alive through
@@ -330,7 +330,7 @@ export function upgradeBannerLoops(root: ParentNode, deps: LoopDeps = defaultDep
 			old.remove();
 		};
 		// Why (M3-02): reveal only once the banner is on the card loop's frame and has painted,
-		// then fade over `--loop-resolve` so the 768 → 1920 px sharpness step reads as a resolve.
+		// then fade over `--loop-resolve` so the card → 1920 px sharpness step reads as a resolve.
 		let revealed = false;
 		const reveal = (): void => {
 			if (revealed) return;

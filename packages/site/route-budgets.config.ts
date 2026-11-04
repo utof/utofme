@@ -152,9 +152,12 @@ export const budgets: BudgetsConfig = {
 	// Why: banner files were ≤ 1,000,000 B (warn 600 KB) at 1280x720; the banner is now 1920x1080
 	// (owner: "banner too low quality"), so the limits are the encoder's: fail > 2.5 MB, warn > 1.5 MB.
 	// Keep in sync with SIZE_SPECS.banner in scripts/lib/loops-core.ts (ADR 0044 addendum).
+	// Why: card files were ≤ 300 KB (warn 150 KB) at ~332 k px; the card frames are now 4/3 on each side
+	// (1024x576, ~590 k px: soft square and portrait cards at two columns on DPR-2), so the limits scale by
+	// the area ratio, 16/9: fail > 540 KB, warn > 270 KB. Keep in sync with SIZE_SPECS.card (ADR 0044 addendum 4).
 	loops: {
-		cardMax: 300 * KB,
-		cardWarn: 150 * KB,
+		cardMax: 540 * KB,
+		cardWarn: 270 * KB,
 		bannerMax: 2.5 * 1024 * KB,
 		bannerWarn: 1.5 * 1024 * KB,
 	},

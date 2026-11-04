@@ -40,11 +40,12 @@ export function posterPathFor(
 /**
  * Card / gallery poster `srcset` steps in px.
  *
- * Why: the card renditions are at most 768 px wide, so a larger step would only upscale.
+ * Why: the card renditions are at most 1024 px wide (ADR 0044 addendum 4; a slideshow card sits on its
+ * poster until hovered, so the poster must be as sharp as the video), so a larger step would only upscale.
  *
  * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
-export const CARD_POSTER_WIDTHS: readonly number[] = [384, 768];
+export const CARD_POSTER_WIDTHS: readonly number[] = [384, 768, 1024];
 
 /**
  * `srcset` widths for a card poster: {@link CARD_POSTER_WIDTHS} capped at the poster's own width.

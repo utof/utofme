@@ -27,33 +27,36 @@ export type CodecName = "av1" | "h264";
 
 /**
  * Per-size encode settings and flash-lint geometry.
- * Card/gallery is 768x432 by default (720x405 has an odd height; neither encoder accepts it), banner 1920x1080.
+ * Card/gallery is 1024x576 by default (720x405 has an odd height; neither encoder accepts it), banner 1920x1080.
  * The card `width`/`height` here are the default 16:9 frame only: a recipe with a `cardAspect` encodes the
  * card at `CARD_FRAMES[cardAspect]`, so read sizes through {@link frameFor}, never from this table.
  * `av1Crf` / `x264Crf` apply to montage and transcode loops; `slideshowAv1Crf` / `slideshowX264Crf`
  * to slideshows (UI screenshots: thin text and hard edges show quantisation first, so they get a lower CRF).
  * `renderWidthCss` is the largest CSS width the size may be rendered at (the lint's field scale).
  * `cellPx` is the flash-lint cell edge in video px (appendix §3.1); banner 12 px at 1920 wide is the same
- * 8 CSS px cell (160x90 grid) the 1280 encode used.
+ * 8 CSS px cell (160x90 grid) the 1280 encode used. The card's 16/3 px at 1024 wide is 6.25 CSS px at the
+ * card's 1200 CSS px, the same 192x108 grid the 768x432 card had ({@link gridFor} rounds it per frame).
  * Why: values come from the spec's encode table with the review's 768x432 override; the banner was raised
  * from 1280x720 to 1920x1080 (and the CRFs and budgets with it) because the owner found it too soft on
- * DPR-2 screens (ADR 0044 addendum).
+ * DPR-2 screens (ADR 0044 addendum). The card went from 768x432 to 1024x576 for the same reason at two
+ * masonry columns (addendum 4): level 3.1 because 1024x576 is above level 3.0's 414,720 px, and the
+ * 270 / 540 KB budgets are the old 150 / 300 KB times the 16/9 area ratio.
  * @see packages/specs/specs/09-project-view.md § P9-4
  * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
 export const SIZE_SPECS = {
 	card: {
-		width: 768,
-		height: 432,
+		width: 1024,
+		height: 576,
 		av1Crf: 38,
 		x264Crf: 26,
 		slideshowAv1Crf: 38,
 		slideshowX264Crf: 26,
-		x264Level: "3.0",
+		x264Level: "3.1",
 		renderWidthCss: 1200,
-		cellPx: 4,
-		failBytes: 300 * 1024,
-		warnBytes: 150 * 1024,
+		cellPx: 16 / 3,
+		failBytes: 540 * 1024,
+		warnBytes: 270 * 1024,
 	},
 	banner: {
 		width: 1920,
@@ -77,30 +80,33 @@ export interface Frame {
 }
 
 /**
- * Card rendition frame per aspect: about 768x432's pixel area (331,776 px, within ±5 %), even sides,
- * multiples of the card's 4 px flash-lint cell.
+ * Card rendition frame per aspect: about 1024x576's pixel area (589,824 px, within ±5 %), exact ratio,
+ * even sides.
  * Why: a non-16:9 tile keeps the media's natural shape (ADR 0044 addendum 2) without growing the card
- * files; the byte budgets (150 / 300 KB) were set for ~332 k px. 3:2 is 696x464 (not 720x480, +4 % area)
- * and 16:10 is 736x460 (720x450 is not a multiple of 4).
+ * files; the byte budgets (270 / 540 KB) were set for ~590 k px. These are the addendum 2 frames
+ * (about 332 k px) scaled by 4/3 on each side (addendum 4), so a tile of about 650 CSS px at two masonry
+ * columns is no longer upscaled on DPR 2. 4:5 is 680x850 and 16:10 is 976x610: not multiples of the lint's
+ * cell, which {@link gridFor} rounds.
  * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
 export const CARD_FRAMES = {
-	"1:1": { width: 576, height: 576 },
-	"4:5": { width: 512, height: 640 },
-	"3:4": { width: 504, height: 672 },
-	"4:3": { width: 672, height: 504 },
-	"3:2": { width: 696, height: 464 },
-	"16:10": { width: 736, height: 460 },
-	"16:9": { width: 768, height: 432 },
+	"1:1": { width: 768, height: 768 },
+	"4:5": { width: 680, height: 850 },
+	"3:4": { width: 672, height: 896 },
+	"4:3": { width: 896, height: 672 },
+	"3:2": { width: 924, height: 616 },
+	"16:10": { width: 976, height: 610 },
+	"16:9": { width: 1024, height: 576 },
 } as const satisfies Record<CardAspect, Frame>;
 
 /**
  * Bump when the encoder settings, filtergraph or colour tagging change, so the recipe hash
  * changes and every loop is re-encoded.
  * Why: the manifest `recipe` hash must cover the settings, not just the recipe JSON.
- * History: 3 = banner 1920x1080, lower CRFs, poster cut from the banner master (ADR 0044 addendum).
+ * History: 3 = banner 1920x1080, lower CRFs, poster cut from the banner master (ADR 0044 addendum);
+ * 4 = card frames x 4/3 on each side, card H.264 level 3.1 (ADR 0044 addendum 4).
  */
-export const ENCODER_VERSION = 3;
+export const ENCODER_VERSION = 4;
 
 /** A relative path under the media root: no absolute path, no `..`, no backslash, no drive letter. */
 const relPath = z
@@ -260,7 +266,7 @@ export function recipeSources(r: Recipe): string[] {
 /**
  * Frame size of a rendition: the banner is always 1920x1080; the card follows the recipe's `cardAspect`
  * (16:9 when absent).
- * Why: the one place that knows the card is not always 768x432, so master, probe check, lint grid and
+ * Why: the one place that knows the card is not always 1024x576, so master, probe check, lint grid and
  * manifest all agree.
  * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
@@ -272,12 +278,15 @@ export function frameFor(r: Pick<Recipe, "cardAspect">, size: SizeName): Frame {
 
 /**
  * The CSS render width the flash lint assumes for a rendition (`FlashInput.renderWidthCss`, recorded in the manifest).
- * Banner: the table's 1280. Card: the frame's width × 1200 / 768, i.e. the lint keeps the 16:9 card's worst-case
- * magnification of 1.5625 CSS px per video px for every aspect (a 576 px square is assumed at 900 CSS px).
+ * Banner: the table's 1280. Card: the frame's width × 1200 / 1024, i.e. the lint keeps the 16:9 card's worst-case
+ * magnification of 1.171875 CSS px per video px for every aspect (a 768 px square is assumed at 900 CSS px).
  * Why: the 1200 was a magnification cap, not a layout width; applying it as a width to a square or portrait
- * frame would assume a 1200 CSS px tall tile no layout can show (home columns are at most ~480 px wide) and
+ * frame would assume a 1200 CSS px tall tile no layout can show (home columns are at most ~650 px wide) and
  * make the same footage fail merely for being square. Equal magnification gives a framing the same verdict
- * as the 16:9 card would get for the same pixels (ADR 0044 addendum 2).
+ * as the 16:9 card would get for the same pixels (ADR 0044 addendum 2). The card frames grew by 4/3 on each
+ * side with this table's width (addendum 4), so the assumed CSS widths per aspect stayed (900 for the
+ * square, 1200 for 16:9): the lint field and area are the same fractions of the frame as before, and a
+ * sharper encode does not change a verdict.
  * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
 export function renderWidthCssFor(size: SizeName, frame: Frame): number {
@@ -497,7 +506,7 @@ export function crfFor(kind: Recipe["kind"], size: SizeName, codec: CodecName): 
 /**
  * ffmpeg args for one lossy encode from the master.
  * AV1: `libsvtav1 -preset 4 -crf <crfFor>`; H.264: `libx264 -preset veryslow -crf <crfFor> -profile:v high
- * -level:v <3.0 card | 4.0 banner>` (+`-tune stillimage` for slideshows).
+ * -level:v <3.1 card | 4.0 banner>` (+`-tune stillimage` for slideshows).
  * All: `-an -pix_fmt yuv420p -movflags +faststart`.
  * Why: values from the spec's encode table (banner raised to 1080p, see ADR 0044 addendum); colour tagged explicitly.
  * @see packages/specs/specs/09-project-view.md § P9-4
@@ -556,8 +565,8 @@ export interface VideoProbe {
 
 /**
  * Derives the `<source type>` value from an ffprobe result (measured, not assumed):
- * H.264 High@3.0 → `avc1.64001E`, @4.0 → `avc1.640028`;
- * AV1 Main, `seq_level_idx` n, 8-bit → `av01.0.<nn>M.08` (card 768x432 → `04`, banner 1920x1080 → `08`).
+ * H.264 High@3.0 → `avc1.64001E`, @3.1 → `avc1.64001F`, @4.0 → `avc1.640028`;
+ * AV1 Main, `seq_level_idx` n, 8-bit → `av01.0.<nn>M.08` (card 1024x576 → `04`, banner 1920x1080 → `08`).
  * Throws on anything else (unexpected profile, bit depth).
  * Why: wrong codecs strings make browsers skip a source, so they come from the real file.
  * @see https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/codecs_parameter
@@ -602,10 +611,11 @@ export function outputUrl(slug: string, name: string): string {
 export type BudgetVerdict = "ok" | "warn" | "fail";
 
 /**
- * Encode-time size budget: card/gallery fail > 300 KB, warn > 150 KB; banner (1080p) fail > 2.5 MB,
+ * Encode-time size budget: card/gallery fail > 540 KB, warn > 270 KB; banner (1080p) fail > 2.5 MB,
  * warn > 1.5 MB (KB = 1024 bytes).
  * Why: loops ship in the home page's critical path; the budget keeps them small. The banner limits were
- * raised from 1 MB / 600 KB with the move to 1920x1080 (ADR 0044 addendum); `route-budgets.config.ts` R6 matches.
+ * raised from 1 MB / 600 KB with the move to 1920x1080 (ADR 0044 addendum), the card limits from 300 / 150 KB
+ * with the 4/3 frames (about 1.78x the area, addendum 4); `route-budgets.config.ts` R6 matches.
  * @see packages/specs/specs/09-project-view.md § P9-4
  */
 export function budgetVerdict(size: SizeName, bytes: number): BudgetVerdict {
@@ -739,8 +749,11 @@ export function cellsArgs(file: string, gridW: number, gridH: number): string[] 
 }
 
 /**
- * Flash-lint grid for a size: `cellPx`-px cells over `frame` (default: the size's default frame).
- * Why: a non-16:9 card has fewer or more cells per side; every frame in `CARD_FRAMES` is a multiple of the cell.
+ * Flash-lint grid for a size: about `cellPx`-px cells over `frame` (default: the size's default frame),
+ * the cell count rounded to a whole number per side.
+ * Why: a non-16:9 card has fewer or more cells per side. The card cell is 16/3 px (the 768x432 card's
+ * 6.25 CSS px cell at the new scale), which divides the 16:9 and 1:1 frames exactly (192x108, 144x144) and
+ * the others to within half a cell; the lint reads the true cell size from `width / gridW`.
  * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
 export function gridFor(
@@ -748,5 +761,5 @@ export function gridFor(
 	frame: Frame = SIZE_SPECS[size],
 ): { gridW: number; gridH: number } {
 	const s = SIZE_SPECS[size];
-	return { gridW: frame.width / s.cellPx, gridH: frame.height / s.cellPx };
+	return { gridW: Math.round(frame.width / s.cellPx), gridH: Math.round(frame.height / s.cellPx) };
 }
