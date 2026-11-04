@@ -22,7 +22,7 @@ The research article prints about 160 numbers: Elo deltas with intervals, median
 ## Alternatives
 - **Numbers typed into the prose, reviewed by hand:** cheapest to write, and the first re-export makes prose and figure disagree with nothing to catch it.
 - **A remark plugin that rewrites numbers at build:** it would have to guess which number is which; keys are explicit.
-- **An LLM or classifier for overclaiming:** not reproducible in CI and not explainable in a failing test. A word list with a negation window is crude, but it fails loudly and a reviewer can read every rule.
+- **A trained text classifier for overclaiming:** not reproducible in CI and not explainable in a failing test. A word list with a negation window is crude, but it fails loudly and a reviewer can read every rule.
 - **Stamps as literal strings:** simpler to read in the MDX, and they drift from the fact's `measuredOn` on the next sync.
 - **Exempting the credits' dataset ids and licences by name:** a list that grows with every citation; code spans mark identifiers once, by markup.
 
