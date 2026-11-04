@@ -1,0 +1,43 @@
+---
+title: "Fixture"
+lede: "Agents learn a small game on a 28×28 board"
+summary: "A fixture that uses every exemption of the provenance lint once."
+article:
+  headline: "Fixture"
+  dek: "Teaching agents a small game on a small board"
+---
+
+import N from "../../../src/components/article/N.astro";
+import Stamp from "../../../src/components/article/Stamp.astro";
+export const on = (k) => k;
+
+## Ten seconds
+
+No agent has played a human or a real CS2 match yet. The agents train on generated maps and meet Dust2 only as an exam, in 5v5 rounds on a 28×28 board.
+
+Agents make first contact at a median of <N k="tempo.b28.contact.median" />, <Stamp measuredOn={on("tempo.b28.contact.median")} />; they also plant about twice as fast as the pros, at <N k="tempo.b28.plant.median" alt />.
+
+The holder beats peeker in most duels, and the agents have not yet beaten pros. The 3v3 peak of <N k="elo.3v3.peak" /> sits on a different scale from the gain of <N k="elo.head.block2" ci /> at block 28.
+
+Maps from the v2 generator ran on a friend's RTX 2080 Ti and a desktop GTX 1660 Ti, after about <N k="compute.cloud.usd" alt /> of cloud GPU. The readout of 4 November 2026 is dated 2026-11-04; see [the paper](https://arxiv.org/abs/1707.06347) and Figure 1.
+
+In one round, <EloSentenceBlock />.
+
+<ReplayBlock number={1}>
+  <span slot="caption">First contact comes at <N k="replay.contact.s" /> in this round.</span>
+  <span slot="try">Press play, then watch as the defenders.</span>
+</ReplayBlock>
+
+<aside>
+
+The win chance is a function of the rating gap alone.
+
+$$
+P = \frac{1}{1 + 10^{-\Delta/400}}
+$$
+
+</aside>
+
+## Toward real CS2
+
+No agent has played a human or a real CS2 match yet.
