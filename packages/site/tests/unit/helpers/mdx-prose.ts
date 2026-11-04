@@ -130,3 +130,89 @@ export function parseMdxProse(text: string): MdxProse {
 
 	return { frontmatter, sections, paragraphs, figures, words, hasMathBlock, unescapedDollar };
 }
+
+/** One structural lint failure. */
+export interface LintFailure {
+	/** Stable rule name, asserted by tests. */
+	rule:
+		| "body-words"
+		| "dek-words"
+		| "lede-words"
+		| "gallery-empty"
+		| "cover-alt"
+		| "sections-match"
+		| "figure-order"
+		| "figure-referenced"
+		| "math-flag"
+		| "dollar-escape";
+	message: string;
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+	return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function asArray(v: unknown): unknown[] {
+	// Why: `Array.isArray` narrows `unknown` to `any[]`, which type-coverage --strict rejects.
+	return Array.isArray(v) ? (v as unknown[]) : [];
+}
+
+/**
+ * Structural lint of one research-article MDX file (callers pass only non-draft, non-fixture
+ * works that have `article`). Returns every failed rule; empty means pass.
+ *
+ * Why: P10-1 replaces the 40–120-word Tier S body rule for article entries with these checks.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-1 (structural content lint)
+ */
+export function lintArticle(text: string): LintFailure[] {
+	const p = parseMdxProse(text);
+	const fm = p.frontmatter;
+	const article = isRecord(fm["article"]) ? fm["article"] : {};
+	const fails: LintFailure[] = [];
+	const add = (rule: LintFailure["rule"], message: string) => fails.push({ rule, message });
+
+	if (p.words < 1500 || p.words > 5000) add("body-words", `body has ${p.words} words`);
+	const dek = countWords(typeof article["dek"] === "string" ? article["dek"] : "");
+	if (dek < 6 || dek > 16) add("dek-words", `dek has ${dek} words`);
+	const lede = countWords(typeof fm["lede"] === "string" ? fm["lede"] : "");
+	if (lede < 6 || lede > 20) add("lede-words", `lede has ${lede} words`);
+
+	const gallery = asArray(fm["gallery"]);
+	if (gallery.length > 0) {
+		add("gallery-empty", `gallery has ${gallery.length} items`);
+	}
+	const cover = fm["cover"];
+	if (!isRecord(cover) || typeof cover["alt"] !== "string" || cover["alt"].trim() === "") {
+		add("cover-alt", "cover has no alt");
+	}
+
+	const declared = asArray(article["sections"]).map((s) => (isRecord(s) ? s["id"] : undefined));
+	const found = p.sections.map((s) => s.id);
+	if (JSON.stringify(declared) !== JSON.stringify(found)) {
+		add(
+			"sections-match",
+			`sections ${JSON.stringify(declared)} vs headings ${JSON.stringify(found)}`,
+		);
+	}
+
+	const numbers = p.figures.map((f) => f.number);
+	if (numbers.some((n, i) => n !== i + 1)) {
+		add("figure-order", `figure numbers ${JSON.stringify(numbers)} are not 1..n in order`);
+	}
+	const prose = p.paragraphs.join("\n");
+	for (const n of numbers) {
+		if (n !== undefined && !new RegExp(`\\bFigure ${n}\\b`).test(prose)) {
+			add("figure-referenced", `Figure ${n} is never referenced in prose`);
+		}
+	}
+
+	if ((article["math"] === true) !== p.hasMathBlock) {
+		add(
+			"math-flag",
+			`article.math is ${String(article["math"])} but hasMathBlock is ${p.hasMathBlock}`,
+		);
+	}
+	if (p.unescapedDollar) add("dollar-escape", "unescaped $ before a digit; write \\$40");
+	return fails;
+}
