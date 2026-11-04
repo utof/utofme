@@ -77,3 +77,10 @@ describe("sitemapFilter — allowed routes", () => {
 		expect(sitemapFilter(`${BASE}/works/search-archive/`)).toBe(true);
 	});
 });
+
+describe("sitemapFilter — nested search segments (#114)", () => {
+	it("keeps a nested /works/search/ page (only the root /search route is excluded)", () => {
+		expect(sitemapFilter(`${BASE}/works/search/`)).toBe(true);
+		expect(sitemapFilter(`${BASE}/works/search`)).toBe(true);
+	});
+});
