@@ -15,14 +15,16 @@ Branch `p10/i-integration` from `phase/10-research-article` at `7e7de47` (A1, A2
 - [x] Reconcile: lefthook `--no-errors-on-unmatched`; garden prebuild Biome-formats — `1e7041b`
 - [x] R10 RollMap lab 6.0/6.0 KB → 5.4 KB (`square-paths.ts`) — `ad4fba4`
 - [ ] **BLOCKED on coordinator:** article HTML 47.2 KB > 45 KB (spec Risk 3: stop and report). Reported.
-- [ ] Step 3: Lighthouse
-- [ ] Step 4: deploy build + privacy gate + manual dist grep
-- [ ] Step 5: Stryker paths; local run on `sight.ts` (30 min cap)
-- [ ] Step 7: ADR review 0052-0060
+- [x] Step 3: budgets (only R3 HTML fails), size ok, LHCI mobile 0.95-0.96 on the article
+- [x] Step 4: deploy build + privacy gate + manual dist grep: clean; privacy fixes `7bd3aa4`, `51f86fb`
+- [x] Step 5: Stryker paths `c7564b6`; sight.ts 75.6 (seed artefact) → 80.2 → 83.97 with `8d5e988`
+- [x] Step 7: ADR review 0052-0060: all on template; 0052/0054/0057/0058/0059 amended `2b2c752`
 - [x] Reader's pass (screenshots 1440x900, 393x852 in `/tmp/p10-i-shots/`): TOC markers, AC1.7 overflows, F3 panel title, F9 label fixed — `8552c39`, `8dced69`
 - [ ] FE merge and FE-dependent checks
-- [ ] Step 8: `10-close.md`
+- [ ] Step 8: `10-close.md` (draft committed; FE rows and the HTML decision pending)
 
 ## Log
 
 - e2e green on the fixes: `p10-article`, `p10-replay`, `p10-roll-map`, `p10-map-stages`, `p10-noise`, `p10-elo`, `p10-agents-vs-pros`, `p10-layout`, `p10-lab`, and AC1.5's `chrome`, `footer`, `layout-chrome`, `project-layout`, `banner-quality`, `p09-morph` (153 + 27 passed).
+- F4 axis end labels `16dc392`. GATE static checks all exit 0 at `16dc392`.
+- Waiting: FE merge; coordinator decision on the article HTML limit.
