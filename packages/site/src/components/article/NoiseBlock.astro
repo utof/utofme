@@ -1,0 +1,71 @@
+---
+/**
+ * NoiseBlock.astro — MDX-facing block of figure F9 (same experiment, twice).
+ *
+ * Imports the dataset twice, statically (parsed JSON for the keyframe, hashed URL for the
+ * island). The `<details>` lists the null differences and the adopted effects as text.
+ *
+ * Why: ADR 0054 keeps data out of the page; the island gets a URL, the shape and a label id
+ * (props far below 2 KB, AC16.3).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-13
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
+ */
+import rawData from "../../data/article/noise.json";
+import url from "../../data/article/noise.json?url&no-inline";
+import { dataset } from "../../lib/article-data/noise";
+import { shapeOf } from "../../lib/article-data/types";
+import { formatSigned } from "../../lib/figure-scale";
+import { rows } from "../../lib/figures/noise";
+import Figure from "./Figure.astro";
+import Noise from "./Noise.svelte";
+import NoiseKeyframe from "./NoiseKeyframe.astro";
+
+/** Props for NoiseBlock. */
+export interface Props {
+	/** Reading-order figure number, set in the MDX. */
+	number: number;
+}
+
+const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
+const groups = rows(data);
+---
+
+<Figure id="f9" number={number} width="text">
+	<Noise
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		labelId="f9-cap"
+	>
+		<NoiseKeyframe data={data} />
+	</Noise>
+	<slot name="caption" slot="caption" />
+	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			Each dot is the Elo difference between two runs. Hollow dots are identical recipes (nothing
+			changed, so the true difference is zero); filled dots are changes I adopted. The shaded band
+			is the tournament's own 90 % noise for one pair at the chosen number of rounds; the dashed
+			lines mark the smallest effect that clears the noise for the chosen seeds and design.
+		</p>
+		<ul class="nz-list">
+			{groups.map((g) => (
+				<li>
+					<strong>{g.title}:</strong> {g.values.map((v) => formatSigned(v, 1)).join(", ")}
+				</li>
+			))}
+		</ul>
+	</Fragment>
+</Figure>
+
+<style>
+	.nz-list {
+		margin: 0;
+		padding-inline-start: var(--space-4);
+		font-size: var(--font-size-ui);
+		font-variant-numeric: tabular-nums;
+	}
+</style>

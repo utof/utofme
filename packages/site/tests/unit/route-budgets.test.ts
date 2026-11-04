@@ -16,6 +16,7 @@ import { describe, expect, it } from "vitest";
 import { budgets } from "../../route-budgets.config.ts";
 import {
 	type Assets,
+	analyzeHtml,
 	analyzeRoute,
 	type BudgetsConfig,
 	buildChunkGraph,
@@ -23,6 +24,7 @@ import {
 	extractJsImports,
 	gzip9,
 	platformChunks,
+	type RouteClassLimits,
 	renderMarkdown,
 	resolveSpecifier,
 	selfCheck,
@@ -108,6 +110,22 @@ describe("gzip measurement", () => {
 		const s = "export const x=1;\n".repeat(500);
 		expect(gzip9(s)).toBe(gzipSync(s, { level: 9 }).length);
 		expect(gzip9(s)).toBeLessThan(s.length / 10);
+	});
+	it("measureDist gzips the JSON data files a route names", () => {
+		const dist = mkdtempSync(join(tmpdir(), "budgets-json-"));
+		mkdirSync(join(dist, "_astro"));
+		const data = JSON.stringify({ rows: "#.".repeat(400) });
+		writeFileSync(join(dist, "_astro/data.abc.json"), data);
+		writeFileSync(join(dist, "_astro/alpha.js"), "export{}");
+		writeFileSync(join(dist, "_astro/beta.js"), "export{}");
+		writeFileSync(join(dist, "_astro/client.svelte.js"), "export{}");
+		writeFileSync(join(dist, "index.html"), read("rules/island-props-data.html"));
+		const r = measureDist(dist, {
+			...budgets,
+			excluded: [],
+			unreferencedChunks: [{ pattern: /./, reason: "fixture" }],
+		}).reports[0];
+		expect(r?.lazyData).toEqual({ raw: data.length, gz: gzip9(data) });
 	});
 });
 
@@ -469,5 +487,242 @@ describe("end to end (AC2.4)", () => {
 		);
 		expect(md).toContain("excluded");
 		expect(md).toContain("Sandpack");
+	});
+});
+
+// ───────────────────────── phase 10 (P10-16): islands, R2, R9, R10 ─────────────────────────
+
+/** Deterministic incompressible text: gzip size ≈ `chars / 2`. */
+function noise(chars: number, seed: number): string {
+	let x = seed;
+	let out = "";
+	while (out.length < chars) {
+		x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
+		out += x.toString(16).padStart(8, "0");
+	}
+	return out.slice(0, chars);
+}
+/** A chunk body whose own gzip size is about `kb` KB, with optional import statements. */
+function chunk(kb: number, seed: number, imports: readonly string[] = []): string {
+	const head = imports.map((i) => `import"${i}";`).join("");
+	return `${head}export default"${noise(kb * KB * 2, seed)}";`;
+}
+const ISLAND_CLASS = (over: Partial<RouteClassLimits>): BudgetsConfig => ({
+	...budgets,
+	classes: { ...budgets.classes, article: { firstViewJs: 400 * KB, ...over } },
+	routes: [{ match: /^\/article\/$/, class: "article" }, ...budgets.routes],
+});
+const islandReport = (
+	file: string,
+	sources: Record<string, string>,
+	cfg: BudgetsConfig,
+	route = "/article/",
+) =>
+	analyzeRoute(
+		{ route, html: read(`rules/${file}`) },
+		buildChunkGraph(new Map(Object.entries(sources))),
+		assetsFrom({}),
+		cfg,
+	);
+
+describe("RouteDoc.islands (P10-16)", () => {
+	it("records name, client, URLs and decoded props bytes", () => {
+		const doc = analyzeHtml(read("rules/island-visible-two.html"), 4);
+		expect(doc.islands).toEqual([
+			{
+				name: "Alpha",
+				client: "visible",
+				componentUrl: "_astro/alpha.js",
+				rendererUrl: "_astro/client.svelte.js",
+				propsBytes: Buffer.byteLength('{"title":[0,"café > tea"]}', "utf8"),
+			},
+			{
+				name: "Beta",
+				client: "visible",
+				componentUrl: "_astro/beta.js",
+				rendererUrl: "_astro/client.svelte.js",
+				propsBytes: 2,
+			},
+		]);
+	});
+});
+
+describe("R2 lazy JS (AC16.1)", () => {
+	const sources = { "_astro/alpha.js": chunk(10, 1), "_astro/beta.js": chunk(10, 2) };
+	it("passes when the route's lazy closure is within lazyJs", () => {
+		const r = islandReport("island-visible-two.html", sources, ISLAND_CLASS({ lazyJs: 40 * KB }));
+		expect(errors(r, "R2")).toEqual([]);
+		expect(r.lazyJs).toBeGreaterThan(15 * KB);
+	});
+	it("fails when it is over", () => {
+		const r = islandReport("island-visible-two.html", sources, ISLAND_CLASS({ lazyJs: 15 * KB }));
+		expect(errors(r, "R2")[0]).toContain("lazy JS");
+	});
+	it("is not applied to classes that declare no lazyJs", () => {
+		const r = islandReport("island-visible-two.html", sources, ISLAND_CLASS({}));
+		expect([...errors(r, "R2"), ...warns(r, "R2")]).toEqual([]);
+	});
+});
+
+describe("R9 eager islands (AC16.1)", () => {
+	const big = (kb: number) => ({ "_astro/big.js": chunk(kb, 3) });
+	it("passes a client:load island whose closure is ≤ 20 KB", () => {
+		const r = islandReport("r9-load-island.html", big(10), ISLAND_CLASS({}));
+		expect(errors(r, "R9")).toEqual([]);
+	});
+	it("fails one over 20 KB", () => {
+		const r = islandReport("r9-load-island.html", big(30), ISLAND_CLASS({}));
+		expect(errors(r, "R9")[0]).toContain("Alpha");
+	});
+	it("does not apply under /lab/", () => {
+		const cfg: BudgetsConfig = {
+			...budgets,
+			classes: { ...budgets.classes, lab: { firstViewJs: 400 * KB, warnOnly: true } },
+		};
+		const r = islandReport("r9-load-island.html", big(30), cfg, "/lab/x/");
+		expect(errors(r, "R9")).toEqual([]);
+		expect(warns(r, "R9")).toEqual([]);
+	});
+	it("downgrades to a warning on an excluded route", () => {
+		const cfg = { ...ISLAND_CLASS({}), excluded: [{ route: "/article/", reason: "t" }] };
+		const r = islandReport("r9-load-island.html", big(30), cfg);
+		expect(errors(r, "R9")).toEqual([]);
+		expect(warns(r, "R9").length).toBe(1);
+	});
+});
+
+describe("R10 per-island exclusive JS (AC16.1)", () => {
+	// shared.js is reachable from both islands: it counts in R2 only.
+	const sources = {
+		"_astro/alpha.js": chunk(10, 4, ["./shared.js"]),
+		"_astro/beta.js": chunk(5, 5, ["./shared.js"]),
+		"_astro/shared.js": chunk(20, 6),
+	};
+	it("passes when each exclusive closure is within islandJs; shared chunks are excluded", () => {
+		const r = islandReport(
+			"island-visible-two.html",
+			sources,
+			ISLAND_CLASS({ islandJs: { Alpha: 12 * KB, Beta: 7 * KB } }),
+		);
+		expect(errors(r, "R10")).toEqual([]);
+		const a = r.islands.find((i) => i.name === "Alpha");
+		expect(a?.exclusiveJs).toBeGreaterThan(9 * KB);
+		expect(a?.exclusiveJs).toBeLessThan(12 * KB);
+	});
+	it("fails an island over its limit", () => {
+		const r = islandReport(
+			"island-visible-two.html",
+			sources,
+			ISLAND_CLASS({ islandJs: { Alpha: 8 * KB, Beta: 7 * KB } }),
+		);
+		expect(errors(r, "R10").join()).toContain("Alpha");
+		expect(errors(r, "R10").join()).not.toContain("Beta");
+	});
+	it("errors on an island with no entry", () => {
+		const r = islandReport(
+			"r10-unknown-island.html",
+			sources,
+			ISLAND_CLASS({ islandJs: { Alpha: 12 * KB } }),
+		);
+		expect(errors(r, "R10")[0]).toContain("Ghost");
+	});
+	it("leaves the chrome's eager islands to R1/R9", () => {
+		const html = read("rules/r10-unknown-island.html").replace('client="visible"', 'client="idle"');
+		const r = analyzeRoute(
+			{ route: "/article/", html },
+			buildChunkGraph(new Map(Object.entries(sources))),
+			assetsFrom({}),
+			ISLAND_CLASS({ islandJs: { Alpha: 12 * KB } }),
+		);
+		expect(errors(r, "R10")).toEqual([]);
+	});
+	it("skips listed chrome islands even when lazy", () => {
+		const r = islandReport(
+			"r10-unknown-island.html",
+			sources,
+			ISLAND_CLASS({ islandJs: { Alpha: 12 * KB }, chromeIslands: ["Ghost"] }),
+		);
+		expect(errors(r, "R10")).toEqual([]);
+	});
+	it("excludes chunks already in the first view", () => {
+		const html = `<script type="module" src="/_astro/shared.js"></script>${read("rules/island-visible-two.html")}`;
+		const r = analyzeRoute(
+			{ route: "/article/", html },
+			buildChunkGraph(new Map(Object.entries(sources))),
+			assetsFrom({}),
+			ISLAND_CLASS({ islandJs: { Alpha: 12 * KB, Beta: 7 * KB } }),
+		);
+		expect(r.islands.find((i) => i.name === "Alpha")?.exclusiveJs).toBeLessThan(12 * KB);
+		expect(errors(r, "R10")).toEqual([]);
+	});
+});
+
+describe("lazy data column", () => {
+	const json = "_astro/data.abc.json";
+	const sources = { "_astro/alpha.js": `export default new URL("data.abc.json",import.meta.url);` };
+	const assets = (gz: number): Assets => ({
+		raw: (p) => (p === json ? gz * 3 : null),
+		gzip: (p) => (p === json ? gz : null),
+	});
+	const run = (gz: number) =>
+		analyzeRoute(
+			{ route: "/article/", html: read("rules/island-visible-two.html") },
+			buildChunkGraph(new Map(Object.entries({ ...sources, "_astro/beta.js": "export{}" }))),
+			assets(gz),
+			ISLAND_CLASS({}),
+		);
+	it("sums the JSON files a route's chunks reference, raw and gzip", () => {
+		expect(run(50 * KB).lazyData).toEqual({ raw: 150 * KB, gz: 50 * KB });
+		expect(warns(run(50 * KB), "DATA")).toEqual([]);
+	});
+	it("warns above 120 KB gzip and never errors", () => {
+		const r = run(130 * KB);
+		expect(warns(r, "DATA").length).toBe(1);
+		expect(errors(r, "DATA")).toEqual([]);
+	});
+	it("counts JSON assets passed to islands through props, once per file", () => {
+		const other = "_astro/other.def.json";
+		const r = analyzeRoute(
+			{ route: "/article/", html: read("rules/island-props-data.html") },
+			buildChunkGraph(new Map(Object.entries({ ...sources, "_astro/beta.js": "export{}" }))),
+			{
+				raw: (p) => (p === json ? 3 * KB : p === other ? 6 * KB : null),
+				gzip: (p) => (p === json ? KB : p === other ? 2 * KB : null),
+			},
+			ISLAND_CLASS({}),
+		);
+		expect(r.lazyData).toEqual({ raw: 9 * KB, gz: 3 * KB });
+	});
+});
+
+describe("P10-16 config", () => {
+	it("routes the article and lab figures to their own classes, ahead of the generic rules", () => {
+		const c = (r: string): string | null => classifyRoute(r, budgets);
+		expect([
+			c("/works/tactical-arena/"),
+			c("/works/enth/"),
+			c("/lab/figures/replay/"),
+			c("/lab/datamosh/"),
+		]).toEqual(["article", "project", "labFigure", "lab"]);
+	});
+	it("declares the spec's limits", () => {
+		const a = budgets.classes.article;
+		expect(a?.lazyJs).toBe(160 * KB);
+		expect(a?.html).toBe(60 * KB);
+		expect(a?.cssMath).toBe(30 * KB);
+		expect(a?.islandJs?.Replay).toBe(25 * KB);
+		expect(a?.islandJs?.EloSentence).toBe(2 * KB);
+		expect(Object.keys(a?.islandJs ?? {})).toHaveLength(12);
+		const l = budgets.classes.labFigure;
+		expect(l?.lazyJs).toBe(60 * KB);
+		expect(l?.html).toBe(30 * KB);
+		expect(l?.css).toBe(12 * KB);
+		expect(l?.warnOnly).toBeUndefined();
+		expect(l?.islandJs).toBe(a?.islandJs);
+	});
+	it("lists the article in lighthouserc", () => {
+		expect(readFileSync(resolve(process.cwd(), "lighthouserc.cjs"), "utf8")).toContain(
+			"/works/tactical-arena/",
+		);
 	});
 });

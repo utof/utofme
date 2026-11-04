@@ -1,0 +1,250 @@
+/*
+ * Shared styles of figure F10 (RollMap.svelte and RollMapKeyframe.astro).
+ *
+ * Why: the SSR keyframe and the island must reserve the same height (no layout shift on
+ * hydration): every row has a fixed or minimum height, and the keyframe shows the island's
+ * default state. Svelte's scoped styles do not reach slotted Astro markup, so both import this
+ * file. Every colour is a figure token (P10-2); no hex literals.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-14
+ */
+.rm-box {
+	container: rm / inline-size;
+	position: relative;
+}
+.rm {
+	display: grid;
+	/* Why: without minmax(0, …) the scrolling strip's min-content widens the whole column. */
+	grid-template-columns: minmax(0, 1fr);
+	align-content: start;
+	gap: var(--space-3);
+	padding: var(--space-3);
+}
+.rm-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	align-content: start;
+	gap: var(--space-2) var(--space-3);
+	/* Why: three rows of controls at the narrowest widths; the keyframe reserves the same. */
+	min-block-size: 9.5rem;
+}
+@container rm (min-width: 44rem) {
+	.rm-bar {
+		min-block-size: 3rem;
+	}
+}
+.rm-gens {
+	display: inline-flex;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	overflow: hidden;
+}
+.rm-gen {
+	position: relative;
+	display: inline-flex;
+	cursor: pointer;
+}
+.rm-gen input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+.rm-gen span {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 2.75rem;
+	min-block-size: 2.75rem;
+	font-size: var(--font-size-ui);
+	font-weight: 600;
+	color: var(--color-text);
+	background: var(--color-bg);
+}
+.rm-gen + .rm-gen span {
+	border-inline-start: 1px solid var(--color-border);
+}
+.rm-gen input:checked + span {
+	color: var(--color-bg);
+	background: var(--color-text);
+}
+.rm-gen input:focus-visible + span {
+	box-shadow: inset var(--shadow-focus);
+}
+.rm-btn,
+.rm-check {
+	min-block-size: 2.75rem;
+	font-size: var(--font-size-ui);
+	color: var(--color-text);
+}
+.rm-btn {
+	padding: 0 var(--space-4);
+	font: inherit;
+	font-size: var(--font-size-ui);
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+}
+.rm-btn:hover {
+	background: var(--color-surface-hover);
+}
+.rm-btn:focus-visible,
+.rm-thumb:focus-visible,
+.rm-check input:focus-visible {
+	outline: none;
+	box-shadow: var(--shadow-focus);
+}
+.rm-check {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	cursor: pointer;
+}
+.rm-check input {
+	inline-size: 1.125rem;
+	block-size: 1.125rem;
+	margin: 0;
+}
+.rm-label {
+	margin: 0;
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-ui);
+	color: var(--color-text);
+}
+.rm-boards {
+	display: grid;
+	grid-template-columns: repeat(var(--rm-cols, 1), minmax(0, 22rem));
+	gap: var(--space-3) var(--space-4);
+}
+.rm-fig {
+	display: grid;
+	gap: var(--space-1);
+	align-content: start;
+	margin: 0;
+}
+.rm-cap {
+	margin: 0;
+	min-block-size: 1.3em;
+	font-size: var(--font-size-ui);
+	color: var(--color-text-muted);
+}
+.rm-board {
+	display: block;
+	box-sizing: border-box;
+	inline-size: 100%;
+	aspect-ratio: 1;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-map-floor);
+}
+.rm-wall {
+	fill: var(--color-map-wall);
+	shape-rendering: crispEdges;
+}
+.rm-site {
+	fill: var(--color-map-site);
+}
+.rm-letter {
+	fill: var(--color-text-muted);
+	font-size: 1.3px;
+	font-weight: 600;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+.rm-spawn-ct {
+	fill: color-mix(in srgb, var(--color-ct) 16%, transparent);
+}
+.rm-spawn-t {
+	fill: color-mix(in srgb, var(--color-t) 16%, transparent);
+}
+.rm-tag {
+	font-size: 1.2px;
+	font-weight: 700;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+.rm-tag--ct {
+	fill: var(--color-ct);
+}
+.rm-tag--t {
+	fill: var(--color-t);
+}
+
+/* The strip: a fixed-height row of twelve thumbnails that shrink to fit the column; figures
+ * never scroll sideways on a phone (spec P10-1 grid, AC1.7). */
+.rm-strip-wrap {
+	block-size: 3.5rem;
+}
+.rm-strip {
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 2.75rem));
+	gap: var(--space-1);
+	margin: 0;
+	padding: 0 0 var(--space-1);
+	list-style: none;
+}
+.rm-thumb {
+	display: block;
+	box-sizing: border-box;
+	inline-size: 100%;
+	aspect-ratio: 1;
+	padding: 2px;
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+}
+.rm-thumb[aria-current="true"] {
+	border-color: var(--color-text);
+	box-shadow: 0 0 0 1px var(--color-text);
+}
+.rm-thumb svg,
+.rm-strip-svg {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+}
+.rm-strip-svg {
+	max-inline-size: 36rem;
+	block-size: auto;
+}
+.rm-note {
+	display: grid;
+	gap: var(--space-1);
+	margin: 0;
+	min-block-size: 7rem;
+	font-size: var(--font-size-ui);
+	line-height: var(--leading-snug);
+	color: var(--color-text-body);
+}
+@container rm (min-width: 44rem) {
+	.rm-note {
+		min-block-size: 4.5rem;
+	}
+}
+.rm-note p {
+	margin: 0;
+}
+.rm-live {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+.rm-fail {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-3);
+	margin: 0;
+	padding: 0 var(--space-3) var(--space-3);
+	font-size: var(--font-size-ui);
+	color: var(--color-text-body);
+}

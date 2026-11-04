@@ -1,0 +1,95 @@
+---
+/**
+ * NoiseKeyframe.astro — the no-JS fallback of figure F9: the static dot plot at 8,000 rounds with
+ * two independent seeds, under the default sentence "With 2 seeds, an effect smaller than ±9.3 Elo
+ * is noise." and a static read-out of the three settings.
+ *
+ * Why: the island shows this until it hydrates and keeps it if its data fails to load; the
+ * caption's claim must be visible without JavaScript (AC13.3). Its markup and sizes mirror the
+ * island's so hydration moves nothing (CLS, spec common contract).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-13 (fallback)
+ */
+import type { NoiseData } from "../../lib/article-data/noise";
+import { formatNumber } from "../../lib/figure-scale";
+import { DEFAULT_STATE, NOISE_LAYOUTS, noiseSvg, sentence, summary } from "../../lib/figures/noise";
+
+/** Props for NoiseKeyframe. */
+export interface Props {
+	/** The projected `noise` data (server side only; never passed to the island). */
+	data: NoiseData;
+}
+
+const { data } = Astro.props;
+const s = sentence(data.rules, DEFAULT_STATE);
+const label = summary(data, DEFAULT_STATE);
+const views = [
+	{ key: "wide", layout: NOISE_LAYOUTS.wide },
+	{ key: "narrow", layout: NOISE_LAYOUTS.narrow },
+] as const;
+---
+
+<div class="nz-controls" aria-hidden="true">
+	<span>
+		Rounds per pair: <b>{formatNumber(DEFAULT_STATE.rounds, 0)}</b>
+	</span>
+	<span>
+		Seeds: <b>{DEFAULT_STATE.seeds}</b>
+	</span>
+	<span>
+		Control: <b>independent seeds</b>
+	</span>
+</div>
+<p class="nz-sentence">
+	With <b>{s.seeds}</b>, an effect smaller than <b>{s.n}</b> Elo is noise.
+</p>
+<div class="nz-stage">
+	{views.map(({ key, layout }) => (
+		<svg
+			class={`nz-svg nz-${key}`}
+			viewBox={`0 0 ${layout.w} ${layout.h}`}
+			role="img"
+			aria-label={label}
+			set:html={noiseSvg(data, DEFAULT_STATE, layout)}
+		/>
+	))}
+</div>
+
+<style>
+	.nz-controls {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		align-items: center;
+		block-size: 5.5rem;
+		padding-inline: var(--space-2);
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+	.nz-sentence {
+		margin: 0;
+		padding: var(--space-2);
+		min-block-size: 3.25rem;
+		font-size: var(--font-size-3);
+		color: var(--color-text);
+	}
+	.nz-svg {
+		display: block;
+		inline-size: 100%;
+		block-size: auto;
+	}
+	.nz-narrow {
+		display: none;
+	}
+	@media (max-width: 700px) {
+		.nz-controls {
+			grid-template-columns: minmax(0, 1fr);
+			block-size: 9.5rem;
+		}
+		.nz-wide {
+			display: none;
+		}
+		.nz-narrow {
+			display: block;
+		}
+	}
+</style>

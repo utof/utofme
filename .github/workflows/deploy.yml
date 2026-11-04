@@ -12,7 +12,7 @@
 # path so wrangler picks up the site's wrangler.jsonc from the workspace root.
 # Verified pattern: context7 /cloudflare/wrangler-action multi-project example.
 #
-# actionlint-clean: verified via /home/vboxuser/.local/bin/actionlint, exit 0.
+# actionlint-clean: verified with actionlint, exit 0.
 name: Deploy
 
 on:
@@ -22,6 +22,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Why: the denylist is a secret; --require-denylist below fails the deploy if it is missing (ADR 0055).
+    env:
+      PRIVACY_DENYLIST: ${{ secrets.PRIVACY_DENYLIST }}
 
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +50,10 @@ jobs:
       # Guard — fails the deploy if any fixture work leaked into dist/ (P9-3).
       - name: Guard — no fixtures in dist
         run: bun run --cwd packages/site check:no-fixtures
+
+      # Guard — privacy scan of the built site; any hit or a missing secret fails the deploy (P10-3).
+      - name: Guard — privacy scan of dist
+        run: bun run --cwd packages/site check:privacy --dist dist --require-denylist
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3

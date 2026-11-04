@@ -1,0 +1,33 @@
+---
+/**
+ * Stamp.astro — the "as measured on block N" stamp that rides on every
+ * agent-vs-pro number (OD-4).
+ *
+ * Why: the agents change every training block, so a number without its block is
+ * misleading; the stamp keeps the claim honest and is plain text (no JS).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § Context (OD-4)
+ */
+
+/** Props for Stamp. */
+export interface Props {
+	/** A block number (renders "block N") or free text such as "block 28, Mirage". */
+	measuredOn: number | string;
+}
+
+const { measuredOn } = Astro.props;
+const where = typeof measuredOn === "number" ? `block ${measuredOn}` : measuredOn;
+---
+
+{/* Why: set:text keeps the span free of template whitespace, so "(<Stamp/>)" renders without inner spaces. */}
+<span class="stamp" data-stamp set:text={`as measured on ${where}`} />
+
+<style>
+	.stamp {
+		font-family: var(--font-mono);
+		font-size: var(--font-size-1);
+		color: var(--color-text-muted);
+		/* Why: long stamps ("…, self-play, recorded 2026-11-04") must wrap on a 393 px phone. */
+		overflow-wrap: anywhere;
+	}
+</style>

@@ -1,0 +1,58 @@
+---
+/**
+ * FreePeekBlock.astro — MDX-facing block of figure F8 (The free peek).
+ *
+ * No dataset: the rules are literals in `src/lib/figures/free-peek.ts`. The two readout rates
+ * and the real tick rate are facts, read on the server and passed to the island as formatted
+ * strings and one number.
+ *
+ * Why: the readouts must match the prose to the digit, so they come from the facts file
+ * (`peek.hit.nosnap`, `peek.hit.snap`, `cs2.tickrate`), never from this component.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-12
+ */
+import { fact, formatFact, measuredOnText } from "../../lib/facts";
+import Figure from "./Figure.astro";
+import FreePeek from "./FreePeek.svelte";
+import FreePeekKeyframe from "./FreePeekKeyframe.astro";
+
+/** Props for FreePeekBlock. */
+export interface Props {
+	/** Reading-order figure number, set in the MDX. */
+	number: number;
+}
+
+const { number } = Astro.props;
+const hitNoSnap = formatFact("peek.hit.nosnap");
+const hitSnap = formatFact("peek.hit.snap");
+const tickrate = fact("cs2.tickrate").v;
+const measuredOn = fact("peek.hit.nosnap").measuredOn;
+---
+
+<Figure
+	id="f8"
+	number={number}
+	width="text"
+	measuredOn={measuredOn ? measuredOnText(measuredOn) : undefined}
+>
+	<FreePeek
+		client:visible={{ rootMargin: "200px 0px" }}
+		hitNoSnap={hitNoSnap}
+		hitSnap={hitSnap}
+		tickrate={tickrate}
+	>
+		<FreePeekKeyframe hitNoSnap={hitNoSnap} />
+	</FreePeek>
+	<slot name="caption" slot="caption" />
+	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			The corridor has eight tiles. The holder stands on tile 8, already aiming at tiles 4 and 5.
+			The peeker starts on tile 3, behind the corner, and every step moves it one tile in one 0.8 s
+			tick. A defender can only shoot at what it saw at the end of the previous tick, and the shot
+			is resolved after everyone has moved, so it lands on the tile where the peeker was. With snap
+			fire, a holder that is set and aiming also fires at whoever steps into its aim on that same
+			tick.
+		</p>
+	</Fragment>
+</Figure>

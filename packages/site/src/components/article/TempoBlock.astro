@@ -1,0 +1,116 @@
+---
+/**
+ * TempoBlock.astro — MDX-facing block of figure F4 (When does the first fight start?).
+ *
+ * Imports the dataset twice, statically: the parsed JSON for the SSR keyframe and the details
+ * table (server only) and its hashed URL (`?url&no-inline`) for the island, which fetches it
+ * after `client:visible`. The stamp lives inside the figure (keyframe and island) because it
+ * changes with the block selector.
+ *
+ * Why: ADR 0054 keeps data out of the page; the island gets a URL, the shape and three literals
+ * (props stay far below 2 KB, AC16.3).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-8
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
+ */
+import rawData from "../../data/article/tempo.json";
+import url from "../../data/article/tempo.json?url&no-inline";
+import { dataset, TEMPO_RERUN_DATE } from "../../lib/article-data/tempo";
+import { shapeOf } from "../../lib/article-data/types";
+import { formatFact } from "../../lib/facts";
+import { formatNumber } from "../../lib/figure-scale";
+import { AGENT_BLOCKS, METRICS } from "../../lib/figures/tempo";
+import Figure from "./Figure.astro";
+import Tempo from "./Tempo.svelte";
+import TempoKeyframe from "./TempoKeyframe.astro";
+
+/** Props for TempoBlock. */
+export interface Props {
+	/** Reading-order figure number, set in the MDX. */
+	number: number;
+}
+
+const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build, and so the keyframe
+// gets the typed value (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
+const prosMaps = formatFact("data.pros.maps");
+const labelId = "f4-cap";
+const labels: Record<string, string> = {
+	v5a2: "Agents, block 2",
+	b6: "Agents, block 6",
+	b10: "Agents, block 10",
+	b28: "Agents, block 28",
+	pros: "Pros",
+};
+const rows = [...AGENT_BLOCKS.map((b) => b.key), "pros" as const].flatMap((key) =>
+	METRICS.map((m) => ({ who: labels[key] ?? key, metric: m.label, s: data.series[key][m.key] })),
+);
+---
+
+<Figure id="f4" number={number} width="wide">
+	<Tempo
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		labelId={labelId}
+		prosMaps={prosMaps}
+		rerunDate={TEMPO_RERUN_DATE}
+	>
+		<TempoKeyframe data={data} rerunDate={TEMPO_RERUN_DATE} prosMaps={prosMaps} labelId={labelId} />
+	</Tempo>
+	<slot name="caption" slot="caption" />
+	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			Seconds into the round, in 0.8 s steps (one game tick). Agents: 5v5 self-play on
+			Counter-Strike maps, one checkpoint per row, {TEMPO_RERUN_DATE} rerun. Pros: {prosMaps} pro
+			maps of 2026. Rounds in which the event never happens are not in the median.
+		</p>
+		<table class="tp-table">
+			<thead>
+				<tr>
+					<th scope="col">Who</th>
+					<th scope="col">Metric</th>
+					<th scope="col">Rounds with event</th>
+					<th scope="col">q10</th>
+					<th scope="col">q25</th>
+					<th scope="col">Median</th>
+					<th scope="col">q75</th>
+					<th scope="col">q90</th>
+				</tr>
+			</thead>
+			<tbody>
+				{rows.map((r) => (
+					<tr>
+						<th scope="row">{r.who}</th>
+						<td>{r.metric}</td>
+						<td>
+							{formatNumber(r.s.nEvent, 0)} of {formatNumber(r.s.n, 0)}
+						</td>
+						{r.s.q.map((v) => (
+							<td>{formatNumber(v, 1)} s</td>
+						))}
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</Fragment>
+</Figure>
+
+<style>
+	.tp-table {
+		border-collapse: collapse;
+		font-size: var(--font-size-ui);
+		font-variant-numeric: tabular-nums;
+		display: block;
+		overflow-x: auto;
+	}
+	.tp-table th,
+	.tp-table td {
+		padding: var(--space-1) var(--space-2);
+		text-align: start;
+		white-space: nowrap;
+		border-block-end: 1px solid var(--color-border);
+	}
+</style>

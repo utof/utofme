@@ -1,0 +1,120 @@
+{
+	"about": "Stand-in description of the source file.",
+	"method": "stand-in method",
+	"eras": [
+		{
+			"era": "A",
+			"name": "stand-in 3v3 line",
+			"maps": "cs",
+			"anchor": "EXAMPLE",
+			"steps_per_block": 200000000.0,
+			"rounds_total": 146000,
+			"tournaments": ["notes/EXAMPLE.json"],
+			"series": {
+				"seed1": [
+					{ "block": 1, "run": "runlabel-s1", "elo": 34.3, "lo": 29.2, "hi": 40.2 },
+					{ "block": 2, "run": "runlabel-s1", "elo": 36.8, "lo": 31.5, "hi": 43.5 },
+					{ "block": 3, "run": "runlabel-s1", "elo": 50.9, "lo": 46.7, "hi": 55.7 },
+					{ "block": 4, "run": "runlabel-s1", "elo": 61.5, "lo": 57.6, "hi": 65.6 },
+					{ "block": 5, "run": "runlabel-s1", "elo": 82.5, "lo": 76.3, "hi": 89.7 },
+					{ "block": 6, "run": "runlabel-s1", "elo": 121.4, "lo": 116.8, "hi": 126.7 },
+					{ "block": 7, "run": "runlabel-s1", "elo": 147.1, "lo": 140.4, "hi": 153.4 },
+					{ "block": 8, "run": "runlabel-s1", "elo": 153.9, "lo": 148.9, "hi": 159.2 }
+				],
+				"seed0": [
+					{ "block": 1, "run": "runlabel-s0", "elo": 27.1, "lo": 21.1, "hi": 32.3 },
+					{ "block": 2, "run": "runlabel-s0", "elo": 23.0, "lo": 17.2, "hi": 28.6 },
+					{ "block": 3, "run": "runlabel-s0", "elo": 30.0, "lo": 23.8, "hi": 36.3 },
+					{ "block": 5, "run": "runlabel-s0", "elo": 70.6, "lo": 62.7, "hi": 77.7 },
+					{ "block": 6, "run": "runlabel-s0", "elo": 100.2, "lo": 92.8, "hi": 106.7 },
+					{ "block": 7, "run": "runlabel-s0", "elo": 130.6, "lo": 124.8, "hi": 136.1 },
+					{ "block": 8, "run": "runlabel-s0", "elo": 156.8, "lo": 149.8, "hi": 163.7 },
+					{ "block": 9, "run": "runlabel-s0", "elo": 158.9, "lo": 151.1, "hi": 166.6 }
+				]
+			},
+			"others": [],
+			"journal": "notes/EXAMPLE.md:1"
+		},
+		{
+			"era": "A",
+			"name": "stand-in 3v3 line",
+			"maps": "cs_heldout",
+			"anchor": "EXAMPLE",
+			"steps_per_block": 200000000.0,
+			"rounds_total": 146000,
+			"tournaments": ["notes/EXAMPLE.json"],
+			"series": {
+				"seed1": [
+					{ "block": 1, "run": "runlabel-s1", "elo": 32.4, "lo": 27.0, "hi": 37.8 },
+					{ "block": 2, "run": "runlabel-s1", "elo": 29.7, "lo": 23.5, "hi": 35.8 },
+					{ "block": 3, "run": "runlabel-s1", "elo": 55.4, "lo": 51.3, "hi": 60.1 },
+					{ "block": 4, "run": "runlabel-s1", "elo": 55.0, "lo": 51.2, "hi": 58.8 },
+					{ "block": 5, "run": "runlabel-s1", "elo": 71.8, "lo": 64.9, "hi": 78.5 },
+					{ "block": 6, "run": "runlabel-s1", "elo": 120.3, "lo": 115.5, "hi": 125.0 },
+					{ "block": 7, "run": "runlabel-s1", "elo": 140.6, "lo": 134.4, "hi": 147.8 },
+					{ "block": 8, "run": "runlabel-s1", "elo": 155.2, "lo": 150.7, "hi": 159.9 }
+				],
+				"seed0": [
+					{ "block": 1, "run": "runlabel-s0", "elo": 26.1, "lo": 20.6, "hi": 31.7 },
+					{ "block": 2, "run": "runlabel-s0", "elo": 19.7, "lo": 14.2, "hi": 25.3 },
+					{ "block": 3, "run": "runlabel-s0", "elo": 40.7, "lo": 33.7, "hi": 46.9 },
+					{ "block": 5, "run": "runlabel-s0", "elo": 52.8, "lo": 45.3, "hi": 60.6 },
+					{ "block": 6, "run": "runlabel-s0", "elo": 91.1, "lo": 84.3, "hi": 98.4 },
+					{ "block": 7, "run": "runlabel-s0", "elo": 130.3, "lo": 124.8, "hi": 135.7 },
+					{ "block": 8, "run": "runlabel-s0", "elo": 138.1, "lo": 130.7, "hi": 145.4 },
+					{ "block": 9, "run": "runlabel-s0", "elo": 146.8, "lo": 139.9, "hi": 154.7 }
+				]
+			},
+			"others": [],
+			"journal": "notes/EXAMPLE.md:1"
+		},
+		{
+			"era": "B",
+			"name": "stand-in 3v3 line",
+			"maps": "cs",
+			"anchor": "EXAMPLE",
+			"steps_per_block": 200000000.0,
+			"rounds_total": 2179421,
+			"tournaments": ["notes/EXAMPLE.json"],
+			"block_note": "stand-in block note",
+			"series": {
+				"seed1": [
+					{ "block": 0, "run": "runlabel-s1", "elo": 53.8, "lo": 51.6, "hi": 56.1 },
+					{ "block": 2, "run": "runlabel-s1", "elo": 86.7, "lo": 85.0, "hi": 88.6 },
+					{ "block": 3, "run": "runlabel-s1", "elo": 99.9, "lo": 98.0, "hi": 101.9 }
+				],
+				"seed2": [
+					{ "block": 0, "run": "runlabel-s2", "elo": 58.1, "lo": 56.0, "hi": 60.3 },
+					{ "block": 2, "run": "runlabel-s2", "elo": 89.4, "lo": 87.8, "hi": 91.1 },
+					{ "block": 3, "run": "runlabel-s2", "elo": 97.2, "lo": 95.5, "hi": 99.0 }
+				]
+			},
+			"journal": "notes/EXAMPLE.md:1",
+			"others": []
+		},
+		{
+			"era": "B",
+			"name": "stand-in 3v3 line",
+			"maps": "cs_heldout",
+			"anchor": "EXAMPLE",
+			"steps_per_block": 200000000.0,
+			"rounds_total": 2174583,
+			"tournaments": ["notes/EXAMPLE.json"],
+			"block_note": "stand-in block note",
+			"series": {
+				"seed1": [
+					{ "block": 0, "run": "runlabel-s1", "elo": 71.8, "lo": 69.6, "hi": 73.8 },
+					{ "block": 2, "run": "runlabel-s1", "elo": 95.3, "lo": 93.4, "hi": 97.1 },
+					{ "block": 3, "run": "runlabel-s1", "elo": 122.2, "lo": 120.4, "hi": 123.9 }
+				],
+				"seed2": [
+					{ "block": 0, "run": "runlabel-s2", "elo": 72.5, "lo": 70.2, "hi": 74.7 },
+					{ "block": 2, "run": "runlabel-s2", "elo": 108.6, "lo": 107.1, "hi": 110.4 },
+					{ "block": 3, "run": "runlabel-s2", "elo": 117.3, "lo": 115.5, "hi": 119.0 }
+				]
+			},
+			"journal": "notes/EXAMPLE.md:1",
+			"others": []
+		}
+	]
+}

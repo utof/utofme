@@ -29,6 +29,8 @@ module.exports = {
 				// Phase 4 slash pages. /tops/ is intentionally omitted — see spec line 17:
 				// /tops/ is a static list page with no external data dependencies, so its
 				// performance profile is equivalent to /garden/ and the other slash pages gated here.
+				// Phase 10: the long-form article (every figure island is lazy; mobile >= 0.85 must hold).
+				"http://localhost:4321/works/tactical-arena/",
 				"http://localhost:4321/now/",
 				"http://localhost:4321/uses/",
 				"http://localhost:4321/colophon/",

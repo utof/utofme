@@ -60,15 +60,48 @@ export function worksSchema({ image }: SchemaContext) {
 		started: z.coerce.date().optional(),
 		links: z
 			.array(
-				z.object({
-					label: z.string().min(1).max(24),
-					href: z.url(),
-					private: z.boolean().default(false),
-				}),
+				z
+					.object({
+						label: z.string().min(1).max(24),
+						href: z.url().optional(),
+						private: z.boolean().default(false),
+					})
+					.superRefine((l, ctx) => {
+						if (!l.private && l.href === undefined) {
+							ctx.addIssue({
+								code: "custom",
+								path: ["href"],
+								message: "href is required unless the link is private",
+							});
+						}
+					}),
 			)
 			.max(5)
 			.default([]),
 		fixture: z.boolean().default(false),
+		/**
+		 * Research-article variant (P10-1). Presence selects `_ArticleLayout`.
+		 * Why: the article page needs its own headline/dek/contents list without a second collection.
+		 */
+		article: z
+			.object({
+				headline: z.string().min(1).max(80),
+				dek: z.string().min(1).max(120),
+				sections: z
+					.array(
+						z.object({
+							id: z
+								.string()
+								.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+								.max(40),
+							title: z.string().min(1).max(60),
+						}),
+					)
+					.min(3)
+					.max(12),
+				math: z.boolean().default(false),
+			})
+			.optional(),
 	};
 	const stack = z.array(z.string().min(1)).max(8).optional();
 

@@ -1,0 +1,78 @@
+---
+/**
+ * MapStagesBlock.astro: MDX-facing block of figure F5 (from a CS2 map to 28×28, stages 2 to 5).
+ *
+ * Imports the dataset twice, statically: the parsed JSON for the SSR keyframe and the `<details>`
+ * counts table (server only), and its hashed URL (`?url&no-inline`) for the island, which fetches
+ * it after `client:visible`.
+ *
+ * Why: ADR 0054 keeps data out of the page; the island gets only a URL, the shape and an id
+ * (props stay far below 2 KB, AC16.3). Stage 1 (the radar trace) is not in any shipped file
+ * (OD-5), so nothing here can show it.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-9
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
+ */
+import rawData from "../../data/article/map_stages.json";
+import url from "../../data/article/map_stages.json?url&no-inline";
+import { dataset } from "../../lib/article-data/map_stages";
+import { shapeOf } from "../../lib/article-data/types";
+import { formatNumber } from "../../lib/figure-scale";
+import { mapTitle, STAGES, stageCount } from "../../lib/figures/map-stages";
+import Figure from "./Figure.astro";
+import MapStages from "./MapStages.svelte";
+import MapStagesKeyframe from "./MapStagesKeyframe.astro";
+
+/** Props for MapStagesBlock. */
+export interface Props {
+	/** Reading-order figure number, set in the MDX. */
+	number: number;
+}
+
+const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build, and so the keyframe
+// gets the typed value (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
+---
+
+<Figure id="f5" number={number} width="wide">
+	<MapStages
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		labelId="f5-cap"
+	>
+		<MapStagesKeyframe data={data} />
+	</MapStages>
+	<slot name="caption" slot="caption" />
+	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			The project's translator turns each map's overhead picture into a 28×28 grid in four steps.
+			First it measures, for every square, how much of it is floor (a digit from 0 to 9 ninths).
+			Then a majority vote makes a square floor if at least half of it is. A corridor pass reopens
+			passages narrower than a square. The final grid closes a few squares and marks the two bomb
+			sites and the spawns. The table counts the squares at each step, from the rows themselves.
+		</p>
+		<table>
+			<thead>
+				<tr>
+					<th scope="col">Map</th>
+					{STAGES.map((s) => (
+						<th scope="col">{s.title}</th>
+					))}
+				</tr>
+			</thead>
+			<tbody>
+				{data.maps.map((m) => (
+					<tr>
+						<th scope="row">{mapTitle(m.name)}</th>
+						{STAGES.map((_, i) => (
+							<td>{formatNumber(stageCount(m, i), 0)}</td>
+						))}
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</Fragment>
+</Figure>

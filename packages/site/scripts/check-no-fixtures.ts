@@ -14,9 +14,12 @@
  *
  * @see packages/specs/specs/09-project-view.md § P9-3 (AC3.5)
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { gunzipSync } from "node:zlib";
+
+/** Lab routes that must not exist in a deploy build (spec P10 "Lab pages"). */
+const LAB_DIRS = ["lab/figures", "lab/article-layout"] as const;
 
 /** Plain-text extensions scanned; pagefind `.pf_*` files are gzip and handled in {@link readScannable}. */
 const TEXT_EXT = /\.(html|xml|txt|json|js|mjs|css|svg|webmanifest)$/;
@@ -87,6 +90,7 @@ function arg(flag: string, fallback: string): string {
  * Why: exported (and import.meta.main-guarded) so tests can run it on a temp tree.
  *
  * @see packages/specs/specs/09-project-view.md § P9-3 (AC3.5)
+ * @see packages/specs/specs/10-tactical-arena-article.md § "Lab pages" (`check:no-fixtures`)
  */
 export function run(distDir: string, contentDir: string): number {
 	const slugs = fixtureSlugs(
@@ -95,6 +99,9 @@ export function run(distDir: string, contentDir: string): number {
 			.map((name) => ({ name, text: readFileSync(join(contentDir, name), "utf8") })),
 	);
 	const problems: string[] = [];
+	// Why: the article lab pages exist only in fixture builds (P10-16); any file under these means a deploy-build leak.
+	for (const lab of LAB_DIRS)
+		if (existsSync(join(distDir, lab))) problems.push(`${lab}/ (lab page in deploy build)`);
 	for (const file of walk(distDir)) {
 		const rel = file.slice(distDir.length + 1);
 		// Why: every fixture slug is also a path segment, so file/dir names leak too (e.g. dist/works/code-1/).

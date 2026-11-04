@@ -1,0 +1,105 @@
+---
+/**
+ * SmokeSightBlock.astro: MDX-facing block of figure F2 (place a smoke, watch the sightlines
+ * change).
+ *
+ * Imports the dataset twice, statically: the parsed JSON for the SSR keyframe (server only) and
+ * its hashed URL (`?url&no-inline`) for the island, which fetches it after `client:visible`.
+ * The long description in `<details>` lists the start position's sightlines, computed at build
+ * with the same `sight.ts`.
+ *
+ * Why: ADR 0054 keeps data out of the page; the island gets only a URL, the shape and an id
+ * (props stay far below 2 KB, AC16.3). There is no real-map sight toggle (OD-8); the grid's
+ * generosity is a keyed fact printed in the description.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-6
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
+ */
+import rawData from "../../data/article/maps_cs.json";
+import url from "../../data/article/maps_cs.json?url&no-inline";
+import { dataset } from "../../lib/article-data/maps_cs";
+import { shapeOf } from "../../lib/article-data/types";
+import {
+	addSmoke,
+	MAP_NAME,
+	sightlines,
+	startBoard,
+	SUGGESTED_SMOKE,
+} from "../../lib/figures/smoke-sight";
+import { parseRows } from "../../lib/grid";
+import { SIGHT } from "../../lib/sight";
+import Figure from "./Figure.astro";
+import N from "./N.astro";
+import SmokeSight from "./SmokeSight.svelte";
+import SmokeSightKeyframe from "./SmokeSightKeyframe.astro";
+
+/** Props for SmokeSightBlock. */
+export interface Props {
+	/** Reading-order figure number, set in the MDX. */
+	number: number;
+}
+
+const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build, and so the keyframe
+// gets the typed value (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
+const rows = data.maps.find((m) => m.name === MAP_NAME)?.rows;
+if (!rows) throw new Error(`maps_cs has no ${MAP_NAME}`);
+const map = parseRows(rows);
+const start = startBoard();
+const withSmoke = addSmoke(map, start, SUGGESTED_SMOKE);
+const kept = new Set(
+	sightlines(map, withSmoke.tokens, withSmoke.smokes).map((l) => `${l.from}>${l.to}`),
+);
+const name = (i: number): string => {
+	const t = start.tokens[i];
+	return t ? `${t.side === "ct" ? "CT" : "T"} ${t.n}` : "";
+};
+const startLines = sightlines(map, start.tokens, []).map((l) => ({
+	text: `${name(l.from)} sees ${name(l.to)}`,
+	cut: !kept.has(`${l.from}>${l.to}`),
+}));
+---
+
+<Figure id="f2" number={number} width="wide">
+	<SmokeSight
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		labelId="f2-cap"
+	>
+		<SmokeSightKeyframe data={data} />
+	</SmokeSight>
+	<slot name="caption" slot="caption" />
+	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			Mirage on the project's 28×28 grid, five defenders (circles) and five attackers (triangles) in
+			the middle of a round. A sightline is one player seeing one enemy, so two players who see each
+			other count twice.
+		</p>
+		<p>
+			To decide whether one player sees another, the game checks {SIGHT.samples} points along the
+			straight line between their tiles. The line is blocked if any point lands in a wall, or in a
+			smoke the target is not standing in. The target must also be within{" "}
+			<N k="sight.range.tiles" /> tiles and inside the viewer's <N k="sight.fov.deg" />° field of
+			view, which points one of eight ways. A player inside a smoke sees no one, yet can still be
+			seen from outside it. This grid is generous: about
+			<N k="sight.grid.extra" alt /> of the sightlines it grants are ones the real map blocks.
+		</p>
+		<p>
+			Keyboard: Tab to a player or a smoke and use the arrow keys to move it one tile (Shift: five).
+			S adds a smoke on the focused tile, Delete removes the focused smoke, R turns the focused
+			player, and Enter says whom they see.
+		</p>
+		<p>Start position, no smoke: {startLines.length} sightlines.</p>
+		<ul>
+			{startLines.map((l) => (
+				<li>
+					{l.text}
+					{l.cut && " (cut by the suggested smoke)"}
+				</li>
+			))}
+		</ul>
+	</Fragment>
+</Figure>

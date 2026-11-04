@@ -1,0 +1,244 @@
+/*
+ * Shared styles of figure F5 (MapStages.svelte and MapStagesKeyframe.astro).
+ *
+ * Why: the SSR keyframe and the island must reserve the same height (no layout shift on
+ * hydration), and Svelte's scoped styles do not reach slotted Astro markup, so both import this
+ * file. Every colour is a figure token (P10-2); no hex literals.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-9
+ */
+.ms-box {
+	container: ms / inline-size;
+	position: relative;
+}
+.ms {
+	display: grid;
+	align-content: start;
+	gap: var(--space-4) var(--space-5);
+	padding: var(--space-3);
+	/* Why: stacked, the island is a square board plus a side stack that scales with the width;
+	 * both views reserve the same height (no layout shift on hydration). */
+	min-block-size: calc(125cqw + 21rem);
+}
+@container ms (min-width: 44rem) {
+	.ms {
+		min-block-size: 30rem;
+	}
+	.ms--live {
+		grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+		align-items: start;
+	}
+}
+.ms-multi {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--space-4) var(--space-3);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	align-content: start;
+}
+@container ms (min-width: 44rem) {
+	.ms-multi {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+.ms-multi li {
+	display: grid;
+	gap: var(--space-1);
+	align-content: start;
+}
+.ms-t {
+	font-size: var(--font-size-ui);
+	font-weight: 600;
+	color: var(--color-text);
+}
+.ms-stop .ms-t {
+	min-block-size: 2.6em;
+}
+.ms-n {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-1);
+	color: var(--color-text-muted);
+}
+.ms-svg {
+	display: block;
+	box-sizing: border-box;
+	inline-size: 100%;
+	aspect-ratio: 1;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-map-floor);
+}
+.ms-wall,
+.ms-cell {
+	fill: var(--color-map-wall);
+	shape-rendering: crispEdges;
+}
+.ms-cell {
+	transition: opacity var(--motion-base) ease;
+}
+.ms-site {
+	fill: var(--color-map-site);
+}
+.ms-letter {
+	fill: var(--color-text-muted);
+	font-size: 1.3px;
+	font-weight: 600;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+.ms-spawn-ct {
+	fill: color-mix(in srgb, var(--color-ct) 16%, transparent);
+}
+.ms-spawn-t {
+	fill: color-mix(in srgb, var(--color-t) 16%, transparent);
+}
+.ms-tag {
+	font-size: 1.2px;
+	font-weight: 700;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+.ms-tag--ct {
+	fill: var(--color-ct);
+}
+.ms-tag--t {
+	fill: var(--color-t);
+}
+.ms-ring {
+	fill: none;
+	stroke: var(--color-text);
+	stroke-width: 0.12px;
+}
+.ms-x {
+	fill: none;
+	stroke: var(--color-bg);
+	stroke-width: 0.14px;
+	stroke-linecap: round;
+}
+.ms-extra {
+	transition: opacity var(--motion-base) ease;
+}
+
+/* Island chrome. */
+.ms-side {
+	display: grid;
+	gap: var(--space-3);
+	align-content: start;
+	min-inline-size: 0;
+	max-inline-size: 34rem;
+}
+.ms-pick {
+	display: grid;
+	gap: var(--space-1);
+	font-size: var(--font-size-ui);
+	color: var(--color-text-body);
+}
+.ms-select {
+	min-block-size: 2.75rem;
+	padding: 0 var(--space-3);
+	font: inherit;
+	color: var(--color-text);
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+}
+.ms-select:focus-visible,
+.ms-range:focus-visible,
+.ms-stop:focus-visible {
+	outline: none;
+	box-shadow: var(--shadow-focus);
+}
+.ms-readout {
+	margin: 0;
+	min-block-size: 2.6rem;
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-2);
+	line-height: var(--leading-snug);
+	color: var(--color-text);
+}
+.ms-range {
+	inline-size: 75%;
+	margin-inline: 12.5%;
+	block-size: 2.75rem;
+	accent-color: var(--color-text);
+}
+.ms-strip {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.ms-stop {
+	display: grid;
+	gap: var(--space-1);
+	inline-size: 100%;
+	padding: var(--space-1);
+	font: inherit;
+	text-align: start;
+	color: var(--color-text);
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+}
+.ms-stop[aria-current="true"] {
+	border-color: var(--color-text);
+	box-shadow: 0 0 0 1px var(--color-text);
+}
+.ms-hint {
+	margin: 0;
+	min-block-size: 2.6em;
+	font-size: var(--font-size-ui);
+	line-height: var(--leading-snug);
+	color: var(--color-text-muted);
+}
+.ms-live {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+.ms-fail {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-3);
+	margin: 0;
+	padding: 0 var(--space-3) var(--space-3);
+	font-size: var(--font-size-ui);
+	color: var(--color-text-body);
+}
+.ms-btn {
+	min-block-size: 2.75rem;
+	padding: 0 var(--space-4);
+	font: inherit;
+	font-size: var(--font-size-ui);
+	color: var(--color-text);
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+}
+.ms-btn:focus-visible {
+	outline: none;
+	box-shadow: var(--shadow-focus);
+}
+[data-still] .ms-cell,
+[data-still] .ms-extra {
+	transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	.ms-cell,
+	.ms-extra {
+		transition: none;
+	}
+}

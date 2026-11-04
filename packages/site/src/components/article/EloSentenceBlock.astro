@@ -1,0 +1,19 @@
+---
+/**
+ * EloSentenceBlock.astro — MDX-facing inline sentence (F13, reactive Elo), no `Figure`, no dataset.
+ *
+ * SSR renders the plain sentence "an agent rated +96 higher wins 63 % of rounds"; the island
+ * (`client:visible`) makes the first number a slider.
+ *
+ * Why: inline and unnumbered by design (spec P10-15); the starting value is the block-28 gain
+ * from the facts, so the sentence and the page's other +96 can never disagree.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-15
+ */
+import { fact } from "../../lib/facts";
+import EloSentence from "./EloSentence.svelte";
+
+const initial = fact("elo.head.block2").v;
+---
+
+<EloSentence client:visible={{ rootMargin: "200px 0px" }} initial={initial} />

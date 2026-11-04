@@ -1,0 +1,222 @@
+{
+	"about": "Stand-in description of the source file (points relative to the block-2 anchor).",
+	"headline": {
+		"text": "stand-in headline: runlabel-28 over runlabel-2",
+		"src": "notes/EXAMPLE.md:1",
+		"confidence": "high (direct readout)"
+	},
+	"caveats": ["stand-in caveat one", "stand-in caveat two", "stand-in caveat three"],
+	"points": [
+		{
+			"block": 2,
+			"run": "runlabel-2",
+			"env_steps": 400000000.0,
+			"elo": 0,
+			"elo_generated": 0,
+			"method": "anchor",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-10-27"
+		},
+		{
+			"block": 4,
+			"run": "runlabel-4",
+			"env_steps": 800000000.0,
+			"elo": 17,
+			"lo": 14,
+			"hi": 19,
+			"elo_generated": 20,
+			"method": "direct",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-10-28"
+		},
+		{
+			"block": 6,
+			"run": "runlabel-6",
+			"env_steps": 1200000000.0,
+			"elo": 32,
+			"elo_generated": 31,
+			"method": "chain: stand-in arithmetic",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-10-28"
+		},
+		{
+			"block": 8,
+			"run": "runlabel-8",
+			"env_steps": 1600000000.0,
+			"elo": 42,
+			"lo": 40,
+			"hi": 44,
+			"elo_generated": 36,
+			"method": "direct",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-10-28"
+		},
+		{
+			"block": 10,
+			"run": "runlabel-10",
+			"env_steps": 2000000000.0,
+			"elo": 52,
+			"lo": 49,
+			"hi": 54,
+			"elo_generated": 44,
+			"method": "direct",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-10-28"
+		},
+		{
+			"block": 12,
+			"run": "runlabel-12",
+			"env_steps": 2400000000.0,
+			"elo": 60,
+			"elo_generated": 50,
+			"method": "chain: stand-in arithmetic",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-10-29"
+		},
+		{
+			"block": 16,
+			"run": "runlabel-16",
+			"env_steps": 3200000000.0,
+			"elo": 69,
+			"elo_generated": 62,
+			"method": "chain: stand-in arithmetic",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-11-01"
+		},
+		{
+			"block": 20,
+			"run": "runlabel-20",
+			"env_steps": 4000000000.0,
+			"elo": 78,
+			"lo": 76,
+			"hi": 80,
+			"elo_generated": 69,
+			"method": "direct",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-10-29"
+		},
+		{
+			"block": 24,
+			"run": "runlabel-24",
+			"env_steps": 4800000000.0,
+			"elo": 86,
+			"lo": 84,
+			"hi": 88,
+			"elo_generated": 76,
+			"method": "direct",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-11-01",
+			"per_seed": { "s1": 89, "s2": 83 }
+		},
+		{
+			"block": 28,
+			"run": "runlabel-28",
+			"env_steps": 5600000000.0,
+			"elo": 96,
+			"lo": 94,
+			"hi": 98,
+			"elo_generated": 81,
+			"method": "direct",
+			"src": ["notes/EXAMPLE.md:1"],
+			"readout": "2026-11-02",
+			"per_seed": { "s1": 102, "s2": 90 }
+		}
+	],
+	"steps": [
+		{
+			"pair": "runlabel-4 - runlabel-2",
+			"blocks": "3-4",
+			"what": "stand-in step",
+			"cs": 17,
+			"lo": 14,
+			"hi": 19,
+			"gen": 20,
+			"src": "notes/EXAMPLE.md:1"
+		},
+		{
+			"pair": "runlabel-6 - runlabel-4",
+			"blocks": "5-6",
+			"what": "stand-in step",
+			"cs": 15,
+			"lo": 13,
+			"hi": 17,
+			"gen": 11,
+			"src": "notes/EXAMPLE.md:2"
+		}
+	],
+	"segments": [
+		{
+			"id": "widen",
+			"pair": "runlabel-2 - runlabel-6",
+			"elo": 317,
+			"lo": 315,
+			"hi": 320,
+			"game": "stand-in game on structured maps",
+			"note": "stand-in note",
+			"src": ["notes/EXAMPLE.md:1"]
+		},
+		{
+			"id": "b29-30",
+			"pair": "runlabel-30 - runlabel-28",
+			"elo": 3.7,
+			"lo": 1.9,
+			"hi": 5.3,
+			"game": "stand-in game on structured maps",
+			"note": "stand-in note",
+			"src": ["notes/EXAMPLE.md:1"]
+		},
+		{
+			"id": "b32-33",
+			"pair": "runlabel-33 - runlabel-31",
+			"elo": 4,
+			"game": "stand-in game on structured maps",
+			"alt": { "snap_game": -3 },
+			"note": "stand-in note",
+			"src": ["notes/EXAMPLE.md:1"]
+		},
+		{
+			"id": "snap",
+			"pair": "runlabel-snap - runlabel-33",
+			"elo": 29,
+			"lo": 27,
+			"hi": 31,
+			"game": "stand-in game on structured maps",
+			"alt": { "today": -15 },
+			"note": "stand-in note",
+			"src": ["notes/EXAMPLE.md:1"]
+		},
+		{
+			"id": "g6",
+			"pair": "runlabel-4 - runlabel-2",
+			"elo": 9,
+			"lo": 7,
+			"hi": 10,
+			"game": "stand-in game on structured maps",
+			"alt": { "crouch_game": 11 },
+			"note": "stand-in note",
+			"src": ["notes/EXAMPLE.md:1"]
+		},
+		{
+			"id": "crouch",
+			"pair": "runlabel-st - runlabel-4",
+			"elo": 74,
+			"lo": 72,
+			"hi": 75,
+			"game": "stand-in game on structured maps",
+			"alt": { "today": 0 },
+			"note": "stand-in note",
+			"src": ["notes/EXAMPLE.md:1"]
+		}
+	],
+	"other_reads": [
+		{
+			"read": "stand-in read: runlabel-28 vs runlabel-2",
+			"elo": 86,
+			"lo": 84,
+			"hi": 89,
+			"vs_hand": 96,
+			"src": ["notes/EXAMPLE.md:1"]
+		}
+	],
+	"bots": []
+}

@@ -1,0 +1,231 @@
+---
+/**
+ * _ArticleLayout.astro — project page shell for research-article entries
+ * (`entry.data.article` set), spec P10-1.
+ *
+ * Order: banner → header (breadcrumb + eyebrow, h1 = headline, lede = dek, meta)
+ * → h-entry url → sections nav → article body → prev/next. No gallery, no
+ * research slot. The body is a grid: text column, aside column (≥ 1200 px),
+ * figures at `text`, `wide` or `full` span.
+ *
+ * Why: the banner is the shared `ProjectBanner`, so the card → banner morph
+ * (ADR 0046) and `banner-quality.spec.ts` keep working. KaTeX CSS loads only when
+ * `article.math` is true (as `_NoteLayout`). The credits are the body's last
+ * section, not a `<footer>`.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-1
+ * @see packages/specs/adrs/0052-research-article-variant.md
+ */
+import type { CollectionEntry } from "astro:content";
+import katexCssUrl from "katex/dist/katex.min.css?url";
+import MotionToggle from "../components/MotionToggle.astro";
+import PrevNext from "../components/PrevNext.astro";
+import ProjectBanner from "../components/ProjectBanner.astro";
+import ProjectMeta from "../components/ProjectMeta.astro";
+import Webmentions from "../components/Webmentions.astro";
+import type { Neighbours } from "../lib/prev-next";
+import { type ArticleFields, projectFields } from "../lib/project-fields";
+import BaseLayout from "./_BaseLayout.astro";
+
+/** Props for _ArticleLayout. */
+export interface Props {
+	entry: CollectionEntry<"works">;
+	/** Prev/next neighbours, computed by the route. */
+	neighbours?: Neighbours<{ id: string; title: string; date: Date }> | undefined;
+	/** 1200x630 `og:image` URL built by the route. */
+	ogImage?: string | undefined;
+	/**
+	 * Overrides `entry.data.article`.
+	 *
+	 * Why: the layout lab page renders a real entry with an inline overlay.
+	 */
+	article?: ArticleFields | undefined;
+}
+
+const { entry, neighbours, ogImage, article: override } = Astro.props;
+const data = projectFields(entry.data);
+const article = override ?? data.article;
+if (!article) throw new Error(`_ArticleLayout: entry "${entry.id}" has no article fields`);
+const description = data.summary ?? data.lede;
+---
+
+<BaseLayout
+	title={data.title}
+	{...(description ? { description } : {})}
+	{...(ogImage ? { ogImage } : {})}
+>
+	{article.math && <link rel="stylesheet" href={katexCssUrl} />}
+	<MotionToggle slot="controls" />
+	<main>
+		<article class="h-entry" data-variant="article">
+			<ProjectBanner slug={entry.id} cover={data.cover} />
+			<div class="work">
+				<header>
+					<div class="nav-row">
+						<a href="/" data-test="breadcrumb">
+							← All works
+						</a>
+						<span class="eyebrow">{data.title} · research notes</span>
+					</div>
+					<h1 class="p-name" tabindex="-1">
+						{article.headline}
+					</h1>
+					<p class="lede p-summary">{article.dek}</p>
+					<ProjectMeta
+						date={data.date}
+						started={data.started}
+						status={data.status}
+						stack={data.stack}
+						links={data.links}
+						updated={data.updated}
+					/>
+				</header>
+				<a class="u-url" href={`/works/${entry.id}/`} aria-hidden="true" hidden></a>
+				<nav aria-label="Sections" data-test="article-toc">
+					<ol>
+						{article.sections.map((s) => (
+							<li>
+								<a href={`#${s.id}`}>{s.title}</a>
+							</li>
+						))}
+					</ol>
+				</nav>
+				<div class="e-content article-body">
+					<slot />
+				</div>
+			</div>
+			<div class="foot">
+				<PrevNext prev={neighbours?.prev ?? null} next={neighbours?.next ?? null} />
+			</div>
+		</article>
+		<div class="col">
+			<Webmentions slug={entry.id} />
+		</div>
+	</main>
+</BaseLayout>
+
+<style>
+	main {
+		width: var(--page-width);
+		margin-inline: auto;
+		padding-block: 0 var(--space-8);
+		color: var(--color-text-body);
+	}
+	.col {
+		max-width: 80ch;
+	}
+	.nav-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3);
+	}
+	.eyebrow {
+		font-family: var(--font-mono);
+		font-size: var(--font-size-1);
+		color: var(--color-text-muted);
+	}
+	header {
+		margin-block-end: var(--space-4);
+	}
+	h1 {
+		font-family: var(--font-sans);
+		font-size: var(--font-size-7);
+		font-weight: 600;
+		letter-spacing: var(--tracking-tight);
+		line-height: var(--leading-tight);
+		margin-block: var(--space-2) 0;
+		max-width: 38rem;
+	}
+	h1:focus {
+		outline: none;
+	}
+	.lede {
+		margin: var(--space-3) 0 0;
+		max-width: 65ch;
+		font-size: var(--font-size-5);
+		line-height: var(--leading-snug);
+		text-wrap: pretty;
+		color: var(--color-text);
+	}
+
+	nav[aria-label="Sections"] {
+		margin-block: var(--space-4) var(--space-6);
+		font-size: var(--font-size-2);
+	}
+	nav[aria-label="Sections"] ol {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-1) var(--space-4);
+		margin: 0;
+		padding-inline-start: 0;
+	}
+	/* Why: in a wrapping flex row an outside marker sits in the gap, flush against the previous
+	 * item ("Ten seconds2. A board"); inside, it stays with its own link. */
+	nav[aria-label="Sections"] li {
+		list-style-position: inside;
+	}
+	nav[aria-label="Sections"] a {
+		display: inline-block;
+		min-block-size: 24px;
+	}
+
+	/* Grid (P10-1): one column < 1200 px; text ≤ 65ch below 700 px, ≤ 38rem from
+	 * 700 px; wide and full figures take the whole column. */
+	.article-body {
+		display: block;
+	}
+	.article-body > :global(*) {
+		max-inline-size: 65ch;
+	}
+	.article-body > :global(.fig--wide),
+	.article-body > :global(.fig--full) {
+		max-inline-size: none;
+	}
+	.article-body :global(h2) {
+		margin-block: var(--space-7) var(--space-3);
+		font-size: var(--font-size-6);
+		line-height: var(--leading-tight);
+	}
+	.article-body :global(p),
+	.article-body :global(li) {
+		text-wrap: pretty;
+	}
+	.article-body :global(aside.note) {
+		margin-block: var(--space-4);
+		padding: var(--space-3) var(--space-4);
+		border-inline-start: 2px solid var(--color-border, currentColor);
+		font-size: var(--font-size-2);
+	}
+	@media (min-width: 700px) {
+		.article-body > :global(*:not(.fig--wide):not(.fig--full)) {
+			max-inline-size: 38rem;
+		}
+	}
+	@media (min-width: 1200px) {
+		.article-body {
+			display: grid;
+			grid-template-columns: [text] minmax(0, 38rem) [aside] minmax(0, 18rem) [rest] minmax(0, 1fr);
+			column-gap: var(--space-7);
+			align-items: start;
+		}
+		.article-body > :global(*) {
+			grid-column: text;
+		}
+		/* Why: the note shares the row of the paragraph before it; spanning the next row too
+		 * lets the following paragraph flow beside it instead of below a ~280 px hole. */
+		.article-body > :global(aside.note) {
+			grid-column: aside;
+			grid-row: span 2;
+			max-inline-size: none;
+			margin-block: 0;
+		}
+		.article-body > :global(.fig--wide) {
+			grid-column: text / rest;
+		}
+		.article-body > :global(.fig--full) {
+			grid-column: 1 / -1;
+		}
+	}
+</style>

@@ -1,0 +1,521 @@
+{
+	"about": "A/B experiments with an Elo verdict: arm minus control, seed-paired, final checkpoints, CS maps unless noted; `cs` is the deciding number, lo/hi its 90% tournament interval when the source gives one",
+	"gates": { "text": "x", "src": "notes/EXAMPLE.md:1" },
+	"rows": [
+		{
+			"id": "A1",
+			"era": "3v3",
+			"cs": 3,
+			"kept": false,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A2",
+			"era": "3v3",
+			"cs": 3,
+			"kept": false,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A3",
+			"era": "3v3",
+			"cs": 0,
+			"kept": true,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A4",
+			"era": "3v3",
+			"cs": -3,
+			"kept": false,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A5",
+			"era": "3v3",
+			"cs": -5,
+			"kept": false,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A6",
+			"era": "3v3",
+			"cs": 11,
+			"kept": true,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A7",
+			"era": "3v3",
+			"cs": 10,
+			"kept": false,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A8",
+			"era": "3v3",
+			"cs": 38,
+			"kept": true,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A9",
+			"era": "3v3",
+			"cs": 8,
+			"kept": true,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A10",
+			"era": "3v3",
+			"cs": 7,
+			"kept": true,
+			"date": "10-17",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A11",
+			"era": "3v3",
+			"cs": -6,
+			"kept": false,
+			"date": "10-18",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A12",
+			"era": "3v3",
+			"cs": -8,
+			"kept": false,
+			"date": "10-18",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A13",
+			"era": "3v3",
+			"cs": -1,
+			"kept": true,
+			"date": "10-18",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A14",
+			"era": "3v3",
+			"cs": 35,
+			"kept": true,
+			"date": "10-18",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A15",
+			"era": "3v3",
+			"cs": 4.4,
+			"kept": true,
+			"date": "10-19",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A16",
+			"era": "3v3",
+			"cs": -10,
+			"kept": false,
+			"date": "10-19",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A17",
+			"era": "3v3",
+			"cs": 4,
+			"kept": false,
+			"date": "10-19",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A18",
+			"era": "3v3",
+			"cs": 3.2,
+			"kept": false,
+			"date": "10-19",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A19",
+			"era": "3v3",
+			"cs": 5.4,
+			"kept": true,
+			"date": "10-19",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A20",
+			"era": "3v3",
+			"cs": 9,
+			"kept": true,
+			"date": "10-20",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A21",
+			"era": "3v3",
+			"cs": 0.1,
+			"kept": false,
+			"date": "10-20",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A22",
+			"era": "3v3",
+			"cs": 6.2,
+			"kept": true,
+			"date": "10-20",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A23",
+			"era": "3v3",
+			"cs": 0.3,
+			"kept": false,
+			"date": "10-20",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A24",
+			"era": "3v3",
+			"cs": -2.4,
+			"kept": true,
+			"date": "10-20",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A25",
+			"era": "3v3",
+			"cs": 4,
+			"kept": true,
+			"date": "10-20",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A26",
+			"era": "3v3",
+			"cs": -0.7,
+			"kept": true,
+			"date": "10-20",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A27",
+			"era": "3v3",
+			"cs": -9,
+			"kept": false,
+			"date": "10-21",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A28",
+			"era": "3v3",
+			"cs": -5.1,
+			"kept": false,
+			"date": "10-21",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A29",
+			"era": "3v3",
+			"cs": -2.7,
+			"kept": false,
+			"date": "10-21",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A30",
+			"era": "3v3",
+			"cs": 1.7,
+			"kept": false,
+			"date": "10-21",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A31",
+			"era": "3v3",
+			"cs": 2.2,
+			"kept": true,
+			"date": "10-21",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A32",
+			"era": "3v3",
+			"cs": 1.8,
+			"kept": true,
+			"date": "10-21",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A33",
+			"era": "3v3",
+			"cs": 1,
+			"kept": true,
+			"date": "10-21",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "A34",
+			"era": "3v3",
+			"cs": -79,
+			"kept": false,
+			"date": "10-21",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "B1",
+			"era": "3v3",
+			"cs": -9,
+			"kept": false,
+			"date": "10-15",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "B2",
+			"era": "3v3",
+			"cs": 1.1,
+			"kept": false,
+			"date": "10-14",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "B3",
+			"era": "3v3",
+			"cs": -10.5,
+			"kept": false,
+			"date": "10-15",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "B4",
+			"era": "3v3",
+			"cs": -8,
+			"kept": false,
+			"date": "10-15",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "B5",
+			"era": "3v3",
+			"cs": 1,
+			"kept": false,
+			"date": "10-14",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "B6",
+			"era": "3v3",
+			"cs": -9.5,
+			"kept": false,
+			"date": "10-13",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "L1",
+			"era": "3v3",
+			"cs": 6,
+			"kept": true,
+			"date": "10-22",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "L2",
+			"era": "3v3",
+			"cs": 3.5,
+			"kept": true,
+			"date": "10-22",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "L3",
+			"era": "3v3",
+			"cs": 4,
+			"kept": true,
+			"date": "10-25",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F1",
+			"era": "5v5",
+			"cs": -4,
+			"lo": -6,
+			"hi": -2,
+			"kept": true,
+			"date": "10-28",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F2",
+			"era": "5v5",
+			"cs": 2,
+			"lo": 1,
+			"hi": 4,
+			"kept": true,
+			"date": "10-28",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F3",
+			"era": "5v5",
+			"cs": -4,
+			"lo": -6,
+			"hi": -2,
+			"kept": false,
+			"date": "10-28",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F4",
+			"era": "5v5",
+			"cs": 4,
+			"lo": 3,
+			"hi": 6,
+			"kept": true,
+			"date": "10-28",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F5",
+			"era": "5v5",
+			"cs": 0.1,
+			"lo": -1.8,
+			"hi": 1.7,
+			"kept": true,
+			"date": "11-03",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F6",
+			"era": "5v5",
+			"cs": 29,
+			"lo": 27,
+			"hi": 31,
+			"kept": true,
+			"date": "11-03",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F7",
+			"era": "5v5",
+			"cs": -7,
+			"kept": false,
+			"date": "11-03",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F8",
+			"era": "5v5",
+			"cs": -3.3,
+			"lo": -5.1,
+			"hi": -1.5,
+			"kept": false,
+			"date": "11-04",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F9",
+			"era": "5v5",
+			"cs": 2.0,
+			"lo": 0.4,
+			"hi": 3.9,
+			"kept": true,
+			"date": "11-04",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F10",
+			"era": "5v5",
+			"cs": -9,
+			"kept": false,
+			"date": "11-04",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F11",
+			"era": "5v5",
+			"cs": -3.9,
+			"lo": -5.6,
+			"hi": -2.2,
+			"kept": true,
+			"date": "11-04",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		},
+		{
+			"id": "F12",
+			"era": "5v5",
+			"cs": 0,
+			"lo": -2,
+			"hi": 1,
+			"kept": true,
+			"date": "11-04",
+			"src": "notes/EXAMPLE.md:1",
+			"heading": "EXAMPLE"
+		}
+	]
+}

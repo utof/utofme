@@ -57,3 +57,23 @@ export function compositeOver(fg: Rgb, alpha: number, bg: Rgb): [number, number,
 		fg[2] * alpha + bg[2] * (1 - alpha),
 	];
 }
+
+/**
+ * Parses `#rgb` or `#rrggbb` (any case) into an {@link Rgb} triple.
+ *
+ * Why: AC2.1 computes token contrast from the CSS source with unrounded floats; the test must
+ * read hex values straight out of `tokens.css`.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-2 (AC2.1)
+ */
+export function parseHex(hex: string): [number, number, number] {
+	const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+	const digits = m?.[1];
+	if (digits === undefined) throw new Error(`not a #rgb/#rrggbb colour: ${hex}`);
+	const full = digits.length === 3 ? [...digits].map((c) => c + c).join("") : digits;
+	return [
+		Number.parseInt(full.slice(0, 2), 16),
+		Number.parseInt(full.slice(2, 4), 16),
+		Number.parseInt(full.slice(4, 6), 16),
+	];
+}

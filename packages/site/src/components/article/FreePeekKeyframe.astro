@@ -1,0 +1,107 @@
+---
+/**
+ * FreePeekKeyframe.astro — SSR fallback of figure F8: a four-panel strip (the peeker steps in,
+ * the holder reacts, the shot lands on the old tile, the peeker is back). Complete without JS.
+ *
+ * Why: the no-JS reader gets the whole argument as pictures plus one sentence each; the island
+ * swaps the strip for the stepping board and both share `FreePeekBoard` and the root height.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-12
+ */
+import { run } from "../../lib/figures/free-peek";
+import FreePeekBoard from "./FreePeekBoard.svelte";
+
+/** Props for FreePeekKeyframe. */
+export interface Props {
+	/** Formatted hit rate of a one-tick peek without snap fire ("17 %"). */
+	hitNoSnap: string;
+}
+
+const { hitNoSnap } = Astro.props;
+const stepIn = run(["out"], false);
+const both = run(["out", "back"], false);
+const panels = [
+	{
+		n: 1,
+		title: "Step in",
+		text: "Tick 1: the peeker steps from tile 3 into the holder's view, on tile 4.",
+		peeker: stepIn.peeker,
+		last: stepIn.ticks[0] ?? null,
+		aimAt: null,
+		hideShots: true,
+	},
+	{
+		n: 2,
+		title: "Holder reacts",
+		text: "End of tick 1: the holder has seen it and aims at tile 4.",
+		peeker: stepIn.peeker,
+		last: null,
+		aimAt: stepIn.peeker,
+		hideShots: true,
+	},
+	{
+		n: 3,
+		title: "Shot lands",
+		text: "Tick 2: everyone moves first, then the shot lands on tile 4. It is empty.",
+		peeker: both.peeker,
+		last: both.ticks[1] ?? null,
+		aimAt: null,
+		hideShots: false,
+	},
+	{
+		n: 4,
+		title: "Step back",
+		text: `The peeker is already back behind the corner. A peek like this is hit ${hitNoSnap} of the time.`,
+		peeker: both.peeker,
+		last: null,
+		aimAt: null,
+		hideShots: true,
+	},
+];
+---
+
+<ol class="fp-strip">
+	{panels.map((p) => (
+		<li class="fp-panel" data-panel={p.n}>
+			<div role="img" aria-label={`Panel ${p.n}, ${p.title}: ${p.text}`}>
+				<FreePeekBoard
+					peeker={p.peeker}
+					last={p.last}
+					recent={p.last ? [p.last] : []}
+					aimAt={p.aimAt}
+					hideShots={p.hideShots}
+				/>
+			</div>
+			<p>
+				<strong>
+					{p.n}. {p.title}.
+				</strong>{" "}
+				{p.text}
+			</p>
+		</li>
+	))}
+</ol>
+
+<style>
+	.fp-strip {
+		box-sizing: border-box;
+		list-style: none;
+		margin: 0;
+		padding: var(--space-2);
+		display: grid;
+		gap: var(--space-3);
+		grid-template-columns: minmax(0, 1fr);
+		block-size: var(--fp-h, 31rem);
+	}
+	@media (min-width: 701px) {
+		.fp-strip {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			block-size: var(--fp-h, 31rem);
+		}
+	}
+	.fp-panel p {
+		margin: var(--space-1) 0 0;
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+</style>

@@ -1,0 +1,63 @@
+---
+/**
+ * NotebookBlock.astro — MDX-facing block of figure F7 (tried / kept / parked).
+ *
+ * Imports both datasets statically (parsed JSON for the keyframe, hashed URLs for the island). The
+ * parked file's URL is only a prop: it is requested when the drawer first opens (AC11.6). The
+ * `<details>` explains how to read the timeline and lists the ten starred entries as text.
+ *
+ * Why: ADR 0054 keeps data out of the page; the island gets two URLs, two shapes and a label id
+ * (props far below 2 KB, AC16.3). The reserved box is content-sized with fixed-height regions,
+ * identical in the keyframe and the island, so hydration moves nothing.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-11
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
+ */
+import rawData from "../../data/article/notebook.json";
+import url from "../../data/article/notebook.json?url&no-inline";
+import rawParked from "../../data/article/notebook_parked.json";
+import parkedUrl from "../../data/article/notebook_parked.json?url&no-inline";
+import { dataset } from "../../lib/article-data/notebook";
+import { dataset as parkedDataset } from "../../lib/article-data/notebook_parked";
+import { shapeOf } from "../../lib/article-data/types";
+import Figure from "./Figure.astro";
+import Notebook from "./Notebook.svelte";
+import NotebookKeyframe from "./NotebookKeyframe.astro";
+
+/** Props for NotebookBlock. */
+export interface Props {
+	/** Reading-order figure number, set in the MDX. */
+	number: number;
+}
+
+const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
+const parkedCount = parkedDataset.projected.parse(rawParked).parked.length;
+---
+
+<Figure id="f7" number={number} width="full">
+	<Notebook
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		parkedSrc={parkedUrl}
+		parkedShape={shapeOf(parkedDataset)}
+		labelId="f7-cap"
+		parkedCount={parkedCount}
+	>
+		<NotebookKeyframe data={data} parkedCount={parkedCount} />
+	</Notebook>
+	<slot name="caption" slot="caption" />
+	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			Each mark is one dated notebook entry, from the first day to the last. The shape and colour
+			say what became of it: kept, reverted, inconclusive, parked, or tooling (work that built a
+			tool rather than tested an idea). Rows are areas of work. A ring marks the ten entries that
+			carry the story. Open an entry for the number that decided it, with its interval when it has
+			one; the drawer below holds the ideas that were parked or ruled out, each with what would make
+			me reopen it.
+		</p>
+	</Fragment>
+</Figure>

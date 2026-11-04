@@ -1,0 +1,173 @@
+{
+	"about": "Stand-in description of the source file.",
+	"pros_source": "notes/EXAMPLE.md:1",
+	"agent3_source": "notes/EXAMPLE.md:1",
+	"stat_format": "[value, lo95, hi95, n]",
+	"pros": {
+		"t_win": [0.462, 0.442, 0.482, 4825],
+		"plant_rate": [0.502, 0.483, 0.52, 4825],
+		"post_plant_t_win": [0.756, 0.736, 0.775, 2422],
+		"retake_ct_win": [0.244, 0.225, 0.264, 2422],
+		"no_plant_t_win": [0.166, 0.149, 0.185, 2403],
+		"elim_any": [0.639, 0.622, 0.655, 4825],
+		"opening_kill_by_T": [0.407, 0.392, 0.423, 4820],
+		"opening_kill_conversion": [0.73, 0.717, 0.743, 4820],
+		"kills_per_round": [6.561, 6.511, 6.61, 4825],
+		"end_reason": {
+			"t_elim_pre": [0.083, 0.074, 0.092, 4825],
+			"t_elim_post": [0.2, 0.189, 0.212, 4825],
+			"bomb": [0.179, 0.164, 0.193, 4825],
+			"defuse": [0.123, 0.113, 0.132, 4825],
+			"ct_elim": [0.356, 0.337, 0.374, 4825],
+			"time": [0.059, 0.052, 0.067, 4825]
+		},
+		"CT_lost_rounds_with_survivor": [0.371, 0.348, 0.395, 2230],
+		"utility_per_player_round": {
+			"smoke": [0.646, 0.638, 0.653, 48250],
+			"flash": [0.624, 0.606, 0.643, 48250],
+			"he": [0.39, 0.381, 0.399, 48250],
+			"molotov": [0.537, 0.528, 0.546, 48250]
+		},
+		"flash_enemies_blinded_per_flash": [0.944, 0.925, 0.962, 29379]
+	},
+	"agent_3v3_genshot2": {
+		"t_win": [0.528, 0.518, 0.537, 10511],
+		"plant_rate": [0.564, 0.554, 0.574, 10511],
+		"post_plant_t_win": [0.707, 0.695, 0.719, 5929],
+		"retake_ct_win": [0.293, 0.281, 0.305, 5929],
+		"no_plant_t_win": [0.296, 0.284, 0.31, 4582],
+		"elim_any": [0.737, 0.728, 0.745, 10511],
+		"opening_kill_by_T": [0.507, 0.497, 0.517, 10300],
+		"opening_kill_conversion": [0.787, 0.779, 0.795, 10300],
+		"kills_per_round": [3.679, 3.664, 3.694, 10511],
+		"end_reason": {
+			"t_elim_pre": [0.129, 0.123, 0.135, 10511],
+			"t_elim_post": [0.313, 0.304, 0.322, 10511],
+			"bomb": [0.086, 0.08, 0.091, 10511],
+			"defuse": [0.165, 0.158, 0.173, 10511],
+			"ct_elim": [0.295, 0.286, 0.303, 10511],
+			"time": [0.012, 0.01, 0.014, 10511]
+		},
+		"CT_lost_rounds_with_survivor": [0.162, 0.152, 0.172, 5548],
+		"utility_per_player_round": {
+			"T": {
+				"smoke": [0.377, 0.37, 0.383, 31533],
+				"flash": [0.006, 0.005, 0.007, 31533],
+				"he": [0.239, 0.234, 0.245, 31533],
+				"molly": [0.277, 0.271, 0.283, 31533]
+			},
+			"CT": {
+				"smoke": [0.385, 0.378, 0.392, 31533],
+				"flash": [0.018, 0.016, 0.02, 31533],
+				"he": [0.26, 0.254, 0.266, 31533],
+				"molly": [0.248, 0.242, 0.254, 31533]
+			}
+		},
+		"flash_enemies_blinded_per_flash": [1.068, 1.007, 1.132, 672],
+		"flash_self_blind_share": [0.921, 0.899, 0.941, 672]
+	},
+	"blocks_5v5": {
+		"cols": ["block 2", "block 6", "block 10", "block 28", "CS2 pros"],
+		"src": "notes/EXAMPLE.md:1",
+		"note": "stand-in note",
+		"rows": {
+			"opening kills by attackers": [0.451, 0.465, 0.452, 0.441, 0.407],
+			"holder beats peeker": [0.62, 0.594, 0.555, 0.582, 0.657],
+			"victim fired back at the killer": [0.419, 0.437, 0.463, 0.486, 0.492],
+			"attack win": [0.474, 0.463, 0.476, 0.451, 0.462],
+			"first contact, median s": [9.6, 9.6, 8.8, 9.6, 22.8],
+			"plant, median s": [33.6, 33.6, 32.8, 33.6, 74.6],
+			"plant rate": [0.638, 0.64, 0.651, 0.647, 0.502]
+		},
+		"elo_vs_v5a2": [0, 32, 52, 96]
+	},
+	"duels": {
+		"cols": ["head", "bots", "pros"],
+		"src": "notes/EXAMPLE.md:1",
+		"rows": [
+			{
+				"row": "holder beats peeker (all holds)",
+				"v": [0.597, 0.64, 0.657],
+				"src": "notes/EXAMPLE.md:1"
+			},
+			{
+				"row": "CT holds, T peeks: CT wins",
+				"v": [0.632, 0.663, 0.713],
+				"src": "notes/EXAMPLE.md:1"
+			},
+			{
+				"row": "pre-aimed, set 2 ticks, no turn",
+				"v": [0.721, 0.752, 0.763],
+				"src": "notes/EXAMPLE.md:1"
+			},
+			{
+				"row": "holder in view, off aim (pros: CT 15-45 deg)",
+				"v": [0.443, 0.621, 0.427],
+				"src": "notes/EXAMPLE.md:1"
+			},
+			{
+				"row": "holder facing away (pros: CT 45+ deg)",
+				"v": [0.215, 0.384, 0.17],
+				"src": "notes/EXAMPLE.md:1"
+			},
+			{
+				"row": "CT still on the duel's first tick",
+				"v": [0.259, 0.62, 0.231],
+				"src": "notes/EXAMPLE.md:1"
+			},
+			{
+				"row": "moving at 15 s, T / CT",
+				"v": [[0.63, 0.53], [0.685, 0.297], [0.25, 0.28]],
+				"src": "notes/EXAMPLE.md:1"
+			}
+		]
+	},
+	"one_tick_peeks": {
+		"src": "notes/EXAMPLE.md:1",
+		"note": "one-tick exposures before the first kill",
+		"rows": [
+			{
+				"row": "head: set pre-aimed CT, T moves in",
+				"one_tick": 0.797,
+				"hit": 0.171,
+				"stepped_back": 0.675
+			},
+			{
+				"row": "bots: set pre-aimed CT, T moves in",
+				"one_tick": 0.561,
+				"hit": 0.46,
+				"stepped_back": 0.015
+			},
+			{ "row": "head with snap_fire 0.5", "one_tick": 0.788, "hit": 0.567, "stepped_back": 0.436 }
+		]
+	},
+	"snap_ab": {
+		"cols": ["snap arm", "control", "pros"],
+		"src": "notes/EXAMPLE.md:1",
+		"rows": {
+			"steps back after a one-tick look at a set, pre-aimed CT": [0.32, 0.5, null],
+			"... at a set, pre-aimed T": [0.46, 0.56, null],
+			"moving in 9.6-20 s, T": [0.63, 0.7, 0.25],
+			"moving in 9.6-20 s, CT": [0.5, 0.61, 0.28],
+			"CTs moving on contact ticks before the first kill": [0.5, 0.59, null],
+			"wasted moves per player in 9.6-20 s": [3.2, 4.0, null],
+			"first contact s": [9.6, 9.6, 22.8],
+			"first kill s": [12.8, 13.6, 29.7],
+			"plant s": [31.2, 32.0, 74.6],
+			"holder beats peeker": [0.61, 0.62, 0.66]
+		}
+	},
+	"five_v_five_test": {
+		"cols": ["3v3 agent widened (start)", "block 2", "pros"],
+		"src": "notes/EXAMPLE.md:1",
+		"rows": {
+			"attack win": [0.557, 0.48, 0.462],
+			"holder beats peeker": [0.64, 0.6, 0.66],
+			"victim fired back": [0.24, 0.44, 0.49],
+			"post-plant T win": [0.75, 0.72, 0.76],
+			"plant rate": [0.71, 0.64, 0.5],
+			"lost T rounds with a survivor": [0.55, 0.33, 0.13],
+			"round length s": [null, 61.6, 91.4]
+		}
+	}
+}

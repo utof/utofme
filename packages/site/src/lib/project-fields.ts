@@ -18,7 +18,7 @@ import type { ImageMetadata } from "astro";
  */
 export interface ProjectLink {
 	label: string;
-	href: string;
+	href?: string | undefined;
 	private: boolean;
 }
 
@@ -35,6 +35,18 @@ export interface GalleryItem {
 	focus: number;
 }
 
+/** The research-article frontmatter (P10-1).
+ *
+ * Why: mirrors the `article` object of `content.config.ts` for layout props.
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-1
+ */
+export interface ArticleFields {
+	headline: string;
+	dek: string;
+	sections: { id: string; title: string }[];
+	math: boolean;
+}
+
 /** The v2 fields, all optional/defaulted as in W1's schema.
  *
  * Why: temporary mirror of the W1 schema shape.
@@ -47,6 +59,8 @@ export interface ProjectFields {
 	links?: ProjectLink[] | undefined;
 	gallery?: GalleryItem[] | undefined;
 	fixture?: boolean | undefined;
+	updated?: Date | undefined;
+	article?: ArticleFields | undefined;
 	stack?: string[] | undefined;
 	cover?:
 		| { src: ImageMetadata; alt: string; loop?: string | undefined; focus?: number | undefined }

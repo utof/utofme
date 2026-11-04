@@ -1,0 +1,122 @@
+---
+/**
+ * MapStagesKeyframe.astro: the no-JS fallback of figure F5: four small multiples of Mirage side
+ * by side (floor fraction, majority vote, corridor pass, final grid), each an SVG image with its
+ * counted value, drawn at build time. It sits inside the island until the interactive board is
+ * ready.
+ *
+ * Why: AC9.2 wants the four steps visible without JS; counting from the rows with the same
+ * helpers as the island keeps picture and numbers equal.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-9 (Fallback, AC9.2)
+ */
+import "./MapStages.css";
+import type { MapStagesData } from "../../lib/article-data/map_stages";
+import { formatNumber } from "../../lib/figure-scale";
+import {
+	closedTiles,
+	DEFAULT_MAP,
+	mapTitle,
+	reopenedTiles,
+	STAGES,
+	stageCount,
+	stageLayers,
+	stageSummary,
+} from "../../lib/figures/map-stages";
+import { centroid } from "../../lib/figures/square-paths";
+import { parseRows, siteRects, spawnTiles } from "../../lib/grid";
+
+/** Props for MapStagesKeyframe. */
+export interface Props {
+	/** The parsed `map_stages` dataset (server only). */
+	data: MapStagesData;
+}
+
+const { data } = Astro.props;
+const m = data.maps.find((x) => x.name === DEFAULT_MAP);
+if (!m) throw new Error(`map_stages has no ${DEFAULT_MAP}`);
+const grid = parseRows(m.stages.final);
+const sites = (["a", "b"] as const).flatMap((k) => siteRects(grid, k).map((r) => ({ k, r })));
+const ct = spawnTiles(grid, "ct");
+const t = spawnTiles(grid, "t");
+const reopened = reopenedTiles(m);
+const closed = closedTiles(m);
+---
+
+<div class="ms">
+	<ol class="ms-multi">
+		{STAGES.map((s, i) => (
+			<li>
+				<svg
+					class="ms-svg"
+					viewBox="0 0 28 28"
+					role="img"
+					aria-label={`${mapTitle(m.name)}. ${stageSummary(m, i)}`}
+				>
+					{i === 3 &&
+						sites.map(({ k, r }) => (
+							<>
+								<rect
+									class="ms-site"
+									x={r.c0}
+									y={r.r0}
+									width={r.c1 - r.c0 + 1}
+									height={r.r1 - r.r0 + 1}
+									opacity="0.9"
+								/>
+								<text
+									class="ms-letter"
+									aria-hidden="true"
+									x={(r.c0 + r.c1 + 1) / 2}
+									y={(r.r0 + r.r1 + 1) / 2}
+									set:text={k.toUpperCase()}
+								/>
+							</>
+						))}
+					{stageLayers(m, i).map((l) => (
+						<path class="ms-wall" opacity={l.opacity} d={l.d} />
+					))}
+					{i === 2 &&
+						reopened.map(([r, c]) => <circle class="ms-ring" cx={c + 0.5} cy={r + 0.5} r="0.42" />)}
+					{i === 3 &&
+						closed.map(([r, c]) => (
+							<path
+								class="ms-x"
+								d={`M${c + 0.2} ${r + 0.2}l0.6 0.6M${c + 0.8} ${r + 0.2}l-0.6 0.6`}
+							/>
+						))}
+					{i === 3 &&
+						ct.map(([r, c]) => <rect class="ms-spawn-ct" x={c} y={r} width="1" height="1" />)}
+					{i === 3 &&
+						t.map(([r, c]) => <rect class="ms-spawn-t" x={c} y={r} width="1" height="1" />)}
+					{i === 3 && (
+						<>
+							<text
+								class="ms-tag ms-tag--ct"
+								aria-hidden="true"
+								x={centroid(ct)[0]}
+								y={centroid(ct)[1]}
+								set:text="CT"
+							/>
+							<text
+								class="ms-tag ms-tag--t"
+								aria-hidden="true"
+								x={centroid(t)[0]}
+								y={centroid(t)[1]}
+								set:text="T"
+							/>
+						</>
+					)}
+				</svg>
+				<span class="ms-t">{s.title}</span>
+				<span class="ms-n">
+					{formatNumber(stageCount(m, i), 0)} {s.unit}
+				</span>
+			</li>
+		))}
+	</ol>
+	<p class="ms-hint">
+		With JavaScript, a slider and four buttons move between these steps, and a selector switches the
+		map.
+	</p>
+</div>

@@ -1,0 +1,121 @@
+---
+/**
+ * RollMapKeyframe.astro: the no-JS fallback of figure F10: the featured generator-v3 map and the
+ * v3 strip of twelve maps as one SVG (one `<symbol>` per map, `<use>` for every repeat), drawn at
+ * build time. It sits inside the island until the interactive controls are ready.
+ *
+ * Why: AC14.2 wants the twelve-map strip without JS; symbols keep the markup small (a map is drawn
+ * once and used for both the strip and the featured board) and the keyframe shows the island's
+ * default state, so hydration changes nothing in the layout.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-14 (Fallback, AC14.2)
+ */
+import "./RollMap.css";
+import type { MapsGeneratedData } from "../../lib/article-data/maps_generated";
+import {
+	DEFAULT_GENERATOR,
+	GENERATORS,
+	generatorMaps,
+	likenessLine,
+	MAPS_PER_GENERATOR,
+	mapShapes,
+	realLikenessLine,
+	seedLabel,
+	squaresPath,
+} from "../../lib/figures/roll-map";
+import { centroid } from "../../lib/figures/square-paths";
+
+/** Props for RollMapKeyframe. */
+export interface Props {
+	/** The parsed `maps_generated` dataset (server only). */
+	data: MapsGeneratedData;
+}
+
+const { data } = Astro.props;
+const maps = generatorMaps(data, DEFAULT_GENERATOR).map((rows) => mapShapes(rows));
+const gen = GENERATORS.find((g) => g.id === DEFAULT_GENERATOR);
+const GAP = 2;
+const label = `Generator ${DEFAULT_GENERATOR}, ${seedLabel(0, MAPS_PER_GENERATOR)}: a 28 by 28 grid with two bomb sites and two spawns.`;
+---
+
+<div class="rm">
+	<div class="rm-bar">
+		<p class="rm-label">
+			Generator {DEFAULT_GENERATOR} · {seedLabel(0, MAPS_PER_GENERATOR)}
+		</p>
+		<p class="rm-cap">JavaScript adds New seed, the v1 to v3 toggle and Compare.</p>
+	</div>
+	<div class="rm-boards">
+		<figure class="rm-fig">
+			<p class="rm-cap">
+				Generated · {DEFAULT_GENERATOR} · {seedLabel(0, MAPS_PER_GENERATOR)}
+			</p>
+			<svg class="rm-board" viewBox="0 0 28 28" role="img" aria-label={label}>
+				<use href="#rm-map-0" width="28" height="28"></use>
+			</svg>
+		</figure>
+	</div>
+	<div class="rm-strip-wrap">
+		<svg
+			class="rm-strip-svg"
+			viewBox={`0 0 ${MAPS_PER_GENERATOR * (28 + GAP) - GAP} 28`}
+			role="img"
+			aria-label={`All ${MAPS_PER_GENERATOR} generator ${DEFAULT_GENERATOR} maps in a row.`}
+		>
+			<defs>
+				{maps.map((m, i) => (
+					<symbol id={`rm-map-${i}`} viewBox="0 0 28 28">
+						{m.sites.map(({ r }) => (
+							<rect
+								class="rm-site"
+								x={r.c0}
+								y={r.r0}
+								width={r.c1 - r.c0 + 1}
+								height={r.r1 - r.r0 + 1}
+							/>
+						))}
+						<path class="rm-wall" d={m.walls} />
+						{i === 0 && (
+							<>
+								<path class="rm-spawn-ct" d={squaresPath(m.ct)} />
+								<path class="rm-spawn-t" d={squaresPath(m.t)} />
+								{m.sites.map(({ k, r }) => (
+									<text
+										class="rm-letter"
+										aria-hidden="true"
+										x={(r.c0 + r.c1 + 1) / 2}
+										y={(r.r0 + r.r1 + 1) / 2}
+										set:text={k.toUpperCase()}
+									/>
+								))}
+								<text
+									class="rm-tag rm-tag--ct"
+									aria-hidden="true"
+									x={centroid(m.ct)[0]}
+									y={centroid(m.ct)[1]}
+									set:text="CT"
+								/>
+								<text
+									class="rm-tag rm-tag--t"
+									aria-hidden="true"
+									x={centroid(m.t)[0]}
+									y={centroid(m.t)[1]}
+									set:text="T"
+								/>
+							</>
+						)}
+					</symbol>
+				))}
+			</defs>
+			{maps.map((_, i) => (
+				<use href={`#rm-map-${i}`} x={i * (28 + GAP)} y="0" width="28" height="28" />
+			))}
+		</svg>
+	</div>
+	<div class="rm-note">
+		<p>{gen?.blurb}</p>
+		<p>
+			{likenessLine(data, DEFAULT_GENERATOR)} {realLikenessLine(data)}
+		</p>
+	</div>
+</div>

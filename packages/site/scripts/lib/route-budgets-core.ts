@@ -53,6 +53,18 @@ export interface RouteClassLimits {
 	readonly lcpPoster?: number;
 	/** Srcset candidate width used to size posters (nearest wins). */
 	readonly posterTargetWidth?: number;
+	/** R2: ceiling for the route's whole lazy JS closure. */
+	readonly lazyJs?: number;
+	/** R10: exclusive lazy JS per island, keyed by the island's `opts.name`; a missing name is an error. */
+	readonly islandJs?: Readonly<Record<string, number>>;
+	/**
+	 * R10 skips these islands by `opts.name`.
+	 *
+	 * Why: the site chrome (`CustomCursor` is `client:media`, lazy) sits on every page but is
+	 * not a figure; AC16.3 requires it unchanged. Spec P10-16 does not name this case (recorded
+	 * in reports/10-b.md).
+	 */
+	readonly chromeIslands?: readonly string[];
 }
 
 /**
@@ -178,6 +190,28 @@ export interface ChunkGraph {
 	readonly gz: ReadonlyMap<string, number>;
 	/** `importer -> specifier` pairs whose target is not a known chunk. */
 	readonly unresolved: readonly { readonly importer: string; readonly spec: string }[];
+	/** `chunk -> dist paths of the _astro/*.json files it names` (the lazy-data column). */
+	readonly json: ReadonlyMap<string, readonly string[]>;
+}
+
+const JSON_REF = /["'`]([\w@./-]{1,200}\.json)["'`]/g;
+
+/**
+ * `_astro/*.json` files a chunk names, as dist-relative paths.
+ *
+ * Why: figure data ships as hashed JSON assets fetched at hydration; a bare
+ * `"x.json"` is relative to the chunk (`new URL(…, import.meta.url)`).
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-16 (Lazy data)
+ */
+function jsonRefs(importer: string, src: string): string[] {
+	const out = new Set<string>();
+	for (const m of src.matchAll(JSON_REF)) {
+		const spec = m[1] ?? "";
+		const rel = spec.startsWith("/") || spec.startsWith(".") ? spec : `./${spec}`;
+		const target = resolveSpecifier(importer, rel);
+		if (target?.startsWith("_astro/")) out.add(target);
+	}
+	return [...out];
 }
 
 /**
@@ -191,6 +225,7 @@ export function buildChunkGraph(sources: ReadonlyMap<string, string>): ChunkGrap
 	const stat = new Map<string, string[]>();
 	const dyn = new Map<string, string[]>();
 	const gz = new Map<string, number>();
+	const json = new Map<string, string[]>();
 	const unresolved: { importer: string; spec: string }[] = [];
 	const edges = (importer: string, specs: readonly string[]): string[] => {
 		const out: string[] = [];
@@ -207,8 +242,9 @@ export function buildChunkGraph(sources: ReadonlyMap<string, string>): ChunkGrap
 		stat.set(path, edges(path, imports.static));
 		dyn.set(path, edges(path, imports.dynamic));
 		gz.set(path, gzip9(src));
+		json.set(path, jsonRefs(path, src));
 	}
-	return { static: stat, dynamic: dyn, gz, unresolved };
+	return { static: stat, dynamic: dyn, gz, unresolved, json };
 }
 
 /**
@@ -251,6 +287,21 @@ export interface LoopVideoInfo {
 }
 
 /**
+ * One `<astro-island>` on a page.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-16
+ */
+export interface IslandInfo {
+	/** `opts.name` Astro writes on every island. */
+	readonly name: string;
+	readonly client: string;
+	readonly componentUrl: string | null;
+	readonly rendererUrl: string | null;
+	/** UTF-8 length of the decoded `props` attribute. */
+	readonly propsBytes: number;
+}
+
+/**
  * What the budget rules need to know about one page.
  *
  * @see packages/specs/specs/09-project-view.md § P9-2
@@ -271,6 +322,10 @@ export interface RouteDoc {
 	/** `.loop-media[data-loop-frame=banner]` present. */
 	readonly hasBanner: boolean;
 	readonly videos: readonly LoopVideoInfo[];
+	/** Every island on the page, in document order. */
+	readonly islands: readonly IslandInfo[];
+	/** Dist paths of the `_astro/*.json` files named in island `props` (figure datasets). */
+	readonly dataRefs: readonly string[];
 }
 
 /** Convert a URL attribute to a dist-relative path, or `null` when external. */
@@ -316,6 +371,21 @@ function posterOf(img: ImgLike): PosterInfo {
 	};
 }
 
+/** A root-relative `/_astro/*.json` URL inside a decoded island `props` attribute. */
+const PROPS_JSON_REF = /"(\/_astro\/[\w@.-]{1,200}\.json)"/g;
+
+/** `opts.name` from an island's JSON `opts` attribute; `""` when absent or malformed. */
+function islandName(opts: string | null): string {
+	if (opts === null) return "";
+	try {
+		const v: unknown = JSON.parse(opts);
+		const name = typeof v === "object" && v !== null ? (v as { name?: unknown }).name : undefined;
+		return typeof name === "string" ? name : "";
+	} catch {
+		return "";
+	}
+}
+
 /**
  * Parse one page into a {@link RouteDoc}.
  *
@@ -345,8 +415,21 @@ export function analyzeHtml(html: string, eagerCardCount: number): RouteDoc {
 	}
 	for (const l of document.querySelectorAll("link[rel~=modulepreload]"))
 		add(first, l.getAttribute("href"));
+	const islands: IslandInfo[] = [];
+	const dataRefs = new Set<string>();
 	for (const isl of document.querySelectorAll("astro-island")) {
 		const client = isl.getAttribute("client") ?? "";
+		// Why: a Block passes its dataset's hashed URL to the island as a prop (ADR 0054), so the
+		// JSON is named in the HTML, not in any chunk.
+		for (const m of (isl.getAttribute("props") ?? "").matchAll(PROPS_JSON_REF))
+			add(dataRefs, m[1] ?? null);
+		islands.push({
+			name: islandName(isl.getAttribute("opts")),
+			client,
+			componentUrl: urlToDist(isl.getAttribute("component-url")),
+			rendererUrl: urlToDist(isl.getAttribute("renderer-url")),
+			propsBytes: Buffer.byteLength(isl.getAttribute("props") ?? "", "utf8"),
+		});
 		const bucket = client === "load" || client === "only" || client === "idle" ? first : lazy;
 		for (const attr of ["component-url", "renderer-url", "before-hydration-url"])
 			add(bucket, isl.getAttribute(attr));
@@ -400,6 +483,8 @@ export function analyzeHtml(html: string, eagerCardCount: number): RouteDoc {
 			document.querySelector('.loop-media[data-loop-frame="banner"], .banner[data-vt-frame]') !==
 			null,
 		videos,
+		islands,
+		dataRefs: [...dataRefs],
 	};
 }
 
@@ -468,7 +553,22 @@ export interface RouteReport {
 	readonly html: number;
 	readonly css: number;
 	readonly buckets: JsBuckets;
+	/** R10 measurements, one per island. */
+	readonly islands: readonly IslandReport[];
+	/** Report-only: JSON assets the route's chunks or island props name (raw / gzip bytes). */
+	readonly lazyData: { readonly raw: number; readonly gz: number };
 	readonly findings: readonly Finding[];
+}
+
+/** One island's exclusive lazy JS against its R10 limit. @see packages/specs/specs/10-tactical-arena-article.md § P10-16 */
+export interface IslandReport {
+	readonly name: string;
+	readonly client: string;
+	/** Closure of the component, minus first view, minus every other island's closure (gzip bytes). */
+	readonly exclusiveJs: number;
+	/** Full closure of the component (gzip bytes), the R9 measure. */
+	readonly closureJs: number;
+	readonly limit: number | null;
 }
 
 /** Input for one page. @see packages/specs/specs/09-project-view.md § P9-2 */
@@ -665,9 +765,80 @@ function checkR6(
 	}
 }
 
+const EAGER: ReadonlySet<string> = new Set(["load", "only", "idle"]);
+const R9_LIMIT = 20 * KB;
+const DATA_WARN = 120 * KB;
+
+/** Measure each island (R9 closure, R10 exclusive closure). */
+function measureIslands(
+	graph: ChunkGraph,
+	doc: RouteDoc,
+	buckets: JsBuckets,
+	limits: RouteClassLimits | undefined,
+): IslandReport[] {
+	const closures = doc.islands.map((i) =>
+		i.componentUrl === null ? new Set<string>() : closure(graph, [i.componentUrl], true),
+	);
+	return doc.islands.map((isl, idx) => {
+		const own = closures[idx] ?? new Set<string>();
+		const others = new Set<string>();
+		doc.islands.forEach((o, j) => {
+			if (j !== idx && o.componentUrl !== isl.componentUrl)
+				for (const c of closures[j] ?? []) others.add(c);
+		});
+		const exclusive = new Set([...own].filter((c) => !buckets.first.has(c) && !others.has(c)));
+		return {
+			name: isl.name,
+			client: isl.client,
+			exclusiveJs: sumGz(graph, exclusive),
+			closureJs: sumGz(graph, own),
+			limit: limits?.islandJs?.[isl.name] ?? null,
+		};
+	});
+}
+
+/** R2 / R9 / R10 on the per-island records. @see packages/specs/specs/10-tactical-arena-article.md § P10-16 */
+function checkIslandRules(
+	route: string,
+	limits: RouteClassLimits,
+	islands: readonly IslandReport[],
+	lazyJs: number,
+	out: Finding[],
+): void {
+	const w = limits.warnOnly === true;
+	if (limits.lazyJs !== undefined)
+		limitFinding(out, "R2", route, "lazy JS", lazyJs, limits.lazyJs, w);
+	if (!route.startsWith("/lab/")) {
+		for (const i of islands) {
+			if ((i.client === "load" || i.client === "only") && i.closureJs > R9_LIMIT)
+				out.push({
+					rule: "R9",
+					severity: w ? "warn" : "error",
+					route,
+					message: `eager island ${i.name || "(unnamed)"} (client:${i.client}) closure ${kbStr(i.closureJs)} > ${kbStr(R9_LIMIT)}`,
+				});
+		}
+	}
+	if (limits.islandJs === undefined) return;
+	// Why: eager (load/only/idle) islands are the chrome's; the first-view limit (R1) and R9 cover them,
+	// and the spec's AC16.3 keeps them unchanged. R10 bounds the lazy figure islands.
+	const chrome = new Set(limits.chromeIslands ?? []);
+	for (const i of islands.filter((x) => !EAGER.has(x.client) && !chrome.has(x.name))) {
+		if (i.limit === null)
+			out.push({
+				rule: "R10",
+				severity: w ? "warn" : "error",
+				route,
+				message: `island ${JSON.stringify(i.name)} has no entry in islandJs`,
+			});
+		else
+			limitFinding(out, "R10", route, `island ${i.name} exclusive JS`, i.exclusiveJs, i.limit, w);
+	}
+}
+
 /**
- * Measure one route and apply R1 (first-view JS), R3 (HTML + linked CSS),
- * R4, R5 and R6.
+ * Measure one route and apply R1 (first-view JS), R2 (lazy JS), R3 (HTML +
+ * linked CSS), R4, R5, R6, R9 (eager islands) and R10 (per-island JS).
  *
  * Why: rules whose markup does not exist yet (no `.loop-media`, no
  * `video[data-loop]`) pass vacuously, so the gate can land before the loop
@@ -698,6 +869,15 @@ export function analyzeRoute(
 			});
 		else css += g;
 	}
+	const lazyData = { raw: 0, gz: 0 };
+	const seenJson = new Set<string>([
+		...doc.dataRefs,
+		...[...buckets.first, ...buckets.lazy].flatMap((c) => graph.json.get(c) ?? []),
+	]);
+	for (const j of seenJson) {
+		lazyData.raw += assets.raw(j) ?? 0;
+		lazyData.gz += assets.gzip(j) ?? 0;
+	}
 	const base: Omit<RouteReport, "findings"> = {
 		route: input.route,
 		className: className ?? "(unclassified)",
@@ -707,8 +887,18 @@ export function analyzeRoute(
 		html,
 		css,
 		buckets,
+		lazyData,
+		islands: [],
 	};
 	const limits = className === null ? undefined : config.classes[className];
+	const islands = measureIslands(graph, doc, buckets, limits);
+	if (lazyData.gz > DATA_WARN)
+		findings.push({
+			rule: "DATA",
+			severity: "warn",
+			route: input.route,
+			message: `lazy data ${kbStr(lazyData.gz)} gzip > ${kbStr(DATA_WARN)} (report-only)`,
+		});
 	if (limits === undefined) {
 		findings.push({
 			rule: "R1",
@@ -729,13 +919,14 @@ export function analyzeRoute(
 		if (cssLimit !== undefined)
 			limitFinding(findings, "R3", input.route, "linked CSS", css, cssLimit, w);
 		checkR4(input.route, doc, limits, assets, input.route === "/", findings);
+		checkIslandRules(input.route, limits, islands, base.lazyJs, findings);
 	}
 	checkR5(input.route, doc, findings);
 	checkR6(input.route, doc, config, assets, findings);
 	// Why: excluded routes (explicit allow-list) are measured but never fail.
 	const kept =
 		excludedReason === null ? findings : findings.map((f): Finding => ({ ...f, severity: "warn" }));
-	return { ...base, findings: kept };
+	return { ...base, islands, findings: kept };
 }
 
 // ─────────────────────────────── site-wide checks ───────────────────────────────
@@ -808,8 +999,8 @@ export function renderMarkdown(
 		"",
 	);
 	lines.push(
-		"| Route | Class | First-view JS | Lazy JS | HTML | CSS | Status |",
-		"|---|---|---:|---:|---:|---:|---|",
+		"| Route | Class | First-view JS | Lazy JS | Lazy data | HTML | CSS | Status |",
+		"|---|---|---:|---:|---:|---:|---:|---|",
 	);
 	for (const r of reports) {
 		const errs = r.findings.filter((f) => f.severity === "error").length;
@@ -823,8 +1014,23 @@ export function renderMarkdown(
 						? `warn (${warns})`
 						: "ok";
 		lines.push(
-			`| \`${r.route}\` | ${r.className} | ${kbStr(r.firstJs)} | ${kbStr(r.lazyJs)} | ${kbStr(r.html)} | ${kbStr(r.css)} | ${status} |`,
+			`| \`${r.route}\` | ${r.className} | ${kbStr(r.firstJs)} | ${kbStr(r.lazyJs)} | ${kbStr(r.lazyData.gz)} | ${kbStr(r.html)} | ${kbStr(r.css)} | ${status} |`,
 		);
+	}
+	const withLimits = reports.filter((r) => r.islands.some((i) => i.limit !== null));
+	const lazyIsland = (i: IslandReport): boolean => !EAGER.has(i.client);
+	if (withLimits.length > 0) {
+		lines.push("", "### Per-island JS (R10, exclusive gzip)", "");
+		lines.push("| Route | Island | Client | Exclusive JS | Limit |", "|---|---|---|---:|---:|");
+		for (const r of withLimits)
+			for (const i of r.islands.filter(lazyIsland))
+				lines.push(
+					`| \`${r.route}\` | ${i.name || "(unnamed)"} | ${i.client} | ${kbStr(i.exclusiveJs)} | ${i.limit === null ? "—" : kbStr(i.limit)} |`,
+				);
+		const data = withLimits.map(
+			(r) => `\`${r.route}\` ${kbStr(r.lazyData.raw)} raw / ${kbStr(r.lazyData.gz)} gzip`,
+		);
+		lines.push("", `Lazy data (report-only): ${data.join("; ")}`);
 	}
 	const all = [...reports.flatMap((r) => r.findings), ...check.findings, ...extra];
 	if (all.length > 0) {
