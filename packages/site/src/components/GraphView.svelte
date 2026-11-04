@@ -129,6 +129,8 @@
 				.linkSource("source")
 				.linkTarget("target")
 				.cooldownTicks(reduced ? 1 : 120)
+				// Why: keep every node inside the canvas (no clipping at the edge).
+				.onEngineStop(() => fg?.zoomToFit(reduced ? 0 : 400, 32))
 				.onNodeClick((n: Node) => {
 					window.location.assign(`/garden/${n.id}/`);
 				});

@@ -146,6 +146,9 @@
 	 * @see packages/site/src/pages/index.astro */
 	--masonry-gap: 12px;
 	--page-margin: clamp(var(--space-4), 7.5vw, 9rem);
+	/* Why: the one outer column every page, banner, header and footer shares;
+	 * text columns keep their own max-width (measure) inside it, left-aligned. */
+	--page-width: min(100% - 2 * var(--page-margin), 1800px);
 }
 
 /* ─── Dark-mode overrides ─────────────────────────────────────────────────── */

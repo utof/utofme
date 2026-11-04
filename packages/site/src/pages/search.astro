@@ -15,6 +15,11 @@ import SearchBox from "../components/SearchBox.astro";
 
 <BaseLayout title="search · utofme" description="Search all works and posts on utofme.">
 	<main>
+		<header class="site-head">
+			<a class="wordmark" href="/" data-test="wordmark">
+				utofme
+			</a>
+		</header>
 		<h1>Search</h1>
 		<SearchBox />
 	</main>
@@ -22,9 +27,22 @@ import SearchBox from "../components/SearchBox.astro";
 
 <style>
 	main {
-		padding: var(--space-6);
-		max-width: 80ch;
+		width: var(--page-width);
 		margin-inline: auto;
+		padding-block: var(--space-6);
+	}
+	.site-head {
+		margin-bottom: var(--space-6);
+	}
+	.wordmark {
+		font-size: var(--font-size-6);
+		font-weight: 600;
+		letter-spacing: var(--tracking-tight);
+		color: var(--color-text);
+		text-decoration: none;
+	}
+	main > :global(*:not(.site-head)) {
+		max-width: 80ch;
 	}
 
 	h1 {

@@ -43,9 +43,12 @@ const siblings = slashSiblings("stats");
 
 <style>
 	main {
+		width: var(--page-width);
+		margin-inline: auto;
+		padding-block: var(--space-4);
+	}
+	main > article {
 		max-width: 70ch;
-		margin: 0 auto;
-		padding: var(--space-4) var(--space-3);
 	}
 	header h1 {
 		margin-bottom: var(--space-1);

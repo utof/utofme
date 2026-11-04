@@ -93,11 +93,13 @@ const cover = data.cover;
 			)}
 			<div class="col">
 				<header>
-					<a href="/" data-test="breadcrumb">
-						← All works
-					</a>
-					{/* Why: project pages play a banner loop, so they get the same Pause-motion toggle as `/` (D16). */}
-					<MotionToggle />
+					<div class="nav-row">
+						<a href="/" data-test="breadcrumb">
+							← All works
+						</a>
+						{/* Why: project pages play a banner loop, so they get the same Pause-motion toggle as `/` (D16). */}
+						<MotionToggle />
+					</div>
 					<h1 class="p-name" tabindex="-1">
 						{data.title}
 					</h1>
@@ -133,14 +135,24 @@ const cover = data.cover;
 
 <style>
 	main {
-		padding: var(--space-6) var(--space-6) var(--space-8);
+		width: var(--page-width);
+		margin-inline: auto;
+		padding-block: var(--space-6) var(--space-8);
 		/* v21: body copy in --color-text-body (#444), headings in --color-text. */
 		color: var(--color-text-body);
 	}
 
 	.col {
 		max-width: 80ch;
-		margin-inline: auto;
+	}
+	/* Why: breadcrumb and Pause-motion share a wrapping row with a real gap
+	 * (they used to touch); the title sits below. */
+	.nav-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3);
 	}
 
 	/* Banner: 16:9 below 700 px, 3:1 above; clipping frame for the morph. */
