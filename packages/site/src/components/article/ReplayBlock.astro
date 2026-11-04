@@ -1,14 +1,28 @@
 ---
 /**
- * ReplayBlock.astro — MDX-facing block for figure F1 (Replay of a real round).
+ * ReplayBlock.astro — MDX-facing block of figure F1 (replay of one real round on Mirage).
  *
- * Why: stub from the layout lane so every later lane has a lab page and an MDX
- * entry point; the owning figure lane replaces the placeholder with the keyframe
- * and the `client:visible` island.
+ * Imports the dataset twice, statically: the parsed JSON for the SSR keyframe (server only) and
+ * its hashed URL (`?url&no-inline`) for the island, which fetches it after `client:visible`.
  *
- * @see packages/specs/specs/10-tactical-arena-article.md § Figures: common contract
+ * Why: ADR 0054 keeps data out of the page; the island gets only a URL, the shape and two
+ * literals (props stay far below 2 KB, AC16.3). The stamp text is the recording line from the
+ * notes data README: block 28, 5v5 self-play, recorded 2026-11-04 (OD-4).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-5
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
  */
+import rawData from "../../data/article/replay_mirage.json";
+import url from "../../data/article/replay_mirage.json?url&no-inline";
+import { dataset } from "../../lib/article-data/replay_mirage";
+import { shapeOf } from "../../lib/article-data/types";
+import { fact, formatFact } from "../../lib/facts";
+import { formatSeconds } from "../../lib/figure-scale";
+import { markers } from "../../lib/figures/replay";
+import { ticksToSeconds } from "../../lib/grid";
 import Figure from "./Figure.astro";
+import Replay from "./Replay.svelte";
+import ReplayKeyframe from "./ReplayKeyframe.astro";
 
 /** Props for ReplayBlock. */
 export interface Props {
@@ -17,10 +31,56 @@ export interface Props {
 }
 
 const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build, and so the keyframe
+// gets the typed value (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
+const pros = {
+	s: fact("tempo.pros.contact.median").v,
+	text: formatFact("tempo.pros.contact.median"),
+};
+const events = markers(data);
 ---
 
-<Figure id="f1" number={number} width="wide" aspect="16 / 9" minBlock="20rem">
-	<p data-stub>Replay of a real round (placeholder)</p>
+<Figure
+	id="f1"
+	number={number}
+	width="wide"
+	measuredOn="block 28 (5v5), self-play, recorded 2026-11-04"
+>
+	<Replay
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		labelId="f1-cap"
+		pros={pros}
+	>
+		<ReplayKeyframe data={data} prosText={pros.text} />
+	</Replay>
 	<slot name="caption" slot="caption" />
 	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			One recorded round on Mirage, played by one agent policy against itself. Times are seconds
+			into the round.
+		</p>
+		<ol class="rp-events">
+			{events.map((m) => (
+				<li>
+					<span class="rp-time">{formatSeconds(ticksToSeconds(m.tick))}</span> {m.label}
+				</li>
+			))}
+		</ol>
+	</Fragment>
 </Figure>
+
+<style>
+	.rp-events {
+		margin: 0;
+		padding-inline-start: var(--space-5);
+		font-size: var(--font-size-ui);
+	}
+	.rp-time {
+		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
+	}
+</style>
