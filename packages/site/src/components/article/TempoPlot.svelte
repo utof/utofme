@@ -80,7 +80,12 @@
 		<path d="M{PLOT.x0},{PLOT.axis}H{PLOT.x1}" />
 		{#each axisTicks(info.maxS) as t (t)}
 			<path d="M{xOf(t, info.maxS)},{PLOT.axis}v5" />
-			<text x={xOf(t, info.maxS)} y={PLOT.axis + 20} text-anchor="middle">{t} s</text>
+			<!-- Why: the end labels hug the axis ends so "60 s" / "128 s" stay inside the drawing. -->
+			<text
+				x={xOf(t, info.maxS)}
+				y={PLOT.axis + 20}
+				text-anchor={t === 0 ? "start" : t === info.maxS ? "end" : "middle"}>{t} s</text
+			>
 		{/each}
 	</g>
 
