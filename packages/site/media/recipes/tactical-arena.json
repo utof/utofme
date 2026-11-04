@@ -9,48 +9,48 @@
 	],
 	"shots": [
 		{
-			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/i2_3d_utility_pop_fire.png",
+			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/i2_3d_utility_pop_fire@3x.png",
 			"duration": 1.4,
 			"fit": "cover",
 			"crop": {
-				"x": 380,
-				"y": 106,
-				"w": 764,
-				"h": 430
+				"x": 1140,
+				"y": 318,
+				"w": 2292,
+				"h": 1290
 			}
 		},
 		{
-			"src": "RL_playground/tactical-arena/runs/m27/round_gifs_best_v2/wide_s2_util_best_def.gif",
+			"src": "RL_playground/tactical-arena/runs/m27/round_gifs_best_v2/wide_s2_util_best_def@4x.mkv",
 			"start": 2.0,
 			"duration": 1.6,
 			"fit": "cover",
 			"crop": {
 				"x": 0,
-				"y": 230,
-				"w": 560,
-				"h": 315
+				"y": 920,
+				"w": 2240,
+				"h": 1260
 			}
 		},
 		{
-			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/d_3d_cover_close.png",
+			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/d_3d_cover_close@3x.png",
 			"duration": 1.2,
 			"fit": "cover",
 			"crop": {
-				"x": 500,
-				"y": 104,
-				"w": 668,
-				"h": 376
+				"x": 1500,
+				"y": 312,
+				"w": 2004,
+				"h": 1128
 			}
 		},
 		{
-			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/g_3d_shadows_close.png",
+			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/g_3d_shadows_close@3x.png",
 			"duration": 1.2,
 			"fit": "cover",
 			"crop": {
-				"x": 600,
-				"y": 104,
-				"w": 620,
-				"h": 349
+				"x": 1800,
+				"y": 312,
+				"w": 1860,
+				"h": 1047
 			}
 		}
 	],
