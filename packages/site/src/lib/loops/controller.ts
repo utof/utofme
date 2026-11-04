@@ -110,10 +110,126 @@ export function mountLoops(root: ParentNode, deps: LoopDeps = defaultDeps()): ()
 	};
 }
 
+/** Shape published by LoopMedia in `data-banner-sources`. */
+interface BannerRendition {
+	width: number;
+	height: number;
+	sources: { url: string; type: string }[];
+}
+
+function isUnknownArray(x: unknown): x is readonly unknown[] {
+	return Array.isArray(x);
+}
+
+function isSource(s: unknown): s is { url: string; type: string } {
+	return (
+		typeof s === "object" &&
+		s !== null &&
+		"url" in s &&
+		typeof s.url === "string" &&
+		"type" in s &&
+		typeof s.type === "string"
+	);
+}
+
+/**
+ * Parse a frame's `data-banner-sources` attribute; `null` when absent or malformed.
+ *
+ * Why: the attribute is the only copy of the banner sources left on a page whose
+ * `<video>` was replaced by the persisted card node.
+ *
+ * @see packages/specs/reports/ui-fix-banner.md (D-02)
+ */
+export function parseBannerSources(raw: string | null | undefined): BannerRendition | null {
+	if (!raw) return null;
+	try {
+		const v: unknown = JSON.parse(raw);
+		if (typeof v !== "object" || v === null) return null;
+		if (!("width" in v && typeof v.width === "number")) return null;
+		if (!("height" in v && typeof v.height === "number")) return null;
+		if (!("sources" in v && isUnknownArray(v.sources) && v.sources.length > 0)) return null;
+		const sources: { url: string; type: string }[] = [];
+		for (const s of v.sources) {
+			if (!isSource(s)) return null;
+			sources.push({ url: s.url, type: s.type });
+		}
+		return { width: v.width, height: v.height, sources };
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * After a card → banner morph, replace the persisted 768 px card `<video>` with the
+ * 1920 px banner rendition.
+ *
+ * Why: `transition:persist` keeps the card node (and its card sources) alive through
+ * the morph, so the banner would otherwise play an upscaled card loop (D-02). The
+ * banner video is inserted ABOVE the card one, hidden until its first `playing`
+ * (the controller reveals it), starts at the card video's `currentTime`, and the card
+ * video is removed only then, so there is no black frame, jump or restart. When motion
+ * is paused (or Save-Data is on) the card video is dropped at once and the sharp banner
+ * poster shows. The new node has no persist id: going Back therefore mounts the card's
+ * own card-rendition video instead of dragging the 1080p one onto the grid.
+ *
+ * @see packages/specs/reports/ui-fix-banner.md (D-02)
+ */
+export function upgradeBannerLoops(root: ParentNode, deps: LoopDeps = defaultDeps()): void {
+	for (const frame of root.querySelectorAll<HTMLElement>("[data-banner-sources]")) {
+		const old = frame.querySelector<HTMLVideoElement>('video[data-loop][data-loop-size="card"]');
+		const banner = parseBannerSources(frame.getAttribute("data-banner-sources"));
+		if (!old || !banner) continue;
+		const next = old.cloneNode(false);
+		if (!(next instanceof HTMLVideoElement)) continue;
+		for (const a of ["data-ready", "data-astro-transition-persist"]) next.removeAttribute(a);
+		next.setAttribute("data-loop-size", "banner");
+		next.setAttribute("width", String(banner.width));
+		next.setAttribute("height", String(banner.height));
+		for (const s of banner.sources) {
+			const el = frame.ownerDocument.createElement("source");
+			el.setAttribute("src", s.url);
+			el.setAttribute("type", s.type);
+			next.append(el);
+		}
+		const at = old.currentTime;
+		if (at > 0) next.currentTime = at;
+		frame.append(next);
+		if (deps.isPaused() || deps.saveData()) {
+			old.remove();
+			continue;
+		}
+		let removed = false;
+		const drop = (): void => {
+			if (removed) return;
+			removed = true;
+			old.remove();
+		};
+		// Why: one frame after `playing` so the banner video has painted before the card one goes.
+		const settle = (): void => {
+			if (next.requestVideoFrameCallback) next.requestVideoFrameCallback(drop);
+			else setTimeout(drop, 100);
+			setTimeout(drop, 500);
+		};
+		next.addEventListener(
+			"playing",
+			() => {
+				// Why: loading took a few hundred ms, so re-align with the card loop before it goes.
+				if (Math.abs(old.currentTime - next.currentTime) > 0.1) {
+					next.addEventListener("seeked", settle, { once: true });
+					next.currentTime = old.currentTime;
+					setTimeout(drop, 500);
+				} else settle();
+			},
+			{ once: true },
+		);
+	}
+}
+
 let dispose: (() => void) | undefined;
 let bound = false;
 
 function remount(): void {
+	upgradeBannerLoops(document);
 	dispose?.();
 	dispose = mountLoops(document);
 }
