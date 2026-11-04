@@ -101,7 +101,8 @@
 
 	/* Motion — v21: calm, ease-out, no bounce.
 	 * Why: 140 ms hover, 220 ms enter/exit, 360 ms layout. `prefers-reduced-motion`
-	 * is handled at the component level; tokens set the nominal values only. */
+	 * is handled where each animation is declared (components, transitions.css, the
+	 * Konami block below); tokens set the nominal values only. */
 	--motion-press: 80ms;
 	--motion-fast: 140ms;
 	--motion-base: 220ms;
@@ -238,9 +239,13 @@
 /*
  * Why: when [data-konami] is toggled on <html> by KonamiListener.astro, the
  * accent cycles through the hue wheel via a CSS @keyframes animation on the
- * custom property. Uses @property (Houdini) for smooth interpolation when
- * supported; falls back to a static rainbow hue otherwise. Layout-safe:
- * no geometry tokens change — only --color-accent is overridden.
+ * custom property. Uses @property (Houdini) to interpolate the hue smoothly
+ * (Chromium 85+, Firefox 128+, Safari 16.4+). Without @property support the
+ * custom property is not interpolated and the accent stays at hue 0 (red) —
+ * a static colour, not a rainbow. The animation runs only under
+ * `prefers-reduced-motion: no-preference` (WCAG 2.3.3); reduced-motion
+ * visitors get the static hue-0 accent. Layout-safe: no geometry tokens
+ * change — only --color-accent is overridden.
  *
  * @see packages/specs/plans/07-atmosphere.md § T4 Implementation outlines
  * @see packages/specs/adrs/0039-easter-eggs-in-house.md
@@ -259,6 +264,11 @@
 
 :root[data-konami] {
 	--konami-hue: 0;
-	animation: konami-rainbow 3s linear infinite;
 	--color-accent: oklch(0.7 0.2 var(--konami-hue));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	:root[data-konami] {
+		animation: konami-rainbow 3s linear infinite;
+	}
 }
