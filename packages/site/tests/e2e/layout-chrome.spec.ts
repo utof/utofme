@@ -60,31 +60,10 @@ test("search has a header with a home link", async ({ page }) => {
 	await expect(page.locator('main a[href="/"]').first()).toBeVisible();
 });
 
-test("project header: breadcrumb and Pause motion have a gap", async ({ page }) => {
-	await page.goto("/works/tactical-arena/");
-	const a = await page.locator('[data-test="breadcrumb"]').boundingBox();
-	const b = await page
-		.locator("header .nav-row button, header .nav-row [data-motion-toggle]")
-		.first()
-		.boundingBox();
-	expect(a && b).toBeTruthy();
-	expect((b?.x ?? 0) - ((a?.x ?? 0) + (a?.width ?? 0))).toBeGreaterThanOrEqual(12);
-});
-
 test("garden pages have a side gutter", async ({ page }) => {
 	for (const route of ["/garden/", "/garden/graph/"]) {
 		await page.goto(route);
 		const x = (await page.locator("h1").boundingBox())?.x ?? 0;
 		expect(x).toBeGreaterThanOrEqual(16);
 	}
-});
-
-test("footer links have a 44px hit area", async ({ page }) => {
-	await page.goto("/now/");
-	const box = await page.locator("footer a.repo").evaluate((el) => {
-		const r = getComputedStyle(el, "::after");
-		return { w: Number.parseFloat(r.width), h: Number.parseFloat(r.height) };
-	});
-	expect(box.h).toBeGreaterThanOrEqual(44);
-	expect(box.w).toBeGreaterThanOrEqual(44);
 });

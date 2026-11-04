@@ -12,13 +12,34 @@
  * @see packages/specs/plans/06-indieweb.md § Task 5
  */
 import { profiles } from "../lib/profiles.ts";
+import {
+	absoluteUrl,
+	DEFAULT_OG_IMAGE,
+	OG_IMAGE_HEIGHT,
+	OG_IMAGE_WIDTH,
+	pageTitle,
+} from "../lib/seo.ts";
 import { forcedLightThemeScript, inlineThemeScript, LIGHT_ONLY } from "../lib/theme.ts";
 
 interface Props {
 	/** Astro.url.pathname — used for per-route <link rel="alternate"> wiring. */
 	route: string;
+	/** Page title (bare or already suffixed); rendered through the `<page> · utofme` template. */
+	title?: string;
+	/** Meta description, reused for `og:description`. */
+	description?: string;
+	/** `og:image` as a path or URL; defaults to the site card in `public/`. */
+	image?: string | undefined;
 }
-const { route } = Astro.props;
+const { route, title = "utofme", description = "", image } = Astro.props;
+
+// Why: share metadata (P-11). Absolute URLs come from `Astro.site`; project pages pass a
+// 1200x630 banner crop as `image`, every other page falls back to the site default card.
+const fullTitle = pageTitle(title);
+const resolve = (u: string): string => (Astro.site ? absoluteUrl(u, Astro.site) : u);
+const canonical = resolve(route);
+const ogImage = resolve(image ?? DEFAULT_OG_IMAGE);
+const ogType = route.startsWith("/works/") ? "article" : "website";
 
 // Per-route alternate-link policy locked in spec § Architecture.
 // `route` is `Astro.url.pathname` with `trailingSlash: "always"`.
@@ -36,6 +57,20 @@ const isGardenIndex = route === "/garden/" || route === "/garden/graph/";
 	data-astro-rerun
 	set:html={LIGHT_ONLY ? forcedLightThemeScript() : inlineThemeScript()}
 />
+<link rel="canonical" href={canonical} />
+<meta name="theme-color" content="#ffffff" />
+<meta property="og:site_name" content="utofme" />
+<meta property="og:title" content={fullTitle} />
+{description && <meta property="og:description" content={description} />}
+<meta property="og:url" content={canonical} />
+<meta property="og:type" content={ogType} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:width" content={String(OG_IMAGE_WIDTH)} />
+<meta property="og:image:height" content={String(OG_IMAGE_HEIGHT)} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+{description && <meta name="twitter:description" content={description} />}
+<meta name="twitter:image" content={ogImage} />
 <link rel="webmention" href="https://webmention.io/utof.me/webmention" />
 <link rel="alternate" type="application/rss+xml" title="utof.me — firehose" href="/feed.xml" />
 {isHome && (

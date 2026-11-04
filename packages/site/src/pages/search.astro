@@ -13,13 +13,8 @@ import BaseLayout from "../layouts/_BaseLayout.astro";
 import SearchBox from "../components/SearchBox.astro";
 ---
 
-<BaseLayout title="search · utofme" description="Search all works and posts on utofme.">
+<BaseLayout title="Search" description="Search all works and posts on utofme.">
 	<main>
-		<header class="site-head">
-			<a class="wordmark" href="/" data-test="wordmark">
-				utofme
-			</a>
-		</header>
 		<h1>Search</h1>
 		<SearchBox />
 	</main>
@@ -29,29 +24,9 @@ import SearchBox from "../components/SearchBox.astro";
 	main {
 		width: var(--page-width);
 		margin-inline: auto;
-		padding-block: var(--space-6);
+		padding-block: 0 var(--space-6);
 	}
-	.site-head {
-		margin-bottom: var(--space-6);
-	}
-	.wordmark {
-		font-size: var(--font-size-6);
-		font-weight: 600;
-		letter-spacing: var(--tracking-tight);
-		color: var(--color-text);
-		text-decoration: none;
-	}
-	main > :global(*:not(.site-head)) {
+	main > :global(*) {
 		max-width: 80ch;
-	}
-
-	h1 {
-		/* v21: headings are Geist 600, tight tracking (ADR 0042). */
-		font-family: var(--font-sans);
-		font-size: var(--font-size-6);
-		font-weight: 600;
-		letter-spacing: var(--tracking-tight);
-		line-height: var(--leading-tight);
-		margin-block: 0 var(--space-4);
 	}
 </style>
