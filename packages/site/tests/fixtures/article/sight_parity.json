@@ -1,0 +1,1828 @@
+{
+	"schema": "sight_parity/1",
+	"verifiedAgainstGame": true,
+	"settings": {
+		"samples": 33,
+		"fovDeg": 106.0,
+		"rangeTiles": 10.0,
+		"smokeRadius": 2.0,
+		"seeBehindTiles": 0.0,
+		"smokeRule": "legs",
+		"eps": 1e-5,
+		"facing": "0 = north, clockwise in 45 degree steps",
+		"frame": "canonical frame of maps_cs.json (T west, CT east, A north)",
+		"maps": ["de_mirage", "de_dust2"],
+		"seed": 20261104,
+		"smokeArea": "every non-wall tile within smokeRadius (+eps) of the landing tile, walls ignored",
+		"oracle": "the game's own line-of-sight, vision-cone and smoke-disk functions, run on the CPU"
+	},
+	"counts": {
+		"total": 200,
+		"see": 67,
+		"los": 147,
+		"kinds": { "random": 120, "range": 40, "angle": 20, "smoke": 20 },
+		"maps": { "de_mirage": 100, "de_dust2": 100 }
+	},
+	"cases": [
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 23, "c": 15, "facing": 6 },
+			"target": { "r": 22, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 23, "c": 18, "facing": 5 },
+			"target": { "r": 21, "c": 14 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 15, "c": 21, "facing": 3 },
+			"target": { "r": 19, "c": 23 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 10, "c": 2, "facing": 4 },
+			"target": { "r": 7, "c": 11 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 24, "c": 22, "facing": 4 },
+			"target": { "r": 24, "c": 19 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 11, "c": 14, "facing": 3 },
+			"target": { "r": 15, "c": 21 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 15, "c": 23, "facing": 0 },
+			"target": { "r": 21, "c": 25 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 6, "c": 13, "facing": 0 },
+			"target": { "r": 10, "c": 3 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 15, "c": 14, "facing": 7 },
+			"target": { "r": 4, "c": 12 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 10, "c": 7, "facing": 6 },
+			"target": { "r": 8, "c": 9 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 15, "c": 8, "facing": 2 },
+			"target": { "r": 15, "c": 16 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 5, "c": 17, "facing": 7 },
+			"target": { "r": 14, "c": 14 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 5, "c": 20, "facing": 4 },
+			"target": { "r": 4, "c": 16 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 11, "c": 13, "facing": 3 },
+			"target": { "r": 17, "c": 8 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 20, "c": 25, "facing": 1 },
+			"target": { "r": 19, "c": 23 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 23, "c": 6, "facing": 3 },
+			"target": { "r": 16, "c": 15 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 10, "c": 9, "facing": 2 },
+			"target": { "r": 4, "c": 11 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 18, "c": 1, "facing": 7 },
+			"target": { "r": 14, "c": 9 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 5, "c": 14, "facing": 2 },
+			"target": { "r": 5, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 13, "c": 18, "facing": 7 },
+			"target": { "r": 10, "c": 9 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 3, "c": 17, "facing": 3 },
+			"target": { "r": 5, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 5, "c": 14, "facing": 2 },
+			"target": { "r": 7, "c": 12 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 7, "c": 9, "facing": 1 },
+			"target": { "r": 6, "c": 14 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 22, "c": 7, "facing": 3 },
+			"target": { "r": 20, "c": 17 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 22, "c": 5, "facing": 1 },
+			"target": { "r": 23, "c": 5 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 14, "c": 13, "facing": 6 },
+			"target": { "r": 21, "c": 3 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 12, "c": 5, "facing": 0 },
+			"target": { "r": 7, "c": 10 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 21, "c": 2, "facing": 3 },
+			"target": { "r": 9, "c": 7 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 17, "c": 8, "facing": 5 },
+			"target": { "r": 16, "c": 8 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 12, "c": 13, "facing": 1 },
+			"target": { "r": 14, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 6, "c": 5, "facing": 4 },
+			"target": { "r": 4, "c": 5 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 11, "c": 1, "facing": 0 },
+			"target": { "r": 13, "c": 3 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 19, "c": 23, "facing": 6 },
+			"target": { "r": 19, "c": 24 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 17, "c": 15, "facing": 6 },
+			"target": { "r": 22, "c": 3 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 13, "c": 9, "facing": 1 },
+			"target": { "r": 23, "c": 7 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 18, "c": 7, "facing": 7 },
+			"target": { "r": 24, "c": 12 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 8, "c": 9, "facing": 4 },
+			"target": { "r": 7, "c": 14 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 8, "c": 20, "facing": 6 },
+			"target": { "r": 16, "c": 16 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 14, "c": 10, "facing": 3 },
+			"target": { "r": 16, "c": 16 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 8, "c": 9, "facing": 0 },
+			"target": { "r": 10, "c": 20 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 9, "c": 19, "facing": 2 },
+			"target": { "r": 7, "c": 21 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 9, "c": 10, "facing": 3 },
+			"target": { "r": 13, "c": 19 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 6, "c": 12, "facing": 3 },
+			"target": { "r": 8, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 17, "c": 15, "facing": 2 },
+			"target": { "r": 20, "c": 26 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 19, "c": 23, "facing": 3 },
+			"target": { "r": 18, "c": 21 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 15, "c": 9, "facing": 1 },
+			"target": { "r": 5, "c": 15 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 14, "c": 7, "facing": 7 },
+			"target": { "r": 15, "c": 7 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 22, "c": 19, "facing": 7 },
+			"target": { "r": 20, "c": 18 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 5, "c": 11, "facing": 7 },
+			"target": { "r": 5, "c": 7 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 12, "c": 13, "facing": 2 },
+			"target": { "r": 19, "c": 15 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 9, "c": 19, "facing": 2 },
+			"target": { "r": 10, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 23, "c": 17, "facing": 6 },
+			"target": { "r": 21, "c": 23 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 16, "c": 11, "facing": 5 },
+			"target": { "r": 15, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 15, "c": 9, "facing": 4 },
+			"target": { "r": 22, "c": 13 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 12, "c": 3, "facing": 0 },
+			"target": { "r": 13, "c": 3 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 14, "c": 16, "facing": 2 },
+			"target": { "r": 18, "c": 7 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 11, "c": 20, "facing": 5 },
+			"target": { "r": 8, "c": 19 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 6, "c": 4, "facing": 0 },
+			"target": { "r": 8, "c": 14 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 10, "c": 20, "facing": 0 },
+			"target": { "r": 8, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_mirage",
+			"viewer": { "r": 11, "c": 6, "facing": 3 },
+			"target": { "r": 18, "c": 16 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 6, "c": 14, "facing": 4 },
+			"target": { "r": 16, "c": 14 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 14, "c": 17, "facing": 6 },
+			"target": { "r": 14, "c": 7 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 16, "c": 14, "facing": 0 },
+			"target": { "r": 6, "c": 14 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 5, "c": 5, "facing": 2 },
+			"target": { "r": 5, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 20, "c": 2, "facing": 0 },
+			"target": { "r": 10, "c": 2 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 10, "c": 14, "facing": 4 },
+			"target": { "r": 20, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 7, "c": 13, "facing": 4 },
+			"target": { "r": 17, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 18, "c": 15, "facing": 0 },
+			"target": { "r": 8, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 6, "c": 14, "facing": 6 },
+			"target": { "r": 5, "c": 4 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 13, "c": 19, "facing": 6 },
+			"target": { "r": 15, "c": 9 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 17, "c": 24, "facing": 5 },
+			"target": { "r": 24, "c": 17 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 3, "c": 16, "facing": 5 },
+			"target": { "r": 10, "c": 9 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 10, "c": 10, "facing": 1 },
+			"target": { "r": 3, "c": 17 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 13, "c": 18, "facing": 3 },
+			"target": { "r": 20, "c": 25 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 7, "c": 14, "facing": 5 },
+			"target": { "r": 11, "c": 5 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 4, "c": 15, "facing": 5 },
+			"target": { "r": 10, "c": 7 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 12, "c": 20, "facing": 5 },
+			"target": { "r": 16, "c": 11 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 22, "c": 8, "facing": 0 },
+			"target": { "r": 13, "c": 7 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 6, "c": 13, "facing": 4 },
+			"target": { "r": 16, "c": 14 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_mirage",
+			"viewer": { "r": 13, "c": 7, "facing": 2 },
+			"target": { "r": 14, "c": 16 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 16, "c": 9, "facing": 3 },
+			"target": { "r": 15, "c": 17 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 22, "c": 20, "facing": 2 },
+			"target": { "r": 18, "c": 23 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 13, "c": 14, "facing": 1 },
+			"target": { "r": 5, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 16, "c": 8, "facing": 3 },
+			"target": { "r": 15, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 20, "c": 17, "facing": 1 },
+			"target": { "r": 21, "c": 25 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 8, "c": 9, "facing": 2 },
+			"target": { "r": 4, "c": 12 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 14, "c": 7, "facing": 1 },
+			"target": { "r": 15, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 14, "c": 12, "facing": 4 },
+			"target": { "r": 17, "c": 8 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 20, "c": 15, "facing": 1 },
+			"target": { "r": 21, "c": 23 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_mirage",
+			"viewer": { "r": 23, "c": 23, "facing": 6 },
+			"target": { "r": 19, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 12, "c": 14, "facing": 4 },
+			"target": { "r": 15, "c": 13 },
+			"smokes": [[13, 14]],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 5, "c": 11, "facing": 4 },
+			"target": { "r": 8, "c": 11 },
+			"smokes": [[5, 11]],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 21, "c": 19, "facing": 2 },
+			"target": { "r": 21, "c": 24 },
+			"smokes": [[21, 24]],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 22, "c": 21, "facing": 2 },
+			"target": { "r": 21, "c": 24 },
+			"smokes": [[21, 26]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 19, "c": 24, "facing": 4 },
+			"target": { "r": 24, "c": 23 },
+			"smokes": [[24, 21]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 11, "c": 2, "facing": 4 },
+			"target": { "r": 16, "c": 2 },
+			"smokes": [[18, 2]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 6, "c": 9, "facing": 2 },
+			"target": { "r": 5, "c": 17 },
+			"smokes": [[8, 14]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 19, "c": 20, "facing": 2 },
+			"target": { "r": 20, "c": 23 },
+			"smokes": [[17, 22]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 9, "c": 10, "facing": 1 },
+			"target": { "r": 4, "c": 14 },
+			"smokes": [[7, 12], [5, 10]],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_mirage",
+			"viewer": { "r": 3, "c": 17, "facing": 6 },
+			"target": { "r": 4, "c": 13 },
+			"smokes": [[3, 17], [5, 18]],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 10, "c": 23, "facing": 1 },
+			"target": { "r": 12, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 10, "c": 3, "facing": 7 },
+			"target": { "r": 21, "c": 5 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 15, "c": 14, "facing": 6 },
+			"target": { "r": 15, "c": 9 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 10, "c": 21, "facing": 6 },
+			"target": { "r": 8, "c": 23 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 10, "c": 19, "facing": 2 },
+			"target": { "r": 11, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 4, "c": 10, "facing": 6 },
+			"target": { "r": 8, "c": 9 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 13, "c": 3, "facing": 5 },
+			"target": { "r": 10, "c": 2 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 12, "c": 17, "facing": 2 },
+			"target": { "r": 6, "c": 9 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 14, "c": 21, "facing": 0 },
+			"target": { "r": 3, "c": 22 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 4, "c": 14, "facing": 5 },
+			"target": { "r": 9, "c": 9 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 20, "c": 22, "facing": 5 },
+			"target": { "r": 18, "c": 22 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 2, "c": 20, "facing": 7 },
+			"target": { "r": 6, "c": 22 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 13, "c": 10, "facing": 6 },
+			"target": { "r": 15, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 18, "c": 16, "facing": 6 },
+			"target": { "r": 22, "c": 14 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 16, "c": 3, "facing": 7 },
+			"target": { "r": 14, "c": 2 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 22, "c": 7, "facing": 7 },
+			"target": { "r": 25, "c": 14 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 13, "c": 17, "facing": 0 },
+			"target": { "r": 24, "c": 14 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 14, "c": 18, "facing": 1 },
+			"target": { "r": 15, "c": 6 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 20, "c": 23, "facing": 3 },
+			"target": { "r": 24, "c": 22 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 19, "c": 15, "facing": 2 },
+			"target": { "r": 10, "c": 7 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 5, "c": 24, "facing": 2 },
+			"target": { "r": 2, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 10, "c": 18, "facing": 4 },
+			"target": { "r": 13, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 3, "c": 12, "facing": 5 },
+			"target": { "r": 4, "c": 14 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 14, "c": 12, "facing": 6 },
+			"target": { "r": 10, "c": 16 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 7, "c": 24, "facing": 3 },
+			"target": { "r": 4, "c": 25 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 3, "c": 18, "facing": 4 },
+			"target": { "r": 6, "c": 9 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 11, "c": 3, "facing": 5 },
+			"target": { "r": 11, "c": 9 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 8, "c": 22, "facing": 1 },
+			"target": { "r": 12, "c": 21 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 24, "c": 22, "facing": 2 },
+			"target": { "r": 23, "c": 24 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 6, "c": 20, "facing": 0 },
+			"target": { "r": 10, "c": 17 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 5, "c": 21, "facing": 4 },
+			"target": { "r": 2, "c": 12 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 23, "c": 24, "facing": 1 },
+			"target": { "r": 12, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 24, "c": 24, "facing": 3 },
+			"target": { "r": 23, "c": 21 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 15, "c": 22, "facing": 4 },
+			"target": { "r": 15, "c": 17 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 21, "c": 19, "facing": 4 },
+			"target": { "r": 21, "c": 24 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 10, "c": 22, "facing": 3 },
+			"target": { "r": 23, "c": 22 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 22, "c": 13, "facing": 3 },
+			"target": { "r": 25, "c": 2 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 14, "c": 14, "facing": 3 },
+			"target": { "r": 3, "c": 11 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 18, "c": 2, "facing": 7 },
+			"target": { "r": 20, "c": 4 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 22, "c": 4, "facing": 7 },
+			"target": { "r": 24, "c": 5 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 3, "c": 12, "facing": 2 },
+			"target": { "r": 4, "c": 22 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 15, "c": 6, "facing": 3 },
+			"target": { "r": 8, "c": 12 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 20, "c": 6, "facing": 4 },
+			"target": { "r": 19, "c": 6 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 6, "c": 13, "facing": 0 },
+			"target": { "r": 15, "c": 16 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 22, "c": 2, "facing": 6 },
+			"target": { "r": 11, "c": 3 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 6, "c": 12, "facing": 3 },
+			"target": { "r": 13, "c": 20 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 15, "c": 2, "facing": 0 },
+			"target": { "r": 15, "c": 3 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 21, "c": 5, "facing": 4 },
+			"target": { "r": 23, "c": 10 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 24, "c": 6, "facing": 2 },
+			"target": { "r": 23, "c": 4 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 14, "c": 1, "facing": 5 },
+			"target": { "r": 14, "c": 12 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 14, "c": 12, "facing": 2 },
+			"target": { "r": 15, "c": 22 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 21, "c": 8, "facing": 1 },
+			"target": { "r": 18, "c": 4 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 22, "c": 24, "facing": 3 },
+			"target": { "r": 14, "c": 21 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 18, "c": 23, "facing": 3 },
+			"target": { "r": 25, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 13, "c": 12, "facing": 4 },
+			"target": { "r": 14, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 10, "c": 19, "facing": 4 },
+			"target": { "r": 15, "c": 18 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 15, "c": 12, "facing": 5 },
+			"target": { "r": 15, "c": 10 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 25, "c": 15, "facing": 3 },
+			"target": { "r": 22, "c": 4 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 4, "c": 12, "facing": 5 },
+			"target": { "r": 4, "c": 22 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "random",
+			"map": "de_dust2",
+			"viewer": { "r": 2, "c": 20, "facing": 7 },
+			"target": { "r": 5, "c": 10 },
+			"smokes": [],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 20, "c": 3, "facing": 0 },
+			"target": { "r": 10, "c": 3 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 22, "c": 20, "facing": 0 },
+			"target": { "r": 12, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 15, "c": 7, "facing": 2 },
+			"target": { "r": 15, "c": 17 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 24, "c": 24, "facing": 6 },
+			"target": { "r": 24, "c": 14 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 15, "c": 17, "facing": 6 },
+			"target": { "r": 15, "c": 7 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 12, "c": 21, "facing": 4 },
+			"target": { "r": 22, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 22, "c": 4, "facing": 0 },
+			"target": { "r": 12, "c": 2 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 6, "c": 21, "facing": 4 },
+			"target": { "r": 16, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 14, "c": 20, "facing": 4 },
+			"target": { "r": 24, "c": 22 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 17, "c": 21, "facing": 0 },
+			"target": { "r": 7, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 8, "c": 6, "facing": 3 },
+			"target": { "r": 15, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 23, "c": 24, "facing": 7 },
+			"target": { "r": 14, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 21, "c": 5, "facing": 7 },
+			"target": { "r": 12, "c": 1 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 15, "c": 2, "facing": 3 },
+			"target": { "r": 24, "c": 6 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 5, "c": 24, "facing": 5 },
+			"target": { "r": 14, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 16, "c": 23, "facing": 4 },
+			"target": { "r": 25, "c": 21 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 3, "c": 25, "facing": 4 },
+			"target": { "r": 13, "c": 21 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 5, "c": 24, "facing": 6 },
+			"target": { "r": 4, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 3, "c": 24, "facing": 4 },
+			"target": { "r": 12, "c": 21 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "range",
+			"map": "de_dust2",
+			"viewer": { "r": 23, "c": 6, "facing": 2 },
+			"target": { "r": 22, "c": 15 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 3, "c": 17, "facing": 7 },
+			"target": { "r": 4, "c": 9 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 14, "c": 21, "facing": 7 },
+			"target": { "r": 7, "c": 22 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 6, "c": 21, "facing": 3 },
+			"target": { "r": 14, "c": 20 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 7, "c": 22, "facing": 0 },
+			"target": { "r": 4, "c": 26 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 6, "c": 22, "facing": 3 },
+			"target": { "r": 14, "c": 21 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 3, "c": 18, "facing": 7 },
+			"target": { "r": 4, "c": 11 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 11, "c": 2, "facing": 5 },
+			"target": { "r": 19, "c": 3 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 16, "c": 9, "facing": 0 },
+			"target": { "r": 13, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 14, "c": 1, "facing": 1 },
+			"target": { "r": 15, "c": 9 },
+			"smokes": [],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "angle",
+			"map": "de_dust2",
+			"viewer": { "r": 3, "c": 17, "facing": 4 },
+			"target": { "r": 6, "c": 13 },
+			"smokes": [],
+			"los": true,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 20, "c": 10, "facing": 4 },
+			"target": { "r": 24, "c": 9 },
+			"smokes": [[22, 9]],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 24, "c": 23, "facing": 7 },
+			"target": { "r": 21, "c": 19 },
+			"smokes": [[24, 23]],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 21, "c": 8, "facing": 6 },
+			"target": { "r": 21, "c": 3 },
+			"smokes": [[21, 3]],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 8, "c": 23, "facing": 6 },
+			"target": { "r": 8, "c": 20 },
+			"smokes": [[6, 20]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 12, "c": 16, "facing": 5 },
+			"target": { "r": 15, "c": 14 },
+			"smokes": [[15, 12]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 16, "c": 21, "facing": 4 },
+			"target": { "r": 21, "c": 21 },
+			"smokes": [[21, 19]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 25, "c": 22, "facing": 0 },
+			"target": { "r": 16, "c": 20 },
+			"smokes": [[23, 19]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 11, "c": 22, "facing": 0 },
+			"target": { "r": 4, "c": 24 },
+			"smokes": [[8, 20]],
+			"los": true,
+			"see": true
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 8, "c": 7, "facing": 2 },
+			"target": { "r": 9, "c": 14 },
+			"smokes": [[8, 9], [11, 10]],
+			"los": false,
+			"see": false
+		},
+		{
+			"kind": "smoke",
+			"map": "de_dust2",
+			"viewer": { "r": 21, "c": 20, "facing": 2 },
+			"target": { "r": 21, "c": 23 },
+			"smokes": [[21, 20], [18, 22]],
+			"los": false,
+			"see": false
+		}
+	]
+}
