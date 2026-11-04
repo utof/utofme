@@ -64,11 +64,12 @@ test.describe("desktop chrome", () => {
 		await expect(page.locator('[data-test="breadcrumb"]')).toBeVisible();
 		const t = await page.locator("[data-motion-toggle]").boundingBox();
 		const w = await page.locator("[data-test='site-header']").boundingBox();
-		// Right edge of the control == right edge of the header column (the sound toggle is
-		// left of Pause motion? no: Pause motion first, Sound last).
+		// Right edge of Pause motion == right edge of the header column; Sound sits left of it
+		// (M3-09: Pause motion keeps its position between home and project pages).
 		expect(t && w).toBeTruthy();
 		const sound = await page.locator("[data-sound-toggle]").boundingBox();
-		expect((sound?.x ?? 0) + (sound?.width ?? 0)).toBeCloseTo((w?.x ?? 0) + (w?.width ?? 0), 0);
+		expect((t?.x ?? 0) + (t?.width ?? 0)).toBeCloseTo((w?.x ?? 0) + (w?.width ?? 0), 0);
+		expect((sound?.x ?? 0) + (sound?.width ?? 0)).toBeLessThanOrEqual(t?.x ?? 0);
 	});
 
 	test("sound and pause toggles share border, radius and height", async ({ page }) => {

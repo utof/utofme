@@ -77,7 +77,8 @@ test.describe("CommandPalette — /", () => {
 
 		// Press Escape
 		await page.keyboard.press("Escape");
-		await expect(dialog).toBeHidden({ timeout: 300 });
+		// Why: 120 ms exit fade (M3-13), then the node is removed.
+		await expect(dialog).toBeHidden({ timeout: 1000 });
 	});
 
 	test("3. typing 'now' filters list to match 'Go to /now/'", async ({ page }) => {
@@ -169,7 +170,7 @@ test.describe("CommandPalette — /", () => {
 		// lands on the backdrop itself — viewport-independent. Center-click would land
 		// on the centered dialog when the list is tall enough to reach center.
 		await page.locator("[data-palette-backdrop]").click({ position: { x: 20, y: 20 } });
-		await expect(dialog).toBeHidden({ timeout: 300 });
+		await expect(dialog).toBeHidden({ timeout: 1000 });
 	});
 
 	test("7. Tab cycles strictly within palette (focus trap)", async ({ page }) => {

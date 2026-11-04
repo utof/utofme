@@ -26,18 +26,33 @@
 				pos = target;
 				ready = true;
 			}
+			wake();
 		};
 		window.addEventListener("pointermove", onMove, { passive: true });
 
-		const tick = () => {
-			pos = { x: pos.x + (target.x - pos.x) * 0.18, y: pos.y + (target.y - pos.y) * 0.18 };
+		// Why: time-based lerp (≈60 ms time constant) so the trail is the same at 30, 60
+		// and 120 Hz, and the loop sleeps once the ring has caught up (M3-16).
+		let last = 0;
+		const tick = (now: number) => {
+			const dt = last ? Math.min(now - last, 100) : 16;
+			last = now;
+			const k = 1 - Math.exp(-dt / 60);
+			pos = { x: pos.x + (target.x - pos.x) * k, y: pos.y + (target.y - pos.y) * k };
+			if (Math.hypot(target.x - pos.x, target.y - pos.y) < 0.1) {
+				pos = target;
+				raf = undefined;
+				last = 0;
+				return;
+			}
 			raf = requestAnimationFrame(tick);
 		};
-		raf = requestAnimationFrame(tick);
+		const wake = () => {
+			if (raf === undefined) raf = requestAnimationFrame(tick);
+		};
 
 		return () => {
 			window.removeEventListener("pointermove", onMove);
-			if (raf) cancelAnimationFrame(raf);
+			if (raf !== undefined) cancelAnimationFrame(raf);
 		};
 	});
 </script>

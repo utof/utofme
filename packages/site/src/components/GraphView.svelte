@@ -13,10 +13,11 @@
   Design contract (Phase 5 Task 11):
     - JSON graph data is read from a server-rendered
       `<script type="application/json" id="garden-graph">` block (no fetch).
-    - `prefers-reduced-motion`: cap simulation at 1 cooldown tick and
-      immediately `pauseAnimation()` so layout freezes after one pass.
+    - `prefers-reduced-motion` / "Pause motion": warm the layout up before the
+      first frame (`warmupTicks`), paint once, then `pauseAnimation()` from
+      `onEngineStop` — pausing before the first frame left the canvas blank (M3-05).
     - Tag-bucket colouring via a small deterministic hash (no extra dep).
-    - Click → `window.location.assign("/garden/<slug>/")`.
+    - Click → `navigate("/garden/<slug>/")` so the ClientRouter transition runs (M3-14).
     - Use the same Svelte 5 runes pattern as LinkPreview.svelte:
       `bind:this` writes into a `$state`-backed variable.
 
@@ -34,7 +35,9 @@
   @see https://svelte.dev/docs/svelte/$state
 -->
 <script lang="ts">
+	import { navigate } from "astro:transitions/client";
 	import { onMount } from "svelte";
+	import { isMotionPaused } from "../lib/motion";
 
 	/**
 	 * Shape of one node in `src/data/graph.json`.
@@ -122,7 +125,8 @@
 			// the lazily-loaded graph-vendor chunk. astro.config.mjs:114-119
 			// declares the manualChunks rule that names that chunk.
 			const { default: ForceGraph } = await import("force-graph");
-			const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+			const reduced =
+				window.matchMedia("(prefers-reduced-motion: reduce)").matches || isMotionPaused();
 			fg = new ForceGraph<Node, Edge>(container)
 				// Why: force-graph sizes the canvas to the window by default, which
 				// spilled nodes outside the container; match the container instead.
@@ -134,18 +138,24 @@
 				.nodeColor((n: Node) => tagColour(n.tags[0]))
 				.linkSource("source")
 				.linkTarget("target")
-				.cooldownTicks(reduced ? 1 : 120)
-				// Why: keep every node inside the canvas (no clipping at the edge).
-				.onEngineStop(() => fg?.zoomToFit(reduced ? 0 : 400, 32))
+				// Why: reduced motion computes the whole layout before the first paint, so
+				// the first frame is already the settled graph (no cooldown animation).
+				.warmupTicks(reduced ? 200 : 0)
+				.cooldownTicks(reduced ? 0 : 120)
+				// Why: keep every node inside the canvas (no clipping at the edge); once the
+				// static frame is painted, stop the render loop.
+				.onEngineStop(() => {
+					fg?.zoomToFit(reduced ? 0 : 400, 32);
+					if (reduced) requestAnimationFrame(() => fg?.pauseAnimation());
+				})
 				.onNodeClick((n: Node) => {
-					window.location.assign(`/garden/${n.id}/`);
+					void navigate(`/garden/${n.id}/`);
 				});
 			ro = new ResizeObserver(() => {
 				if (!container) return;
 				fg?.width(container.clientWidth).height(container.clientHeight);
 			});
 			ro.observe(container);
-			if (reduced) fg.pauseAnimation();
 		})();
 		return () => {
 			ro?.disconnect();

@@ -80,7 +80,10 @@ describe("CustomCursor", () => {
 		// Without it, the $effect callback hasn't run yet when we assert.
 		flushSync();
 
-		expect(globalThis.requestAnimationFrame).toHaveBeenCalledTimes(1);
+		// The loop sleeps until the pointer moves (M3-16), then wakes once.
+		const before = vi.mocked(globalThis.requestAnimationFrame).mock.calls.length;
+		window.dispatchEvent(new PointerEvent("pointermove", { clientX: 10, clientY: 10 }));
+		expect(vi.mocked(globalThis.requestAnimationFrame).mock.calls.length).toBeGreaterThan(before);
 
 		vi.unstubAllGlobals();
 	});
