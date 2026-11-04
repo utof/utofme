@@ -24,7 +24,8 @@ for (const { path, title } of STATIC_SLASH) {
 			/^\d{4}-\d{2}-\d{2}/,
 		);
 		const crosslinks = page.locator("article > nav.cross-link a");
-		await expect(crosslinks).toHaveCount(4); // 5 - self
+		// 5 - self; the colophon drops the in-page copy (the footer lists them).
+		await expect(crosslinks).toHaveCount(path === "/colophon/" ? 0 : 4);
 	});
 
 	test(`${path} is axe-clean`, async ({ page }) => {

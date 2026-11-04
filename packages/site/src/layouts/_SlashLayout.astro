@@ -17,9 +17,16 @@ interface Props {
 	title: string;
 	description?: string | undefined;
 	updated: Date;
+	/**
+	 * Render the in-page "more about me" cross-link nav.
+	 *
+	 * Why: the site footer lists the same pages; /colophon turns the duplicate off.
+	 * @see packages/specs/reviews/ui/breaker-desktop.md (B-13)
+	 */
+	crossLink?: boolean;
 }
 
-const { id, title, description, updated } = Astro.props;
+const { id, title, description, updated, crossLink = true } = Astro.props;
 const siblings = slashSiblings(id);
 const updatedISO = updated.toISOString();
 const updatedHuman = updated.toISOString().slice(0, 10);
@@ -36,25 +43,30 @@ const updatedHuman = updated.toISOString().slice(0, 10);
 				{description && <p class="description">{description}</p>}
 			</header>
 			<slot />
-			<nav class="cross-link" aria-label="Other slash pages">
-				<h2>more about me</h2>
-				<ul>
-					{siblings.map((s) => (
-						<li>
-							<a href={s.href}>{s.title}</a>
-						</li>
-					))}
-				</ul>
-			</nav>
+			{crossLink && (
+				<nav class="cross-link" aria-label="Other slash pages">
+					<h2>more about me</h2>
+					<ul>
+						{siblings.map((s) => (
+							<li>
+								<a href={s.href}>{s.title}</a>
+							</li>
+						))}
+					</ul>
+				</nav>
+			)}
 		</article>
 	</main>
 </BaseLayout>
 
 <style>
 	main {
+		width: var(--page-width);
+		margin-inline: auto;
+		padding-block: var(--space-4);
+	}
+	main > :global(article) {
 		max-width: 70ch;
-		margin: 0 auto;
-		padding: var(--space-4) var(--space-3);
 	}
 	article header h1 {
 		margin-bottom: var(--space-1);

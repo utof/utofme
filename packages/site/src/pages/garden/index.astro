@@ -28,6 +28,14 @@ const notes = await getAllNotes();
 </BaseLayout>
 
 <style>
+	main {
+		width: var(--page-width);
+		margin-inline: auto;
+		padding-block: var(--space-4);
+	}
+	main > :global(*) {
+		max-width: 70ch;
+	}
 	.note-list {
 		padding: 0;
 		list-style: none;

@@ -60,6 +60,17 @@ const notes = await getAllNotes();
 </BaseLayout>
 
 <style>
+	main {
+		width: var(--page-width);
+		margin-inline: auto;
+		padding-block: var(--space-4);
+	}
+	.list-fallback > summary {
+		display: flex;
+		align-items: center;
+		min-height: 44px;
+		cursor: pointer;
+	}
 	.list-fallback {
 		margin-block-start: var(--space-3);
 	}

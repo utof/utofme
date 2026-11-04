@@ -105,6 +105,8 @@
 	// guard against a future minor renaming the underscored API.
 	let fg: import("force-graph").ForceGraph<Node, Edge> | undefined;
 
+	let ro: ResizeObserver | undefined;
+
 	onMount(() => {
 		void (async () => {
 			if (!container) return;
@@ -122,6 +124,10 @@
 			const { default: ForceGraph } = await import("force-graph");
 			const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 			fg = new ForceGraph<Node, Edge>(container)
+				// Why: force-graph sizes the canvas to the window by default, which
+				// spilled nodes outside the container; match the container instead.
+				.width(container.clientWidth)
+				.height(container.clientHeight)
 				.graphData({ nodes: graph.nodes, links: graph.edges })
 				.nodeId("id")
 				.nodeLabel((n: Node) => n.label)
@@ -129,12 +135,20 @@
 				.linkSource("source")
 				.linkTarget("target")
 				.cooldownTicks(reduced ? 1 : 120)
+				// Why: keep every node inside the canvas (no clipping at the edge).
+				.onEngineStop(() => fg?.zoomToFit(reduced ? 0 : 400, 32))
 				.onNodeClick((n: Node) => {
 					window.location.assign(`/garden/${n.id}/`);
 				});
+			ro = new ResizeObserver(() => {
+				if (!container) return;
+				fg?.width(container.clientWidth).height(container.clientHeight);
+			});
+			ro.observe(container);
 			if (reduced) fg.pauseAnimation();
 		})();
 		return () => {
+			ro?.disconnect();
 			fg?._destructor?.();
 			fg = undefined;
 		};
@@ -155,5 +169,6 @@
 		min-height: 400px;
 		background: var(--color-surface);
 		border-radius: 6px;
+		overflow: hidden;
 	}
 </style>

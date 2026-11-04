@@ -73,14 +73,10 @@ const {
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<MetaHead route={Astro.url.pathname} />
-		<!-- Why: an empty inline favicon prevents the spurious /favicon.ico 404 +
-		     console error that Lighthouse counts under `errors-in-console` (a
-		     best-practices audit also factored into Performance via Speed Index
-		     filmstrip variance). The site's real favicon ships in a later phase. -->
-		<link
-			rel="icon"
-			href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'/%3E"
-		/>
+		<!-- Why: real favicon files (public/favicon.svg + favicon.ico) so browsers'
+		     implicit /favicon.ico request no longer 404s (console error). -->
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon.ico" sizes="32x32" />
 		<!-- Why: meta-description is a SEO + best-practices audit; an empty page
 		     fails the `meta-description` audit and is flagged in Lighthouse SEO. -->
 		<meta name="description" content={description} />
@@ -114,7 +110,7 @@ const {
 		     persistent UI controls that belong at page scope rather than per-route.
 		     @see packages/specs/specs/07-atmosphere.md § T2 -->
 		<!-- Why .footer-meta: HCard + SoundToggle were bare children of <body> and sat flush
-		     at x=0; the wrapper gives them the footer's own inset (--footer-inset) so
+		     at x=0; the wrapper gives them the shared page column (--page-width) so
 		     they line up with the "© utof" row below. The h-card markup is unchanged.
 		     @see packages/specs/reports/09-close.md (footer layout) -->
 		{minimal ? (
@@ -262,13 +258,8 @@ const {
 		}
 	}
 
-	/* Why: minimal pages (masonry home) align the footer with the page's side
-	 * margin; see SlashFooter.astro --footer-inset. */
-	body[data-minimal] {
-		--footer-inset: var(--page-margin);
-	}
-
-	/* Footer identity block: same side inset as <footer>, h-card left, sound toggle right. */
+	/* Footer identity block: same column as <footer> (--page-width), h-card left,
+	 * sound toggle right. */
 	.footer-meta {
 		display: flex;
 		flex-wrap: wrap;
@@ -276,7 +267,8 @@ const {
 		justify-content: space-between;
 		gap: var(--space-3);
 		margin-top: var(--space-6);
-		padding-inline: var(--footer-inset, var(--space-3));
+		width: var(--page-width);
+		margin-inline: auto;
 	}
 	.footer-meta + footer {
 		margin-top: var(--space-3);
