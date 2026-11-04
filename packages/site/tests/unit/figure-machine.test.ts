@@ -169,7 +169,7 @@ describe("machine behaviour", () => {
 	});
 	it("summary names the counts and the stage", () => {
 		expect(summary(data, 3)).toBe(
-			"Diagram of 18 boxes in 7 groups joined by 27 arrows. Stage 4 of 9, Train, is highlighted.",
+			"18 boxes in 7 groups, 27 arrows. Stage 4 of 9, Train, is highlighted.",
 		);
 	});
 	it("wrapLabel keeps short labels and balances long ones over two lines", () => {

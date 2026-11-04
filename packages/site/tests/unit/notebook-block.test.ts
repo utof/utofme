@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
  * `NotebookBlock` (F7): caption, SSR keyframe with the legend counts, the static timeline with
- * ringed highlights, the ten starred entries as a list and exactly one `astro-island[client="visible"]`
+ * the ten starred entries as a list and exactly one `astro-island[client="visible"]`
  * with props of at most 2 KB.
  *
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-11 (AC11.5, AC16.3)
@@ -49,16 +49,14 @@ describe("NotebookBlock", () => {
 		expect(island?.querySelectorAll(".nb-hl-list li")).toHaveLength(10);
 		expect(island?.querySelector(".nb-hl-more")?.textContent).toContain("and 219 more entries");
 	});
-	it("the legend carries the outcome counts and the static timeline draws all 229 marks", () => {
+	it("the legend carries the outcome counts and the timeline box is reserved, not drawn", () => {
 		const island = doc.querySelector("astro-island");
 		const legend = (island?.querySelector(".nb-legend")?.textContent ?? "").replace(/\s+/g, " ");
-		expect(legend).toContain("kept 99");
-		expect(legend).toContain("reverted 41");
-		expect(legend).toContain("inconclusive 11");
-		expect(legend).toContain("parked 18");
-		expect(legend).toContain("tooling 60");
-		expect(island?.querySelectorAll("svg[role='img'] .nb-mark")).toHaveLength(229);
-		expect(island?.querySelectorAll("svg[role='img'] .nb-ring")).toHaveLength(10);
+		for (const c of ["kept 99", "reverted 41", "inconclusive 11", "parked 18", "tooling 60"])
+			expect(legend).toContain(c);
+		const ph = island?.querySelector(".nb-stage-ph");
+		expect(ph?.getAttribute("style")).toMatch(/aspect-ratio:1000 \/ \d+/);
+		expect(island?.querySelectorAll(".nb-mark")).toHaveLength(0);
 	});
 	it("ships no file name or private word in the markup", () => {
 		const html = doc.documentElement.outerHTML;

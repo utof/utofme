@@ -255,31 +255,31 @@ export function neighbourInDirection(
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-10
  */
 export const NODE_COPY: Readonly<Record<string, string>> = {
-	gen: "Carves CS-like maps out of rooms and corridors: 2,048 to train on and 200 held back for testing, for each of three generations of the generator.",
+	gen: "Carves CS-like maps from rooms and corridors: 2,048 to train on and 200 held back, per generator version.",
 	csmaps:
-		"Five real CS2 maps (Dust2, Mirage, Inferno, Ancient, Anubis) traced from their radar images onto the same 28 × 28 grid. Mirage is never trained on.",
-	mapc: "A compiler that reads the real maps' walkable-area files and projects them onto grids, with heights. It measures how CS-like a map is and sets the generator's knobs.",
+		"Five real CS2 maps (Dust2, Mirage, Inferno, Ancient, Anubis) traced from radar images onto a 28 × 28 grid. Mirage is never trained on.",
+	mapc: "Compiles the real maps' walkable areas into grids with heights, measures how CS-like a map is, and sets the generator's knobs.",
 	prodemo:
-		"224 professional CS2 maps, parsed tick by tick. Their bullets, kills and timings tune the game's shot model and give me human yardsticks to compare against.",
-	env: "The game itself: 5 against 5 on a 28 × 28 grid, one decision per 0.8 seconds, with a bomb, fog of war, sound, grenades, an economy and crouching. Written in JAX so thousands of games run at once.",
-	bots: "Hand-written Counter-Strike playbooks (rushes, executes, splits, fakes; stacks and retakes). They see only what their team could know and act through the same controls as the agents.",
+		"224 pro CS2 maps, parsed tick by tick. Their bullets, kills and timings tune the shot model and give human yardsticks.",
+	env: "The game: 5 against 5 on a 28 × 28 grid, a decision every 0.8 seconds, with a bomb, fog of war, sound, grenades, an economy and crouching. Written in JAX, so thousands of games run at once.",
+	bots: "Hand-written Counter-Strike playbooks (rushes, executes, fakes, retakes). They see only what their team could know and use the agents' controls.",
 	train:
-		"Self-play reinforcement learning (PPO). One network controls each player and sees only that player's view; it picks a move, a turn and an action one after another.",
+		"Self-play reinforcement learning (PPO). One network controls each player, sees only that player's view, and picks a move, a turn and an action in turn.",
 	league:
-		"Chooses opponents: half the games against the latest self, half against a pool of older versions, and one in five against scripted bots so old tricks are not forgotten.",
-	ckpt: "The saved agents: weights, settings and logs of every run. A new block starts from the last one, and older ones fill the opponent pool.",
-	tour: "Every pair of agents plays both sides on the CS maps, 8,000 rounds per pair for an A/B test. Results are tallied per pair.",
-	elo: "Fits Elo ratings to the tournament, then compares seed-paired runs with a 90 % bootstrap interval. The CS maps decide; Mirage is a diagnostic.",
+		"Chooses opponents: half the games the latest self, half older versions, one in five scripted bots.",
+	ckpt: "The saved agents and logs of every run. A new block starts from the last one; older ones fill the opponent pool.",
+	tour: "Every pair of agents plays both sides on the CS maps, 8,000 rounds per pair for an A/B test.",
+	elo: "Fits Elo ratings to the tournament and compares seed-paired runs with a 90 % bootstrap interval. The CS maps decide.",
 	referee:
-		"A real CS2 server I can read and steer, for checking my game against the original. It runs about 370 bot rounds an hour. Agents cannot play in it yet.",
-	rec: "Replays rounds of agents and bots with analysis switched on (what each player sees, how likely each action was, how the round looks to the value estimate) and saves them as tables.",
-	v2d: "A local web app: the map, a timeline, policy and stats panels, what-if edits and heat maps over many rounds.",
-	v3d: "A 3D view of the same rounds, optionally over the real CS2 map, where a person can take one player's slot against agents and bots.",
+		"A real CS2 server I can read and steer, to check my game against the original. Agents cannot play in it yet.",
+	rec: "Replays rounds of agents and bots with analysis on (what each player sees, how likely each action was) and saves them as tables.",
+	v2d: "A local web app: map, timeline, policy and stats panels, what-if edits, heat maps.",
+	v3d: "A 3D view of the same rounds, optionally over the real CS2 map. A person can take one player's slot.",
 	queue:
-		"Jobs wait in a first-in, first-out line per machine. A job can be paused, resumed or restarted without losing the run.",
-	gpus: "Where training runs: my laptop drives everything, a desktop GTX 1660 Ti and a friend's RTX 2080 Ti do the main-line training, and a small cloud budget covers bursts.",
+		"Jobs wait in a first-in, first-out line per machine and can be paused or restarted without losing the run.",
+	gpus: "Where training runs: my laptop drives everything, a desktop GTX 1660 Ti and a friend's RTX 2080 Ti train, and a small cloud budget covers bursts.",
 	backup:
-		"Every fifteen minutes each active run is copied to a safe place, so a machine that freezes loses at most a quarter of an hour.",
+		"Every fifteen minutes each active run is copied somewhere safe, so a frozen machine loses little.",
 };
 
 /**
@@ -290,37 +290,34 @@ export const NODE_COPY: Readonly<Record<string, string>> = {
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-10
  */
 export const EDGE_COPY: Readonly<Record<EdgeId, string>> = {
-	"mapc>csmaps": "Grids of walkable tiles and heights compiled from the real maps.",
-	"mapc>gen":
-		"Measured door widths, sightlines and attacker/defender timing gaps that set the third generator's knobs.",
+	"mapc>csmaps": "Walkable-tile grids with heights.",
+	"mapc>gen": "Door widths, sightlines and timing gaps that set the third generator's knobs.",
 	"gen>env": "A bank of 2,048 generated maps, with spawns, sites and points of interest.",
-	"csmaps>env": "The five real maps in the same format. Mirage is for evaluation only.",
-	"prodemo>env":
-		"Constants measured on professional play: shot accuracy, grenade timings, crouch accuracy.",
-	"bots>env": "Scripted actions, in the same encoding the agents use.",
+	"csmaps>env": "The five real maps, same format. Mirage: evaluation only.",
+	"prodemo>env": "Constants measured on pros: shot accuracy, grenade timings, crouch accuracy.",
+	"bots>env": "Scripted actions, in the agents' encoding.",
 	"env>train":
 		"Every update: 512 games × 256 steps × 10 players = 1.31 M decisions, each with its observation and reward.",
-	"train>env": "The chosen action of every player, for every game.",
-	"bots>league":
-		"One game in five is against a pair of scripted plans, so the agent never forgets them.",
+	"train>env": "Every player's action.",
+	"bots>league": "One game in five is against scripted plans.",
 	"league>train": "Which opponent each group of games plays: the latest self or a pool member.",
-	"train>ckpt": "Saved weights every few updates, plus the settings and logs of the run.",
+	"train>ckpt": "Weights saved every few updates, with the run's settings and logs.",
 	"ckpt>league": "Older agents join the opponent pool.",
 	"ckpt>train": "A new block warm-starts from the last block's final agent.",
 	"ckpt>tour": "The final agent of each run, and for Mirage the last three.",
 	"tour>elo": "Score and game-count tables for every pair.",
 	"prodemo>tour": "Professional yardsticks, such as when the first contact happens.",
-	"ckpt>referee": "Planned: a bridge that would let a saved agent play in a real server.",
+	"ckpt>referee": "Planned: a bridge so a saved agent could play on a real server.",
 	"ckpt>rec": "The agent (or bot) that plays the recorded round.",
-	"env>rec": "A detailed tick of the game with the analysis switched on.",
+	"env>rec": "A detailed tick of the game with analysis on.",
 	"rec>v2d": "Recorded rounds as tables.",
 	"rec>v3d": "The same rounds, plus live play.",
-	"mapc>v3d": "The real map's surface, for the 3D backdrop.",
-	"elo>queue": "A verdict (adopt, no harm, reject) that I turn into the next block's job.",
+	"mapc>v3d": "The real map's surface, as backdrop.",
+	"elo>queue": "A verdict (adopt, no harm, reject) that becomes the next job.",
 	"queue>gpus": "The job is shipped to the GPU machine.",
 	"gpus>train": "GPU time for the trainer.",
 	"gpus>backup": "A copy of the run, every fifteen minutes.",
-	"backup>ckpt": "Restore: another machine downloads the run and training resumes exactly.",
+	"backup>ckpt": "Restore: another machine resumes the run exactly.",
 };
 
 /**
@@ -352,7 +349,7 @@ export const STAGES: readonly Stage[] = [
 	{
 		// STORY § 3: the block begins as a job file
 		title: "Write the job",
-		text: "The last block's verdict decides what runs next. I copy its job, change three things (the name, the start point and one pool entry) and check that nothing else moved.",
+		text: "The last verdict decides what runs next. I copy the last job, change the name, the start point and one pool entry, and check nothing else moved.",
 		nodes: ["elo", "queue"],
 		edges: ["elo>queue"],
 	},
@@ -366,49 +363,49 @@ export const STAGES: readonly Stage[] = [
 	{
 		// STORY § 3: warm start from the previous block
 		title: "Start up",
-		text: "The worker starts the trainer. It loads the previous block's final agent as its starting point, builds the game, and draws its maps from the bank.",
+		text: "The trainer loads the last block's final agent, builds the game and draws maps from the bank.",
 		nodes: ["gpus", "ckpt", "gen", "env", "train"],
 		edges: ["gpus>train", "ckpt>train", "gen>env"],
 	},
 	{
 		// STORY § 3: self-play, a pool of past selves and one game in five against bots
 		title: "Train",
-		text: "512 games run at once for 256 steps with ten players each. Half face the latest self, half face the pool, one in five face scripted bots; then PPO updates the network.",
+		text: "512 games run at once for 256 steps, ten players each. Half face the latest self, half the pool, one in five scripted bots; then PPO updates the network.",
 		nodes: ["train", "env", "league", "bots", "ckpt"],
 		edges: ["env>train", "train>env", "league>train", "bots>league", "bots>env", "ckpt>league"],
 	},
 	{
 		// STORY § 3: nothing is lost when a machine freezes
 		title: "Save",
-		text: "Every few updates the weights are saved, and every fifteen minutes a copy of the run goes somewhere safe. A frozen machine loses at most a quarter of an hour.",
+		text: "Weights are saved every few updates, and every fifteen minutes the run is copied somewhere safe.",
 		nodes: ["train", "ckpt", "gpus", "backup"],
 		edges: ["train>ckpt", "gpus>backup", "backup>ckpt"],
 	},
 	{
 		// STORY § 3: how long a block takes
 		title: "Time",
-		text: "A block is about 200 million player-decisions: roughly half an hour per seed on the fast machine, and two seeds run one after the other.",
+		text: "A block is about 200 million player-decisions: roughly half an hour per seed on the fast machine.",
 		nodes: ["gpus", "train"],
 		edges: ["gpus>train"],
 	},
 	{
 		// STORY § 5: round-robin tournaments on the CS maps
 		title: "Evaluate",
-		text: "The new agent, the previous block and some references play a tournament on the CS maps, both sides of every pair, 8,000 rounds per pair.",
+		text: "The new agent, the last block and some references play on the CS maps, both sides, 8,000 rounds per pair.",
 		nodes: ["ckpt", "tour", "prodemo"],
 		edges: ["ckpt>tour", "prodemo>tour"],
 	},
 	{
 		// STORY § 5: Elo with a 90 % interval, seed-paired
 		title: "Elo number",
-		text: "The results become Elo ratings. Each seed is compared with its own predecessor, and the mean difference gets a 90 % bootstrap interval: the number the notebook records.",
+		text: "Results become Elo. Each seed is compared with its own predecessor; the mean difference, with a 90 % interval, goes in the notebook.",
 		nodes: ["tour", "elo"],
 		edges: ["tour>elo"],
 	},
 	{
 		// STORY § 3 and § 7: the verdict feeds the next job
 		title: "Close the loop",
-		text: "The verdict goes into the notebook and decides the next job: continue the line, or adopt or reject a change. Then it starts again.",
+		text: "The verdict goes into the notebook and decides the next job: continue the line, or adopt or reject a change.",
 		nodes: ["elo", "queue"],
 		edges: ["elo>queue"],
 	},
@@ -500,7 +497,7 @@ export function readout(data: ArchitectureData, sel: Selection | null, stage: nu
  */
 export function summary(data: ArchitectureData, stage: number): string {
 	const i = stageIndex(stage);
-	return `Diagram of ${data.nodes.length} boxes in ${data.groups.length} groups joined by ${data.edges.length} arrows. Stage ${i + 1} of ${STAGES.length}, ${STAGES[i]?.title ?? ""}, is highlighted.`;
+	return `${data.nodes.length} boxes in ${data.groups.length} groups, ${data.edges.length} arrows. Stage ${i + 1} of ${STAGES.length}, ${STAGES[i]?.title ?? ""}, is highlighted.`;
 }
 
 /**

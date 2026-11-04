@@ -1,8 +1,8 @@
 ---
 /**
  * NotebookKeyframe.astro — the no-JS fallback of figure F7: the legend with the outcome counts, the
- * static timeline (every entry as a mark, the ten highlights ringed) and the ten starred entries
- * as a list, with a count of the rest. On phones the timeline is replaced by the list alone.
+ * ten starred entries as a list with a count of the rest, and an empty box where the timeline will
+ * be drawn (same aspect ratio, so nothing moves). On phones the list alone.
  *
  * Why: the island shows this until it hydrates and keeps it if its data fails to load; the
  * caption's claim ("kept 99, reverted 41…") must be visible without JavaScript. Its blocks and
@@ -19,7 +19,6 @@ import {
 	metricLine,
 	OUTCOME_LABEL,
 	OUTCOMES,
-	summary,
 } from "../../lib/figures/notebook";
 
 /** Props for NotebookKeyframe. */
@@ -32,14 +31,11 @@ export interface Props {
 
 const { data, parkedCount } = Astro.props;
 const entries = data.entries;
-const tl = buildTimeline(entries);
+const tl = buildTimeline(entries); // dimensions only: the marks are drawn by the island
 const counts = countByOutcome(entries);
 const star = HIGHLIGHT_IDS.map((id) => entries.find((e) => e.id === id)).filter(
 	(e): e is (typeof entries)[number] => e !== undefined,
 );
-const byId = new Map(entries.map((e) => [e.id, e]));
-const starred = new Set(HIGHLIGHT_IDS);
-const label = summary(entries, entries.length);
 ---
 
 <ul class="nb-legend">
@@ -64,36 +60,10 @@ const label = summary(entries, entries.length);
 	</li>
 </ul>
 <div class="nb-chips nb-chips-static" aria-hidden="true"></div>
-<div class="nb-stage">
-	<svg class="nb-svg" viewBox={`0 0 ${tl.w} ${tl.h + 26}`} role="img" aria-label={label}>
-		{tl.rows.map((r) => (
-			<g>
-				<line class="nb-rowline" x1={tl.left} x2={tl.w} y1={r.top + r.h} y2={r.top + r.h} />
-				<text class="nb-rowlabel" x={tl.left - 8} y={r.top + r.h / 2 + 4} text-anchor="end">
-					{r.area}
-				</text>
-				{r.marks.map((m) => {
-					const e = byId.get(m.id);
-					return e ? (
-						<g class={`nb-mark nb-${e.outcome}`} style={`--c:var(${MARKS[e.outcome].token})`}>
-							{starred.has(e.id) && <circle class="nb-ring" cx={m.x} cy={m.y} r="6.5" />}
-							<path
-								d={markPath(e.outcome, m.x, m.y, 4)}
-								fill={MARKS[e.outcome].filled ? "var(--c)" : "none"}
-								stroke="var(--c)"
-								stroke-width="1.5"
-							/>
-						</g>
-					) : null;
-				})}
-			</g>
-		))}
-		{tl.ticks.map((t) => (
-			<text class="nb-tick" x={t.x} y={tl.h + 16} text-anchor="middle">
-				{t.label}
-			</text>
-		))}
-	</svg>
+<div class="nb-stage nb-stage-ph" style={`aspect-ratio:${tl.w} / ${tl.h + 26}`}>
+	<p>
+		The timeline of all {entries.length} entries appears here when this figure scrolls into view.
+	</p>
 </div>
 <div class="nb-bottom">
 	<div class="nb-hl">
@@ -187,6 +157,16 @@ const label = summary(entries, entries.length);
 	.nb-bottom:focus-visible {
 		outline: none;
 		box-shadow: var(--shadow-focus);
+	}
+	.nb-stage-ph {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-inline: var(--space-3);
+		background: var(--color-surface);
+		color: var(--color-text-muted);
+		font-size: var(--font-size-ui);
+		text-align: center;
 	}
 	.nb-svg {
 		display: block;

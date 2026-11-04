@@ -1,8 +1,8 @@
 ---
 /**
  * MachineKeyframe.astro — the no-JS fallback of figure F6: the whole diagram with the training
- * loop (stage 4) highlighted, the stage counter "4 / 9" and the stage's sentence. Both layouts are
- * rendered (wide and vertical); CSS shows one.
+ * loop (stage 4) highlighted, the stage counter "4 / 9" and the stage's sentence. On phones an empty
+ * box of the vertical layout's aspect ratio stands in for the diagram (the details list the boxes).
  *
  * Why: the island shows this until it hydrates and keeps it if its data fails to load; the
  * caption's claim must be visible without JavaScript. Its markup and sizes mirror the island's so
@@ -35,7 +35,7 @@ const onNodes = new Set(stage?.nodes);
 const onEdges = new Set(stage?.edges);
 const out = readout(data, null, DEFAULT_STAGE);
 const reverse = new Set(data.edges.map((e) => `${e.to}>${e.from}`));
-const views = (["wide", "narrow"] as const).map((kind) => {
+const views = (["wide"] as const).map((kind) => {
 	const layout = layoutFor(data, kind);
 	return {
 		kind,
@@ -101,6 +101,9 @@ const views = (["wide", "narrow"] as const).map((kind) => {
 			})}
 		</svg>
 	))}
+	<div class="mc-narrow mc-ph" style="aspect-ratio:360 / 792">
+		<p>The diagram appears here when this figure scrolls into view.</p>
+	</div>
 </div>
 <div class="mc-nav" aria-hidden="true">
 	<span class="mc-btn">Previous</span>
@@ -126,6 +129,14 @@ const views = (["wide", "narrow"] as const).map((kind) => {
 	}
 	.mc-narrow {
 		display: none;
+	}
+	.mc-ph {
+		align-items: center;
+		justify-content: center;
+		background: var(--color-surface);
+		color: var(--color-text-muted);
+		font-size: var(--font-size-ui);
+		text-align: center;
 	}
 	.mc-group rect {
 		fill: var(--color-surface);
@@ -289,6 +300,9 @@ const views = (["wide", "narrow"] as const).map((kind) => {
 		}
 		.mc-narrow {
 			display: block;
+		}
+		.mc-ph {
+			display: flex;
 		}
 		.mc-readout {
 			min-block-size: 12rem;
