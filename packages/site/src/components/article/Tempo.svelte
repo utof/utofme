@@ -298,7 +298,8 @@
 	}
 	/* Mirrors TempoKeyframe.astro's .tp-foot: same reserved height, so hydration moves nothing. */
 	.tp-foot {
-		min-block-size: var(--tp-foot, 14rem);
+		box-sizing: border-box;
+		min-block-size: var(--tp-foot, 19rem);
 		padding: var(--space-3) var(--space-2) 0;
 		font-size: var(--font-size-ui);
 		color: var(--color-text-body);
@@ -308,7 +309,7 @@
 	}
 	@media (min-width: 701px) {
 		.tp-foot {
-			min-block-size: var(--tp-foot, 11rem);
+			min-block-size: var(--tp-foot, 15rem);
 		}
 	}
 	.tp-row {

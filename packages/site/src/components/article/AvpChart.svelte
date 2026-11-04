@@ -41,7 +41,12 @@
 {#snippet head(row: AvpRow)}
 	<span class="av-name">{ROW_DEFS[row.id].label}</span>
 	<span class="av-stamp" data-stamp>{stampOf(row)}</span>
-	<svg class="av-track" viewBox="0 0 {TRACK.w} {TRACK.h}" aria-hidden="true">
+	<svg
+		class="av-track"
+		viewBox="0 0 {TRACK.w} {TRACK.h}"
+		preserveAspectRatio="xMinYMid meet"
+		aria-hidden="true"
+	>
 		<path class="av-axis" d="M{TRACK.pad},{cy}H{TRACK.w - TRACK.pad}" />
 		{#each ["agent", "pro"] as const as side (side)}
 			{#if row[side].length === 3}
@@ -154,6 +159,7 @@
 		border-block-start: 1px solid var(--color-border);
 	}
 	.av-head {
+		box-sizing: border-box;
 		display: grid;
 		grid-template-columns: 1fr auto;
 		grid-template-areas: "name vals" "stamp vals" "track track";

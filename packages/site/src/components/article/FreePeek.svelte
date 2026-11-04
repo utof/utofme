@@ -199,16 +199,16 @@
 		position: relative;
 		inline-size: 100%;
 		/* Mirrors FreePeekKeyframe.astro's .fp-strip: same fixed height, so hydration moves nothing. */
-		block-size: var(--fp-h, 40rem);
+		block-size: var(--fp-h, 31rem);
+		box-sizing: border-box;
 		padding: var(--space-2);
 		font-size: var(--font-size-ui);
 		color: var(--color-text-body);
 		overflow: hidden;
 	}
-	@media (min-width: 701px) {
-		.fig-box {
-			block-size: var(--fp-h, 28rem);
-		}
+	.fp-board,
+	.fp-time {
+		max-inline-size: 36rem;
 	}
 	.fp-board {
 		touch-action: pan-y;

@@ -142,7 +142,7 @@ export function shareBefore(s: TempoSeries, seconds: number, binS = 0.8): number
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-8 */
 export const PLOT = {
 	w: 640,
-	h: 376,
+	h: 392,
 	x0: 16,
 	x1: 624,
 	agent: { label: 20, top: 28, base: 112, box: 134 },

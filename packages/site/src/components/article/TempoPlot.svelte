@@ -35,6 +35,8 @@
 		guess: number | null;
 		interactive: boolean;
 		labelId: string;
+		/** Accessible name of the static (keyframe) image. */
+		label?: string | undefined;
 		/** Printed count of pro maps ("224"), a fact formatted by the Block. */
 		prosMaps: string;
 		describedBy?: string | undefined;
@@ -47,6 +49,7 @@
 		guess,
 		interactive,
 		labelId,
+		label,
 		prosMaps,
 		describedBy,
 	}: Props = $props();
@@ -69,7 +72,8 @@
 	class="tp-svg"
 	viewBox="0 0 {PLOT.w} {PLOT.h}"
 	role={interactive ? "group" : "img"}
-	aria-labelledby={labelId}
+	aria-labelledby={interactive ? labelId : undefined}
+	aria-label={interactive ? undefined : label}
 	aria-describedby={describedBy}
 >
 	<g class="tp-axis">
@@ -132,7 +136,7 @@
 		<text
 			class="tp-val tp-val--guess"
 			x={gx}
-			y={PLOT.pro.label - 4}
+			y={PLOT.axis + 36}
 			text-anchor={guess > 30 ? "end" : "start"}
 			dx={guess > 30 ? -6 : 6}>Your guess {formatSeconds(guess)}</text
 		>

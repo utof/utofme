@@ -30,7 +30,7 @@ const summary = `Histograms of first contact per round. Agents, block 28: median
 ---
 
 <div class="tp-box-ssr">
-	<div role="img" aria-label={summary}>
+	<div>
 		<TempoPlot
 			data={data}
 			agent="b28"
@@ -39,6 +39,7 @@ const summary = `Histograms of first contact per round. Agents, block 28: median
 			guess={null}
 			interactive={false}
 			labelId={labelId}
+			label={summary}
 			prosMaps={prosMaps}
 		/>
 	</div>
@@ -47,9 +48,7 @@ const summary = `Histograms of first contact per round. Agents, block 28: median
 		<p class="tp-sentence">
 			The pros' median first contact is {prosMedianText(data.prosCi.contact)}.
 		</p>
-		<p class="tp-stamp" data-stamp>
-			{stampText(data, "b28", rerunDate, prosMaps)}
-		</p>
+		<p class="tp-stamp" data-stamp set:text={stampText(data, "b28", rerunDate, prosMaps)} />
 	</div>
 </div>
 
@@ -58,14 +57,15 @@ const summary = `Histograms of first contact per round. Agents, block 28: median
 		inline-size: 100%;
 	}
 	.tp-foot {
-		min-block-size: var(--tp-foot, 14rem);
+		box-sizing: border-box;
+		min-block-size: var(--tp-foot, 19rem);
 		padding: var(--space-3) var(--space-2) 0;
 		font-size: var(--font-size-ui);
 		color: var(--color-text-body);
 	}
 	@media (min-width: 701px) {
 		.tp-foot {
-			min-block-size: var(--tp-foot, 11rem);
+			min-block-size: var(--tp-foot, 15rem);
 		}
 	}
 	.tp-sentence {

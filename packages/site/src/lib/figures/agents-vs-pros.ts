@@ -179,7 +179,7 @@ export function intervalText(row: AvpRow, side: "agent" | "pro"): string {
 
 /** Track width in viewBox units.
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-8 */
-export const TRACK = { w: 200, h: 24, pad: 6 } as const;
+export const TRACK = { w: 320, h: 24, pad: 6 } as const;
 
 /** x position of a value on a row's track.
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-8 */

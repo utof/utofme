@@ -74,7 +74,7 @@ describe("F11 agents vs pros logic", () => {
 		for (const r of data.rows) {
 			const x = trackX(r, v);
 			expect(x).toBeGreaterThanOrEqual(6);
-			expect(x).toBeLessThanOrEqual(194);
+			expect(x).toBeLessThanOrEqual(314);
 		}
 	});
 });
