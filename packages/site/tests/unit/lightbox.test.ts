@@ -3,7 +3,7 @@
  *
  * @see packages/specs/reviews/ui/polish.md (P-03)
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { installLightbox, stepIndex } from "../../src/lib/lightbox.ts";
 
 /** Returns `v` or throws: a typed stand-in for `!`. */
@@ -24,7 +24,7 @@ describe("stepIndex", () => {
 describe("installLightbox", () => {
 	function setup() {
 		document.body.innerHTML = `
-			<button data-zoom data-full="/a.png" data-alt="A" data-caption="cap a"></button>
+			<button data-zoom data-full="/a.png" data-alt="A" data-caption="cap a" data-w="1600" data-h="900"></button>
 			<button data-zoom data-full="/b.png" data-alt="B" data-caption="cap b"></button>
 			<dialog class="lightbox"><figure><img alt=""><figcaption></figcaption></figure>
 			<button data-close></button><button data-step="1"></button></dialog>`;
@@ -38,17 +38,44 @@ describe("installLightbox", () => {
 		installLightbox();
 		return dialog;
 	}
-	it("opens with the clicked image + caption, steps, and returns focus", () => {
+	/** Lets the async show() (preload + decode) settle. */
+	const settle = () => new Promise<void>((r) => setTimeout(r, 0));
+	it("opens with the clicked image + caption, steps, and returns focus", async () => {
 		const dialog = setup();
 		const [a, b] = document.querySelectorAll<HTMLButtonElement>("button[data-zoom]");
 		must(b).click();
+		await settle();
 		expect(dialog.hasAttribute("open")).toBe(true);
 		expect(must(dialog.querySelector("img")).getAttribute("src")).toBe("/b.png");
 		expect(must(dialog.querySelector("figcaption")).textContent).toBe("cap b");
 		dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+		await settle();
 		expect(must(dialog.querySelector("img")).getAttribute("src")).toBe("/a.png");
+		// Image, size and caption swap together (M3-07).
+		expect(must(dialog.querySelector("figcaption")).textContent).toBe("cap a");
+		expect(must(dialog.querySelector("img")).style.getPropertyValue("--w")).toBe("1600");
 		must(dialog.querySelector<HTMLElement>("[data-close]")).click();
 		expect(dialog.hasAttribute("open")).toBe(false);
 		expect(document.activeElement).toBe(a);
+	});
+
+	it("opens only after the image is decoded, with its size already set (M3-06)", async () => {
+		const dialog = setup();
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((r) => {
+			release = r;
+		});
+		vi.spyOn(HTMLImageElement.prototype, "decode").mockImplementation(() => gate);
+		const [a] = document.querySelectorAll<HTMLButtonElement>("button[data-zoom]");
+		must(a).click();
+		await settle();
+		expect(dialog.hasAttribute("open")).toBe(false);
+		release();
+		await settle();
+		expect(dialog.hasAttribute("open")).toBe(true);
+		expect(must(dialog.querySelector("img")).style.getPropertyValue("--ar")).toBe(
+			String(1600 / 900),
+		);
+		vi.restoreAllMocks();
 	});
 });

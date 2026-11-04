@@ -29,9 +29,7 @@ const updated = entry.data.updated ?? entry.data.created;
 	<main>
 		<article class="note h-entry">
 			<header>
-				<h1 class="p-name" transition:name={`note-${entry.id}`}>
-					{entry.data.title}
-				</h1>
+				<h1 class="p-name">{entry.data.title}</h1>
 				<p class="dates">
 					<time class="dt-published" datetime={entry.data.created.toISOString()}>
 						{entry.data.created.toISOString().slice(0, 10)}

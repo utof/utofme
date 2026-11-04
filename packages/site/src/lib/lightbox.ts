@@ -40,22 +40,55 @@ export function installLightbox(root: ParentNode = document): void {
 	if (!img || !cap || buttons.length === 0) return;
 	let current = 0;
 	let opener: HTMLButtonElement | undefined;
+	// Bumped on every show() so a slow decode never overwrites a newer choice.
+	let ticket = 0;
+	let clearTimer: ReturnType<typeof setTimeout> | undefined;
 
-	const show = (i: number): void => {
+	const warm = (j: number): void => {
+		const src = buttons[stepIndex(j, 0, buttons.length)]?.dataset["full"];
+		if (src) new Image().src = src;
+	};
+
+	/**
+	 * Loads and decodes the image for button `i`, then swaps image, size and caption
+	 * in one go (so the caption never leads the picture). Opens the dialog on the
+	 * first call. Why: the old code opened a caption-only strip that snapped to size
+	 * when the image arrived (M3-06) and showed the next caption over the previous
+	 * picture while stepping (M3-07). A slow connection falls back after 250 ms.
+	 */
+	const show = async (i: number): Promise<void> => {
 		const b = buttons[i];
 		if (!b) return;
+		const mine = ++ticket;
+		const full = b.dataset["full"] ?? "";
+		const pre = new Image();
+		pre.src = full;
+		await Promise.race([
+			("decode" in pre ? pre.decode() : Promise.resolve()).catch(() => undefined),
+			new Promise<void>((r) => setTimeout(r, 250)),
+		]);
+		if (mine !== ticket) return;
+		clearTimeout(clearTimer);
 		current = i;
 		opener = b;
-		img.src = b.dataset["full"] ?? "";
+		const w = Number(b.dataset["w"]);
+		const h = Number(b.dataset["h"]);
+		const nw = w > 0 ? w : pre.naturalWidth;
+		const nh = h > 0 ? h : pre.naturalHeight;
+		if (nw > 0 && nh > 0) {
+			img.style.setProperty("--w", String(nw));
+			img.style.setProperty("--ar", String(nw / nh));
+		}
+		img.src = full;
 		img.alt = b.dataset["alt"] ?? "";
 		cap.textContent = b.dataset["caption"] ?? "";
+		if (!dialog.open) dialog.showModal();
+		warm(i + 1);
+		warm(i - 1);
 	};
 
 	buttons.forEach((b, i) => {
-		b.addEventListener("click", () => {
-			show(i);
-			dialog.showModal();
-		});
+		b.addEventListener("click", () => void show(i));
 	});
 	dialog.addEventListener("click", (e) => {
 		// Why: the dialog box is the backdrop's hit target; the figure inside is not.
@@ -65,16 +98,20 @@ export function installLightbox(root: ParentNode = document): void {
 	dialog.addEventListener("keydown", (e) => {
 		if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
 			e.preventDefault();
-			show(stepIndex(current, e.key === "ArrowRight" ? 1 : -1, buttons.length));
+			void show(stepIndex(current, e.key === "ArrowRight" ? 1 : -1, buttons.length));
 		}
 	});
 	dialog.addEventListener("close", () => {
-		img.removeAttribute("src");
+		ticket++;
 		opener?.focus();
+		// Why: keep the picture until the 120 ms exit fade has finished.
+		clearTimeout(clearTimer);
+		clearTimer = setTimeout(() => img.removeAttribute("src"), 200);
 	});
 	for (const n of dialog.querySelectorAll<HTMLElement>("[data-step]")) {
-		n.addEventListener("click", () =>
-			show(stepIndex(current, Number(n.dataset["step"]), buttons.length)),
+		n.addEventListener(
+			"click",
+			() => void show(stepIndex(current, Number(n.dataset["step"]), buttons.length)),
 		);
 	}
 }

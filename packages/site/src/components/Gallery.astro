@@ -41,6 +41,8 @@ const hasStills = items.some((it) => !it.loop);
 							class="frame zoom"
 							data-zoom
 							data-full={it.src.src}
+							data-w={it.src.width}
+							data-h={it.src.height}
 							data-alt={it.alt}
 							data-caption={it.caption}
 							aria-label={`Enlarge: ${it.alt}`}
@@ -150,12 +152,51 @@ const hasStills = items.some((it) => !it.loop);
 	.lightbox::backdrop {
 		background: rgb(0 0 0 / 0.78);
 	}
+	/* Enter 180 ms, exit 120 ms: fade + slight scale on the dialog, fade on the backdrop.
+	   Off under reduced motion and the site-wide "Pause motion" (M3-06). */
+	@media (prefers-reduced-motion: no-preference) {
+		:global(html:not([data-motion="paused"])) .lightbox,
+		:global(html:not([data-motion="paused"])) .lightbox::backdrop {
+			opacity: 0;
+			transition:
+				opacity 120ms ease-in,
+				scale 120ms ease-in,
+				overlay 120ms allow-discrete,
+				display 120ms allow-discrete;
+		}
+		:global(html:not([data-motion="paused"])) .lightbox {
+			scale: 0.98;
+		}
+		:global(html:not([data-motion="paused"])) .lightbox[open],
+		:global(html:not([data-motion="paused"])) .lightbox[open]::backdrop {
+			opacity: 1;
+			transition-duration: 180ms;
+			transition-timing-function: var(--ease-out);
+		}
+		:global(html:not([data-motion="paused"])) .lightbox[open] {
+			scale: 1;
+		}
+		@starting-style {
+			:global(html:not([data-motion="paused"])) .lightbox[open],
+			:global(html:not([data-motion="paused"])) .lightbox[open]::backdrop {
+				opacity: 0;
+			}
+			:global(html:not([data-motion="paused"])) .lightbox[open] {
+				scale: 0.98;
+			}
+		}
+	}
 	.lightbox figure {
 		display: grid;
 		gap: var(--space-2);
 		justify-items: center;
 	}
+	/* Box sized from the still's own dimensions (--w, --ar set before open), so the
+	   first frame is already full size; never upscaled past natural width. */
 	.lightbox img {
+		width: min(100%, calc(var(--w, 4000) * 1px), calc((96vh - 7rem) * var(--ar, 1.7778)));
+		height: auto;
+		aspect-ratio: var(--ar, 16 / 9);
 		max-width: 100%;
 		max-height: calc(96vh - 7rem);
 		object-fit: contain;
