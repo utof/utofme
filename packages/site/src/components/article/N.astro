@@ -1,0 +1,35 @@
+---
+/**
+ * `<N k="tempo.pros.contact.median" />`: prints a keyed fact as `<data class="n" value data-fact>`,
+ * at the fact's own stored digits (it never rounds a stored value further), with `U+2212` and
+ * `U+00A0` units from `figure-scale`. `ci` appends " (lo to hi)"; `alt` prints the approved
+ * wording; a fact with `measuredOn` gets `title="as measured on block 28 (5v5), 2026-11-02"`.
+ * An unknown key (or `ci`/`alt` the fact cannot satisfy) throws, which fails the build.
+ *
+ * The text goes through `set:text` so Prettier cannot put whitespace inside the inline element.
+ *
+ * Why: every number on the page flows through one keyed source, so prose and figures cannot
+ * disagree and a bare digit in prose is a lint error (spec P10-17, ADR 0059).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-17 (`<N>`)
+ */
+import { fact, formatFact, measuredOnText } from "../../lib/facts";
+
+interface Props {
+	/** Fact key, e.g. `elo.head.block2`. */
+	k: string;
+	/** Append the interval "(lo to hi)". */
+	ci?: boolean;
+	/** Print the approved wording instead of the number. */
+	alt?: boolean;
+}
+
+const { k, ci = false, alt = false } = Astro.props;
+const entry = fact(k);
+const text = formatFact(k, { ci, alt });
+const value = String(entry.v);
+const m = entry.measuredOn;
+const title = m === undefined ? undefined : `as measured on ${measuredOnText(m)}`;
+---
+
+<data class="n" value={value} data-fact={k} title={title} set:text={text} />

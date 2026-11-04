@@ -12,6 +12,7 @@
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-17
  */
 import { z } from "astro/zod";
+import factsJson from "../data/article-meta/facts.json";
 import { formatInterval, formatNumber, formatSigned } from "./figure-scale";
 
 const NBSP = " ";
@@ -175,4 +176,34 @@ export function createFacts(raw: unknown): FactReader {
 		return `${base} (${formatInterval(e.lo, e.hi, e.digits, { signed: e.sign === true })})`;
 	};
 	return { fact, formatFact };
+}
+
+let defaultReader: FactReader | undefined;
+/** Why: validation runs on first use, so importing this module never throws; a bad file fails the build at the first `<N>`. */
+function committed(): FactReader {
+	defaultReader ??= createFacts(factsJson);
+	return defaultReader;
+}
+
+/**
+ * The fact for `key` from the committed `src/data/article-meta/facts.json`; throws on an unknown
+ * key (the build fails).
+ *
+ * Why: the JSON is imported as a module only (never `?url`), so it is never emitted to `dist/`.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-17
+ */
+export function fact(key: string): Fact {
+	return committed().fact(key);
+}
+
+/**
+ * The committed fact printed as the page prints it (see {@link FormatFactOptions}).
+ *
+ * Why: figures that print a number in a caption or mark use the same function as `<N>`.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-17
+ */
+export function formatFact(key: string, opts?: FormatFactOptions): string {
+	return committed().formatFact(key, opts);
 }

@@ -3,18 +3,17 @@
 Successor: continue from "In progress"; branch `p10/d2-data`, worktree cut from `phase/10-research-article`.
 
 ## Done (SHA)
-- (none yet)
+- e593e8a dataset contract (`types.ts`) + sync core (`article-data-core.ts`) + 27 tests
+- d730647 `figure-scale.ts` + 19 tests
+- dc89ad1 `facts.ts` schema/reader factory + `sync-article-data.ts` CLI + `package.json` script + `ci.yml` step + `biome.json` excludes for `src/data/article{,-meta}/**`
+- 01550f6 `maps_cs` dataset + first real sync (maps_cs output + sidecar + facts.json, 149 keys)
 
 ## In progress
-- Step 1: `types.ts` + `article-data-core.ts` (red test first).
+- Step 5: `facts.ts` default reader (`fact`, `formatFact`) + `N.astro` (tests green, committing).
 
 ## Next
-2. CLI `scripts/sync-article-data.ts` + `package.json` script + `ci.yml` step.
-3. `maps_cs` dataset + real sync (`src/data/article/maps_cs.json` + sidecar).
-4. `src/lib/figure-scale.ts`.
-5. `src/lib/facts.ts`, `N.astro`, real `facts.json` sync.
-6. `src/lib/figure-data.ts`.
-7. ADR 0054, GATE, report `10-d2.md`.
+6. `src/lib/figure-data.ts` loader (red test first: happy-dom, stubbed fetch).
+7. ADR 0054 (`packages/specs/adrs/0054-article-data-whitelist-projections.md`), GATE (incl. build + full vitest under the lock), `check:privacy`, report `10-d2.md`, final push.
 
 ## Decisions
 - Sidecar `syncedAt` is a UTC date and is kept when the output sha256 is unchanged (AC3.7: a second run leaves `git diff` empty).

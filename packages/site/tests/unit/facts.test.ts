@@ -1,11 +1,14 @@
 import { fc, test } from "@fast-check/vitest";
 import { describe, expect, it } from "vitest";
+import committed from "../../src/data/article-meta/facts.json";
 import {
 	createFacts,
 	FACT_KEY,
+	fact,
 	factEntrySchema,
 	factsSchema,
 	factsSourceSchema,
+	formatFact,
 	measuredOnText,
 } from "../../src/lib/facts";
 
@@ -188,5 +191,53 @@ describe("createFacts", () => {
 			"block 28 (5v5), 2026-11-02",
 		);
 		expect(measuredOnText({ line: "3v3", date: "2026-10-25" })).toBe("the 3v3 line, 2026-10-25");
+	});
+});
+
+describe("the committed facts.json (default reader)", () => {
+	const all = factsSchema.parse(committed).facts;
+
+	it("parses as facts/1 and holds every key the plan requires", () => {
+		for (const k of [
+			"elo.head.block2",
+			"tempo.pros.contact.median",
+			"tempo.b28.contact.median",
+			"tempo.pros.plant.median",
+			"sight.grid.extra",
+			"peek.hit.nosnap",
+			"peek.hit.snap",
+			"cs2.tickrate",
+			"compute.block.minutes",
+			"util.agent.grenades",
+			"util.pros.grenades",
+			"replay.contact.s",
+		]) {
+			expect(Object.hasOwn(all, k), k).toBe(true);
+		}
+	});
+	it("every key is valid and prints without throwing (also with its alt / ci where set)", () => {
+		for (const [k, e] of Object.entries(all)) {
+			expect(FACT_KEY.test(k), k).toBe(true);
+			expect(formatFact(k).length, k).toBeGreaterThan(0);
+			if (e.alt !== undefined) expect(formatFact(k, { alt: true })).toBe(e.alt);
+			if (e.lo !== undefined) expect(formatFact(k, { ci: true })).toContain(" to ");
+		}
+	});
+	it("prints the headline numbers the way the page will", () => {
+		expect(formatFact("elo.head.block2", { ci: true })).toBe("+96 (+94 to +98)");
+		expect(formatFact("tempo.pros.contact.median")).toBe(`22.8${NBSP}s`);
+		expect(formatFact("tempo.pros.plant.median")).toBe(`74.7${NBSP}s`);
+		expect(formatFact("sight.grid.extra", { alt: true })).toBe("1 in 7");
+		expect(fact("cs2.tickrate").v).toBe(64);
+	});
+	it("agent-vs-pro facts carry the measurement line (OD-4)", () => {
+		for (const [k, e] of Object.entries(all)) {
+			if (k.startsWith("agents.")) expect(e.measuredOn, k).toBeDefined();
+		}
+		expect(fact("util.agent.grenades").measuredOn).toEqual({ line: "3v3", date: "2026-10-25" });
+	});
+	it("an unknown key throws through the default reader too", () => {
+		expect(() => fact("no.such.key")).toThrow(/unknown fact key/);
+		expect(() => formatFact("no.such.key")).toThrow(/unknown fact key/);
 	});
 });
