@@ -18,11 +18,16 @@ import { defineDataset } from "./types";
 
 const SRC = "notebook.json";
 /**
- * Rewrites the few private-repo file and journal names that appear in free text into public words.
+ * Rewrites the few private-repo file and journal names that appear in free text into public words,
+ * and the notes' run labels into plain block names ("Elo g5line10 - v5a2" becomes "Elo block 10 vs
+ * block 2").
  *
  * Why: the notes' free text sometimes cites their own bookkeeping files ("PARKED.md", "JOURNAL 11-01",
- * "env.py"); the page calls the whole thing "the notebook" and never names a file. Applied to every
- * shipped string of `notebook` and `notebook_parked`; the shipped privacy scan is the backstop.
+ * "env.py"); the page calls the whole thing "the notebook" and never names a file. Run labels follow
+ * the notes' naming table (FACTS.md: `gline` 3v3 line, `g5line` 5v5 line, `g6line` v3 line, `g7line`
+ * crouch line, number = block; `v5a1`/`v5a2` the first two 5v5 blocks), which a reader cannot know.
+ * Applied to every shipped string of `notebook` and `notebook_parked`; the shipped privacy scan is
+ * the backstop.
  *
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-10 (no file names) and § P10-11 (card provenance)
  */
@@ -31,7 +36,14 @@ export function publicText(text: string): string {
 		.replace(/PARKED\.md/g, "the parked list")
 		.replace(/JOURNAL(\.md)?/g, "notebook")
 		.replace(/\bjournal\b/g, "notebook")
-		.replace(/\b([A-Za-z0-9_]+)\.py\b/g, "$1 code");
+		.replace(/\b([A-Za-z0-9_]+)\.py\b/g, "$1 code")
+		.replace(/\bhead - (?=v5a\d\b|g\d*line\d)/g, "newest block - ")
+		.replace(/\bg5line(\d+)\b/g, "block $1")
+		.replace(/\bg6line(\d+)\b/g, "v3-line block $1")
+		.replace(/\bg7line(\d+)\b/g, "crouch-line block $1")
+		.replace(/\bgline(\d+)w?\b/g, "3v3 block $1")
+		.replace(/\bv5a(\d)\b/g, "block $1")
+		.replace(/\b(block \d+|newest block) - (?=(?:[\w-]+ )?block \d+)/g, "$1 vs ");
 }
 
 const outcome = z.enum(OUTCOMES);
