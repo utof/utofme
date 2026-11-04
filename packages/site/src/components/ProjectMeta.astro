@@ -2,7 +2,9 @@
 /**
  * ProjectMeta.astro — the one-line meta row of a project page.
  *
- * Why: anatomy item 3 — year (or range) · status · up to 4 stack items · links.
+ * Why: anatomy item 3 — a quiet grey tag row (year or range · status · up to 4
+ * stack items) and, below it, a link row at UI size in the link colour with
+ * 44 px hit areas (P-15).
  * The year is the page's single `<time class="dt-published">` (microformats).
  * A `private: true` link renders its label as plain text plus a "private for
  * now" note (D12): the URL is not yet public, so it must not be a live link.
@@ -25,62 +27,100 @@ const { date, started, status, stack = [], links = [], externalUrl } = Astro.pro
 const year = date.getUTCFullYear();
 const startYear = started?.getUTCFullYear();
 const showRange = startYear !== undefined && startYear !== year;
+const hasLinks = links.length > 0 || externalUrl !== undefined;
 ---
 
 <!-- Why: items use class "m", not "item": `item` is a microformats1 root class and
-     made the parser drop dt-published from the enclosing h-entry. -->
-<p class="meta" data-test="project-meta">
-	<span class="m">
-		{showRange && <span>{startYear}–</span>}
-		<time class="dt-published" datetime={date.toISOString()}>
-			{year}
-		</time>
-	</span>
-	{status && (
-		<span class="m" data-test="meta-status">
-			{status}
-		</span>
-	)}
-	{stack.slice(0, 4).map((s) => (
-		<span class="m p-category">{s}</span>
-	))}
-	{links.map((l) => (
-		<span class="m" data-test="meta-link">
-			{l.private ? (
-				<>
-					<span>{l.label} ↗</span>{" "}
-					<span class="private" data-test="private-label">
-						private for now
-					</span>
-				</>
-			) : (
-				<a href={l.href} rel="external noopener">
-					{l.label} ↗
-				</a>
-			)}
-		</span>
-	))}
-	{links.length === 0 && externalUrl && (
+     made the parser drop dt-published from the enclosing h-entry. Tags (year, status,
+     stack) are quiet grey mono; links get their own row in the link colour (P-15). -->
+<div class="meta-block" data-test="project-meta">
+	<p class="meta">
 		<span class="m">
-			<a href={externalUrl} data-test="detail-external" rel="external noopener">
-				Open external →
-			</a>
+			{showRange && <span>{startYear}–</span>}
+			<time class="dt-published" datetime={date.toISOString()}>
+				{year}
+			</time>
 		</span>
+		{status && (
+			<span class="m" data-test="meta-status">
+				{status}
+			</span>
+		)}
+		{stack.slice(0, 4).map((s) => (
+			<span class="m p-category">{s}</span>
+		))}
+	</p>
+	{hasLinks && (
+		<p class="links">
+			{links.map((l) => (
+				<span class="l" data-test="meta-link">
+					{l.private ? (
+						<>
+							<span>{l.label} ↗</span>{" "}
+							<span class="private" data-test="private-label">
+								private for now
+							</span>
+						</>
+					) : (
+						<a href={l.href} rel="external noopener">
+							{l.label} ↗
+						</a>
+					)}
+				</span>
+			))}
+			{links.length === 0 && externalUrl && (
+				<span class="l">
+					<a href={externalUrl} data-test="detail-external" rel="external noopener">
+						Open external →
+					</a>
+				</span>
+			)}
+		</p>
 	)}
-</p>
+</div>
 
 <style>
+	.meta-block {
+		margin: var(--space-3) 0 0;
+	}
 	.meta {
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--space-1) var(--space-3);
-		margin: var(--space-3) 0 0;
+		margin: 0;
 		font-family: var(--font-mono);
 		font-size: var(--font-size-1);
 		color: var(--color-text-muted);
 	}
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0 var(--space-4);
+		margin: var(--space-2) 0 0;
+		font-size: var(--font-size-ui);
+	}
+	.l {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: 44px;
+		margin-block: -8px;
+	}
+	/* Why: 44 px hit area on touch without moving the visible text. */
+	.l a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		color: var(--color-link);
+	}
+	.l a:hover {
+		color: var(--color-link-hover);
+	}
 	.private {
+		font-family: var(--font-mono);
 		font-size: 0.75rem;
+		color: var(--color-text-muted);
 		padding: 0 var(--space-1);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-xs);

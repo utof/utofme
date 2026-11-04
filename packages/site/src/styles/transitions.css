@@ -27,22 +27,22 @@
 	animation-duration: 450ms;
 	animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+/* Why (P-xx morph polish): the UA cross-fades old/new with `plus-lighter` blending,
+ * and the old snapshot used to fade out in 200 ms while the new one faded in over
+ * 450 ms, so mid-morph the media was semi-transparent over white. Both images now
+ * stay fully opaque with no animation of their own: the NEW snapshot sits on top
+ * (later in the pair's stacking order) and `object-fit: cover` crops it to the
+ * group's moving box, so the 16:9 → 3:1 change never stretches the picture. */
 /* biome-ignore lint/correctness/noUnknownTypeSelector: the argument is a view-transition-name (custom-ident), not a type selector */
-::view-transition-old(hero) {
+::view-transition-old(hero),
+/* biome-ignore lint/correctness/noUnknownTypeSelector: the argument is a view-transition-name (custom-ident), not a type selector */
+	::view-transition-new(hero) {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-}
-/* biome-ignore lint/correctness/noUnknownTypeSelector: the argument is a view-transition-name (custom-ident), not a type selector */
-::view-transition-new(hero) {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-}
-/* Frozen old frame leaves early: less ghosting at the crossfade. */
-/* biome-ignore lint/correctness/noUnknownTypeSelector: the argument is a view-transition-name (custom-ident), not a type selector */
-::view-transition-old(hero) {
-	animation-duration: 200ms;
+	mix-blend-mode: normal;
+	opacity: 1;
+	animation: none;
 }
 /* Caption: its own group so it never stretches with the media. Forward: fades
  * out fast (old-only). Back: returns late (new-only). */
