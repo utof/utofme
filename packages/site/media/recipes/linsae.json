@@ -2,33 +2,39 @@
 	"slug": "linsae",
 	"kind": "slideshow",
 	"aspect": "16:9",
+	"cardAspect": "4:5",
 	"fps": 10,
 	"sizes": ["card", "banner"],
 	"slides": [
 		{
 			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K1-main-window-feed.png",
 			"hold": 1.4,
-			"fit": "cover"
+			"fit": "cover",
+			"cardCrop": { "x": 360, "y": 0, "w": 720, "h": 900 }
 		},
 		{
 			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K4-thread-view.png",
 			"hold": 1.0,
-			"fit": "cover"
+			"fit": "cover",
+			"cardCrop": { "x": 360, "y": 0, "w": 720, "h": 900 }
 		},
 		{
 			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K8-canvas.png",
 			"hold": 1.4,
-			"fit": "cover"
+			"fit": "cover",
+			"cardCrop": { "x": 380, "y": 0, "w": 720, "h": 900 }
 		},
 		{
 			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K9-pdf-reader-docked.png",
 			"hold": 1.2,
-			"fit": "cover"
+			"fit": "cover",
+			"cardCrop": { "x": 840, "y": 30, "w": 600, "h": 750 }
 		},
 		{
 			"src": "linsa/flinsa/_local/sessions/2026-11-03-linsae-reference/key/K7-command-palette.png",
 			"hold": 1.0,
-			"fit": "cover"
+			"fit": "cover",
+			"cardCrop": { "x": 360, "y": 0, "w": 720, "h": 900 }
 		}
 	],
 	"poster": { "at": 0.5 },

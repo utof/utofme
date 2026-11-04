@@ -2,10 +2,16 @@
  * Loop playback controller: plays `video[data-loop]` only while ≥ 25 % visible
  * and motion is not paused; reveals the video on its first `playing`.
  *
+ * A slideshow card (`data-loop-play="hover"` inside a `.card`) is the exception: it stays on its
+ * poster at rest and plays only while the card is hovered or keyboard-focused on a fine pointer,
+ * then pauses, rewinds and hides the video again. Real motion (montage / transcode) and every
+ * banner keep the in-view autoplay.
+ *
  * Why: loops are `preload="none"` with no `autoplay`, so nothing downloads or
  * decodes until the card is near the viewport. Disposal deliberately never
  * pauses (the `transition:persist`ed node must keep playing through a view
- * transition). Dependencies are injected so tests can fake them.
+ * transition). A slideshow is a sequence of screenshots, which reads as noise when it moves
+ * unprompted and is perfectly legible on a still. Dependencies are injected so tests can fake them.
  *
  * @see packages/specs/specs/09-project-view.md § P9-6
  * @see https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver
@@ -26,6 +32,10 @@ export interface LoopDeps {
 	) => IntersectionObserver;
 	isPaused: () => boolean;
 	saveData: () => boolean;
+	/** `(hover: hover) and (pointer: fine)`: whether hover-played loops may play at all. */
+	finePointer: () => boolean;
+	/** Whether `el` shows a keyboard focus ring (`:focus-visible`); a mouse click on a link does not. */
+	focusVisible: (el: Element) => boolean;
 	doc: Document;
 }
 
@@ -36,6 +46,15 @@ function defaultDeps(): LoopDeps {
 		saveData: () =>
 			(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData ===
 			true,
+		finePointer: () => matchMedia("(hover: hover) and (pointer: fine)").matches,
+		focusVisible: (el) => {
+			try {
+				return el.matches(":focus-visible");
+			} catch {
+				// Engines without :focus-visible: treat any focus as keyboard focus.
+				return true;
+			}
+		},
 		doc: document,
 	};
 }
@@ -68,9 +87,14 @@ export function mountLoops(
 	deps: LoopDeps = defaultDeps(),
 	opts: MountOptions = {},
 ): () => void {
-	const videos = [...root.querySelectorAll<HTMLVideoElement>("video[data-loop]")].filter(
+	const all = [...root.querySelectorAll<HTMLVideoElement>("video[data-loop]")].filter(
 		(v) => opts.only?.(v) ?? true,
 	);
+	// Why: only a card video is hover-played; the persisted node inside a banner keeps the in-view rule.
+	const hoverHost = (v: HTMLVideoElement): HTMLElement | null =>
+		v.dataset["loopPlay"] === "hover" ? v.closest<HTMLElement>(".card") : null;
+	const videos = all.filter((v) => hoverHost(v) === null);
+	const hoverVideos = all.filter((v) => hoverHost(v) !== null);
 	const visible = new Set<HTMLVideoElement>();
 	const cleanups: (() => void)[] = [];
 	let disposed = false;
@@ -93,12 +117,42 @@ export function mountLoops(
 			if (!disposed && visible.has(v) && allowed()) play(v);
 		}, delay);
 	};
+
+	// Slideshow cards: `hovered` / `focused` per video; `on` marks a video this controller started.
+	const hover = new Map<HTMLVideoElement, { hovered: boolean; focused: boolean; on: boolean }>();
+	const wantsPlay = (v: HTMLVideoElement): boolean => {
+		const st = hover.get(v);
+		return (
+			st !== undefined &&
+			(st.hovered || st.focused) &&
+			allowed() &&
+			deps.finePointer() &&
+			deps.doc.visibilityState !== "hidden"
+		);
+	};
+	const stop = (v: HTMLVideoElement): void => {
+		const st = hover.get(v);
+		if (!st?.on) return;
+		st.on = false;
+		v.pause();
+		v.currentTime = 0;
+		v.removeAttribute("data-ready");
+	};
+	const updateHover = (v: HTMLVideoElement): void => {
+		const st = hover.get(v);
+		if (!st) return;
+		if (wantsPlay(v)) {
+			st.on = true;
+			play(v);
+		} else stop(v);
+	};
 	const sync = (): void => {
 		const ok = allowed() && deps.doc.visibilityState !== "hidden";
 		for (const v of videos) {
 			if (ok && visible.has(v)) start(v);
 			else v.pause();
 		}
+		for (const v of hoverVideos) updateHover(v);
 	};
 
 	for (const v of videos) {
@@ -109,13 +163,46 @@ export function mountLoops(
 		v.addEventListener("playing", reveal, { once: true });
 		cleanups.push(() => v.removeEventListener("playing", reveal));
 	}
+	for (const v of hoverVideos) {
+		const host = hoverHost(v);
+		if (!host) continue;
+		hover.set(v, { hovered: false, focused: false, on: false });
+		const set = (patch: { hovered?: boolean; focused?: boolean }) => (): void => {
+			const st = hover.get(v);
+			if (!st || disposed) return;
+			Object.assign(st, patch);
+			updateHover(v);
+		};
+		const enter = (e: Event): void => {
+			// Why: a touch pointer fires `pointerenter` too; those cards stay still.
+			if ("pointerType" in e && e.pointerType === "touch") return;
+			set({ hovered: true })();
+		};
+		// Why: `:focus-visible` so a mouse click on the link does not count as keyboard focus.
+		const focusIn = (): void => {
+			if (deps.focusVisible(host)) set({ focused: true })();
+		};
+		const reveal = (): void => v.setAttribute("data-ready", "");
+		const handlers: [string, EventListener][] = [
+			["pointerenter", enter],
+			["pointerleave", set({ hovered: false })],
+			["focusin", focusIn],
+			["focusout", set({ focused: false })],
+		];
+		for (const [name, fn] of handlers) {
+			host.addEventListener(name, fn);
+			cleanups.push(() => host.removeEventListener(name, fn));
+		}
+		v.addEventListener("playing", reveal);
+		cleanups.push(() => v.removeEventListener("playing", reveal));
+	}
 
 	const io = deps.createObserver(
 		(entries) => {
 			if (disposed) return;
 			for (const e of entries) {
 				const v = e.target;
-				if (!(v instanceof HTMLVideoElement)) continue;
+				if (!(v instanceof HTMLVideoElement) || hover.has(v)) continue;
 				if (e.isIntersecting) {
 					visible.add(v);
 					if (allowed() && deps.doc.visibilityState !== "hidden") start(v);
@@ -217,7 +304,8 @@ export function upgradeBannerLoops(root: ParentNode, deps: LoopDeps = defaultDep
 		if (!old || !banner) continue;
 		const next = old.cloneNode(false);
 		if (!(next instanceof HTMLVideoElement)) continue;
-		for (const a of ["data-ready", "data-astro-transition-persist"]) next.removeAttribute(a);
+		for (const a of ["data-ready", "data-astro-transition-persist", "data-loop-play"])
+			next.removeAttribute(a);
 		next.setAttribute("data-loop-size", "banner");
 		next.setAttribute("width", String(banner.width));
 		next.setAttribute("height", String(banner.height));

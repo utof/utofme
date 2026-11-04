@@ -64,7 +64,7 @@ interface Harness {
 	videos: HTMLVideoElement[];
 	play: Mock<() => Promise<void>>;
 	pause: Mock<() => void>;
-	state: { paused: boolean; saveData: boolean };
+	state: { paused: boolean; saveData: boolean; fine: boolean; focusRing: boolean };
 	deps: LoopDeps;
 }
 
@@ -83,11 +83,13 @@ function setup(n = 2, playImpl?: () => Promise<void>): Harness {
 		videos.push(v);
 	}
 	document.body.append(root);
-	const state = { paused: false, saveData: false };
+	const state = { paused: false, saveData: false, fine: true, focusRing: true };
 	const deps: LoopDeps = {
 		createObserver: (cb, opts) => new FakeObserver(cb, opts),
 		isPaused: () => state.paused,
 		saveData: () => state.saveData,
+		finePointer: () => state.fine,
+		focusVisible: () => state.focusRing,
 		doc: document,
 	};
 	return { root, videos, play, pause, state, deps };
@@ -189,5 +191,158 @@ describe("mountLoops", () => {
 		document.dispatchEvent(new Event("visibilitychange"));
 		expect(h.pause).toHaveBeenCalled();
 		Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
+	});
+});
+
+/** A home card wrapping one video, as `Card.astro` + `LoopMedia.astro` render it. */
+function hoverSetup(mode: "hover" | "view" = "hover", withCard = true) {
+	const h = setup(0);
+	const v = document.createElement("video");
+	v.setAttribute("data-loop", "");
+	v.setAttribute("data-loop-play", mode);
+	v.play = h.play;
+	v.pause = h.pause;
+	const card = document.createElement(withCard ? "a" : "div");
+	if (withCard) card.className = "card";
+	card.append(v);
+	h.root.append(card);
+	return { ...h, v, card };
+}
+
+describe("mountLoops: slideshow cards play on hover or focus only", () => {
+	beforeEach(() => {
+		FakeObserver.last = undefined;
+	});
+
+	it("never observes a hover video, so nothing plays at rest or when it scrolls into view", () => {
+		const h = hoverSetup();
+		mountLoops(h.root, h.deps);
+		expect(FakeObserver.last?.targets.size).toBe(0);
+		must(FakeObserver.last).fire(h.v, true);
+		expect(h.play).not.toHaveBeenCalled();
+	});
+
+	it("plays on pointerenter, and on pointerleave pauses, rewinds to the poster frame and hides the video", () => {
+		const h = hoverSetup();
+		mountLoops(h.root, h.deps);
+		h.card.dispatchEvent(new Event("pointerenter"));
+		expect(h.play).toHaveBeenCalledTimes(1);
+		h.v.dispatchEvent(new Event("playing"));
+		expect(h.v.hasAttribute("data-ready")).toBe(true);
+		Object.defineProperty(h.v, "currentTime", { value: 2.4, writable: true });
+		h.card.dispatchEvent(new Event("pointerleave"));
+		expect(h.pause).toHaveBeenCalledTimes(1);
+		expect(h.v.currentTime).toBe(0);
+		expect(h.v.hasAttribute("data-ready")).toBe(false);
+	});
+
+	it("is revealed again by every hover, not only the first", () => {
+		const h = hoverSetup();
+		mountLoops(h.root, h.deps);
+		for (let i = 0; i < 2; i++) {
+			h.card.dispatchEvent(new Event("pointerenter"));
+			h.v.dispatchEvent(new Event("playing"));
+			expect(h.v.hasAttribute("data-ready")).toBe(true);
+			h.card.dispatchEvent(new Event("pointerleave"));
+			expect(h.v.hasAttribute("data-ready")).toBe(false);
+		}
+		expect(h.play).toHaveBeenCalledTimes(2);
+	});
+
+	it("stays still on a coarse pointer, under paused motion and under saveData", () => {
+		const h = hoverSetup();
+		mountLoops(h.root, h.deps);
+		h.state.fine = false;
+		h.card.dispatchEvent(new Event("pointerenter"));
+		h.card.dispatchEvent(new Event("focusin"));
+		h.state.fine = true;
+		h.state.paused = true;
+		h.card.dispatchEvent(new Event("pointerenter"));
+		h.state.paused = false;
+		h.state.saveData = true;
+		h.card.dispatchEvent(new Event("pointerenter"));
+		expect(h.play).not.toHaveBeenCalled();
+	});
+
+	it("ignores touch pointers even on a device that also reports a fine pointer", () => {
+		const h = hoverSetup();
+		mountLoops(h.root, h.deps);
+		const touch = new Event("pointerenter");
+		Object.defineProperty(touch, "pointerType", { value: "touch" });
+		h.card.dispatchEvent(touch);
+		expect(h.play).not.toHaveBeenCalled();
+	});
+
+	it("plays while the card is keyboard-focused and keeps playing until both hover and focus are gone", () => {
+		const h = hoverSetup();
+		mountLoops(h.root, h.deps);
+		h.card.dispatchEvent(new Event("focusin"));
+		expect(h.play).toHaveBeenCalledTimes(1);
+		h.card.dispatchEvent(new Event("pointerenter"));
+		h.card.dispatchEvent(new Event("pointerleave"));
+		expect(h.pause).not.toHaveBeenCalled();
+		h.card.dispatchEvent(new Event("focusout"));
+		expect(h.pause).toHaveBeenCalledTimes(1);
+	});
+
+	it("a mouse-click focus (no focus ring) does not count as keyboard focus", () => {
+		const h = hoverSetup();
+		h.state.focusRing = false;
+		mountLoops(h.root, h.deps);
+		h.card.dispatchEvent(new Event("focusin"));
+		expect(h.play).not.toHaveBeenCalled();
+	});
+
+	it("'Pause motion' stops a playing hover loop and rewinds it; once the pointer has left, resuming plays nothing", () => {
+		const h = hoverSetup();
+		mountLoops(h.root, h.deps);
+		h.card.dispatchEvent(new Event("pointerenter"));
+		h.v.dispatchEvent(new Event("playing"));
+		h.state.paused = true;
+		document.dispatchEvent(new CustomEvent("utofme:motion", { detail: { paused: true } }));
+		expect(h.pause).toHaveBeenCalled();
+		expect(h.v.hasAttribute("data-ready")).toBe(false);
+		h.card.dispatchEvent(new Event("pointerleave"));
+		h.play.mockClear();
+		h.state.paused = false;
+		document.dispatchEvent(new CustomEvent("utofme:motion", { detail: { paused: false } }));
+		expect(h.play).not.toHaveBeenCalled();
+	});
+
+	it("a rejected play() leaves the poster showing", async () => {
+		const h = hoverSetup();
+		h.play.mockImplementation(() => Promise.reject(new DOMException("blocked", "NotAllowedError")));
+		mountLoops(h.root, h.deps);
+		h.card.dispatchEvent(new Event("pointerenter"));
+		await flush();
+		expect(h.v.hasAttribute("data-ready")).toBe(false);
+	});
+
+	it("dispose removes the hover and focus listeners", () => {
+		const h = hoverSetup();
+		const dispose = mountLoops(h.root, h.deps);
+		dispose();
+		h.card.dispatchEvent(new Event("pointerenter"));
+		h.card.dispatchEvent(new Event("focusin"));
+		expect(h.play).not.toHaveBeenCalled();
+	});
+
+	it("a view-mode loop (montage / transcode / banner) keeps autoplaying in view", () => {
+		const h = hoverSetup("view");
+		mountLoops(h.root, h.deps);
+		expect(FakeObserver.last?.targets.size).toBe(1);
+		must(FakeObserver.last).fire(h.v, true);
+		expect(h.play).toHaveBeenCalledTimes(1);
+		h.card.dispatchEvent(new Event("pointerenter"));
+		h.card.dispatchEvent(new Event("pointerleave"));
+		expect(h.pause).not.toHaveBeenCalled();
+	});
+
+	it("a hover-mode video outside a card (the persisted node inside a banner) is managed like any loop", () => {
+		const h = hoverSetup("hover", false);
+		mountLoops(h.root, h.deps);
+		expect(FakeObserver.last?.targets.size).toBe(1);
+		must(FakeObserver.last).fire(h.v, true);
+		expect(h.play).toHaveBeenCalledTimes(1);
 	});
 });

@@ -15,6 +15,46 @@ import { z } from "astro/zod";
 /** Loop slug: lowercase kebab-case, also the directory name under `public/loops/`. */
 const slugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "slug must be kebab-case");
 
+/**
+ * What a loop is made of.
+ *
+ * Why: the card controller treats them differently: a `slideshow` (a sequence of UI screenshots) stays
+ * on its poster at rest and plays only while the card is hovered or keyboard-focused, whereas a `montage`
+ * or `transcode` (real motion) plays while in view (ADR 0044 addendum 3).
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export const LOOP_KINDS = ["montage", "slideshow", "transcode"] as const;
+
+/** One of {@link LOOP_KINDS}. @see LOOP_KINDS */
+export const loopKindSchema = z.enum(LOOP_KINDS);
+
+/**
+ * Card aspect ratios a loop can be encoded at (`W:H`).
+ *
+ * Why: the home masonry keeps every tile's natural aspect (ADR 0044 addendum 2), so the card
+ * rendition is no longer always 16:9. The set is closed so the encoder can pin an even,
+ * codec-friendly frame size per aspect (`CARD_FRAMES` in `scripts/lib/loops-core.ts`).
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export const CARD_ASPECTS = ["1:1", "4:5", "3:4", "4:3", "3:2", "16:10", "16:9"] as const;
+
+/** One of {@link CARD_ASPECTS}. @see CARD_ASPECTS */
+export const cardAspectSchema = z.enum(CARD_ASPECTS);
+
+/** A card aspect ratio name. @see cardAspectSchema */
+export type CardAspect = z.infer<typeof cardAspectSchema>;
+
+/**
+ * Width ÷ height of a card aspect (`"4:5"` → 0.8).
+ *
+ * Why: the manifest check and the tests compare real frame sizes against the named aspect.
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export function aspectRatio(a: CardAspect): number {
+	const [w, h] = a.split(":").map(Number);
+	return (w ?? 1) / (h ?? 1);
+}
+
 /** 8 lowercase hex chars: the first 8 chars of a sha256. */
 const sha8Schema = z.string().regex(/^[0-9a-f]{8}$/, "expected 8 hex chars (sha256 prefix)");
 
@@ -69,18 +109,62 @@ const loopFlashSchema = z.strictObject({
  * One manifest entry.
  * `recipe` is the sha8 of the canonical recipe JSON plus the encoder settings; an unchanged hash means the
  * encode can be skipped. `posterPath` is relative to `packages/site/` (an Astro-processed asset).
+ *
+ * `kind` is the recipe kind (it decides whether a card plays at rest or on hover).
+ * `aspect` is the loop's master aspect (the banner, always 16:9). `cardAspect` is the card/gallery
+ * rendition's aspect: the home masonry tile keeps it, so a square sim is a square tile.
+ * `posterPath` is cut from the banner master when there is one; when the card is not 16:9 and a banner
+ * exists, the card needs its own poster of the card's framing, `cardPosterPath` (`card-poster.png`).
+ * Why: the card frame, its poster and its video must share one aspect, or the poster would jump when the
+ * video fades in.
  * @see packages/specs/specs/09-project-view.md § P9-4
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
-export const loopEntrySchema = z.strictObject({
-	recipe: sha8Schema,
-	durationS: z.number().positive(),
-	fps: z.number().positive(),
-	aspect: z.literal("16:9"),
-	card: loopSizeSchema,
-	banner: loopSizeSchema.nullable(),
-	posterPath: z.string().regex(/^src\/assets\/loops\/[a-z0-9-]+\/poster\.png$/),
-	flash: loopFlashSchema,
-});
+export const loopEntrySchema = z
+	.strictObject({
+		recipe: sha8Schema,
+		durationS: z.number().positive(),
+		fps: z.number().positive(),
+		kind: loopKindSchema,
+		aspect: z.literal("16:9"),
+		cardAspect: cardAspectSchema,
+		card: loopSizeSchema,
+		banner: loopSizeSchema.nullable(),
+		posterPath: z.string().regex(/^src\/assets\/loops\/[a-z0-9-]+\/poster\.png$/),
+		cardPosterPath: z
+			.string()
+			.regex(/^src\/assets\/loops\/[a-z0-9-]+\/card-poster\.png$/)
+			.optional(),
+		flash: loopFlashSchema,
+	})
+	.superRefine((e, ctx) => {
+		const ratio = aspectRatio(e.cardAspect);
+		if (Math.abs(e.card.width / e.card.height - ratio) > ratio * 0.01)
+			ctx.addIssue({
+				code: "custom",
+				message: `card ${e.card.width}x${e.card.height} is not ${e.cardAspect}`,
+				path: ["card"],
+			});
+		if (e.cardPosterPath !== undefined) {
+			if (e.banner === null)
+				ctx.addIssue({
+					code: "custom",
+					message: "a card-only loop has no banner, so its poster is already the card poster",
+					path: ["cardPosterPath"],
+				});
+			if (e.cardPosterPath.replace(/card-poster\.png$/, "poster.png") !== e.posterPath)
+				ctx.addIssue({
+					code: "custom",
+					message: "cardPosterPath must sit next to posterPath",
+					path: ["cardPosterPath"],
+				});
+		} else if (e.banner !== null && e.cardAspect !== "16:9")
+			ctx.addIssue({
+				code: "custom",
+				message: `a ${e.cardAspect} card with a 16:9 banner needs its own cardPosterPath`,
+				path: ["cardPosterPath"],
+			});
+	});
 
 /**
  * The whole `loops.json`: slug → entry. The writer emits keys sorted so diffs stay stable.

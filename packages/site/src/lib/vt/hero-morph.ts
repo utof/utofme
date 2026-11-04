@@ -88,7 +88,7 @@ export function clearMarks(root: ParentNode): void {
  * Returns whether a frame was marked.
  *
  * Why: `hero` goes on the clipping `[data-vt-frame]`, never on the scaled
- * child, so the snapshot carries the clip and hover zoom exactly as seen.
+ * child, so the snapshot carries the clip exactly as seen.
  */
 function markSlug(root: ParentNode, slug: string, withCap: boolean): boolean {
 	const host = root.querySelector(bySlug(slug));
@@ -120,7 +120,7 @@ export interface NavLike {
  * - Back from `/works/<slug>/` to a grid: marks the visible banner frame.
  * Always clears stale marks first. Returns the slug marked, or `null`.
  *
- * Why: never touches transforms (the hover zoom must stay in the snapshot).
+ * Why: never touches transforms (whatever the card shows must stay in the snapshot).
  *
  * @see packages/specs/specs/09-project-view.md § P9-9
  */
