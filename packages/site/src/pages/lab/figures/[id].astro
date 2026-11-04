@@ -1,0 +1,83 @@
+---
+/**
+ * /lab/figures/<id>/ — one page per article figure Block.
+ *
+ * Discovers every `src/components/article/*Block.astro` with `import.meta.glob`;
+ * `id` is the kebab-case Block name without `Block` (`SmokeSightBlock` →
+ * `smoke-sight`). Each page renders the Block with a placeholder caption and Try
+ * line. Noindexed, and no pages at all when `UTOFME_FIXTURES` is false.
+ *
+ * Why: figure lanes develop and test their island in isolation before the MDX
+ * uses it; the page never ships (`check:no-fixtures` fails if it does).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § Figures: common contract (Lab pages)
+ */
+import { UTOFME_FIXTURES } from "astro:env/server";
+import type ReplayBlock from "../../../components/article/ReplayBlock.astro";
+import BaseLayout from "../../../layouts/_BaseLayout.astro";
+
+/** Every Block takes `number` and the `caption` / `try` slots; Replay stands for the shape. */
+type BlockComponent = typeof ReplayBlock;
+
+/**
+ * Block modules by path, eager so ids can be listed.
+ *
+ * Why: `getStaticPaths` is hoisted out of the component scope, so it cannot see
+ * frontmatter variables; it and the page body each call the glob themselves.
+ */
+export function getStaticPaths() {
+	if (!UTOFME_FIXTURES) return [];
+	const found = import.meta.glob("../../../components/article/*Block.astro", { eager: true });
+	return Object.keys(found).map((path) => ({
+		params: {
+			id: (path.split("/").pop() ?? "")
+				.replace(/Block\.astro$/, "")
+				.replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+				.toLowerCase(),
+		},
+		props: { path },
+	}));
+}
+
+const blocks = import.meta.glob("../../../components/article/*Block.astro", { eager: true });
+const { id } = Astro.params;
+const { path } = Astro.props;
+const Block = (blocks[path] as { default: BlockComponent }).default;
+// Why: figure numbers in reading order; F13 (elo-sentence) is inline and unnumbered.
+const numbers: Record<string, number> = {
+	replay: 1,
+	"smoke-sight": 2,
+	"map-stages": 3,
+	machine: 4,
+	"roll-map": 5,
+	elo: 6,
+	noise: 7,
+	tempo: 8,
+	"agents-vs-pros": 9,
+	"free-peek": 10,
+	notebook: 11,
+};
+---
+
+<BaseLayout title={`Lab: ${id}`} noindex>
+	<main class="lab">
+		<h1>Figure lab: {id}</h1>
+		<div class="article-body">
+			<Block number={numbers[id ?? ""] ?? 1}>
+				<Fragment slot="caption">Placeholder caption for {id}.</Fragment>
+				<Fragment slot="try">use the placeholder control.</Fragment>
+			</Block>
+		</div>
+	</main>
+</BaseLayout>
+
+<style>
+	.lab {
+		width: var(--page-width);
+		margin-inline: auto;
+		padding-block: var(--space-6) var(--space-8);
+	}
+	.article-body {
+		max-inline-size: 60rem;
+	}
+</style>

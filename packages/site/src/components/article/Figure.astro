@@ -36,8 +36,12 @@ const capId = `${id}-cap`;
 const reserve = [aspect && `aspect-ratio:${aspect}`, minBlock && `min-block-size:${minBlock}`]
 	.filter(Boolean)
 	.join(";");
-const hasTry = Astro.slots.has("try");
-const hasDetails = Astro.slots.has("details");
+// Why: a Block forwards `<slot name="try" slot="try" />` unconditionally, so slot
+// presence is always true; render and test for content instead.
+const hasText = async (name: string): Promise<boolean> =>
+	Astro.slots.has(name) && (await Astro.slots.render(name)).trim() !== "";
+const hasTry = await hasText("try");
+const hasDetails = await hasText("details");
 ---
 
 <figure id={id} class={`fig fig--${width}`} data-figure aria-labelledby={capId}>

@@ -7,6 +7,9 @@
  */
 import { render } from "astro:content";
 import { getWorksCollection } from "../../lib/works-collection";
+import Note from "../../components/article/Note.astro";
+import SectionHeading from "../../components/article/SectionHeading.astro";
+import ArticleLayout from "../../layouts/_ArticleLayout.astro";
 import WorkLayout from "../../layouts/_WorkLayout.astro";
 import { prevNext } from "../../lib/prev-next";
 import { projectOgImage } from "../../lib/og-image";
@@ -41,6 +44,15 @@ const neighbours = prevNext(
 const ogImage = await projectOgImage(projectFields(entry.data).cover);
 ---
 
-<WorkLayout entry={entry} neighbours={neighbours} ogImage={ogImage}>
-	<Content />
-</WorkLayout>
+{
+	/* Why: presence of `article` selects the research-article variant (P10-1). */
+	projectFields(entry.data).article ? (
+		<ArticleLayout entry={entry} neighbours={neighbours} ogImage={ogImage}>
+			<Content components={{ h2: SectionHeading, aside: Note }} />
+		</ArticleLayout>
+	) : (
+		<WorkLayout entry={entry} neighbours={neighbours} ogImage={ogImage}>
+			<Content />
+		</WorkLayout>
+	)
+}

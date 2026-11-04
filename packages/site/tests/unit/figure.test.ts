@@ -53,6 +53,11 @@ describe("Figure", () => {
 		expect(t).toContain("as measured on block 20, Mirage");
 	});
 
+	it("treats an empty forwarded try slot as absent", async () => {
+		const html = await figure({ id: "f1", number: 1 }, { try: "  " });
+		expect(html).not.toContain("Try:");
+	});
+
 	it("renders <details> only with the details slot", async () => {
 		expect(await figure({ id: "f4", number: 8 })).not.toContain("<details");
 		const html = await figure({ id: "f4", number: 8 }, { details: "<table></table>" });
