@@ -18,20 +18,20 @@
 			"width": 1920
 		},
 		"card": {
-			"height": 432,
+			"height": 576,
 			"sources": [
 				{
-					"bytes": 50956,
+					"bytes": 69148,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/eeg-ads1299-lab/card.3752a3b5.av1.mp4"
+					"url": "/loops/eeg-ads1299-lab/card.e81972f4.av1.mp4"
 				},
 				{
-					"bytes": 66731,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/eeg-ads1299-lab/card.fd3a22a0.h264.mp4"
+					"bytes": 86383,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/eeg-ads1299-lab/card.d29b71f2.h264.mp4"
 				}
 			],
-			"width": 768
+			"width": 1024
 		},
 		"cardAspect": "16:9",
 		"durationS": 5.2,
@@ -47,7 +47,7 @@
 		"fps": 10,
 		"kind": "slideshow",
 		"posterPath": "src/assets/loops/eeg-ads1299-lab/poster.png",
-		"recipe": "7f198ff2"
+		"recipe": "411bca4d"
 	},
 	"enth": {
 		"aspect": "16:9",
@@ -68,20 +68,20 @@
 			"width": 1920
 		},
 		"card": {
-			"height": 464,
+			"height": 616,
 			"sources": [
 				{
-					"bytes": 97329,
+					"bytes": 127767,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/enth/card.f35038a9.av1.mp4"
+					"url": "/loops/enth/card.20b106e5.av1.mp4"
 				},
 				{
-					"bytes": 156012,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/enth/card.a0df4091.h264.mp4"
+					"bytes": 233262,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/enth/card.093fd9ae.h264.mp4"
 				}
 			],
-			"width": 696
+			"width": 924
 		},
 		"cardAspect": "3:2",
 		"cardPosterPath": "src/assets/loops/enth/card-poster.png",
@@ -91,14 +91,14 @@
 			"maxPerSecond": 0.29,
 			"renderWidthCss": {
 				"banner": 1280,
-				"card": 1088
+				"card": 1083
 			},
 			"status": "pass"
 		},
 		"fps": 10,
 		"kind": "slideshow",
 		"posterPath": "src/assets/loops/enth/poster.png",
-		"recipe": "f8dc49c3"
+		"recipe": "e079d515"
 	},
 	"fixture-testsrc": {
 		"aspect": "16:9",
@@ -119,20 +119,20 @@
 			"width": 1920
 		},
 		"card": {
-			"height": 432,
+			"height": 576,
 			"sources": [
 				{
-					"bytes": 62527,
+					"bytes": 79630,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/fixture-testsrc/card.a0afccf4.av1.mp4"
+					"url": "/loops/fixture-testsrc/card.9a2065fe.av1.mp4"
 				},
 				{
-					"bytes": 70605,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/fixture-testsrc/card.7c5bb9ec.h264.mp4"
+					"bytes": 102979,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/fixture-testsrc/card.5c553a4a.h264.mp4"
 				}
 			],
-			"width": 768
+			"width": 1024
 		},
 		"cardAspect": "16:9",
 		"durationS": 4,
@@ -148,7 +148,7 @@
 		"fps": 30,
 		"kind": "montage",
 		"posterPath": "src/assets/loops/fixture-testsrc/poster.png",
-		"recipe": "c2b7051e"
+		"recipe": "80341967"
 	},
 	"godot-ctcs": {
 		"aspect": "16:9",
@@ -169,20 +169,20 @@
 			"width": 1920
 		},
 		"card": {
-			"height": 460,
+			"height": 610,
 			"sources": [
 				{
-					"bytes": 111619,
+					"bytes": 162508,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/godot-ctcs/card.ed1b2aad.av1.mp4"
+					"url": "/loops/godot-ctcs/card.aabd9f67.av1.mp4"
 				},
 				{
-					"bytes": 210840,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/godot-ctcs/card.c6841147.h264.mp4"
+					"bytes": 313783,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/godot-ctcs/card.ccd6cbf7.h264.mp4"
 				}
 			],
-			"width": 736
+			"width": 976
 		},
 		"cardAspect": "16:10",
 		"cardPosterPath": "src/assets/loops/godot-ctcs/card-poster.png",
@@ -192,14 +192,14 @@
 			"maxPerSecond": 0.78,
 			"renderWidthCss": {
 				"banner": 1280,
-				"card": 1150
+				"card": 1144
 			},
 			"status": "pass"
 		},
 		"fps": 10,
 		"kind": "slideshow",
 		"posterPath": "src/assets/loops/godot-ctcs/poster.png",
-		"recipe": "2012cbc5"
+		"recipe": "7cf9887d"
 	},
 	"gr-demo-learn": {
 		"aspect": "16:9",
@@ -220,20 +220,20 @@
 			"width": 1920
 		},
 		"card": {
-			"height": 460,
+			"height": 610,
 			"sources": [
 				{
-					"bytes": 49816,
+					"bytes": 76400,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/gr-demo-learn/card.93d26536.av1.mp4"
+					"url": "/loops/gr-demo-learn/card.55e14ebd.av1.mp4"
 				},
 				{
-					"bytes": 71006,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/gr-demo-learn/card.62c5eca5.h264.mp4"
+					"bytes": 113487,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/gr-demo-learn/card.c2c63437.h264.mp4"
 				}
 			],
-			"width": 736
+			"width": 976
 		},
 		"cardAspect": "16:10",
 		"cardPosterPath": "src/assets/loops/gr-demo-learn/card-poster.png",
@@ -243,14 +243,14 @@
 			"maxPerSecond": 0.68,
 			"renderWidthCss": {
 				"banner": 1280,
-				"card": 1150
+				"card": 1144
 			},
 			"status": "pass"
 		},
 		"fps": 10,
 		"kind": "slideshow",
 		"posterPath": "src/assets/loops/gr-demo-learn/poster.png",
-		"recipe": "1f997977"
+		"recipe": "e2f475b9"
 	},
 	"linsae": {
 		"aspect": "16:9",
@@ -271,20 +271,20 @@
 			"width": 1920
 		},
 		"card": {
-			"height": 640,
+			"height": 850,
 			"sources": [
 				{
-					"bytes": 98995,
+					"bytes": 160933,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/linsae/card.7013e783.av1.mp4"
+					"url": "/loops/linsae/card.cf528348.av1.mp4"
 				},
 				{
-					"bytes": 148955,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/linsae/card.4afa4c6c.h264.mp4"
+					"bytes": 235153,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/linsae/card.81ac219f.h264.mp4"
 				}
 			],
-			"width": 512
+			"width": 680
 		},
 		"cardAspect": "4:5",
 		"cardPosterPath": "src/assets/loops/linsae/card-poster.png",
@@ -294,14 +294,14 @@
 			"maxPerSecond": 0.83,
 			"renderWidthCss": {
 				"banner": 1280,
-				"card": 800
+				"card": 797
 			},
 			"status": "pass"
 		},
 		"fps": 10,
 		"kind": "slideshow",
 		"posterPath": "src/assets/loops/linsae/poster.png",
-		"recipe": "7c7c90ac"
+		"recipe": "d0e1e1c4"
 	},
 	"modified-maxwell-taichi": {
 		"aspect": "16:9",
@@ -322,27 +322,27 @@
 			"width": 1920
 		},
 		"card": {
-			"height": 576,
+			"height": 768,
 			"sources": [
 				{
-					"bytes": 30451,
+					"bytes": 42600,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/modified-maxwell-taichi/card.b06737ef.av1.mp4"
+					"url": "/loops/modified-maxwell-taichi/card.ca6603a1.av1.mp4"
 				},
 				{
-					"bytes": 44535,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/modified-maxwell-taichi/card.d9f8f6f7.h264.mp4"
+					"bytes": 65275,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/modified-maxwell-taichi/card.8f2269e1.h264.mp4"
 				}
 			],
-			"width": 576
+			"width": 768
 		},
 		"cardAspect": "1:1",
 		"cardPosterPath": "src/assets/loops/modified-maxwell-taichi/card-poster.png",
 		"durationS": 2.9,
 		"flash": {
-			"maxEventsPerWindow": 2,
-			"maxPerSecond": 0.69,
+			"maxEventsPerWindow": 1,
+			"maxPerSecond": 0.34,
 			"renderWidthCss": {
 				"banner": 1280,
 				"card": 900
@@ -352,26 +352,26 @@
 		"fps": 30,
 		"kind": "montage",
 		"posterPath": "src/assets/loops/modified-maxwell-taichi/poster.png",
-		"recipe": "c6cfdb1f"
+		"recipe": "140d2f57"
 	},
 	"modified-maxwell-taichi-pml": {
 		"aspect": "16:9",
 		"banner": null,
 		"card": {
-			"height": 432,
+			"height": 576,
 			"sources": [
 				{
-					"bytes": 16023,
+					"bytes": 23124,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/modified-maxwell-taichi-pml/card.f89b76a0.av1.mp4"
+					"url": "/loops/modified-maxwell-taichi-pml/card.55600e4d.av1.mp4"
 				},
 				{
-					"bytes": 30499,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/modified-maxwell-taichi-pml/card.fcb0eabb.h264.mp4"
+					"bytes": 45184,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/modified-maxwell-taichi-pml/card.fa01f1df.h264.mp4"
 				}
 			],
-			"width": 768
+			"width": 1024
 		},
 		"cardAspect": "16:9",
 		"durationS": 1.3,
@@ -387,7 +387,7 @@
 		"fps": 30,
 		"kind": "transcode",
 		"posterPath": "src/assets/loops/modified-maxwell-taichi-pml/poster.png",
-		"recipe": "330b1aa3"
+		"recipe": "c7738fdb"
 	},
 	"tactical-arena": {
 		"aspect": "16:9",
@@ -408,20 +408,20 @@
 			"width": 1920
 		},
 		"card": {
-			"height": 576,
+			"height": 768,
 			"sources": [
 				{
-					"bytes": 48168,
+					"bytes": 63768,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/tactical-arena/card.280beb6c.av1.mp4"
+					"url": "/loops/tactical-arena/card.c7f0008d.av1.mp4"
 				},
 				{
-					"bytes": 59364,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/tactical-arena/card.103e1d74.h264.mp4"
+					"bytes": 81849,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/tactical-arena/card.2e6d4f72.h264.mp4"
 				}
 			],
-			"width": 576
+			"width": 768
 		},
 		"cardAspect": "1:1",
 		"cardPosterPath": "src/assets/loops/tactical-arena/card-poster.png",
@@ -438,32 +438,32 @@
 		"fps": 30,
 		"kind": "montage",
 		"posterPath": "src/assets/loops/tactical-arena/poster.png",
-		"recipe": "0121a2fa"
+		"recipe": "e1930d9b"
 	},
 	"tactical-arena-smokes": {
 		"aspect": "16:9",
 		"banner": null,
 		"card": {
-			"height": 432,
+			"height": 576,
 			"sources": [
 				{
-					"bytes": 22357,
+					"bytes": 28726,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/tactical-arena-smokes/card.48a048cc.av1.mp4"
+					"url": "/loops/tactical-arena-smokes/card.e0277c58.av1.mp4"
 				},
 				{
-					"bytes": 30291,
-					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/tactical-arena-smokes/card.fba9200c.h264.mp4"
+					"bytes": 37789,
+					"type": "video/mp4; codecs=\"avc1.64001F\"",
+					"url": "/loops/tactical-arena-smokes/card.9445a10a.h264.mp4"
 				}
 			],
-			"width": 768
+			"width": 1024
 		},
 		"cardAspect": "16:9",
 		"durationS": 2,
 		"flash": {
-			"maxEventsPerWindow": 4,
-			"maxPerSecond": 2,
+			"maxEventsPerWindow": 3,
+			"maxPerSecond": 1.5,
 			"renderWidthCss": {
 				"banner": null,
 				"card": 1200
@@ -473,6 +473,6 @@
 		"fps": 30,
 		"kind": "transcode",
 		"posterPath": "src/assets/loops/tactical-arena-smokes/poster.png",
-		"recipe": "626f7056"
+		"recipe": "82d86f52"
 	}
 }
