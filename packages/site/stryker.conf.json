@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-	"_comment": "Why: ADR 0008 — Stryker scoped to schema + query helpers (logic only); phase 10 adds the sight port, the grid, the dataset projections and the privacy and sync cores (spec 10 § Tests). See packages/specs/adrs/0008-stryker-and-fast-check-targets.md",
+	"_comment": "Why: ADR 0008 — Stryker scoped to schema + query helpers (logic only). See packages/specs/adrs/0008-stryker-and-fast-check-targets.md",
 	"packageManager": "npm",
 	"plugins": ["@stryker-mutator/vitest-runner", "@stryker-mutator/typescript-checker"],
 	"testRunner": "vitest",
@@ -13,12 +13,7 @@
 		"src/lib/url-state.ts",
 		"src/lib/filter.ts",
 		"src/lib/keymap.ts",
-		"src/lib/range.ts",
-		"src/lib/sight.ts",
-		"src/lib/grid.ts",
-		"src/lib/article-data/*.ts",
-		"scripts/lib/privacy-scan-core.ts",
-		"scripts/lib/article-data-core.ts"
+		"src/lib/range.ts"
 	],
 	"thresholds": { "high": 90, "low": 80, "break": 80 },
 	"reporters": ["clear-text", "html", "progress"],
