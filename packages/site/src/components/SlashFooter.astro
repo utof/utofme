@@ -30,12 +30,14 @@ const year = new Date().getFullYear();
 </footer>
 
 <style>
-	/* Why: --footer-inset lets a page align the footer with its own side margin
-	 * (the masonry home sets it to --page-margin via <body data-minimal>);
-	 * every other page keeps the original 12 px inset. */
+	/* Why: the footer sits in the shared page column (--page-width) so its left
+	 * edge matches every page's header and content on every route. */
 	footer {
+		width: var(--page-width);
+		margin-inline: auto;
+		box-sizing: border-box;
 		margin-top: var(--space-6);
-		padding: var(--space-4) var(--footer-inset, var(--space-3));
+		padding-block: var(--space-4);
 		border-top: 1px solid var(--color-border);
 		display: flex;
 		flex-wrap: wrap;
@@ -55,6 +57,19 @@ const year = new Date().getFullYear();
 	footer a:hover {
 		color: var(--color-text);
 		text-decoration: underline;
+	}
+	/* Why: >=44x44 hit area without changing the visual size (WCAG 2.5.8 target). */
+	footer a {
+		position: relative;
+	}
+	footer a::after {
+		content: "";
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: max(100%, 44px);
+		height: 44px;
+		transform: translate(-50%, -50%);
 	}
 	nav ul {
 		display: flex;

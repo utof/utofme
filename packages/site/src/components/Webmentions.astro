@@ -13,6 +13,7 @@
  *
  * @see packages/specs/specs/06-indieweb.md § Architecture (Webmentions render fallbacks)
  */
+import { UTOFME_FIXTURES } from "astro:env/server";
 import type { Mention } from "../lib/webmentions-types.ts";
 
 interface Props {
@@ -25,7 +26,14 @@ const { slug } = Astro.props;
 const all = import.meta.glob<{ default: Mention[] }>("../data/webmentions/*.json", {
 	eager: true,
 });
-const file = all[`../data/webmentions/${slug}.json`];
+// Why: seed mentions (example.com authors) live in `webmentions-fixtures/` and only
+// render while `UTOFME_FIXTURES` is true, like fixture works; the deploy shows real data only.
+const seeds = import.meta.glob<{ default: Mention[] }>("../data/webmentions-fixtures/*.json", {
+	eager: true,
+});
+const file =
+	all[`../data/webmentions/${slug}.json`] ??
+	(UTOFME_FIXTURES ? seeds[`../data/webmentions-fixtures/${slug}.json`] : undefined);
 const mentions: Mention[] = file?.default ?? [];
 
 // Why: Set.has() is O(1) vs Array.includes() O(n); also eliminates the
@@ -73,6 +81,7 @@ function publishedAt(m: Mention): string {
 								referrerpolicy="no-referrer"
 								width="32"
 								height="32"
+								onerror="this.hidden=true"
 							/>
 						)}
 						<span class="p-name">{authorName(m)}</span>
@@ -81,7 +90,7 @@ function publishedAt(m: Mention): string {
 			</ul>
 		)}
 		{replies.length > 0 && (
-			<ol class="webmention-replies">
+			<ul class="webmention-replies">
 				{replies.map((m) => (
 					<li class="h-cite">
 						<span class="p-name">{authorName(m)}</span>
@@ -98,7 +107,30 @@ function publishedAt(m: Mention): string {
 						)}
 					</li>
 				))}
-			</ol>
+			</ul>
 		)}
 	</aside>
 )}
+
+<style>
+	/* Why: likes and replies share one plain list style (no bullets / numbers). */
+	.webmention-likes,
+	.webmention-replies {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.webmention-likes li {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+	.webmention-replies li {
+		margin-block: var(--space-3);
+	}
+	/* Why: a failed avatar is hidden by onerror; the author name still reads. */
+	.webmention-avatar {
+		border-radius: 50%;
+		background: var(--color-surface-hover);
+	}
+</style>

@@ -16,6 +16,10 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { bindGlobalChord } from "../lib/keymap";
+	import { type PaletteLink, matchesLabel } from "../lib/palette";
+
+	/** Build-time work / note / lab destinations (see PaletteMount.astro). */
+	let { links = [] }: { links?: PaletteLink[] } = $props();
 
 	// ---------------------------------------------------------------------------
 	// Types
@@ -83,20 +87,14 @@
 	 *
 	 * @see packages/specs/plans/02-interactivity.md § Task 9
 	 */
+	const everything = $derived<Action[]>([
+		...allActions,
+		...links.map((l): Action => ({ id: l.id, label: l.label, kind: "navigate", target: l.target })),
+	]);
 	const filtered = $derived.by(() => {
-		const q = query.trim().toLowerCase();
-		if (!q) return allActions;
-		return allActions.filter((a) => {
-			const label = a.label.toLowerCase();
-			// Substring match
-			if (label.includes(q)) return true;
-			// Initials match: "gth" matches "Go to home"
-			const initials = label
-				.split(/\s+/)
-				.map((w) => w[0] ?? "")
-				.join("");
-			return initials.includes(q);
-		});
+		// Empty query: only the short command list, not every project.
+		if (!query.trim()) return allActions;
+		return everything.filter((a) => matchesLabel(a.label, query));
 	});
 
 	// Reset selection whenever the filtered list changes
@@ -285,7 +283,7 @@
 		<input
 			type="text"
 			data-palette-input
-			placeholder="Type a command…"
+			placeholder="Type a command or project…"
 			bind:value={query}
 			autocomplete="off"
 			spellcheck={false}

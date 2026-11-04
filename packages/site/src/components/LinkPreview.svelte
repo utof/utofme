@@ -96,8 +96,16 @@
 			card.style.top = `${pos.y}px`;
 		}
 
+		// Why: `focusout` also fires synchronously when Svelte removes a focused node
+		// (e.g. the palette input closing on Enter) while it is applying updates;
+		// a direct write then throws `state_unsafe_mutation`. Skip no-op writes and
+		// defer the real one to a microtask.
+		// @see https://svelte.dev/e/state_unsafe_mutation
 		function hide(): void {
-			visible = false;
+			if (!visible) return;
+			queueMicrotask(() => {
+				visible = false;
+			});
 		}
 
 		function onKeydown(e: KeyboardEvent): void {

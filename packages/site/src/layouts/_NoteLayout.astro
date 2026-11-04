@@ -66,6 +66,14 @@ const updated = entry.data.updated ?? entry.data.created;
 </BaseLayout>
 
 <style>
+	main {
+		width: var(--page-width);
+		margin-inline: auto;
+		padding-block: var(--space-4);
+	}
+	main > :global(*) {
+		max-width: 70ch;
+	}
 	/* tokens reused — only layout-specific overrides here. */
 	.note header {
 		margin-block-end: var(--space-3);

@@ -11,7 +11,10 @@
  * read from the committed manifest `src/data/loops.json`.
  *
  * `persistId` adds `transition:persist` so the same node survives a
- * ClientRouter morph (card → banner) and keeps playing.
+ * ClientRouter morph (card → banner) and keeps playing. That node carries the 768 px
+ * CARD rendition, so a banner frame also publishes its own sources in
+ * `data-banner-sources` (the frame is not persisted); after the morph
+ * `upgradeBannerLoops` (src/lib/loops/controller.ts) swaps in the 1920 px banner video.
  *
  * The `entry` / `poster` props are test seams (the Container-API test passes a
  * fixture instead of reading the manifest); pages never set them.
@@ -72,8 +75,8 @@ const poster = posterProp ?? posters[`../${entry.posterPath.replace(/^src\//, ""
 if (!poster) throw new Error(`LoopMedia: poster not found for "${slug}" at ${entry.posterPath}`);
 
 const rendition = size === "banner" && entry.banner ? entry.banner : entry.card;
-// Why: the banner poster is cut from the 1920x1080 banner master and shown up to 1280 CSS px wide
-// (2560 device px on DPR-2), so it offers every step up to the source width (sharp never upscales,
+// Why: the banner poster is cut from the 1920x1080 banner master and spans the page column (up to
+// ~1630 CSS px, more device px on DPR-2), so it offers every step up to the source width (sharp never upscales,
 // so a step above `poster.width` would only duplicate bytes). 1280 stays in the list: it is the
 // width `check:budgets` R4 measures the LCP poster at.
 const BANNER_POSTER_WIDTHS = [640, 960, 1280, 1920, 2560];
@@ -82,10 +85,15 @@ const widths =
 		? [...BANNER_POSTER_WIDTHS.filter((w) => w < poster.width), poster.width]
 		: [384, 768];
 const sizes =
-	size === "banner" ? "(min-width: 1280px) 1280px, 100vw" : "(min-width: 560px) 50vw, 100vw";
+	size === "banner" ? "(min-width: 700px) 85vw, 100vw" : "(min-width: 560px) 50vw, 100vw";
 ---
 
-<div class:list={["loop-frame", className]} data-loop-frame data-slug={slug}>
+<div
+	class:list={["loop-frame", className]}
+	data-loop-frame
+	data-slug={slug}
+	data-banner-sources={persistId && size === "banner" ? JSON.stringify(rendition) : undefined}
+>
 	<Picture
 		src={poster}
 		formats={["avif", "webp"]}

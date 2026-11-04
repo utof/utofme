@@ -374,14 +374,14 @@
 			"height": 1080,
 			"sources": [
 				{
-					"bytes": 203742,
+					"bytes": 229803,
 					"type": "video/mp4; codecs=\"av01.0.08M.08\"",
-					"url": "/loops/tactical-arena/banner.7afcad36.av1.mp4"
+					"url": "/loops/tactical-arena/banner.8ec47829.av1.mp4"
 				},
 				{
-					"bytes": 251355,
+					"bytes": 288317,
 					"type": "video/mp4; codecs=\"avc1.640028\"",
-					"url": "/loops/tactical-arena/banner.9aa7d47e.h264.mp4"
+					"url": "/loops/tactical-arena/banner.2dbb6bc0.h264.mp4"
 				}
 			],
 			"width": 1920
@@ -390,14 +390,14 @@
 			"height": 432,
 			"sources": [
 				{
-					"bytes": 66141,
+					"bytes": 57644,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/tactical-arena/card.c0364b24.av1.mp4"
+					"url": "/loops/tactical-arena/card.46a12098.av1.mp4"
 				},
 				{
-					"bytes": 72122,
+					"bytes": 67775,
 					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/tactical-arena/card.0e62c933.h264.mp4"
+					"url": "/loops/tactical-arena/card.4aba2dda.h264.mp4"
 				}
 			],
 			"width": 768
@@ -414,7 +414,7 @@
 		},
 		"fps": 30,
 		"posterPath": "src/assets/loops/tactical-arena/poster.png",
-		"recipe": "fa8c823f"
+		"recipe": "473a22be"
 	},
 	"tactical-arena-smokes": {
 		"aspect": "16:9",

@@ -1,0 +1,24 @@
+---
+/**
+ * Mounts the command palette with build-time work / note / lab destinations.
+ *
+ * Why: the palette island cannot read content collections; this wrapper builds
+ * the list (fixtures hidden via `getWorksCollection`) and passes it as a prop.
+ *
+ * @see packages/specs/plans/02-interactivity.md § Task 10
+ * @see src/lib/palette.ts
+ */
+import { getCollection } from "astro:content";
+import { buildPaletteLinks } from "../lib/palette";
+import { sortNotes } from "../lib/notes";
+import { getWorksCollection } from "../lib/works-collection";
+import CommandPalette from "./CommandPalette.svelte";
+
+const [works, notes] = await Promise.all([getWorksCollection(), getCollection("notes")]);
+const links = buildPaletteLinks(
+	works.filter((w) => w.data.draft !== true),
+	sortNotes(notes),
+);
+---
+
+<CommandPalette client:idle transition:persist links={links} />

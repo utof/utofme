@@ -8,8 +8,16 @@ import type { CollectionEntry } from "astro:content";
 import { getContainerRenderer as getSvelteRenderer } from "@astrojs/svelte/container-renderer";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import { mf2 } from "microformats-parser";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import WorkLayout from "../../src/layouts/_WorkLayout.astro";
+
+// Why: _BaseLayout mounts PaletteMount, which reads the content collections; the
+// container has no content layer, so give it empty collections.
+vi.mock("astro:content", async (importOriginal) => ({
+	...(await importOriginal<typeof import("astro:content")>()),
+	getCollection: async () => [],
+}));
+vi.mock("../../src/lib/works-collection", () => ({ getWorksCollection: async () => [] }));
 
 /**
  * Minimal works fixture — structurally satisfies CollectionEntry<"works">

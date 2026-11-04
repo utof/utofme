@@ -13,6 +13,8 @@
 	let target = $state({ x: 0, y: 0 });
 	let pos = $state({ x: 0, y: 0 });
 	let raf: number | undefined;
+	/** True after the first pointer move; until then the ring would sit at (0,0). The SSR markup stays invisible (never hydrates on coarse pointers). */
+	let ready = $state(false);
 
 	$effect(() => {
 		const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -20,6 +22,10 @@
 
 		const onMove = (e: PointerEvent) => {
 			target = { x: e.clientX, y: e.clientY };
+			if (!ready) {
+				pos = target;
+				ready = true;
+			}
 		};
 		window.addEventListener("pointermove", onMove, { passive: true });
 
@@ -36,7 +42,12 @@
 	});
 </script>
 
-<div data-cursor style:transform="translate3d({pos.x}px, {pos.y}px, 0)" aria-hidden="true"></div>
+<div
+	data-cursor
+	data-ready={ready ? "" : undefined}
+	style:transform="translate3d({pos.x}px, {pos.y}px, 0)"
+	aria-hidden="true"
+></div>
 
 <style>
 	[data-cursor] {
@@ -50,5 +61,10 @@
 		will-change: transform;
 		z-index: 9999;
 		mix-blend-mode: difference;
+		/* Why: SSR markup exists on touch devices where the island never hydrates (client:media). */
+		display: none;
+	}
+	[data-cursor][data-ready] {
+		display: block;
 	}
 </style>
