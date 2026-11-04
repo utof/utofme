@@ -52,7 +52,7 @@
 			{#if row[side].length === 3}
 				<path
 					class="av-ci av-ci--{side}"
-					d="M{trackX(row, row[side][1])},{cy + (side === 'agent' ? -4 : 4)}H{trackX(
+					d="M{trackX(row, row[side][1])},{cy + (side === 'agent' ? -7 : 7)}H{trackX(
 						row,
 						row[side][2],
 					)}"
@@ -64,12 +64,12 @@
 			data-fact={ROW_DEFS[row.id].facts?.agent}
 			cx={trackX(row, row.agent[0])}
 			{cy}
-			r="5"
+			r="6.5"
 		/>
 		<path
 			class="av-pro"
 			data-fact={ROW_DEFS[row.id].facts?.pro}
-			d={markPath("pro", trackX(row, row.pro[0]), cy, 6.5)}
+			d={markPath("pro", trackX(row, row.pro[0]), cy, 8.5)}
 		/>
 	</svg>
 	<span class="av-vals">
@@ -205,7 +205,7 @@
 	.av-track {
 		grid-area: track;
 		inline-size: 100%;
-		block-size: 24px;
+		block-size: 32px;
 	}
 	.av-vals {
 		grid-area: vals;
@@ -220,7 +220,7 @@
 		fill: none;
 	}
 	.av-ci {
-		stroke-width: 3;
+		stroke-width: 4;
 		fill: none;
 	}
 	.av-ci--agent {

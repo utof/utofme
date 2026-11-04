@@ -379,7 +379,7 @@ export function afterRows(data: EloData): AfterRow[] {
  * Why: typed contract between the pure logic, the keyframe and the island.
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-7
  */
-export const PANEL = { w: 320, h: 180, left: 40, right: 12, top: 12, bottom: 30 } as const;
+export const PANEL = { w: 320, h: 194, left: 40, right: 12, top: 12, bottom: 44 } as const;
 
 /**
  * The 3v3 panel's own axis, geometry and two series.
@@ -525,10 +525,11 @@ export function panelSvg(data: EloData): { markup: string; summary: string } {
 		);
 	for (const t of p.xTicks)
 		parts.push(
-			`<text x="${pf(p.x(t))}" y="${PANEL.h - 12}" text-anchor="middle" style="${TEXT.tick}">${t}</text>`,
+			`<text x="${pf(p.x(t))}" y="${PANEL.h - PANEL.bottom + 18}" text-anchor="middle" style="${TEXT.tick}">${t}</text>`,
 		);
 	parts.push(
-		`<text x="${PANEL.left}" y="${PANEL.h - 1}" style="${TEXT.note}">3v3 training block</text>`,
+		// Why: the axis title sits a full line below the tick labels so neither clips (reader's pass).
+		`<text x="${PANEL.left}" y="${PANEL.h - 4}" style="${TEXT.note}">3v3 training block</text>`,
 	);
 	for (const sr of p.series)
 		parts.push(

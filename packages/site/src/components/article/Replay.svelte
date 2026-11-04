@@ -561,16 +561,12 @@
 					>{pb.playing ? "Pause" : "Play"}</button
 				>
 				<div class="rp-scrub">
-					<div
-						class="rp-pros"
-						style={`left:${(prosFraction * 100).toFixed(1)}%`}
-						aria-hidden="true"
-					></div>
-					<span
-						class="rp-pros-label"
-						style={`left:${(prosFraction * 100).toFixed(1)}%`}
-						aria-hidden="true">Pros' median first contact, about {pros.text}</span
-					>
+					<div class="rp-track" aria-hidden="true">
+						<div class="rp-pros" style={`left:${(prosFraction * 100).toFixed(1)}%`}></div>
+						<span class="rp-pros-label" style={`left:${(prosFraction * 100).toFixed(1)}%`}
+							>Pros' median first contact, about {pros.text}</span
+						>
+					</div>
 					<!-- Why: one mark per 0.8 s (a tick); decorative, so hidden from assistive tech. -->
 					<div class="rp-ticks" style={`--ticks:${nTicks - 1}`} aria-hidden="true"></div>
 					<input
@@ -591,7 +587,7 @@
 								type="button"
 								class="rp-marker"
 								data-kind={g.items[0]?.kind}
-								style={`left:${(scrubFraction(g.tick, nTicks) * 100).toFixed(2)}%`}
+								style={`--f:${scrubFraction(g.tick, nTicks).toFixed(4)}`}
 								aria-label={`${formatSeconds(ticksToSeconds(g.tick))}: ${g.items.map((m) => m.label).join("; ")}`}
 								title={`tick ${g.tick}`}
 								onclick={() => seek(g.tick)}
@@ -735,18 +731,26 @@
 		min-inline-size: 0;
 		block-size: 100%;
 	}
+	/* Why: the range sits 4 px in and its ~16 px thumb centres 8 px further, so every time
+	 * position is 12 px in from the scrub's edges; ticks, markers and the pros' line share that
+	 * track, and the 24 px end markers stay inside the bar (AC1.7). */
 	.rp-scrub input[type="range"] {
 		position: absolute;
-		inset-inline: 0;
+		inset-inline-start: 4px;
 		inset-block-end: 2px;
-		inline-size: 100%;
+		inline-size: calc(100% - 8px);
 		margin: 0;
 		block-size: 18px;
 	}
+	.rp-track {
+		position: absolute;
+		inset-inline: 12px;
+		inset-block: 0;
+		pointer-events: none;
+	}
 	.rp-ticks {
 		position: absolute;
-		/* The native thumb is about 16 px wide, so the track starts 8 px in. */
-		inset-inline: 8px;
+		inset-inline: 12px;
 		inset-block-end: 6px;
 		block-size: 10px;
 		background-image: linear-gradient(to right, var(--color-border) 1px, transparent 1px);
@@ -779,6 +783,8 @@
 	}
 	.rp-marker {
 		position: absolute;
+		/* Why: centred on the 12 px-inset track, so the 24 px end markers end flush with the bar. */
+		left: calc(12px + (100% - 24px) * var(--f));
 		inline-size: 24px;
 		block-size: 24px;
 		padding: 0;

@@ -134,6 +134,7 @@
 }
 .rm-board {
 	display: block;
+	box-sizing: border-box;
 	inline-size: 100%;
 	aspect-ratio: 1;
 	border: 1px solid var(--color-border);
@@ -173,29 +174,29 @@
 	fill: var(--color-t);
 }
 
-/* The strip: a fixed-height row, scrolling sideways when twelve thumbnails do not fit. */
+/* The strip: a fixed-height row of twelve thumbnails that shrink to fit the column; figures
+ * never scroll sideways on a phone (spec P10-1 grid, AC1.7). */
 .rm-strip-wrap {
 	block-size: 3.5rem;
 }
 .rm-strip {
-	display: flex;
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 2.75rem));
 	gap: var(--space-1);
 	margin: 0;
 	padding: 0 0 var(--space-1);
 	list-style: none;
-	overflow-x: auto;
-	scroll-snap-type: x proximity;
 }
 .rm-thumb {
-	flex: none;
-	inline-size: 2.75rem;
-	block-size: 2.75rem;
+	display: block;
+	box-sizing: border-box;
+	inline-size: 100%;
+	aspect-ratio: 1;
 	padding: 2px;
 	background: var(--color-bg);
 	border: 1px solid var(--color-border);
 	border-radius: var(--radius-sm);
 	cursor: pointer;
-	scroll-snap-align: start;
 }
 .rm-thumb[aria-current="true"] {
 	border-color: var(--color-text);

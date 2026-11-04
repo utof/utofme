@@ -235,7 +235,9 @@ export function noiseSvg(data: NoiseData, state: NoiseState, l: NoiseLayout): st
 		);
 	out.push(
 		`<text x="${pf(x(n) + 6)}" y="${top - 12}" style="${T.lab}">${formatSigned(n, 1).replace("+", "±")}</text>`,
-		`<text x="${pf(x(-half) - 4)}" y="${top - 12}" text-anchor="end" style="${T.note}">tournament noise, 90 %: ±${formatNumber(half, 1)}</text>`,
+		// Why: centred over the band a line higher, the label stays inside the drawing at every band
+		// width; anchored to the band's left edge it ran off a phone's left edge (reader's pass).
+		`<text x="${pf(x(0))}" y="${top - 26}" text-anchor="middle" style="${T.note}">tournament noise, 90 %: ±${formatNumber(half, 1)}</text>`,
 	);
 	let y = top;
 	rows(data).forEach((row, idx) => {
