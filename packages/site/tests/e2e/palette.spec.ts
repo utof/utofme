@@ -251,42 +251,49 @@ test.describe("CommandPalette — /", () => {
 	// Why: transition:persist only takes effect when Astro's ClientRouter handles
 	// navigation. ClientRouter wired in Task 12 — this test now exercises SPA nav.
 	// @see packages/specs/plans/02-interactivity.md § Task 10
-	test("9. palette persists across route navigation (ClientRouter wired)", async ({ page }) => {
-		await page.goto("/");
-		await waitForPalette(page);
-		await openPalette(page);
+	// Why every layout family: #135 reported the palette vanishing on SPA navigation to
+	// /now/, /uses/, /colophon/ (_SlashLayout) and /stats/. It no longer reproduces; the loop
+	// keeps all of them pinned.
+	for (const route of ["/search/", "/now/", "/uses/", "/colophon/", "/stats/"]) {
+		test(`9. palette persists across route navigation to ${route} (ClientRouter wired)`, async ({
+			page,
+		}) => {
+			await page.goto("/");
+			await waitForPalette(page);
+			await openPalette(page);
 
-		const dialog = page.locator('[role="dialog"][data-palette]');
-		await expect(dialog).toBeVisible({ timeout: 100 });
+			const dialog = page.locator('[role="dialog"][data-palette]');
+			await expect(dialog).toBeVisible({ timeout: 100 });
 
-		// Type a query so we can verify state is preserved after nav
-		await page.keyboard.type("now");
-		const input = dialog.locator("input");
-		await expect(input).toHaveValue("now", { timeout: 300 });
+			// Type a query so we can verify state is preserved after nav
+			await page.keyboard.type("now");
+			const input = dialog.locator("input");
+			await expect(input).toHaveValue("now", { timeout: 300 });
 
-		// Navigate to /search/ via in-page anchor click so ClientRouter intercepts it.
-		// Why: page.goto() is a full browser navigation and bypasses ClientRouter;
-		// transition:persist only works when ClientRouter handles the swap.
-		// Clicking a synthetic same-origin anchor triggers the SPA swap path.
-		await page.evaluate(() => {
-			const a = document.createElement("a");
-			a.href = "/search/";
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
+			// Navigate to /search/ via in-page anchor click so ClientRouter intercepts it.
+			// Why: page.goto() is a full browser navigation and bypasses ClientRouter;
+			// transition:persist only works when ClientRouter handles the swap.
+			// Clicking a synthetic same-origin anchor triggers the SPA swap path.
+			await page.evaluate((path) => {
+				const a = document.createElement("a");
+				a.href = path;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+			}, route);
+			await page.waitForURL((url) => url.pathname === route, { timeout: 5000 });
+			// Why: paletteReady flag is already set before nav; transition:persist keeps
+			// the CommandPalette island alive — onMount does not re-fire. We wait a beat
+			// for the SPA swap to settle then assert directly on the existing DOM.
+			await page.waitForTimeout(300);
+
+			// Palette should still be open and query preserved
+			const dialogAfterNav = page.locator('[role="dialog"][data-palette]');
+			await expect(dialogAfterNav).toBeVisible({ timeout: 1000 });
+			const inputAfterNav = dialogAfterNav.locator("input");
+			await expect(inputAfterNav).toHaveValue("now", { timeout: 500 });
 		});
-		await page.waitForURL(/\/search/, { timeout: 5000 });
-		// Why: paletteReady flag is already set before nav; transition:persist keeps
-		// the CommandPalette island alive — onMount does not re-fire. We wait a beat
-		// for the SPA swap to settle then assert directly on the existing DOM.
-		await page.waitForTimeout(300);
-
-		// Palette should still be open and query preserved
-		const dialogAfterNav = page.locator('[role="dialog"][data-palette]');
-		await expect(dialogAfterNav).toBeVisible({ timeout: 1000 });
-		const inputAfterNav = dialogAfterNav.locator("input");
-		await expect(inputAfterNav).toHaveValue("now", { timeout: 500 });
-	});
+	}
 });
 
 test("Ctrl+K keeps the first press from the browser, lets the second through", async ({ page }) => {

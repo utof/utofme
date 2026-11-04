@@ -27,6 +27,12 @@ declare global {
 		 * @see packages/specs/plans/07-atmosphere.md § T2 TDD red cases
 		 */
 		__startCalls: number;
+		/**
+		 * Count of settled `decodeAudioData` calls, set by the same init script.
+		 *
+		 * Why: a deterministic "buffers ready" signal instead of a fixed sleep (#99).
+		 */
+		__decoded: number;
 		/** Vendor-prefixed AudioContext present on some older Chromium builds. */
 		webkitAudioContext?: typeof AudioContext;
 	}
@@ -112,8 +118,16 @@ test("sound: cmd-k keydown plays the cmd-k buffer", async ({ page }) => {
 	// Instrument BEFORE navigation so the patch runs in the page context on load.
 	await page.addInitScript(() => {
 		window.__startCalls = 0;
+		window.__decoded = 0;
 		const Ctor = window.AudioContext || window.webkitAudioContext;
 		if (!Ctor) return;
+		const origDecode = Ctor.prototype.decodeAudioData;
+		Ctor.prototype.decodeAudioData = function (this: AudioContext, ...args: [ArrayBuffer]) {
+			return origDecode.apply(this, args).then((buf: AudioBuffer) => {
+				window.__decoded += 1;
+				return buf;
+			});
+		};
 		const origCreate = Ctor.prototype.createBufferSource;
 		Ctor.prototype.createBufferSource = function (this: AudioContext) {
 			const node = origCreate.call(this) as AudioBufferSourceNode;
@@ -136,8 +150,8 @@ test("sound: cmd-k keydown plays the cmd-k buffer", async ({ page }) => {
 	// wait for the toggle's aria-pressed to be "true" as a proxy that the click
 	// was processed, then give decode time to complete.
 	await expect(page.locator("[data-sound-toggle]")).toHaveAttribute("aria-pressed", "true");
-	// Small grace period for async decode pipeline to finish before we fire cmd-K.
-	await page.waitForTimeout(500);
+	// Both clips (cmd-k + hover) must be decoded before we fire cmd-K.
+	await page.waitForFunction(() => window.__decoded >= 2, undefined, { timeout: 4000 });
 
 	const before = await page.evaluate(() => window.__startCalls);
 
