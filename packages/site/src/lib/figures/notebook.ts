@@ -299,10 +299,11 @@ export function buildTimeline(
 	for (let d = first; d <= last; d += 1) {
 		const dt = new Date(d * DAY_MS);
 		if (d === first || dt.getUTCDay() === 1 || dt.getUTCDate() === 1) {
-			ticks.push({
-				x: opts.left + (d - first) * dayW + dayW / 2,
-				label: `${dt.getUTCDate()} ${MONTHS[dt.getUTCMonth()]}`,
-			});
+			const x = opts.left + (d - first) * dayW + dayW / 2;
+			const prev = ticks[ticks.length - 1];
+			// Why: a label closer than 3 days to the previous one would overprint it; keep the later.
+			if (prev && x - prev.x < dayW * 3) ticks.pop();
+			ticks.push({ x, label: `${dt.getUTCDate()} ${MONTHS[dt.getUTCMonth()]}` });
 		}
 	}
 	return { w: opts.w, h: top, left: opts.left, rows, ticks, byId };

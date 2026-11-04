@@ -35,7 +35,6 @@
 		type Selection,
 		STAGES,
 		stageIndex,
-		summary,
 		wrapLabel,
 	} from "../../lib/figures/machine";
 
@@ -210,13 +209,34 @@
 				viewBox="0 0 {layout.w} {layout.h}"
 				role="group"
 				aria-labelledby={labelId}
-				aria-describedby="f6-desc"
+				aria-describedby="f6-readout"
 			>
 				{#each groups as g (g.id)}
 					<g class="mc-group">
 						<rect x={g.x} y={g.y} width={g.w} height={g.h} rx="10" />
 						<text x={g.x + 8} y={g.y + 14}>{g.label}</text>
 					</g>
+				{/each}
+				{#each arrows as { id, g } (id)}
+					{#if g}
+						<g
+							class="mc-edge"
+							class:on={onEdges.has(id)}
+							class:dim={!onEdges.has(id)}
+							class:sel={isSel("edge", id)}
+							aria-hidden="true"
+						>
+							<path d={g.d} fill="none" />
+							<path
+								class="mc-head"
+								d="M0 0L-9 -4.5L-9 4.5Z"
+								transform="translate({g.tip.x.toFixed(1)} {g.tip.y.toFixed(1)}) rotate({(
+									(g.angle * 180) /
+									Math.PI
+								).toFixed(1)})"
+							/>
+						</g>
+					{/if}
 				{/each}
 				{#each order as id (id)}
 					{@const n = data.nodes.find((x) => x.id === id)}
@@ -260,10 +280,7 @@
 				{#each arrows as { e, id, g } (id)}
 					{#if g}
 						<g
-							class="mc-edge"
-							class:on={onEdges.has(id)}
-							class:dim={!onEdges.has(id)}
-							class:sel={isSel("edge", id)}
+							class="mc-hit"
 							role="button"
 							tabindex="0"
 							aria-label={edgeName(data, e)}
@@ -277,15 +294,6 @@
 							onkeydown={(ev) => onEdgeKey(ev, e.from, e.to, id)}
 						>
 							<path d={g.d} fill="none" />
-							<path class="mc-hit" d={g.d} fill="none" />
-							<path
-								class="mc-head"
-								d="M0 0L-9 -4.5L-9 4.5Z"
-								transform="translate({g.tip.x.toFixed(1)} {g.tip.y.toFixed(1)}) rotate({(
-									(g.angle * 180) /
-									Math.PI
-								).toFixed(1)})"
-							/>
 						</g>
 					{/if}
 				{/each}
@@ -305,13 +313,12 @@
 				Next
 			</button>
 		</div>
-		<div class="mc-readout" data-readout>
+		<div class="mc-readout" id="f6-readout" data-readout>
 			<p class="mc-title">{out.title}</p>
 			<p class="mc-text">{out.text}</p>
 			{#if out.receives}<p class="mc-line">{out.receives}</p>{/if}
 			{#if out.sends}<p class="mc-line">{out.sends}</p>{/if}
 		</div>
-		<p id="f6-desc" class="mc-sr">{summary(data, stage)}</p>
 		<p class="mc-sr" aria-live="polite">{live}</p>
 	{/if}
 </div>

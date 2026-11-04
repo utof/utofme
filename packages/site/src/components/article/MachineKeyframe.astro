@@ -185,21 +185,29 @@ const views = (["wide"] as const).map((kind) => {
 	.calm .mc-edge {
 		transition: none;
 	}
-	.mc-node[role="button"],
-	.mc-edge[role="button"] {
+	.mc-node[role="button"] {
 		cursor: pointer;
 	}
-	.mc-edge .mc-hit {
+	.mc-hit path {
 		stroke: transparent;
 		stroke-width: 16;
 		pointer-events: stroke;
+		cursor: pointer;
+	}
+	.mc-hit:focus {
+		outline: none;
+	}
+	.mc-hit:focus-visible path {
+		stroke: var(--color-focus);
+		stroke-opacity: 0.55;
+		stroke-width: 7;
 	}
 	.mc-node.sel rect {
 		stroke: var(--color-link);
 		stroke-width: 3;
 		fill: var(--color-focus-tint);
 	}
-	.mc-edge.sel path:not(.mc-hit) {
+	.mc-edge.sel path {
 		stroke: var(--color-link);
 		stroke-width: 3.2;
 	}
@@ -210,20 +218,14 @@ const views = (["wide"] as const).map((kind) => {
 	.mc-edge.dim.sel {
 		opacity: 1;
 	}
-	.mc-node:focus,
-	.mc-edge:focus {
+	.mc-node:focus {
 		outline: none;
 	}
 	.mc-node:focus-visible rect {
 		stroke: var(--color-focus);
 		stroke-width: 3.5;
 	}
-	.mc-edge:focus-visible path:not(.mc-hit) {
-		stroke: var(--color-focus);
-		stroke-width: 4;
-	}
-	.mc-node:focus-visible,
-	.mc-edge:focus-visible {
+	.mc-node:focus-visible {
 		opacity: 1;
 	}
 	.mc-btn:disabled {

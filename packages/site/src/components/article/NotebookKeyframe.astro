@@ -125,7 +125,7 @@ const star = HIGHLIGHT_IDS.map((id) => entries.find((e) => e.id === id)).filter(
 		gap: var(--space-1) var(--space-2);
 		block-size: 9.5rem;
 		padding: var(--space-1) var(--space-3);
-		overflow: hidden;
+		overflow-y: auto;
 	}
 	.nb-chip-label {
 		flex-basis: 100%;
@@ -158,11 +158,13 @@ const star = HIGHLIGHT_IDS.map((id) => entries.find((e) => e.id === id)).filter(
 		outline: none;
 		box-shadow: var(--shadow-focus);
 	}
+	.nb-stage {
+		margin-inline: var(--space-3);
+	}
 	.nb-stage-ph {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin-inline: var(--space-3);
 		background: var(--color-surface);
 		color: var(--color-text-muted);
 		font-size: var(--font-size-ui);
@@ -330,6 +332,11 @@ const star = HIGHLIGHT_IDS.map((id) => entries.find((e) => e.id === id)).filter(
 	.calm .nb-ring {
 		transition: none;
 	}
+	@media (max-width: 1099px) {
+		.nb-chips {
+			block-size: 13rem;
+		}
+	}
 	@media (max-width: 700px) {
 		.nb-stage,
 		.nb-hl-more {
@@ -344,7 +351,7 @@ const star = HIGHLIGHT_IDS.map((id) => entries.find((e) => e.id === id)).filter(
 			overflow: hidden;
 		}
 		.nb-chips {
-			block-size: 13rem;
+			block-size: 18rem;
 		}
 		.nb-legend {
 			block-size: 5.5rem;

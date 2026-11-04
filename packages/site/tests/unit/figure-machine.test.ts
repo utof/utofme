@@ -191,6 +191,6 @@ describe("machine behaviour", () => {
 	});
 	it("edgeName reads from → to", () => {
 		const e = data.edges[0];
-		expect(e && edgeName(data, e)).toContain(": from ");
+		expect(e && edgeName(data, e)).toContain(" to ");
 	});
 });

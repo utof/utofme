@@ -22,6 +22,7 @@ interface Props {
 	parkedSrc: string;
 	parkedShape: typeof PSHAPE;
 	labelId: string;
+	parkedCount: number;
 }
 
 /**
@@ -43,6 +44,7 @@ const freshProps = (): Props => {
 		parkedSrc: `/_astro/notebook_parked.test${urlN}.json`,
 		parkedShape: PSHAPE,
 		labelId: "f7-cap",
+		parkedCount: 74,
 	};
 };
 const q = <T extends Element>(sel: string) => document.querySelector<T>(sel);

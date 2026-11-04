@@ -56,10 +56,12 @@
 		parkedShape: Shape;
 		/** Id of the figure caption (`aria-labelledby`). */
 		labelId: string;
+		/** Number of parked ideas, for the drawer's label before it is opened. */
+		parkedCount: number;
 		/** The SSR keyframe. */
 		children?: Snippet;
 	}
-	const { src, shape, parkedSrc, parkedShape, labelId, children }: Props = $props();
+	const { src, shape, parkedSrc, parkedShape, labelId, parkedCount, children }: Props = $props();
 
 	let data: NotebookData | null = $state(null);
 	let failed = $state(false);
@@ -427,7 +429,7 @@
 			{/if}
 		</div>
 		<details class="nb-drawer" ontoggle={onDrawer}>
-			<summary>Parked and ruled out: {parked ? parked.parked.length : "ideas"}</summary>
+			<summary>Parked and ruled out: {parkedCount} ideas</summary>
 			{#if parkedState === "loading"}
 				<p class="nb-fail">Loading…</p>
 			{:else if parkedState === "error"}

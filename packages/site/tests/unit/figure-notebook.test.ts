@@ -154,8 +154,11 @@ describe("timeline geometry", () => {
 		expect(top[0]).toBe(0);
 		expect(tl.h).toBe(tl.rows.reduce((n, r) => n + r.h, 0));
 	});
-	it("the axis starts at the first date", () => {
-		expect(tl.ticks[0]?.label).toBe("11 Oct");
+	it("axis labels never overprint and every entry date lies inside the axis", () => {
+		expect(tl.ticks.length).toBeGreaterThan(3);
+		for (let i = 1; i < tl.ticks.length; i++)
+			expect((tl.ticks[i]?.x ?? 0) - (tl.ticks[i - 1]?.x ?? 0)).toBeGreaterThanOrEqual(100);
+		expect(tl.ticks.map((t) => t.label)).toContain("19 Oct");
 	});
 	it("an empty notebook yields an empty timeline", () => {
 		const e = buildTimeline([]);

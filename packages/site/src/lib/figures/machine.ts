@@ -83,15 +83,15 @@ export const VERTICAL_POS: Readonly<Record<string, Point>> = {
 	train: { x: 92, y: 308 },
 	league: { x: 268, y: 308 },
 	ckpt: { x: 92, y: 392 },
-	tour: { x: 268, y: 392 },
-	elo: { x: 92, y: 476 },
-	referee: { x: 268, y: 476 },
-	rec: { x: 92, y: 560 },
+	gpus: { x: 268, y: 392 },
+	tour: { x: 92, y: 476 },
+	backup: { x: 268, y: 476 },
+	elo: { x: 92, y: 560 },
 	queue: { x: 268, y: 560 },
-	v2d: { x: 92, y: 644 },
-	gpus: { x: 268, y: 644 },
-	v3d: { x: 92, y: 728 },
-	backup: { x: 268, y: 728 },
+	rec: { x: 92, y: 644 },
+	referee: { x: 268, y: 644 },
+	v2d: { x: 92, y: 728 },
+	v3d: { x: 268, y: 728 },
 };
 
 /**
@@ -261,25 +261,25 @@ export const NODE_COPY: Readonly<Record<string, string>> = {
 	mapc: "Compiles the real maps' walkable areas into grids with heights, measures how CS-like a map is, and sets the generator's knobs.",
 	prodemo:
 		"224 pro CS2 maps, parsed tick by tick. Their bullets, kills and timings tune the shot model and give human yardsticks.",
-	env: "The game: 5 against 5 on a 28 × 28 grid, a decision every 0.8 seconds, with a bomb, fog of war, sound, grenades, an economy and crouching. Written in JAX, so thousands of games run at once.",
-	bots: "Hand-written Counter-Strike playbooks (rushes, executes, fakes, retakes). They see only what their team could know and use the agents' controls.",
+	env: "The game: 5 against 5 on a 28 × 28 grid, a decision every 0.8 seconds, with a bomb, fog of war, sound, grenades, an economy and crouching. Written in JAX to run thousands at once.",
+	bots: "Hand-written Counter-Strike playbooks (rushes, executes, fakes, retakes). They see only what their team could and use the agents' controls.",
 	train:
-		"Self-play reinforcement learning (PPO). One network controls each player, sees only that player's view, and picks a move, a turn and an action in turn.",
+		"Self-play reinforcement learning (PPO). One network controls each player, sees only that player's view, and picks a move, a turn, an action.",
 	league:
 		"Chooses opponents: half the games the latest self, half older versions, one in five scripted bots.",
-	ckpt: "The saved agents and logs of every run. A new block starts from the last one; older ones fill the opponent pool.",
+	ckpt: "The saved agents and logs of every run. A new block starts from the last; older ones fill the opponent pool.",
 	tour: "Every pair of agents plays both sides on the CS maps, 8,000 rounds per pair for an A/B test.",
-	elo: "Fits Elo ratings to the tournament and compares seed-paired runs with a 90 % bootstrap interval. The CS maps decide.",
+	elo: "Fits Elo to the tournament and compares seed-paired runs with a 90 % bootstrap interval. The CS maps decide.",
 	referee:
-		"A real CS2 server I can read and steer, to check my game against the original. Agents cannot play in it yet.",
-	rec: "Replays rounds of agents and bots with analysis on (what each player sees, how likely each action was) and saves them as tables.",
+		"A real CS2 server I can read and steer, to check my game against the original. Agents cannot play there yet.",
+	rec: "Replays rounds of agents and bots with analysis on (what each player sees, how likely each action was) and saves them.",
 	v2d: "A local web app: map, timeline, policy and stats panels, what-if edits, heat maps.",
 	v3d: "A 3D view of the same rounds, optionally over the real CS2 map. A person can take one player's slot.",
 	queue:
 		"Jobs wait in a first-in, first-out line per machine and can be paused or restarted without losing the run.",
-	gpus: "Where training runs: my laptop drives everything, a desktop GTX 1660 Ti and a friend's RTX 2080 Ti train, and a small cloud budget covers bursts.",
+	gpus: "Where training runs: my laptop drives, a desktop GTX 1660 Ti and a friend's RTX 2080 Ti train, and a small cloud budget covers bursts.",
 	backup:
-		"Every fifteen minutes each active run is copied somewhere safe, so a frozen machine loses little.",
+		"Each active run is copied somewhere safe every fifteen minutes, so a frozen machine loses little.",
 };
 
 /**
@@ -580,7 +580,6 @@ export function edgeName(
 	data: ArchitectureData,
 	e: { from: string; to: string; label: string },
 ): string {
-	const from = data.nodes.find((n) => n.id === e.from)?.label ?? e.from;
-	const to = data.nodes.find((n) => n.id === e.to)?.label ?? e.to;
-	return `${e.label}: from ${from} to ${to}`;
+	const name = (id: string): string => data.nodes.find((n) => n.id === id)?.label ?? id;
+	return `${e.label}: ${name(e.from)} to ${name(e.to)}`;
 }
