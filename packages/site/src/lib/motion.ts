@@ -5,7 +5,7 @@
  * Stored in `localStorage["utofme:motion"]` (`"paused"` | `"playing"`); when the
  * key is absent the state follows `prefers-reduced-motion`, so reduced-motion
  * users get posters by default and can opt in. Mirrored on `<html data-motion>`
- * so CSS (hover zoom) can react without JS, and broadcast as `utofme:motion`.
+ * so CSS (the card caption reveal) can react without JS, and broadcast as `utofme:motion`.
  *
  * @see packages/specs/specs/09-project-view.md § P9-6
  * @see https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html
@@ -62,7 +62,7 @@ export function isMotionPaused(): boolean {
 /**
  * Reflect the current state on `<html data-motion>`.
  *
- * Why: CSS hook (hover zoom) and re-applied after ClientRouter swaps, which drop it.
+ * Why: CSS hook (caption reveal) and re-applied after ClientRouter swaps, which drop it.
  *
  * @see packages/specs/specs/09-project-view.md § P9-6
  */

@@ -47,19 +47,19 @@ const ThumbFor = {
  * How many leading DOM cards load eagerly.
  *
  * Why: the masonry is column-major (CSS multi-column) and every card keeps its own aspect, so the
- * balancer decides how many cards each column holds: the head of column 1 is DOM card 1, but the heads
- * of columns 2 and 3 are later DOM cards (with the 7 works they are 3 and 6, measured at 1280 and
- * 1920 px wide). 4 matches the `eagerCardCount` budget and covers the heads of columns 1 and 2 and the
- * second tile of column 1; the column-3 head (card 6) lazy-loads although it is in the first viewport
- * (not the LCP: only card 1 gets `fetchpriority="high"`). Raising both numbers to 6 is the follow-up
- * recorded in the ADR addendum, together with the R4 selector (`.loop-media`, the DOM says `.loop-frame`).
+ * balancer decides how many cards each column holds: the head of column 1 is DOM card 1, but the head
+ * of column 2 is a later DOM card (5 with the 7 works, measured at 1280 and 1920 px wide).
+ * 4 matches the `eagerCardCount` budget and covers the first two tiles of column 1; the column-2 head
+ * (card 5) lazy-loads although it is in the first viewport (not the LCP: only card 1 gets
+ * `fetchpriority="high"`). Raising both numbers to 5 is the follow-up recorded in the ADR addendum,
+ * together with the R4 selector (`.loop-media`, the DOM says `.loop-frame`).
  *
  * @see packages/specs/reviews/09-spec-review.md finding 5
  * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
 const EAGER_CARDS = 4;
 
-/** One masonry column: mirrors the column breakpoints in the stylesheet below (3 / 2 / 1 columns). */
+/** One masonry column: mirrors the column breakpoint in the stylesheet below (2 columns from 560 px, else 1). */
 const COVER_SIZES = MASONRY_COLUMN_SIZES;
 ---
 
@@ -228,13 +228,6 @@ const COVER_SIZES = MASONRY_COLUMN_SIZES;
 	@media (min-width: 560px) {
 		.masonry {
 			column-count: 2;
-		}
-	}
-
-	/* Desktop: three narrower columns inside the 1340 px page column. */
-	@media (min-width: 1100px) {
-		.masonry {
-			column-count: 3;
 		}
 	}
 </style>

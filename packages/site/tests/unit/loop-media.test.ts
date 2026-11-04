@@ -153,9 +153,7 @@ describe("LoopMedia.astro markup contract", () => {
 
 	it("the card sizes hint is the masonry column, the banner's is its own", async () => {
 		const html = await render({});
-		expect(html).toContain(
-			'sizes="(min-width: 1635px) 439px, (min-width: 1100px) calc(26.7vw + 3px), (min-width: 560px) 50vw, 100vw"',
-		);
+		expect(html).toContain('sizes="(min-width: 560px) 50vw, 100vw"');
 	});
 
 	it("alt text lands on the poster image", async () => {
