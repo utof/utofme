@@ -1,0 +1,297 @@
+---
+/**
+ * MachineKeyframe.astro — the no-JS fallback of figure F6: the whole diagram with the training
+ * loop (stage 4) highlighted, the stage counter "4 / 9" and the stage's sentence. Both layouts are
+ * rendered (wide and vertical); CSS shows one.
+ *
+ * Why: the island shows this until it hydrates and keeps it if its data fails to load; the
+ * caption's claim must be visible without JavaScript. Its markup and sizes mirror the island's so
+ * hydration moves nothing (CLS, spec common contract).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-10 (fallback)
+ */
+import type { ArchitectureData } from "../../lib/article-data/architecture";
+import {
+	arrowGeom,
+	DEFAULT_STAGE,
+	edgeId,
+	groupBoxes,
+	layoutFor,
+	readout,
+	STAGES,
+	summary,
+	wrapLabel,
+} from "../../lib/figures/machine";
+
+/** Props for MachineKeyframe. */
+export interface Props {
+	/** The projected `architecture` data (server side only; never passed to the island). */
+	data: ArchitectureData;
+}
+
+const { data } = Astro.props;
+const stage = STAGES[DEFAULT_STAGE];
+const onNodes = new Set(stage?.nodes);
+const onEdges = new Set(stage?.edges);
+const out = readout(data, null, DEFAULT_STAGE);
+const reverse = new Set(data.edges.map((e) => `${e.to}>${e.from}`));
+const views = (["wide", "narrow"] as const).map((kind) => {
+	const layout = layoutFor(data, kind);
+	return {
+		kind,
+		layout,
+		max: kind === "wide" ? 21 : 19,
+		groups: kind === "wide" ? groupBoxes(data, layout) : [],
+		arrows: data.edges.map((e) => ({
+			e,
+			id: edgeId(e),
+			g: arrowGeom(layout, e, reverse.has(edgeId(e))),
+		})),
+	};
+});
+---
+
+<div class="mc-stage">
+	{views.map((v) => (
+		<svg
+			class={`mc-svg mc-${v.kind}`}
+			viewBox={`0 0 ${v.layout.w} ${v.layout.h}`}
+			role="img"
+			aria-label={summary(data, DEFAULT_STAGE)}
+		>
+			{v.groups.map((g) => (
+				<g class="mc-group">
+					<rect x={g.x} y={g.y} width={g.w} height={g.h} rx="10" />
+					<text x={g.x + 8} y={g.y + 14}>
+						{g.label}
+					</text>
+				</g>
+			))}
+			{v.arrows.map(({ id, g }) =>
+				g ? (
+					<g class={onEdges.has(id) ? "mc-edge on" : "mc-edge dim"}>
+						<path d={g.d} fill="none" />
+						<path
+							class="mc-head"
+							d="M0 0L-9 -4.5L-9 4.5Z"
+							transform={`translate(${g.tip.x.toFixed(1)} ${g.tip.y.toFixed(1)}) rotate(${((g.angle * 180) / Math.PI).toFixed(1)})`}
+						/>
+					</g>
+				) : null,
+			)}
+			{data.nodes.map((n) => {
+				const p = v.layout.pos[n.id];
+				const lines = wrapLabel(n.label, v.max);
+				return p ? (
+					<g class={onNodes.has(n.id) ? "mc-node on" : "mc-node dim"}>
+						<rect
+							x={p.x - v.layout.boxW / 2}
+							y={p.y - v.layout.boxH / 2}
+							width={v.layout.boxW}
+							height={v.layout.boxH}
+							rx="8"
+						/>
+						{lines.map((line, i) => (
+							<text x={p.x} y={p.y + (i - (lines.length - 1) / 2) * 15 + 4} text-anchor="middle">
+								{line}
+							</text>
+						))}
+					</g>
+				) : null;
+			})}
+		</svg>
+	))}
+</div>
+<div class="mc-nav" aria-hidden="true">
+	<span class="mc-btn">Previous</span>
+	<span class="mc-count">
+		{DEFAULT_STAGE + 1} / {STAGES.length}
+	</span>
+	<span class="mc-btn">Next</span>
+</div>
+<div class="mc-readout">
+	<p class="mc-title">{out.title}</p>
+	<p class="mc-text">{out.text}</p>
+</div>
+
+<style is:global>
+	.mc-stage {
+		display: block;
+	}
+	.mc-svg {
+		display: block;
+		inline-size: 100%;
+		block-size: auto;
+		font-size: 12px;
+	}
+	.mc-narrow {
+		display: none;
+	}
+	.mc-group rect {
+		fill: var(--color-surface);
+		stroke: var(--color-border-strong);
+		stroke-dasharray: 4 4;
+	}
+	.mc-group text {
+		fill: var(--color-text-muted);
+		font-size: 11px;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+	.mc-node rect {
+		fill: var(--color-bg);
+		stroke: var(--color-text-muted);
+		stroke-width: 1.2;
+	}
+	.mc-node text {
+		fill: var(--color-text);
+	}
+	.mc-node.on rect {
+		stroke: var(--color-text);
+		stroke-width: 2.4;
+		fill: var(--color-focus-tint);
+	}
+	.mc-edge path {
+		stroke: var(--color-text-muted);
+		stroke-width: 1.3;
+	}
+	.mc-edge .mc-head {
+		fill: var(--color-text-muted);
+		stroke: none;
+	}
+	.mc-edge.on path {
+		stroke: var(--color-text);
+		stroke-width: 2.6;
+	}
+	.mc-edge.on .mc-head {
+		fill: var(--color-text);
+	}
+	.mc-node,
+	.mc-edge {
+		transition: opacity var(--motion-base);
+	}
+	.calm .mc-node,
+	.calm .mc-edge {
+		transition: none;
+	}
+	.mc-node[role="button"],
+	.mc-edge[role="button"] {
+		cursor: pointer;
+	}
+	.mc-edge .mc-hit {
+		stroke: transparent;
+		stroke-width: 16;
+		pointer-events: stroke;
+	}
+	.mc-node.sel rect {
+		stroke: var(--color-link);
+		stroke-width: 3;
+		fill: var(--color-focus-tint);
+	}
+	.mc-edge.sel path:not(.mc-hit) {
+		stroke: var(--color-link);
+		stroke-width: 3.2;
+	}
+	.mc-edge.sel .mc-head {
+		fill: var(--color-link);
+	}
+	.mc-node.dim.sel,
+	.mc-edge.dim.sel {
+		opacity: 1;
+	}
+	.mc-node:focus,
+	.mc-edge:focus {
+		outline: none;
+	}
+	.mc-node:focus-visible rect {
+		stroke: var(--color-focus);
+		stroke-width: 3.5;
+	}
+	.mc-edge:focus-visible path:not(.mc-hit) {
+		stroke: var(--color-focus);
+		stroke-width: 4;
+	}
+	.mc-node:focus-visible,
+	.mc-edge:focus-visible {
+		opacity: 1;
+	}
+	.mc-btn:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+	.mc-btn:focus-visible,
+	.mc-retry:focus-visible {
+		outline: none;
+		box-shadow: var(--shadow-focus);
+	}
+	.mc-sr {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	.mc-fail {
+		margin: var(--space-2);
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+	.mc-node.dim,
+	.mc-edge.dim {
+		opacity: 0.55;
+	}
+	.mc-nav {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-3);
+		block-size: 3.25rem;
+		font-size: var(--font-size-ui);
+	}
+	.mc-btn {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 40px;
+		padding-inline: var(--space-4);
+		border: 1px solid var(--color-border-strong);
+		border-radius: var(--radius-pill);
+		background: var(--color-bg);
+		color: var(--color-text-body);
+		font: inherit;
+		cursor: pointer;
+	}
+	.mc-count {
+		min-inline-size: 4rem;
+		text-align: center;
+		font-variant-numeric: tabular-nums;
+		color: var(--color-text);
+	}
+	.mc-readout {
+		box-sizing: border-box;
+		min-block-size: 9.5rem;
+		padding: var(--space-2) var(--space-3) var(--space-3);
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+	.mc-title {
+		margin: 0 0 var(--space-1);
+		font-weight: 600;
+		color: var(--color-text);
+	}
+	.mc-text,
+	.mc-line {
+		margin: 0 0 var(--space-1);
+	}
+	@media (max-width: 700px) {
+		.mc-wide {
+			display: none;
+		}
+		.mc-narrow {
+			display: block;
+		}
+		.mc-readout {
+			min-block-size: 12rem;
+		}
+	}
+</style>
