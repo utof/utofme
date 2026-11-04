@@ -1,0 +1,81 @@
+---
+/**
+ * TempoKeyframe.astro — SSR fallback of figure F4: the revealed view for block 28 and first
+ * contact (both strips, the three medians and the pros' interval), with its stamp and the
+ * computed sentences. Complete without JS.
+ *
+ * Why: the no-JS reader gets the answer the island hides behind its guess; the island swaps it
+ * out on load, and the two share `TempoPlot` and the footer height so nothing shifts.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-8
+ */
+import type { TempoData } from "../../lib/article-data/tempo";
+import { formatSeconds } from "../../lib/figure-scale";
+import { earlySentence, prosMedianText, stampText } from "../../lib/figures/tempo";
+import TempoPlot from "./TempoPlot.svelte";
+
+/** Props for TempoKeyframe. */
+export interface Props {
+	data: TempoData;
+	rerunDate: string;
+	prosMaps: string;
+	labelId: string;
+}
+
+const { data, rerunDate, prosMaps, labelId } = Astro.props;
+const agents = data.series.b28.contact;
+const pros = data.series.pros.contact;
+const [, , agentMedian] = agents.q;
+const summary = `Histograms of first contact per round. Agents, block 28: median ${formatSeconds(agentMedian ?? 0)}. Pros: median ${formatSeconds(pros.q[2])}.`;
+---
+
+<div class="tp-box-ssr">
+	<div role="img" aria-label={summary}>
+		<TempoPlot
+			data={data}
+			agent="b28"
+			metric="contact"
+			revealed={true}
+			guess={null}
+			interactive={false}
+			labelId={labelId}
+			prosMaps={prosMaps}
+		/>
+	</div>
+	<div class="tp-foot">
+		<p class="tp-sentence">{earlySentence(agents, pros)}</p>
+		<p class="tp-sentence">
+			The pros' median first contact is {prosMedianText(data.prosCi.contact)}.
+		</p>
+		<p class="tp-stamp" data-stamp>
+			{stampText(data, "b28", rerunDate, prosMaps)}
+		</p>
+	</div>
+</div>
+
+<style>
+	.tp-box-ssr {
+		inline-size: 100%;
+	}
+	.tp-foot {
+		min-block-size: var(--tp-foot, 14rem);
+		padding: var(--space-3) var(--space-2) 0;
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+	@media (min-width: 701px) {
+		.tp-foot {
+			min-block-size: var(--tp-foot, 11rem);
+		}
+	}
+	.tp-sentence {
+		margin: 0 0 var(--space-1);
+	}
+	.tp-stamp {
+		margin: var(--space-2) 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--font-size-1);
+		color: var(--color-text-muted);
+		overflow-wrap: anywhere;
+	}
+</style>

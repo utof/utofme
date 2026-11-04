@@ -1,0 +1,66 @@
+{
+	"about": "How fast rounds go: agents make first contact at ~9.6 s, CS2 pros at ~22.8 s",
+	"headline": {
+		"head_contact_s": 9.6,
+		"pros_contact_s": 22.8,
+		"pros_ci": [22.14, 23.63],
+		"src": "notes/EXAMPLE.md:1"
+	},
+	"tick_s": 0.8,
+	"pros": {
+		"contact_s_median": [22.8, 22.14, 23.63, 4822],
+		"contact_s_mean": [29.69, 28.94, 30.49, 4822],
+		"spotted_s_median": [33.25, 32.25, 34.75, 4754],
+		"first_dmg_s_median": [15.92, 15.36, 16.58, 4825],
+		"first_kill_s_median": [29.7, 28.84, 30.89, 4820],
+		"first_kill_s_mean": [36.85, 35.91, 37.84, 4820],
+		"plant_s_median": [74.65, 72.14, 76.53, 2422],
+		"len_s_median": [91.44, 89.77, 93.19, 4825],
+		"len_s_mean": [89.6, 88.39, 90.74, 4825]
+	},
+	"medians": [
+		{
+			"who": "CS2 pros",
+			"contact": 22.8,
+			"first_kill": 29.7,
+			"plant": 74.65,
+			"round": 91.44,
+			"src": "notes/EXAMPLE.md:1"
+		},
+		{
+			"who": "5v5 head g5line28 (self-play, CS maps)",
+			"contact": 9.6,
+			"first_kill": 13.6,
+			"plant": 33.6,
+			"round": 54.4,
+			"src": "notes/EXAMPLE.md:1"
+		},
+		{
+			"who": "5v5 head on real-mesh sight",
+			"contact": 10.4,
+			"first_kill": 14.4,
+			"src": "notes/EXAMPLE.md:1"
+		},
+		{
+			"who": "scripted bots (v2, 5v5)",
+			"contact": 17.6,
+			"plant": 32.8,
+			"src": "notes/EXAMPLE.md:1"
+		},
+		{
+			"who": "3v3 agent genshot2_s1 (10-25)",
+			"contact": 9.6,
+			"first_kill": 15.2,
+			"plant": 27.2,
+			"round": 48.8,
+			"src": "notes/EXAMPLE.md:1"
+		},
+		{
+			"who": "snap arm snapb2 (snap game)",
+			"contact": 9.6,
+			"first_kill": 12.8,
+			"plant": 31.2,
+			"src": "notes/EXAMPLE.md:1"
+		}
+	]
+}
