@@ -8,8 +8,9 @@ Phase 10 turns `/works/tactical-arena/` into an article with twelve interactive 
 - `RouteDoc.islands` records each `astro-island`: `opts.name`, `client`, component and renderer URLs, decoded `props` byte length.
 - R2: the route's lazy JS closure ≤ `lazyJs` for classes that declare it.
 - R9: outside `/lab/`, no `client:load` or `client:only` island with a closure above 20 KB gzip.
-- R10: per island, the exclusive closure (chunks reachable from its component, minus the first-view set, minus chunks reachable from other islands) ≤ `islandJs[name]`. An island without an entry is an error. Shared chunks are counted once, in R2.
-- Lazy data (`_astro/*.json` named by the route's chunks) is report-only, with a warning above 120 KB gzip.
+- R10: per island, the exclusive closure (chunks reachable from its component, minus the first-view set, minus chunks reachable from other islands) ≤ `islandJs[name]`. An island without an entry is an error, except eager (`load`/`only`/`idle`) islands, which R1/R9 cover, and the site chrome's islands listed in `chromeIslands` (`CommandPalette`, `LinkPreview`, `CustomCursor`). Shared chunks are counted once, in R2.
+- Lazy data (`_astro/*.json` named by the route's chunks or passed to an island in its `props`, the way figure Blocks hand over their dataset URL) is report-only, raw and gzip, with a warning above 120 KB gzip.
+- The `article` class's CSS limits are 30 KB (`css` and `cssMath`): Astro links every island's CSS in `<head>`, so eleven figures add ~1–1.5 KB gzip each on top of KaTeX and the layouts; the spec's 15 KB held only the stub figures.
 - No `htmlWarn`: the core already warns at 85 % of every limit.
 
 ## Alternatives
@@ -19,7 +20,7 @@ Phase 10 turns `/works/tactical-arena/` into an article with twelve interactive 
 
 ## Consequences
 - A new figure needs an `islandJs` entry before its page builds green.
-- The JSON-reference scan is textual (quoted `*.json` strings inside `_astro/` chunks); a bundler change that hides the names would make the data column read zero, not fail.
+- The JSON-reference scan is textual (quoted `*.json` strings inside `_astro/` chunks and `/_astro/*.json` URLs inside island props); a bundler change that hides the names would make the data column read zero, not fail.
 
 ## Sources
 - packages/specs/specs/10-tactical-arena-article.md § P10-16

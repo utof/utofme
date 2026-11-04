@@ -13,7 +13,7 @@ The research article's figures need real data that lives in a private notes repo
 - **Facts.** `<from>/facts.json` → `src/data/article-meta/facts.json`: strict whitelist `v, digits, unit?, sign?, alt?, lo?, hi?, measuredOn?`; `src` is dropped; the file is scanned with the shipped rule set because its text is printed on the page. `src/lib/facts.ts` reads it on the server only; an unknown key throws, so the build fails.
 - **Loading in the browser.** Blocks import the data twice statically: the JSON module (server only, for the SSR keyframe) and `…json?url&no-inline` (emits `dist/_astro/<name>.<hash>.json`; plain `?url` would inline a `data:` URI). The island gets `url` and `shape`. `loadFigureData<T>(url, shape, { signal })` does `fetch` → `res.ok` → `json()` → shape check (schema id and every top-level key) → `T`, with typed `FigureDataError` kinds `http | network | shape | abort`. One request per URL per page: callers share it, only the last abort cancels it, failures are not cached (Retry), and the cache is cleared on `astro:before-swap`. No Zod on the client: the file was validated at sync and in CI and cannot change after the build.
 - **Formatting.** `src/lib/figure-scale.ts` rounds once (half away from zero on the binary value), groups with commas, prints U+2212 and joins units with U+00A0. Facts store values as printed in their unit, so `<N>` never rounds a stored value again.
-- **Biome ignores `src/data/article/**` and `src/data/article-meta/**`** (`biome.json`): the canonical compact form cannot be both Biome-formatted and byte-stable for the sidecar hash. A commit that stages only those JSON files makes the lefthook `biome-format` job fail with "No files were processed"; stage them with any other file or run the job with `--no-errors-on-unmatched`.
+- **Biome ignores `src/data/article/**` and `src/data/article-meta/**`** (`biome.json`): the canonical compact form cannot be both Biome-formatted and byte-stable for the sidecar hash. The lefthook `biome-format` job runs with `--no-errors-on-unmatched`, so a commit that stages only those JSON files passes it (before integration it failed with "No files were processed").
 - **Declared surface** (CLAUDE.md hard gate): the local env var `UTOFME_ARTICLE_DATA` (notes folder; never set in CI, never written to a committed file) and the fixture-build-only routes `/lab/figures/[id]` and `/lab/article-layout` (never deployed; ADR 0055's `check:no-fixtures` guards the deploy build).
 
 ## Alternatives
@@ -28,7 +28,7 @@ The research article's figures need real data that lives in a private notes repo
 - Adding a figure's data is one module, one fixture folder and one `sync:article-data --only <name>`; CI re-verifies the committed files without the notes repo.
 - The committed JSON is canonical, so reviews see data changes as one-line diffs per file and the sidecar hash proves nobody hand-edited it.
 - A data re-export that adds or moves a field fails the sync at the field's JSON path instead of shipping.
-- The biome exclusion and the data-only-commit caveat above are the price of byte-stable files.
+- The Biome exclusion is the price of byte-stable files.
 
 ## Sources
 - https://vite.dev/guide/assets (`?url`, `?no-inline`)

@@ -9,7 +9,7 @@ Status: accepted (phase 10, spec P10-1)
 - **One route, two layouts.** Presence of `article` in the frontmatter selects `_ArticleLayout.astro` in `src/pages/works/[...slug].astro`; absent, `_WorkLayout.astro` renders exactly as before.
 - **The banner is shared.** The banner block (markup, `ProjectStill` fallback and `.banner` CSS) moved verbatim into `ProjectBanner.astro`; golden markup tests (`tests/fixtures/banner-golden/`) pin the extraction for a loop and a still cover, so the morph and `banner-quality.spec.ts` are unaffected.
 - **Layout.** Banner → header (breadcrumb and eyebrow share the `.nav-row`; `h1` = `article.headline`, `.lede` = `article.dek`; meta with "Updated") → hidden `u-url` → `nav[aria-label="Sections"]` → `.e-content.article-body` → prev/next. The body is a CSS grid from 1200 px (text 38rem, aside 18rem, a `rest` track so `fig--full` reaches the page width); one column below. Figures take `fig--text|wide|full` from `Figure.astro`.
-- **Server-rendered conveniences.** MDX `h2` and `aside` map to `SectionHeading.astro` (adds the `#` anchor with `aria-label`) and `Note.astro` (`role="note"`, since a bare `<aside>` in `<main>` fails Axe's top-level-landmark rule). No client JS.
+- **Server-rendered conveniences.** MDX `h2` maps to `SectionHeading.astro` (adds the `#` anchor with `aria-label`). The boxed note is `Note.astro` (`<aside class="note" role="note">`, since a bare `<aside>` in `<main>` fails Axe's top-level-landmark rule), imported by the MDX: the `components` map replaces only markdown-generated elements, never a literal `<aside>`, so an `aside` mapping would be dead code (removed in integration). At 1200 px and wider the note sits in the aside column and spans two grid rows, so the next paragraph flows beside it. No client JS.
 - **Lab pages never ship.** `/lab/figures/<id>/` and `/lab/article-layout/` exist only when `UTOFME_FIXTURES` is true. Because `getStaticPaths` only applies to dynamic routes, the layout lab is `src/pages/lab/[layout].astro` with a single path.
 
 ## Alternatives
@@ -19,7 +19,7 @@ Status: accepted (phase 10, spec P10-1)
 
 ## Consequences
 - Both layouts duplicate a few header rules (`h1`, `.lede`, `.nav-row`); the banner CSS has a single home.
-- MDX authors write plain `##` headings and `<aside>`; the components map handles anchors and the note role.
+- MDX authors write plain `##` headings (the components map adds the anchors) and import `Note` for the boxed aside.
 - The lab layout page is a static dynamic-route file, not `article-layout.astro`.
 
 ## Sources
