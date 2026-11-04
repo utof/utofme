@@ -13,7 +13,7 @@ const manifest: Record<string, { posterPath: string }> = loopsJson;
  *
  * Why: a structural subset of the works `cover` field keeps the helper free of the content layer.
  *
- * @see packages/specs/reviews/ui/polish.md (P-11)
+ * @see UI polish review, branch review/ui2-polish (P-11)
  */
 export interface OgCover {
 	src: ImageMetadata;
@@ -40,7 +40,7 @@ export function focusPosition(focus: number): "top" | "center" | "bottom" {
  * page opens with, so it is the share image; without a loop the cover still is used.
  * `getImage` crops (`fit: cover`) and re-encodes to JPEG, so the file stays small.
  *
- * @see packages/specs/reviews/ui/polish.md (P-11)
+ * @see UI polish review, branch review/ui2-polish (P-11)
  * @see https://docs.astro.build/en/reference/modules/astro-assets/#getimage
  */
 export async function projectOgImage(cover: OgCover | undefined): Promise<string | undefined> {

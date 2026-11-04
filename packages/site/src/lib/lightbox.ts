@@ -7,7 +7,7 @@
  * the top layer for free; this module only adds backdrop click, arrow-key
  * stepping and focus return to the thumbnail. No dependency, ~1 KB gzipped.
  *
- * @see packages/specs/reviews/ui/polish.md (P-03)
+ * @see UI polish review, branch review/ui2-polish (P-03)
  * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog
  */
 

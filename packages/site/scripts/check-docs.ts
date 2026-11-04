@@ -13,11 +13,43 @@
  * @see CLAUDE.md
  */
 
+import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { type JSDoc, Node, Project } from "ts-morph";
 
 /** Regex that matches a "Why:" documentation line anywhere in JSDoc inner text. */
 const WHY_RE = /^\s*\*?\s*Why:/m;
+
+/** Matches a `@see` target that names a repo-local file (as opposed to a URL or prose). */
+const LOCAL_SEE_RE = /^(?:packages\/|docs\/|CLAUDE\.md|README\.md)/;
+
+/**
+ * Returns the repo-local paths cited by `@see` tags on the given docs that do not
+ * exist on disk, resolved against `repoRoot`.
+ *
+ * Why: a `@see packages/specs/adrs/NNNN-…md` forward-reference used to pass
+ * check:docs even though the ADR had not landed (#95); asserting local file
+ * existence turns a dangling pointer into a precommit failure. Only the first
+ * whitespace-delimited token is checked, so trailing `§ Task N` / `(note)` text is fine.
+ * @see https://github.com/utof/utofme/issues/95
+ */
+function missingLocalSeeTargets(jsDocs: JSDoc[], repoRoot: string): string[] {
+	const missing: string[] = [];
+	for (const doc of jsDocs) {
+		for (const tag of doc.getTags()) {
+			if (tag.getTagName() !== "see") continue;
+			// getText() rather than getCommentText(): TS parses the first token of `@see` as the tag's `name`.
+			const target =
+				tag
+					.getText()
+					.replace(/^@see\s+/, "")
+					.trim()
+					.split(/\s+/)[0] ?? "";
+			if (LOCAL_SEE_RE.test(target) && !existsSync(resolve(repoRoot, target))) missing.push(target);
+		}
+	}
+	return missing;
+}
 
 /**
  * Parses `--root <path>` from process.argv; defaults to `"src"`.
@@ -82,6 +114,10 @@ function main(): void {
 	project.addSourceFilesAtPaths(join(root, "**/*.ts"));
 
 	const offenders: Array<{ file: string; line: number; name: string }> = [];
+	const danglingSees: Array<{ file: string; line: number; name: string; target: string }> = [];
+	// Why: scripts run with cwd = packages/site; repo-local @see paths are written
+	// from the monorepo root (e.g. `packages/specs/adrs/…`).
+	const repoRoot = resolve(cwd, "../..");
 
 	for (const sourceFile of project.getSourceFiles()) {
 		// Skip files outside the requested root to avoid contamination from
@@ -91,6 +127,7 @@ function main(): void {
 		for (const [name, declarations] of sourceFile.getExportedDeclarations()) {
 			for (const decl of declarations) {
 				let documented = false;
+				let docs: JSDoc[] = [];
 
 				if (Node.isVariableDeclaration(decl)) {
 					// VariableDeclaration is not JSDocableNode; JSDoc lives on the
@@ -101,10 +138,12 @@ function main(): void {
 					// implements but VariableDeclaration does not.
 					const stmt = decl.getVariableStatement();
 					if (stmt !== undefined && Node.isJSDocable(stmt)) {
-						documented = isDocumented(stmt.getJsDocs());
+						docs = stmt.getJsDocs();
+						documented = isDocumented(docs);
 					}
 				} else if (Node.isJSDocable(decl)) {
-					documented = isDocumented(decl.getJsDocs());
+					docs = decl.getJsDocs();
+					documented = isDocumented(docs);
 				} else {
 					// Expression / SourceFile re-exports — not documentable at the
 					// declaration site. Treat as pass to avoid false positives on
@@ -119,12 +158,26 @@ function main(): void {
 						name,
 					});
 				}
+				for (const target of missingLocalSeeTargets(docs, repoRoot)) {
+					danglingSees.push({
+						file: sourceFile.getFilePath(),
+						line: decl.getStartLineNumber(),
+						name,
+						target,
+					});
+				}
 			}
 		}
 	}
 
-	if (offenders.length === 0) {
+	if (offenders.length === 0 && danglingSees.length === 0) {
 		process.exit(0);
+	}
+
+	for (const { file, line, name, target } of danglingSees) {
+		process.stderr.write(
+			`ERROR ${file}:${line} exported '${name}' has @see to missing file '${target}'\n`,
+		);
 	}
 
 	for (const { file, line, name } of offenders) {
