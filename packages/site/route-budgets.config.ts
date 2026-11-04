@@ -85,7 +85,6 @@ export const budgets: BudgetsConfig = {
 					},
 				]
 			: [],
-	unreferencedChunks: [],
 	// Why: banner files were ≤ 1,000,000 B (warn 600 KB) at 1280x720; the banner is now 1920x1080
 	// (owner: "banner too low quality"), so the limits are the encoder's: fail > 2.5 MB, warn > 1.5 MB.
 	// Keep in sync with SIZE_SPECS.banner in scripts/lib/loops-core.ts (ADR 0044 addendum).
