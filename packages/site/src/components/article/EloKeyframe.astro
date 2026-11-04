@@ -1,0 +1,97 @@
+---
+/**
+ * EloKeyframe.astro — the no-JS fallback of figure F3: the default view (hand-made CS maps) as an
+ * SVG with its 90 % bands, the hollow chained points and the labelled block-28 point
+ * "+96 (+94 to +98)", under a static (non-interactive) map-set row.
+ *
+ * Why: the island shows this until it hydrates and keeps it if its data fails to load; the
+ * caption's claim must be visible without JavaScript. Two SVGs (16:9 and 4:3) are swapped by a
+ * media query, mirroring the island's layout choice, and the stage keeps the island's aspect
+ * ratio so hydration moves nothing (CLS, spec common contract).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-7 (fallback)
+ */
+import type { EloData } from "../../lib/article-data/elo";
+import { chartSvg, headLabel, LAYOUTS, MAP_SETS, plotPoints } from "../../lib/figures/elo-chart";
+
+/** Props for EloKeyframe. */
+export interface Props {
+	/** The projected `elo` data (server side only; never passed to the island). */
+	data: EloData;
+}
+
+const { data } = Astro.props;
+const head = plotPoints(data, "hand").find((p) => p.block === 28);
+const label = `Line chart of Elo over block 2 by training block on hand-made CS maps, with 90 % bands. Block 28 reads ${head ? headLabel(head) : ""} Elo. The table below lists every point.`;
+const views = [
+	{ key: "wide", layout: LAYOUTS.wide },
+	{ key: "narrow", layout: LAYOUTS.narrow },
+] as const;
+---
+
+<div class="el-bar" aria-hidden="true">
+	<span class="el-lab">Maps</span>
+	{MAP_SETS.map((m) => (
+		<span class:list={["el-chip", { "el-on": m.id === "hand" }]}>{m.label.split(" ")[0]}</span>
+	))}
+</div>
+<div class={"el-stage"}>
+	{views.map(({ key, layout }) => (
+		<svg
+			class={`el-svg el-${key}`}
+			viewBox={`0 0 ${layout.w} ${layout.h}`}
+			role="img"
+			aria-label={label}
+			set:html={chartSvg(data, "hand", layout)}
+		/>
+	))}
+</div>
+
+<style>
+	.el-bar {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-block-size: 44px;
+		padding-inline: var(--space-2);
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+	.el-chip {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 32px;
+		padding-inline: var(--space-3);
+		border: 1px solid var(--color-border-strong);
+		border-radius: var(--radius-pill);
+	}
+	.el-on {
+		border-color: var(--color-text);
+		color: var(--color-text);
+		font-weight: 600;
+	}
+	.el-stage {
+		position: relative;
+		inline-size: 100%;
+		aspect-ratio: 640 / 360;
+	}
+	.el-svg {
+		display: block;
+		inline-size: 100%;
+		block-size: 100%;
+	}
+	.el-narrow {
+		display: none;
+	}
+	@media (max-width: 700px) {
+		.el-stage {
+			aspect-ratio: 480 / 360;
+		}
+		.el-wide {
+			display: none;
+		}
+		.el-narrow {
+			display: block;
+		}
+	}
+</style>
