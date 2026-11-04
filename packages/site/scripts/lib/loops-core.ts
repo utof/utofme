@@ -12,7 +12,11 @@
 
 import { createHash } from "node:crypto";
 import { z } from "astro/zod";
-import type { LoopsManifest } from "../../src/lib/loops/manifest";
+import {
+	type CardAspect,
+	cardAspectSchema,
+	type LoopsManifest,
+} from "../../src/lib/loops/manifest";
 
 /** Rendition names. */
 export type SizeName = "card" | "banner";
@@ -22,7 +26,9 @@ export type CodecName = "av1" | "h264";
 
 /**
  * Per-size encode settings and flash-lint geometry.
- * Card/gallery is 768x432 (720x405 has an odd height; neither encoder accepts it), banner 1920x1080.
+ * Card/gallery is 768x432 by default (720x405 has an odd height; neither encoder accepts it), banner 1920x1080.
+ * The card `width`/`height` here are the default 16:9 frame only: a recipe with a `cardAspect` encodes the
+ * card at `CARD_FRAMES[cardAspect]`, so read sizes through {@link frameFor}, never from this table.
  * `av1Crf` / `x264Crf` apply to montage and transcode loops; `slideshowAv1Crf` / `slideshowX264Crf`
  * to slideshows (UI screenshots: thin text and hard edges show quantisation first, so they get a lower CRF).
  * `renderWidthCss` is the largest CSS width the size may be rendered at (the lint's field scale).
@@ -63,6 +69,30 @@ export const SIZE_SPECS = {
 	},
 } as const satisfies Record<SizeName, unknown>;
 
+/** A frame size in px. */
+export interface Frame {
+	readonly width: number;
+	readonly height: number;
+}
+
+/**
+ * Card rendition frame per aspect: about 768x432's pixel area (331,776 px, within ±5 %), even sides,
+ * multiples of the card's 4 px flash-lint cell.
+ * Why: a non-16:9 tile keeps the media's natural shape (ADR 0044 addendum 2) without growing the card
+ * files; the byte budgets (150 / 300 KB) were set for ~332 k px. 3:2 is 696x464 (not 720x480, +4 % area)
+ * and 16:10 is 736x460 (720x450 is not a multiple of 4).
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export const CARD_FRAMES = {
+	"1:1": { width: 576, height: 576 },
+	"4:5": { width: 512, height: 640 },
+	"3:4": { width: 504, height: 672 },
+	"4:3": { width: 672, height: 504 },
+	"3:2": { width: 696, height: 464 },
+	"16:10": { width: 736, height: 460 },
+	"16:9": { width: 768, height: 432 },
+} as const satisfies Record<CardAspect, Frame>;
+
 /**
  * Bump when the encoder settings, filtergraph or colour tagging change, so the recipe hash
  * changes and every loop is re-encoded.
@@ -99,12 +129,14 @@ const shotSchema = z.strictObject({
 	duration: z.number().min(1).max(10),
 	fit: fitSchema,
 	crop: cropSchema.optional(),
+	cardCrop: cropSchema.optional(),
 });
 
 const slideSchema = z.strictObject({
 	src: relPath,
 	hold: z.number().min(0.8).max(2),
 	fit: fitSchema,
+	cardCrop: cropSchema.optional(),
 });
 
 const stillSchema = z.strictObject({
@@ -122,6 +154,9 @@ const isIntegerFrames = (seconds: number, fps: number): boolean => {
  * Recipe: how one loop is built from sources under the media root.
  * Montage shots are 1.0–2.0 s (hard cuts); a transcode is a single shot (up to 10 s);
  * a slideshow holds each slide 0.8–2.0 s. `duration × fps` / `hold × fps` must be integers.
+ * `aspect` is the master (banner) aspect, always 16:9. `cardAspect` (default 16:9) is the card/gallery
+ * rendition's aspect, so the home tile keeps the media's natural shape; a shot or slide's `cardCrop`
+ * (source px) replaces its `crop` on the card master only, so the banner keeps its framing.
  * Why: Zod-validated so a bad recipe exits 1 before ffmpeg runs; paths are relative so no
  * local absolute path is ever committed.
  * @see packages/specs/specs/09-project-view.md § P9-4
@@ -131,6 +166,7 @@ export const recipeSchema = z
 		slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 		kind: z.enum(["montage", "slideshow", "transcode"]),
 		aspect: z.literal("16:9"),
+		cardAspect: cardAspectSchema.optional(),
 		fps: z.number().positive().optional(),
 		sizes: z
 			.array(z.enum(["card", "banner"]))
@@ -218,6 +254,51 @@ export function recipeSources(r: Recipe): string[] {
 	const loop =
 		r.kind === "slideshow" ? (r.slides ?? []).map((s) => s.src) : (r.shots ?? []).map((s) => s.src);
 	return [...loop, ...(r.stills ?? []).map((s) => s.src)];
+}
+
+/**
+ * Frame size of a rendition: the banner is always 1920x1080; the card follows the recipe's `cardAspect`
+ * (16:9 when absent).
+ * Why: the one place that knows the card is not always 768x432, so master, probe check, lint grid and
+ * manifest all agree.
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export function frameFor(r: Pick<Recipe, "cardAspect">, size: SizeName): Frame {
+	if (size === "banner")
+		return { width: SIZE_SPECS.banner.width, height: SIZE_SPECS.banner.height };
+	return CARD_FRAMES[r.cardAspect ?? "16:9"];
+}
+
+/**
+ * The CSS render width the flash lint assumes for a rendition (`FlashInput.renderWidthCss`, recorded in the manifest).
+ * Banner: the table's 1280. Card: the frame's width × 1200 / 768, i.e. the lint keeps the 16:9 card's worst-case
+ * magnification of 1.5625 CSS px per video px for every aspect (a 576 px square is assumed at 900 CSS px).
+ * Why: the 1200 was a magnification cap, not a layout width; applying it as a width to a square or portrait
+ * frame would assume a 1200 CSS px tall tile no layout can show (home columns are at most ~480 px wide) and
+ * make the same footage fail merely for being square. Equal magnification gives a framing the same verdict
+ * as the 16:9 card would get for the same pixels (ADR 0044 addendum 2).
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export function renderWidthCssFor(size: SizeName, frame: Frame): number {
+	const s = SIZE_SPECS[size];
+	if (size === "banner") return s.renderWidthCss;
+	return Math.round((frame.width * s.renderWidthCss) / s.width);
+}
+
+/**
+ * Whether the card needs its own poster (`card-poster.png`): the recipe has a banner (whose master the
+ * main poster is cut from) and the card is framed differently, by aspect or by a `cardCrop`.
+ * Why: a poster of another framing than the video would jump when the video fades in over it.
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export function wantsCardPoster(
+	r: Pick<Recipe, "cardAspect" | "sizes" | "kind" | "shots" | "slides">,
+): boolean {
+	if (!r.sizes.includes("banner")) return false;
+	if ((r.cardAspect ?? "16:9") !== "16:9") return true;
+	const items: readonly { cardCrop?: unknown }[] =
+		r.kind === "slideshow" ? (r.slides ?? []) : (r.shots ?? []);
+	return items.some((it) => it.cardCrop !== undefined);
 }
 
 /** A JSON value. */
@@ -309,7 +390,7 @@ export function buildMasterGraph(
 	size: SizeName,
 	resolve: (p: string) => string = (p) => p,
 ): MasterGraph {
-	const { width: w, height: h } = SIZE_SPECS[size];
+	const { width: w, height: h } = frameFor(r, size);
 	const fps = effectiveFps(r);
 	const inputArgs: string[] = [];
 	const chains: string[] = [];
@@ -318,14 +399,14 @@ export function buildMasterGraph(
 			? (r.slides ?? []).map((s) => ({
 					src: s.src,
 					fit: s.fit,
-					crop: undefined,
+					crop: size === "card" ? s.cardCrop : undefined,
 					len: s.hold,
 					start: 0,
 				}))
 			: (r.shots ?? []).map((s) => ({
 					src: s.src,
 					fit: s.fit,
-					crop: s.crop,
+					crop: size === "card" ? (s.cardCrop ?? s.crop) : s.crop,
 					len: s.duration,
 					start: s.start ?? 0,
 				}));
@@ -558,7 +639,7 @@ export interface FileFact {
 
 /**
  * Compares the manifest with the files on disk. `files` is keyed by site-absolute URL
- * (`/loops/<slug>/<name>`); `posters` holds the existing `posterPath`s.
+ * (`/loops/<slug>/<name>`); `posters` holds the existing `posterPath`s and `cardPosterPath`s.
  * Reports missing files, byte-size mismatches, file-name hash ≠ content hash, orphans and missing posters.
  * Why: `check:media` guarantees the committed tree is self-consistent without needing ffmpeg.
  * @see packages/specs/specs/09-project-view.md § P9-4 (`--check`, exit 5)
@@ -578,6 +659,12 @@ export function diffManifestFiles(
 				kind: "poster-missing",
 				path: entry.posterPath,
 				detail: `poster of ${slug}`,
+			});
+		if (entry.cardPosterPath !== undefined && !posters.has(entry.cardPosterPath))
+			problems.push({
+				kind: "poster-missing",
+				path: entry.cardPosterPath,
+				detail: `card poster of ${slug}`,
 			});
 		for (const size of [entry.card, entry.banner]) {
 			if (!size) continue;
@@ -650,8 +737,15 @@ export function cellsArgs(file: string, gridW: number, gridH: number): string[] 
 	];
 }
 
-/** Flash-lint grid for a size: `cellPx`-px cells. */
-export function gridFor(size: SizeName): { gridW: number; gridH: number } {
+/**
+ * Flash-lint grid for a size: `cellPx`-px cells over `frame` (default: the size's default frame).
+ * Why: a non-16:9 card has fewer or more cells per side; every frame in `CARD_FRAMES` is a multiple of the cell.
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export function gridFor(
+	size: SizeName,
+	frame: Frame = SIZE_SPECS[size],
+): { gridW: number; gridH: number } {
 	const s = SIZE_SPECS[size];
-	return { gridW: s.width / s.cellPx, gridH: s.height / s.cellPx };
+	return { gridW: frame.width / s.cellPx, gridH: frame.height / s.cellPx };
 }

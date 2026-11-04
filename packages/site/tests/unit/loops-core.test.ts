@@ -10,19 +10,31 @@ import { describe, expect, it } from "vitest";
 import {
 	budgetVerdict,
 	buildMasterGraph,
+	CARD_FRAMES,
 	canonicalJson,
 	codecsFromProbe,
 	crfFor,
 	diffManifestFiles,
 	encodeArgs,
+	frameFor,
+	gridFor,
 	planPrune,
 	type Recipe,
 	recipeSchema,
+	renderWidthCssFor,
+	SIZE_SPECS,
 	serializeManifest,
 	sha8,
 	totalDuration,
+	wantsCardPoster,
 } from "../../scripts/lib/loops-core";
-import { type LoopsManifest, loopsManifestSchema } from "../../src/lib/loops/manifest";
+import {
+	aspectRatio,
+	CARD_ASPECTS,
+	type CardAspect,
+	type LoopsManifest,
+	loopsManifestSchema,
+} from "../../src/lib/loops/manifest";
 
 const montage = {
 	slug: "demo",
@@ -83,6 +95,176 @@ describe("recipeSchema", () => {
 				poster: { at: 1 },
 			}).success,
 		).toBe(true);
+	});
+});
+
+describe("recipeSchema card aspect", () => {
+	it.each(CARD_ASPECTS)("accepts cardAspect %s", (cardAspect) => {
+		expect(recipeSchema.safeParse({ ...montage, cardAspect }).success).toBe(true);
+	});
+	it("defaults to no cardAspect (16:9) and rejects names outside the set", () => {
+		expect(recipeSchema.parse(montage).cardAspect).toBeUndefined();
+		expect(recipeSchema.safeParse({ ...montage, cardAspect: "5:4" }).success).toBe(false);
+		expect(recipeSchema.safeParse({ ...montage, cardAspect: "1:2" }).success).toBe(false);
+	});
+	it("takes a cardCrop on shots and slides, and nothing else new on slides", () => {
+		const cardCrop = { x: 0, y: 0, w: 900, h: 900 };
+		expect(
+			recipeSchema.safeParse({
+				...montage,
+				shots: [{ src: "a/one.mp4", duration: 1.5, fit: "cover", cardCrop }],
+			}).success,
+		).toBe(true);
+		const deck = {
+			slug: "deck",
+			kind: "slideshow",
+			aspect: "16:9",
+			sizes: ["card"],
+			poster: { at: 0 },
+		};
+		expect(
+			recipeSchema.safeParse({
+				...deck,
+				slides: [{ src: "s/1.png", hold: 1.2, fit: "cover", cardCrop }],
+			}).success,
+		).toBe(true);
+		expect(
+			recipeSchema.safeParse({
+				...deck,
+				slides: [{ src: "s/1.png", hold: 1.2, fit: "cover", crop: cardCrop }],
+			}).success,
+		).toBe(false);
+		expect(
+			recipeSchema.safeParse({
+				...montage,
+				shots: [
+					{ src: "a/one.mp4", duration: 1.5, fit: "cover", cardCrop: { x: 0, y: 0, w: 0, h: 9 } },
+				],
+			}).success,
+		).toBe(false);
+	});
+});
+
+describe("frameFor / CARD_FRAMES", () => {
+	it("the 16:9 card is today's 768x432 and the banner is 1920x1080 whatever the card aspect", () => {
+		expect(CARD_FRAMES["16:9"]).toEqual({
+			width: SIZE_SPECS.card.width,
+			height: SIZE_SPECS.card.height,
+		});
+		expect(frameFor({}, "card")).toEqual({ width: 768, height: 432 });
+		for (const cardAspect of CARD_ASPECTS)
+			expect(frameFor({ cardAspect }, "banner")).toEqual({ width: 1920, height: 1080 });
+	});
+	it.each(
+		CARD_ASPECTS,
+	)("%s frame has the named ratio, even sides on the lint grid, ~today's pixel area", (a) => {
+		const f = frameFor({ cardAspect: a }, "card");
+		expect(f).toBe(CARD_FRAMES[a]);
+		expect(Math.abs(f.width / f.height - aspectRatio(a))).toBeLessThan(1e-9);
+		// Encoders need even sides; the flash lint's 4 px cell grid needs multiples of cellPx.
+		expect(f.width % SIZE_SPECS.card.cellPx).toBe(0);
+		expect(f.height % SIZE_SPECS.card.cellPx).toBe(0);
+		// Keeps the byte budget: within ±5 % of 768x432 (331,776 px).
+		const area = f.width * f.height;
+		expect(Math.abs(area / (768 * 432) - 1)).toBeLessThan(0.05);
+	});
+	it("the card lint keeps one magnification (1200 CSS px per 768 video px) whatever the aspect", () => {
+		expect(renderWidthCssFor("card", CARD_FRAMES["16:9"])).toBe(1200);
+		expect(renderWidthCssFor("banner", { width: 1920, height: 1080 })).toBe(1280);
+		for (const a of CARD_ASPECTS) {
+			const f = CARD_FRAMES[a];
+			const w = renderWidthCssFor("card", f);
+			expect(Number.isInteger(w)).toBe(true);
+			expect(Math.abs(w / f.width - 1200 / 768)).toBeLessThan(1 / f.width);
+		}
+		expect(renderWidthCssFor("card", CARD_FRAMES["1:1"])).toBe(900);
+		expect(renderWidthCssFor("card", CARD_FRAMES["4:5"])).toBe(800);
+	});
+	it("the flash-lint grid follows the frame", () => {
+		expect(gridFor("card")).toEqual({ gridW: 192, gridH: 108 });
+		expect(gridFor("card", CARD_FRAMES["1:1"])).toEqual({ gridW: 144, gridH: 144 });
+		expect(gridFor("banner")).toEqual({ gridW: 160, gridH: 90 });
+	});
+});
+
+describe("buildMasterGraph card aspect", () => {
+	const tail = "setsar=1,scale=out_color_matrix=bt709:out_range=tv,format=yuv420p";
+	const square = recipeSchema.parse({
+		...montage,
+		cardAspect: "1:1",
+		shots: [
+			{ src: "a/sim.mp4", duration: 1.5, fit: "cover" },
+			{
+				src: "a/grid.mp4",
+				duration: 1,
+				fit: "cover",
+				crop: { x: 0, y: 920, w: 2240, h: 1260 },
+				cardCrop: { x: 0, y: 0, w: 2240, h: 2240 },
+			},
+		],
+	});
+	it("scales the card master to the card frame and the banner master to 1920x1080", () => {
+		const card = buildMasterGraph(square, "card").filterComplex;
+		expect(card).toContain("scale=576:576:force_original_aspect_ratio=increase,crop=576:576");
+		expect(card).not.toContain("768:432");
+		const banner = buildMasterGraph(square, "banner").filterComplex;
+		expect(banner).toContain("scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080");
+		expect(banner).not.toContain("576");
+	});
+	it("cardCrop replaces crop on the card master only", () => {
+		expect(buildMasterGraph(square, "card").filterComplex).toContain(
+			`[1:v]fps=30,trim=start=0:duration=1,setpts=PTS-STARTPTS,crop=2240:2240:0:0,scale=576:576:force_original_aspect_ratio=increase,crop=576:576,${tail}[v1]`,
+		);
+		expect(buildMasterGraph(square, "banner").filterComplex).toContain(
+			`[1:v]fps=30,trim=start=0:duration=1,setpts=PTS-STARTPTS,crop=2240:1260:0:920,scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,${tail}[v1]`,
+		);
+	});
+	it("a slide's cardCrop applies to the card master only", () => {
+		const deck = recipeSchema.parse({
+			slug: "deck",
+			kind: "slideshow",
+			aspect: "16:9",
+			cardAspect: "4:5",
+			sizes: ["card", "banner"],
+			slides: [
+				{ src: "s/1.png", hold: 1.2, fit: "cover", cardCrop: { x: 360, y: 0, w: 720, h: 900 } },
+			],
+			poster: { at: 0 },
+		});
+		const card = buildMasterGraph(deck, "card").filterComplex;
+		expect(card).toContain(
+			"crop=720:900:360:0,scale=512:640:force_original_aspect_ratio=increase,crop=512:640",
+		);
+		const banner = buildMasterGraph(deck, "banner").filterComplex;
+		expect(banner).not.toContain("crop=720:900");
+		expect(banner).toContain("scale=1920:1080");
+	});
+	it("a recipe without cardAspect still builds the golden 768x432 graph", () => {
+		const g = buildMasterGraph(recipeSchema.parse(montage), "card").filterComplex;
+		expect(g).toContain("scale=768:432:force_original_aspect_ratio=increase,crop=768:432");
+	});
+});
+
+describe("wantsCardPoster", () => {
+	it("is true only with a banner and a card that is not the banner's framing", () => {
+		const base = recipeSchema.parse(montage);
+		expect(wantsCardPoster(base)).toBe(false);
+		expect(wantsCardPoster({ ...base, cardAspect: "16:9" })).toBe(false);
+		expect(wantsCardPoster({ ...base, cardAspect: "1:1" })).toBe(true);
+		const cropped = {
+			...base,
+			shots: [
+				{
+					src: "a.mp4",
+					duration: 1.5,
+					fit: "cover" as const,
+					cardCrop: { x: 0, y: 0, w: 16, h: 9 },
+				},
+			],
+		};
+		expect(wantsCardPoster(cropped)).toBe(true);
+		expect(wantsCardPoster({ ...cropped, sizes: ["card"] })).toBe(false);
+		expect(wantsCardPoster({ ...base, cardAspect: "1:1", sizes: ["card"] })).toBe(false);
 	});
 });
 
@@ -249,6 +431,7 @@ const entry = (hash: string): LoopsManifest[string] => ({
 	durationS: 4,
 	fps: 30,
 	aspect: "16:9",
+	cardAspect: "16:9",
 	card: {
 		width: 768,
 		height: 432,
@@ -269,6 +452,37 @@ const entry = (hash: string): LoopsManifest[string] => ({
 		status: "pass",
 	},
 });
+
+/** A valid entry of any card aspect: frame from CARD_FRAMES, banner optional, card poster as the schema demands. */
+const aspectEntry = (
+	hash: string,
+	cardAspect: CardAspect,
+	banner: boolean,
+): LoopsManifest[string] => {
+	const base = entry(hash);
+	const frame = CARD_FRAMES[cardAspect];
+	return {
+		...base,
+		cardAspect,
+		card: { ...base.card, ...frame },
+		banner: banner
+			? {
+					width: 1920,
+					height: 1080,
+					sources: [
+						{
+							url: `/loops/demo/banner.${hash}.av1.mp4`,
+							type: 'video/mp4; codecs="av01.0.08M.08"',
+							bytes: 100,
+						},
+					],
+				}
+			: null,
+		...(banner && cardAspect !== "16:9"
+			? { cardPosterPath: "src/assets/loops/demo/card-poster.png" }
+			: {}),
+	};
+};
 
 describe("diffManifestFiles", () => {
 	const m: LoopsManifest = { demo: entry("11111111") };
@@ -299,6 +513,29 @@ describe("diffManifestFiles", () => {
 	});
 });
 
+describe("diffManifestFiles card poster", () => {
+	const m: LoopsManifest = { demo: aspectEntry("11111111", "1:1", true) };
+	const files = new Map([
+		["/loops/demo/card.11111111.av1.mp4", { bytes: 100, sha8: "11111111" }],
+		["/loops/demo/banner.11111111.av1.mp4", { bytes: 100, sha8: "11111111" }],
+	]);
+	it("wants both posters on disk", () => {
+		const both = new Set([
+			"src/assets/loops/demo/poster.png",
+			"src/assets/loops/demo/card-poster.png",
+		]);
+		expect(diffManifestFiles(m, files, both)).toEqual([]);
+		const onlyBanner = new Set(["src/assets/loops/demo/poster.png"]);
+		expect(diffManifestFiles(m, files, onlyBanner)).toEqual([
+			{
+				kind: "poster-missing",
+				path: "src/assets/loops/demo/card-poster.png",
+				detail: "card poster of demo",
+			},
+		]);
+	});
+});
+
 describe("loopsManifestSchema", () => {
 	it("accepts the empty manifest and rejects unknown keys / bad urls", () => {
 		expect(loopsManifestSchema.safeParse({}).success).toBe(true);
@@ -318,7 +555,9 @@ describe("loopsManifestSchema", () => {
 		expect(loopsManifestSchema.safeParse({ demo: bad }).success).toBe(false);
 	});
 	const hex8 = fc.stringMatching(/^[0-9a-f]{8}$/);
-	const entryArb = hex8.map(entry);
+	const entryArb = fc
+		.tuple(hex8, fc.constantFrom(...CARD_ASPECTS), fc.boolean())
+		.map(([h, a, b]) => aspectEntry(h, a, b));
 	fcTest.prop([fc.dictionary(fc.stringMatching(/^[a-z][a-z0-9]{0,6}$/), entryArb, { maxKeys: 4 })])(
 		"round-trips through JSON and the sorted serialiser",
 		(x) => {
@@ -326,6 +565,44 @@ describe("loopsManifestSchema", () => {
 			expect(loopsManifestSchema.parse(JSON.parse(serializeManifest(x)))).toEqual(x);
 		},
 	);
+	it.each(CARD_ASPECTS)("accepts a %s card with and without a banner", (a) => {
+		expect(loopsManifestSchema.safeParse({ demo: aspectEntry("11111111", a, false) }).success).toBe(
+			true,
+		);
+		expect(loopsManifestSchema.safeParse({ demo: aspectEntry("11111111", a, true) }).success).toBe(
+			true,
+		);
+	});
+	it("rejects a card whose size is not its aspect", () => {
+		const good = aspectEntry("11111111", "1:1", false);
+		const bad = { ...good, card: { ...good.card, width: 768, height: 432 } };
+		expect(loopsManifestSchema.safeParse({ demo: bad }).success).toBe(false);
+		const tall = { ...good, cardAspect: "4:5" as const };
+		expect(loopsManifestSchema.safeParse({ demo: tall }).success).toBe(false);
+	});
+	it("requires cardAspect", () => {
+		const { cardAspect: _drop, ...rest } = entry("11111111");
+		expect(loopsManifestSchema.safeParse({ demo: rest }).success).toBe(false);
+	});
+	it("a non-16:9 card with a banner needs cardPosterPath; a card-only loop must not have one", () => {
+		const withPoster = aspectEntry("11111111", "3:4", true);
+		const { cardPosterPath: _drop, ...without } = withPoster;
+		expect(loopsManifestSchema.safeParse({ demo: without }).success).toBe(false);
+		const cardOnly = {
+			...aspectEntry("11111111", "3:4", false),
+			cardPosterPath: "src/assets/loops/demo/card-poster.png",
+		};
+		expect(loopsManifestSchema.safeParse({ demo: cardOnly }).success).toBe(false);
+		const elsewhere = { ...withPoster, cardPosterPath: "src/assets/loops/other/card-poster.png" };
+		expect(loopsManifestSchema.safeParse({ demo: elsewhere }).success).toBe(false);
+		const badName = { ...withPoster, cardPosterPath: "src/assets/loops/demo/poster2.png" };
+		expect(loopsManifestSchema.safeParse({ demo: badName }).success).toBe(false);
+	});
+	it("a 16:9 card with a banner may omit cardPosterPath (the banner poster is its poster)", () => {
+		expect(
+			loopsManifestSchema.safeParse({ demo: aspectEntry("11111111", "16:9", true) }).success,
+		).toBe(true);
+	});
 	it("serialises keys sorted", () => {
 		const out = serializeManifest({ b: entry("11111111"), a: entry("22222222") });
 		expect(out.indexOf('"a"')).toBeLessThan(out.indexOf('"b"'));
