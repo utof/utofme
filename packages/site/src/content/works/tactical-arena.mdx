@@ -86,7 +86,7 @@ Plenty is lost. There are no heights, no jumps, no shooting through walls. Sight
 
 But much of what makes Counter-Strike a game of information survives. There are two bomb sites to attack or hold, and chokepoints between them. There is fog of war: you see an enemy only inside a <N k="sight.fov.deg" />° cone and within <N k="sight.range.m" />, and your team shares a memory of where it last saw each one, like a radar. Running footsteps carry through walls; walking is silent. Every player carries a smoke, a molotov, a flash and an HE grenade, and money and weapons carry over from round to round.
 
-Sight is where the board gets interesting. To decide whether you can see me, the game samples points along the line between us; if any of them falls in a wall or in a smoke, the line is blocked. Figure 2 puts five defenders and five attackers on Mirage in the middle of a round and draws every pair of enemies that can see each other. One twist is worth testing: a player standing inside a smoke can still be seen from outside it, but cannot see anyone.
+Sight is where the board gets interesting. To decide whether you can see me, the game samples points along the line between us; if any of them falls in a wall or in a smoke, the line is blocked. Figure 2 puts five defenders and five attackers on Mirage in the middle of a round and draws every pair of enemies that can see each other. One twist is worth testing: a player standing just inside the edge of a smoke can still be seen from outside it, but cannot see anyone.
 
 <SmokeSightBlock number={2}>
   <span slot="caption">Smokes cut sightlines; the grid grants about <N k="sight.grid.extra" alt /> sightlines the real map blocks.</span>

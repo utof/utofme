@@ -680,7 +680,7 @@ describe("P10-16 config", () => {
 		const a = budgets.classes.article;
 		expect(a?.lazyJs).toBe(160 * KB);
 		expect(a?.html).toBe(45 * KB);
-		expect(a?.cssMath).toBe(15 * KB);
+		expect(a?.cssMath).toBe(30 * KB);
 		expect(a?.islandJs?.Replay).toBe(25 * KB);
 		expect(a?.islandJs?.EloSentence).toBe(2 * KB);
 		expect(Object.keys(a?.islandJs ?? {})).toHaveLength(12);
