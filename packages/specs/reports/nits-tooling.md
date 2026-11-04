@@ -15,3 +15,11 @@
 - #138 FIXED: `tests/unit/fixtures-tracked.test.ts` fails if any file under `tests/fixtures/` is git-ignored (verified: it fails with an ignored file present).
 
 ## Gates
+- biome check: clean (177 files). astro check: 0 errors, 0 warnings, 1 pre-existing hint (SoundToggle.astro:66). type-coverage: 100%. knip: clean, no hints. depcruise: no violations. check:docs: pass.
+- Unit suite: 59 of 60 files pass (576 tests, 73 skipped). `card-pagefind-attrs.test.ts` fails at load: Astro's font provider can't reach Google Fonts through this VM's proxy (403). Environmental, not touched by this lane.
+- Build with `UTOFME_FIXTURES=false`: OK. `check:no-fixtures`: clean. `check:budgets`: exit 1 with "chunk … not reachable from any route and not allow-listed" for Sandpack/React chunks (SandboxIsland, react, Counter, …). Not caused by this lane (no build-affecting code changed), but I did not run it on a clean origin/main to confirm.
+- Playwright e2e (visual specs excluded, run against the fixtures-off preview, chromium-mobile project only): 163 passed, 3 skipped, 23 failed. The failures are in specs that need fixture pages (sandbox, webmentions on /garden/welcome/, p09-project, p09-morph, …). I did not compare against origin/main, so treat as unverified-but-likely pre-existing. Playwright needed `executablePath: /opt/pw-browsers/chromium` (the installed browser build differs); I used a temporary config for that and deleted it.
+
+## Surprising
+- The new `@see` existence check found 5 dangling review-doc pointers (see #95).
+- `scripts/check-docs.ts` must read `@see` via `tag.getText()`; `getCommentText()` drops the first token.
