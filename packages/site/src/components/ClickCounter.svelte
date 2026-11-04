@@ -25,7 +25,12 @@
 
 	function bump() {
 		n += 1;
-		localStorage.setItem("utofme:slash-clicks", String(n));
+		try {
+			localStorage.setItem("utofme:slash-clicks", String(n));
+		} catch {
+			// Why: quota / strict storage policy must not break the click (#109); the tally
+			// then lasts for the page view only.
+		}
 		visible = true;
 		if (hideTimer) clearTimeout(hideTimer);
 		hideTimer = setTimeout(() => {
@@ -35,7 +40,7 @@
 </script>
 
 <button class="click-zone" onclick={bump} aria-label="Click counter">
-	<span class:visible aria-live="polite">{n}</span>
+	<span class:visible>{n}</span>
 </button>
 
 <style>

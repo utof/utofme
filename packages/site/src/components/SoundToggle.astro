@@ -45,6 +45,12 @@
 	<span class="lbl lbl-off">Sound off</span>
 </button>
 
+<!-- Why data-astro-rerun: ClientRouter swaps <body> on SPA navigation and re-runs only
+     inline scripts that carry this attribute; without it the new button would have no
+     click handler. The script has no define:vars, so rerun is the only reason for it.
+     Re-runs rebind the button via `onclick=` (overwrites, no stacking).
+     @see https://docs.astro.build/en/guides/view-transitions/#script-behavior-with-view-transitions
+     @issue utof/utofme#102 -->
 <script is:inline data-astro-rerun>
 	(function () {
 		var KEY = "utofme:sound";
@@ -105,7 +111,7 @@
 			"keydown",
 			function (e) {
 				if (!on) return;
-				if ((e.metaKey || e.ctrlKey) && e.key === "k")
+				if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")
 					ensure().then(function () {
 						play("cmd-k");
 					});

@@ -74,6 +74,10 @@ export function forcedLightThemeScript(): string {
  * `data-astro-rerun` (Astro docs: ClientRouter re-runs only inline scripts with
  * that attribute). Each rerun re-binds via `onclick=` (overwrites prior binding,
  * no double-fire) instead of `addEventListener` (which would stack handlers).
+ *
+ * Invariant: the storage key is inlined as the literal `K='utofme:theme'` because
+ * this string is shipped verbatim to the browser. It must equal
+ * {@link THEME_STORAGE_KEY}; tests/unit/theme-script.test.ts asserts it (#115).
  * @see https://docs.astro.build/en/guides/view-transitions/#script-behavior-with-view-transitions
  */
 export function wireToggleScript(): string {

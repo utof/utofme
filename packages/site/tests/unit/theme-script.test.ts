@@ -11,6 +11,15 @@ import {
 	wireToggleScript,
 } from "../../src/lib/theme.ts";
 
+describe("storage key drift", () => {
+	it("inlines THEME_STORAGE_KEY verbatim in both scripts", () => {
+		// Why: both scripts hard-code the key because they run as inline strings; a rename of
+		// THEME_STORAGE_KEY must fail here rather than silently orphan stored choices (#115).
+		expect(inlineThemeScript()).toContain(`"${THEME_STORAGE_KEY}"`);
+		expect(wireToggleScript()).toContain(`K='${THEME_STORAGE_KEY}'`);
+	});
+});
+
 describe("inlineThemeScript", () => {
 	beforeEach(() => {
 		document.documentElement.removeAttribute("data-theme");

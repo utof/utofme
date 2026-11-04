@@ -221,6 +221,8 @@ describe("SoundToggle server render", () => {
 async function runInlineScript(opts: { soundOn?: boolean } = {}): Promise<{
 	storage: Storage;
 	btn: FakeButton;
+	/** Window listeners the IIFE registered, by event type. */
+	windowHandlers: Map<string, (e: { key: string; metaKey: boolean; ctrlKey: boolean }) => void>;
 }> {
 	const html = await renderSoundToggle();
 	const scriptBody = extractInlineScript(html);
@@ -243,11 +245,19 @@ async function runInlineScript(opts: { soundOn?: boolean } = {}): Promise<{
 	};
 
 	// Minimal window stub: only exposes the globals the IIFE actually reads.
+	const windowHandlers = new Map<
+		string,
+		(e: { key: string; metaKey: boolean; ctrlKey: boolean }) => void
+	>();
 	const fakeWindow = {
 		AudioContext: audioCtxCtor,
 		webkitAudioContext: undefined as undefined,
-		addEventListener(_: string, __: unknown, ___?: unknown) {
-			/* no-op — keydown listener exercised in e2e */
+		addEventListener(
+			type: string,
+			handler: (e: { key: string; metaKey: boolean; ctrlKey: boolean }) => void,
+			_opts?: unknown,
+		) {
+			windowHandlers.set(type, handler);
 		},
 	};
 
@@ -278,7 +288,7 @@ async function runInlineScript(opts: { soundOn?: boolean } = {}): Promise<{
 
 	fn(fakeWindow, fakeDocument, storage, audioCtxCtor, fakeFetch, FakeAudio);
 
-	return { storage, btn };
+	return { storage, btn, windowHandlers };
 }
 
 describe("SoundToggle inline script", () => {
@@ -309,6 +319,29 @@ describe("SoundToggle inline script", () => {
 		btn.click();
 
 		expect(audioCtxCtor).toHaveBeenCalledTimes(1);
+	});
+
+	it("cmd/ctrl+K plays the cmd-k buffer for both 'k' and Shift's 'K'", async () => {
+		// Why: Shift+Cmd+K reports e.key === 'K'; the palette binds case-insensitively,
+		// so the sound must too. @issue utof/utofme#101
+		mockAudioCtxInstance.decodeAudioData.mockResolvedValue({});
+		try {
+			const { btn, windowHandlers } = await runInlineScript();
+			btn.click();
+			await new Promise((r) => setTimeout(r, 0));
+			const keydown = windowHandlers.get("keydown");
+			if (!keydown) throw new Error("keydown listener not registered");
+
+			keydown({ key: "k", metaKey: true, ctrlKey: false });
+			await new Promise((r) => setTimeout(r, 0));
+			expect(mockBufferSource.start).toHaveBeenCalledTimes(1);
+
+			keydown({ key: "K", metaKey: true, ctrlKey: false });
+			await new Promise((r) => setTimeout(r, 0));
+			expect(mockBufferSource.start).toHaveBeenCalledTimes(2);
+		} finally {
+			mockAudioCtxInstance.decodeAudioData.mockResolvedValue(null);
+		}
 	});
 
 	it("subsequent toggle off does not destroy AudioContext", async () => {

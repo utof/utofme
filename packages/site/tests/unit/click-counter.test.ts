@@ -113,4 +113,33 @@ describe("ClickCounter", () => {
 		const span = container.querySelector("span");
 		expect(span?.textContent?.trim()).toBe("5");
 	});
+
+	it("still counts when localStorage.setItem throws (quota / strict policy)", () => {
+		// @issue utof/utofme#109
+		vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+			throw new DOMException("quota", "QuotaExceededError");
+		});
+		mountSvelteInTest(ClickCounterRaw, container);
+		flushSync();
+
+		const btn = container.querySelector("button");
+		btn?.click();
+		flushSync();
+		btn?.click();
+		flushSync();
+
+		const span = container.querySelector("span");
+		expect(span?.textContent?.trim()).toBe("2");
+		// The badge must still show: an uncaught throw skips `visible = true`.
+		expect(span?.classList.contains("visible")).toBe(true);
+	});
+
+	it("keeps the count out of a live region nested in the button", () => {
+		// Why: aria-live inside a <button> makes screen readers announce the label and
+		// the count together. @issue utof/utofme#110
+		mountSvelteInTest(ClickCounterRaw, container);
+		flushSync();
+
+		expect(container.querySelector("button [aria-live]")).toBeNull();
+	});
 });

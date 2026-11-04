@@ -21,9 +21,11 @@
 		if (mq.matches) return; // no rAF scheduled at all
 
 		const onMove = (e: PointerEvent) => {
-			target = { x: e.clientX, y: e.clientY };
+			target.x = e.clientX;
+			target.y = e.clientY;
 			if (!ready) {
-				pos = target;
+				pos.x = target.x;
+				pos.y = target.y;
 				ready = true;
 			}
 			wake();
@@ -37,9 +39,12 @@
 			const dt = last ? Math.min(now - last, 100) : 16;
 			last = now;
 			const k = 1 - Math.exp(-dt / 60);
-			pos = { x: pos.x + (target.x - pos.x) * k, y: pos.y + (target.y - pos.y) * k };
+			// Why: mutate the $state proxies in place — no per-frame object allocation (#92).
+			pos.x += (target.x - pos.x) * k;
+			pos.y += (target.y - pos.y) * k;
 			if (Math.hypot(target.x - pos.x, target.y - pos.y) < 0.1) {
-				pos = target;
+				pos.x = target.x;
+				pos.y = target.y;
 				raf = undefined;
 				last = 0;
 				return;
