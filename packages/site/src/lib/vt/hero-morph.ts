@@ -221,6 +221,9 @@ function installHeroMorph(doc: Document = document): void {
 		if (!nav) return;
 		const target = focusTarget(doc, nav);
 		target?.focus({ preventScroll: true });
+		// Why: the swap replaced <html>'s attributes, dropping the mark set before navigation;
+		// transitions.css scopes the root fade-through to it, so restore it for the animation.
+		if (oldSlug) root.setAttribute(MORPH_ATTR, "");
 		// Why: without a view transition `finished` never fires from us; marks are
 		// harmless then (no names are applied) but must not leak into the next nav.
 		if (!oldSlug) clearAll();

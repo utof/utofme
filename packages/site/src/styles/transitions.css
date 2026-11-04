@@ -58,6 +58,24 @@
 ::view-transition-new(root) {
 	animation-duration: 200ms;
 }
+/* Card ↔ banner morph (M-14): only the named `hero` frame travels. The old page
+ * fades out fast, the new one fades in AFTER it, so masonry and project text are
+ * never on screen together. The gap shows the page background, not a black canvas.
+ * Scoped to a morph in flight (`data-vt-morph`, set by src/lib/vt/hero-morph.ts) so
+ * every other navigation keeps the plain 200 ms cross-fade.
+ * @see packages/specs/reports/ui-fix-banner.md (M-14) */
+html[data-vt-morph]::view-transition {
+	background-color: var(--color-bg);
+}
+html[data-vt-morph]::view-transition-old(root) {
+	animation-duration: 120ms;
+	animation-fill-mode: forwards;
+}
+html[data-vt-morph]::view-transition-new(root) {
+	animation-duration: 220ms;
+	animation-delay: 140ms;
+	animation-fill-mode: backwards;
+}
 /* Hover-overlay canvases (dither / mosh) sit outside the card and would freeze
  * into the snapshot; hidden from preparation until the transition finishes. */
 html[data-vt-morph] canvas[data-dither-backend],

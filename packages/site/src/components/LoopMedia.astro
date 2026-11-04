@@ -11,7 +11,10 @@
  * read from the committed manifest `src/data/loops.json`.
  *
  * `persistId` adds `transition:persist` so the same node survives a
- * ClientRouter morph (card → banner) and keeps playing.
+ * ClientRouter morph (card → banner) and keeps playing. That node carries the 768 px
+ * CARD rendition, so a banner frame also publishes its own sources in
+ * `data-banner-sources` (the frame is not persisted); after the morph
+ * `upgradeBannerLoops` (src/lib/loops/controller.ts) swaps in the 1920 px banner video.
  *
  * The `entry` / `poster` props are test seams (the Container-API test passes a
  * fixture instead of reading the manifest); pages never set them.
@@ -85,7 +88,12 @@ const sizes =
 	size === "banner" ? "(min-width: 1280px) 1280px, 100vw" : "(min-width: 560px) 50vw, 100vw";
 ---
 
-<div class:list={["loop-frame", className]} data-loop-frame data-slug={slug}>
+<div
+	class:list={["loop-frame", className]}
+	data-loop-frame
+	data-slug={slug}
+	data-banner-sources={persistId && size === "banner" ? JSON.stringify(rendition) : undefined}
+>
 	<Picture
 		src={poster}
 		formats={["avif", "webp"]}
