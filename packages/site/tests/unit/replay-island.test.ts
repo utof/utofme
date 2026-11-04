@@ -175,6 +175,12 @@ describe("Replay island", () => {
 		expect(playButton()?.textContent).toMatch(/Play/);
 	});
 
+	it("draws tick marks every 0.8 s behind the scrub bar", async () => {
+		await ready();
+		expect(q(".rp-ticks")?.getAttribute("style")).toMatch(/--ticks:\s*72/);
+		expect(q(".rp-ticks")?.getAttribute("aria-hidden")).toBe("true");
+	});
+
 	it("keyboard: arrows move one tick, Shift five, Home and End jump (AC5.2)", async () => {
 		await ready();
 		const s = slider();

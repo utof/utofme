@@ -571,6 +571,8 @@
 						style={`left:${(prosFraction * 100).toFixed(1)}%`}
 						aria-hidden="true">Pros' median first contact, about {pros.text}</span
 					>
+					<!-- Why: one mark per 0.8 s (a tick); decorative, so hidden from assistive tech. -->
+					<div class="rp-ticks" style={`--ticks:${nTicks - 1}`} aria-hidden="true"></div>
 					<input
 						type="range"
 						min="0"
@@ -740,6 +742,18 @@
 		inline-size: 100%;
 		margin: 0;
 		block-size: 18px;
+	}
+	.rp-ticks {
+		position: absolute;
+		/* The native thumb is about 16 px wide, so the track starts 8 px in. */
+		inset-inline: 8px;
+		inset-block-end: 6px;
+		block-size: 10px;
+		background-image: linear-gradient(to right, var(--color-border) 1px, transparent 1px);
+		background-size: calc(100% / var(--ticks)) 100%;
+		background-repeat: repeat-x;
+		border-inline-end: 1px solid var(--color-border);
+		pointer-events: none;
 	}
 	.rp-pros {
 		position: absolute;
