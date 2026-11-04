@@ -1,14 +1,28 @@
 ---
 /**
- * RollMapBlock.astro — MDX-facing block for figure F10 (Roll a map).
+ * RollMapBlock.astro: MDX-facing block of figure F10 (roll a map).
  *
- * Why: stub from the layout lane so every later lane has a lab page and an MDX
- * entry point; the owning figure lane replaces the placeholder with the keyframe
- * and the `client:visible` island.
+ * Imports its dataset twice, statically: the parsed `maps_generated` JSON for the SSR keyframe
+ * (server only) and its hashed URL (`?url&no-inline`); plus the hashed URL of `maps_cs` for the
+ * Mirage comparison, the very file figure F2 loads, so one request serves both figures.
  *
- * @see packages/specs/specs/10-tactical-arena-article.md § Figures: common contract
+ * Why: ADR 0054 keeps data out of the page; the island gets only two URLs, two shapes and an id
+ * (props stay far below 2 KB, AC16.3). The generators run offline: the page ships twelve rolled
+ * maps of each, not a generator.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-14
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
  */
+import csUrl from "../../data/article/maps_cs.json?url&no-inline";
+import rawData from "../../data/article/maps_generated.json";
+import url from "../../data/article/maps_generated.json?url&no-inline";
+import { dataset as csDataset } from "../../lib/article-data/maps_cs";
+import { dataset } from "../../lib/article-data/maps_generated";
+import { shapeOf } from "../../lib/article-data/types";
+import { GENERATORS } from "../../lib/figures/roll-map";
 import Figure from "./Figure.astro";
+import RollMap from "./RollMap.svelte";
+import RollMapKeyframe from "./RollMapKeyframe.astro";
 
 /** Props for RollMapBlock. */
 export interface Props {
@@ -17,10 +31,42 @@ export interface Props {
 }
 
 const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build, and so the keyframe
+// gets the typed value (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
 ---
 
-<Figure id="f10" number={number} width="text" aspect="1 / 1" minBlock="24rem">
-	<p data-stub>Roll a map (placeholder)</p>
+<Figure id="f10" number={number} width="wide">
+	<RollMap
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		compareSrc={csUrl}
+		compareShape={shapeOf(csDataset)}
+		labelId="f10-cap"
+	>
+		<RollMapKeyframe data={data} />
+	</RollMap>
 	<slot name="caption" slot="caption" />
 	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			A generated map is a recipe: two bomb sites, a spawn for each team, long and short routes
+			between them, a middle and chokepoints. The figure shows twelve maps rolled from each of the
+			three versions, in order, so the strip is a fair sample, not a hand-picked gallery. Nothing
+			runs a generator in your browser.
+		</p>
+		<ul>
+			{GENERATORS.map((g) => (
+				<li>
+					<strong>{g.label}</strong>: {g.blurb}
+				</li>
+			))}
+		</ul>
+		<p>
+			Each version is scored by how many key layout statistics of a map fall outside the range the
+			five real maps span; lower is more like the real maps. The score is measured for v2 and v3
+			only.
+		</p>
+	</Fragment>
 </Figure>
