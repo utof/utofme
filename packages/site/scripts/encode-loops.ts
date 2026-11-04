@@ -6,8 +6,8 @@
  *
  * Reads recipes from `media/recipes/*.json`, builds a lossless FFV1 master per size in a temp dir,
  * encodes AV1 + H.264 MP4s, flash-lints the FINAL H.264 encode of each size, enforces size budgets and
- * writes hashed outputs to `public/loops/<slug>/`, the poster to `src/assets/loops/<slug>/poster.png`,
- * stills to `src/assets/works/<slug>/` and the manifest `src/data/loops.json`.
+ * writes hashed outputs to `public/loops/<slug>/`, the poster to `src/assets/loops/<slug>/poster.png`
+ * (plus `card-poster.png` when the card is framed differently from the banner), stills to `src/assets/works/<slug>/` and the manifest `src/data/loops.json`.
  *
  * Exit codes: 0 ok · 1 recipe/validation/usage error · 2 ffmpeg/ffprobe failure (or missing tool)
  * · 3 size budget · 4 flash lint · 5 `--check` mismatch.
@@ -52,6 +52,7 @@ import {
 	encodeArgs,
 	errMsg,
 	type FileFact,
+	frameFor,
 	gridFor,
 	masterArgs,
 	must,
@@ -62,12 +63,13 @@ import {
 	recipeHash,
 	recipeSchema,
 	recipeSources,
-	SIZE_SPECS,
+	renderWidthCssFor,
 	type SizeName,
 	serializeManifest,
 	sha8,
 	totalDuration,
 	type VideoProbe,
+	wantsCardPoster,
 } from "./lib/loops-core";
 
 /** An error that carries the CLI exit code. */
@@ -158,7 +160,8 @@ function runCheck(o: Options): number {
 	}
 	const posters = new Set<string>();
 	for (const e of Object.values(manifest))
-		if (existsSync(join(o.siteRoot, e.posterPath))) posters.add(e.posterPath);
+		for (const p of [e.posterPath, e.cardPosterPath])
+			if (p !== undefined && existsSync(join(o.siteRoot, p))) posters.add(p);
 	const problems = diffManifestFiles(manifest, files, posters);
 	if (problems.length === 0) {
 		console.log(`check:media ok (${Object.keys(manifest).length} loop(s), ${files.size} file(s))`);
@@ -254,7 +257,8 @@ function hash8File(path: string): string {
 }
 
 function buildSize(r: Recipe, size: SizeName, mediaRoot: string, tmp: string): BuiltSize {
-	const spec = SIZE_SPECS[size];
+	// Why: the card frame follows the recipe's `cardAspect`; the spec table only holds the 16:9 default.
+	const frame = frameFor(r, size);
 	const fps = effectiveFps(r);
 	const master = join(tmp, `${size}.master.mkv`);
 	run(
@@ -270,10 +274,10 @@ function buildSize(r: Recipe, size: SizeName, mediaRoot: string, tmp: string): B
 		const out = join(tmp, `${size}.${codec}.mp4`);
 		run("ffmpeg", encodeArgs(r.kind, size, codec, master, out));
 		const { probe: p, frames } = probe(out);
-		if (p.width !== spec.width || p.height !== spec.height)
+		if (p.width !== frame.width || p.height !== frame.height)
 			throw new CliError(
 				2,
-				`${size}/${codec}: got ${p.width}x${p.height}, expected ${spec.width}x${spec.height}`,
+				`${size}/${codec}: got ${p.width}x${p.height}, expected ${frame.width}x${frame.height}`,
 			);
 		if (frames !== 0 && frames !== expectedFrames)
 			throw new CliError(2, `${size}/${codec}: ${frames} frames, expected ${expectedFrames}`);
@@ -291,7 +295,7 @@ function buildSize(r: Recipe, size: SizeName, mediaRoot: string, tmp: string): B
 		files.find((f) => f.codec === "h264"),
 		"h264 encode",
 	);
-	const { gridW, gridH } = gridFor(size);
+	const { gridW, gridH } = gridFor(size, frame);
 	const raw = run("ffmpeg", cellsArgs(h264.tmp, gridW, gridH)).stdout;
 	const floats = new Float32Array(
 		raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength - (raw.byteLength % 4)),
@@ -303,14 +307,14 @@ function buildSize(r: Recipe, size: SizeName, mediaRoot: string, tmp: string): B
 			`${size}: flash lint decoded ${lum.length} frames, expected ${expectedFrames}`,
 		);
 	const res = analyzeFlashes({
-		width: spec.width,
-		height: spec.height,
+		width: frame.width,
+		height: frame.height,
 		gridW,
 		gridH,
 		fps,
 		lum,
 		red,
-		renderWidthCss: spec.renderWidthCss,
+		renderWidthCss: renderWidthCssFor(size, frame),
 	});
 	for (const reason of res.reasons) console.warn(`  flash ${res.status} (${size}): ${reason}`);
 	if (res.status === "fail")
@@ -319,8 +323,8 @@ function buildSize(r: Recipe, size: SizeName, mediaRoot: string, tmp: string): B
 			`${r.slug}/${size}: flash lint failed — re-cut or shrink the flashing area`,
 		);
 	return {
-		width: spec.width,
-		height: spec.height,
+		width: frame.width,
+		height: frame.height,
 		files,
 		maxEvents: res.maxEventsPerWindow,
 		maxRate: res.maxPerSecond,
@@ -399,23 +403,34 @@ function encodeSlug(
 				keep.add(f.name);
 			}
 		const posterRel = `src/assets/loops/${r.slug}/poster.png`;
+		const cardPosterRel = `src/assets/loops/${r.slug}/card-poster.png`;
 		const cardB = must(built.get("card"), "card build");
+		const cutPoster = (master: string, rel: string): void => {
+			mkdirSync(dirname(join(o.siteRoot, rel)), { recursive: true });
+			run("ffmpeg", [
+				"-v",
+				"error",
+				"-y",
+				"-ss",
+				String(r.poster.at),
+				"-i",
+				master,
+				"-frames:v",
+				"1",
+				join(o.siteRoot, rel),
+			]);
+		};
 		// Why: the poster is the banner's underlay (and the no-JS / reduced-motion picture), so it
 		// is cut from the largest master: the 1920x1080 banner when the recipe has one, else the card.
-		const posterMaster = (built.get("banner") ?? cardB).master;
-		mkdirSync(dirname(join(o.siteRoot, posterRel)), { recursive: true });
-		run("ffmpeg", [
-			"-v",
-			"error",
-			"-y",
-			"-ss",
-			String(r.poster.at),
-			"-i",
-			posterMaster,
-			"-frames:v",
-			"1",
-			join(o.siteRoot, posterRel),
-		]);
+		cutPoster((built.get("banner") ?? cardB).master, posterRel);
+		// Why: a card framed differently from the banner (other aspect, or a cardCrop) needs a poster
+		// of its own framing cut from the card master, so the poster does not jump when the video fades in.
+		const cardPoster = wantsCardPoster(r);
+		if (cardPoster) cutPoster(cardB.master, cardPosterRel);
+		else if (existsSync(join(o.siteRoot, cardPosterRel))) {
+			unlinkSync(join(o.siteRoot, cardPosterRel));
+			console.log(`  pruned ${cardPosterRel}`);
+		}
 		for (const st of r.stills ?? []) {
 			const outFile = join(o.siteRoot, "src/assets/works", r.slug, `${st.out}.png`);
 			mkdirSync(dirname(outFile), { recursive: true });
@@ -444,8 +459,8 @@ function encodeSlug(
 			maxEventsPerWindow: Math.max(cardB.maxEvents, bannerB?.maxEvents ?? 0),
 			maxPerSecond: Math.round(Math.max(cardB.maxRate, bannerB?.maxRate ?? 0) * 100) / 100,
 			renderWidthCss: {
-				card: SIZE_SPECS.card.renderWidthCss,
-				banner: bannerB ? SIZE_SPECS.banner.renderWidthCss : null,
+				card: renderWidthCssFor("card", cardB),
+				banner: bannerB ? renderWidthCssFor("banner", bannerB) : null,
 			},
 			status: cardB.status === "warn" || bannerB?.status === "warn" ? "warn" : "pass",
 		};
@@ -453,10 +468,13 @@ function encodeSlug(
 			recipe: hash,
 			durationS: totalDuration(r),
 			fps: effectiveFps(r),
+			kind: r.kind,
 			aspect: "16:9",
+			cardAspect: r.cardAspect ?? "16:9",
 			card: toSize(cardB),
 			banner: bannerB ? toSize(bannerB) : null,
 			posterPath: posterRel,
+			...(cardPoster ? { cardPosterPath: cardPosterRel } : {}),
 			flash,
 		};
 		manifest[r.slug] = entry;

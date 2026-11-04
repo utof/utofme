@@ -2,6 +2,7 @@
 	"slug": "enth",
 	"kind": "slideshow",
 	"aspect": "16:9",
+	"cardAspect": "3:2",
 	"fps": 10,
 	"sizes": ["card", "banner"],
 	"slides": [

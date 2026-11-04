@@ -2,6 +2,7 @@
 	"slug": "tactical-arena",
 	"kind": "montage",
 	"aspect": "16:9",
+	"cardAspect": "1:1",
 	"fps": 30,
 	"sizes": [
 		"card",
@@ -17,7 +18,8 @@
 				"y": 318,
 				"w": 2292,
 				"h": 1290
-			}
+			},
+			"cardCrop": { "x": 1600, "y": 318, "w": 1288, "h": 1288 }
 		},
 		{
 			"src": "RL_playground/tactical-arena/runs/m27/round_gifs_best_v2/wide_s2_util_best_def@4x.mkv",
@@ -29,7 +31,8 @@
 				"y": 920,
 				"w": 2240,
 				"h": 1260
-			}
+			},
+			"cardCrop": { "x": 560, "y": 980, "w": 1260, "h": 1260 }
 		},
 		{
 			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/d_3d_cover_close@3x.png",
@@ -40,7 +43,8 @@
 				"y": 312,
 				"w": 2004,
 				"h": 1128
-			}
+			},
+			"cardCrop": { "x": 1800, "y": 237, "w": 1208, "h": 1208 }
 		},
 		{
 			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/g_3d_shadows_close@3x.png",
@@ -51,7 +55,8 @@
 				"y": 312,
 				"w": 1860,
 				"h": 1047
-			}
+			},
+			"cardCrop": { "x": 2000, "y": 237, "w": 1100, "h": 1100 }
 		}
 	],
 	"poster": {

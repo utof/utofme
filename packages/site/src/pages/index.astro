@@ -21,6 +21,7 @@ import CoverImage from "../components/CoverImage.astro";
 import LoopMedia from "../components/LoopMedia.astro";
 import MotionToggle from "../components/MotionToggle.astro";
 import { coverLoop } from "../lib/card-caption";
+import { MASONRY_COLUMN_SIZES } from "../lib/masonry";
 import CodeThumb from "../components/thumbs/CodeThumb.astro";
 import VideoThumb from "../components/thumbs/VideoThumb.astro";
 import MusicThumb from "../components/thumbs/MusicThumb.astro";
@@ -45,17 +46,21 @@ const ThumbFor = {
 /**
  * How many leading DOM cards load eagerly.
  *
- * Why: the masonry is column-major (CSS multi-column), so the first DOM cards
- * fill column 1 top-to-bottom and the top of column 2 is a later DOM card. The
- * first 4 cover the above-the-fold cards of both columns; only card 1 gets
- * `fetchpriority="high"` (the LCP candidate).
+ * Why: the masonry is column-major (CSS multi-column) and every card keeps its own aspect, so the
+ * balancer decides how many cards each column holds: the head of column 1 is DOM card 1, but the head
+ * of column 2 is a later DOM card (5 with the 7 works, measured at 1280 and 1920 px wide).
+ * 4 matches the `eagerCardCount` budget and covers the first two tiles of column 1; the column-2 head
+ * (card 5) lazy-loads although it is in the first viewport (not the LCP: only card 1 gets
+ * `fetchpriority="high"`). Raising both numbers to 5 is the follow-up recorded in the ADR addendum,
+ * together with the R4 selector (`.loop-media`, the DOM says `.loop-frame`).
  *
  * @see packages/specs/reviews/09-spec-review.md finding 5
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
  */
 const EAGER_CARDS = 4;
 
-/** Mirrors the column breakpoints in the stylesheet below (--masonry-cols / 2 / 1 columns). */
-const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
+/** One masonry column: mirrors the column breakpoint in the stylesheet below (2 columns from 560 px, else 1). */
+const COVER_SIZES = MASONRY_COLUMN_SIZES;
 ---
 
 <BaseLayout title="utofme" minimal wordmarkHeading>
@@ -223,14 +228,6 @@ const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 	@media (min-width: 560px) {
 		.masonry {
 			column-count: 2;
-		}
-	}
-
-	/* --masonry-cols: desktop column count (trying 2; was 3). */
-	@media (min-width: 1000px) {
-		.masonry {
-			--masonry-cols: 2;
-			column-count: var(--masonry-cols);
 		}
 	}
 </style>

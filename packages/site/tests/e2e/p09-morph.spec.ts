@@ -128,6 +128,9 @@ test("reduced motion: no view-transition animations run", async ({ page }) => {
 
 const LOOP_SLUG = "enth";
 const loopCard = (page: Page) => page.locator(`a.card[href="/works/${LOOP_SLUG}/"]`);
+// Why: a card with its own framing (enth is 3:2) does not persist its video into the banner; the
+// persisted-node hand-off is only exercised by a loop whose card is framed like the banner.
+const PERSIST_SLUG = "eeg-ads1299-lab";
 
 /** Records, once per `astro:before-swap` after the view transition is ready, either the running pseudo animations or the hero snapshot style. */
 async function onReady(page: Page, kind: "names" | "snap") {
@@ -197,6 +200,19 @@ test("M3-01/M3-03: hero snapshots clip and crop at the banner focus, both direct
 	await expect(page.locator("html")).not.toHaveAttribute("style", /--vt-focus/);
 });
 
+test("a card framed differently from the banner mounts its own banner video (no persisted node)", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await loopCard(page).click();
+	await page.waitForURL(`**/works/${LOOP_SLUG}/`);
+	const banner = page.locator(".banner [data-loop-frame]");
+	await expect(banner.locator("video[data-loop]")).toHaveCount(1);
+	await expect(banner.locator("video[data-loop]")).toHaveAttribute("data-loop-size", "banner");
+	await expect(banner).not.toHaveAttribute("data-banner-sources", /.*/);
+	await expect(banner.locator("[data-astro-transition-persist]")).toHaveCount(0);
+});
+
 test("M3-02: the banner video is revealed only once it is on the card loop's frame", async ({
 	page,
 }) => {
@@ -205,7 +221,9 @@ test("M3-02: the banner video is revealed only once it is on the card loop's fra
 	await page.evaluate(() => {
 		const w = window;
 		w.__rev = [];
-		const card = document.querySelector(`[data-work-slug="enth"] [data-loop-frame] video`);
+		const card = document.querySelector(
+			`[data-work-slug="eeg-ads1299-lab"] [data-loop-frame] video`,
+		);
 		new MutationObserver((muts) => {
 			for (const m of muts) {
 				const t = m.target;
@@ -219,8 +237,8 @@ test("M3-02: the banner video is revealed only once it is on the card loop's fra
 			}
 		}).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-ready"] });
 	});
-	await loopCard(page).click();
-	await page.waitForURL(`**/works/${LOOP_SLUG}/`);
+	await page.locator(`a.card[href="/works/${PERSIST_SLUG}/"]`).click();
+	await page.waitForURL(`**/works/${PERSIST_SLUG}/`);
 	await expect.poll(() => page.evaluate(() => window.__rev?.length ?? 0)).toBe(1);
 	// Why: `card` is the persisted node (same element across the swap) and keeps playing until
 	// the banner has faded in; +100 marks a reveal while the banner was still seeking.

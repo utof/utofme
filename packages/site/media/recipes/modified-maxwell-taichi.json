@@ -2,6 +2,7 @@
 	"slug": "modified-maxwell-taichi",
 	"kind": "montage",
 	"aspect": "16:9",
+	"cardAspect": "1:1",
 	"fps": 30,
 	"sizes": [
 		"card",

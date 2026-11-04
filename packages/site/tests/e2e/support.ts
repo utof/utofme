@@ -14,5 +14,16 @@ import type { Page } from "@playwright/test";
  */
 export async function waitForImagesSettled(page: Page): Promise<void> {
 	await page.waitForLoadState("load");
+	// Why: natural-aspect cards make the one-column phone page tall enough that the last
+	// lazy covers sit beyond Chromium's lazy-load distance and would never start; walk the
+	// page once so every lazy image begins loading, then return to the top.
+	await page.evaluate(async () => {
+		const step = window.innerHeight;
+		for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
+			window.scrollTo(0, y);
+			await new Promise((r) => requestAnimationFrame(r));
+		}
+		window.scrollTo(0, 0);
+	});
 	await page.waitForFunction(() => Array.from(document.images).every((img) => img.complete));
 }

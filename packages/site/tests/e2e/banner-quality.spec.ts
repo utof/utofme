@@ -20,20 +20,28 @@ const bannerVideos = (page: import("@playwright/test").Page) =>
 		})),
 	);
 
-test("after a card → banner morph the banner plays the 1920 px rendition", async ({ page }) => {
-	await page.goto("/");
-	await page.locator(`a.card[href="/works/${SLUG}/"]`).click();
-	await page.waitForURL(`**/works/${SLUG}/`);
-	await expect
-		.poll(async () => (await bannerVideos(page))[0]?.src ?? "", { timeout: 8000 })
-		.toMatch(/^banner\./);
-	await expect
-		.poll(async () => (await bannerVideos(page))[0]?.width ?? 0, { timeout: 8000 })
-		.toBe(1920);
-	// The card rendition is gone and the banner video is visible (no poster-only state).
-	await expect.poll(async () => (await bannerVideos(page)).length, { timeout: 8000 }).toBe(1);
-	expect((await bannerVideos(page))[0]?.ready).toBe(true);
-});
+// Why both: eeg-ads1299-lab is framed like its banner, so its persisted card node is swapped for the banner
+// rendition; tactical-arena has its own framing, so its banner mounts its own video (no persisted node).
+for (const slug of ["eeg-ads1299-lab", SLUG]) {
+	test(`after a card → banner morph the banner plays the 1920 px rendition (${slug})`, async ({
+		page,
+	}) => {
+		await page.goto("/");
+		await page.locator(`a.card[href="/works/${slug}/"]`).click();
+		await page.waitForURL(`**/works/${slug}/`);
+		await expect
+			.poll(async () => (await bannerVideos(page))[0]?.src ?? "", { timeout: 8000 })
+			.toMatch(/^banner\./);
+		await expect
+			.poll(async () => (await bannerVideos(page))[0]?.width ?? 0, { timeout: 8000 })
+			.toBe(1920);
+		// The card rendition is gone and the banner video is visible (no poster-only state).
+		await expect.poll(async () => (await bannerVideos(page)).length, { timeout: 8000 }).toBe(1);
+		await expect
+			.poll(async () => (await bannerVideos(page))[0]?.ready, { timeout: 8000 })
+			.toBe(true);
+	});
+}
 
 test("Back to the grid leaves the card on the card rendition", async ({ page }) => {
 	await page.goto("/");

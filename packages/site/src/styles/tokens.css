@@ -84,6 +84,9 @@
 	--radius-sm: 4px;
 	--radius-md: 6px;
 	--radius-lg: 10px;
+	/* Why: one soft corner for every media tile (cards, banner, gallery): the owner
+	 * asked for a small iOS-like radius; the clip lives on the media frame. */
+	--radius-card: 12px;
 	--radius-bubble: 14px;
 	--radius-pill: 999px;
 
@@ -143,13 +146,14 @@
 	/* Masonry home (light-only MVP).
 	 * Why: one gutter token drives both the column gap and the vertical gap
 	 * between items — set it to 0 for an edge-to-edge mosaic. --page-margin is
-	 * the side inset of the page (~85 % content width at 1600 px).
+	 * the side inset of the page; the column also caps at 1340 px so wide screens
+	 * keep generous side gaps (~290 px each at 1920 px).
 	 * @see packages/site/src/pages/index.astro */
 	--masonry-gap: 12px;
-	--page-margin: clamp(var(--space-4), 7.5vw, 9rem);
+	--page-margin: clamp(var(--space-4), 10vw - 1rem, 12rem);
 	/* Why: the one outer column every page, banner, header and footer shares;
 	 * text columns keep their own max-width (measure) inside it, left-aligned. */
-	--page-width: min(100% - 2 * var(--page-margin), 1800px);
+	--page-width: min(100% - 2 * var(--page-margin), 1340px);
 }
 
 /* ─── Dark-mode overrides ─────────────────────────────────────────────────── */

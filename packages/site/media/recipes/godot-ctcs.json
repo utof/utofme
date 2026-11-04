@@ -2,6 +2,7 @@
 	"slug": "godot-ctcs",
 	"kind": "slideshow",
 	"aspect": "16:9",
+	"cardAspect": "16:10",
 	"fps": 10,
 	"sizes": ["card", "banner"],
 	"slides": [

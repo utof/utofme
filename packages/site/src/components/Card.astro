@@ -30,9 +30,9 @@
  * variant="media": the image-first masonry card used on `/`: media on top at its
  * natural aspect ratio inside a clipping `[data-vt-frame]`, with a dark-glass
  * caption bar (title, one-line description = `lede ?? summary`, meta line
- * `year · stack`) flush at the bottom of the media. Hover = "zoom + reveal":
- * the media children scale 1.05 and the bar content slides up to reveal the meta
- * line (transform/opacity only). Every glyph is #fff on `--caption-bg`; contrast
+ * `year · stack`) flush at the bottom of the media. Hover = "reveal": the bar content
+ * slides up to reveal the meta line (transform/opacity only); the media itself does not zoom
+ * (a slideshow card plays on hover instead, see `src/lib/loops/controller.ts`). Every glyph is #fff on `--caption-bg`; contrast
  * is proven in `tests/unit/contrast.test.ts`. The `header`/`meta` slots are not
  * rendered. Why a variant and not a restyle: the bordered
  * default card is kept for the lab pages. The link mechanism is shared.
@@ -182,13 +182,14 @@ const caption = captionParts(data);
 		border: 0;
 		border-radius: 0;
 	}
-	/* Why: the figure clips the zoom and the sliding bar. It must NOT carry
+	/* Why: the figure clips the sliding bar and the rounded corners. It must NOT carry
 	 * filter / opacity / mask / clip-path / will-change (a Backdrop Root would
 	 * blind the bar's optional backdrop-filter). Shrink-wraps still media so the
 	 * bar matches the image width; loops fill the column. */
 	.card-figure {
 		position: relative;
 		overflow: hidden;
+		border-radius: var(--radius-card);
 		width: fit-content;
 		max-width: 100%;
 		margin-inline: auto;
@@ -217,9 +218,6 @@ const caption = captionParts(data);
 		background-color: var(--color-surface);
 		outline: 1px solid var(--color-border);
 		outline-offset: -1px;
-	}
-	.card--media [data-vt-frame] > :global(*) {
-		transform-origin: 50% 50%;
 	}
 
 	/* Caption: dark glass bar, flush bottom, full width, no radius. Hierarchy by
@@ -282,7 +280,7 @@ const caption = captionParts(data);
 		}
 	}
 
-	/* ─── Hover "zoom + reveal" (fine pointers only, motion allowed) ───────── */
+	/* ─── Hover "reveal" (fine pointers only, motion allowed) ──────────────── */
 	@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
 		:global(html:not([data-motion="paused"])) .card--media .cap {
 			transform: translateY(calc(var(--cap-meta-h) + var(--cap-pad)));
@@ -292,11 +290,6 @@ const caption = captionParts(data);
 			opacity: 0;
 			transition: opacity 160ms var(--ease-out);
 		}
-		:global(html:not([data-motion="paused"])) .card--media [data-vt-frame] > :global(*) {
-			/* Why: the exit is eased in-out (not expo-out) so the first frame after leave
-			   does not drop ~39 % of the zoom at once (M3-11). */
-			transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
-		}
 		:global(html:not([data-motion="paused"])) a.card--media:hover .cap {
 			transform: none;
 			transition: transform 220ms var(--ease-out) 50ms;
@@ -305,26 +298,14 @@ const caption = captionParts(data);
 			opacity: 1;
 			transition: opacity 160ms var(--ease-out) 110ms; /* 50 ms intent + 60 ms delay */
 		}
-		:global(html:not([data-motion="paused"])) a.card--media:hover [data-vt-frame] > :global(*) {
-			transform: scale(1.05);
-			transition: transform 560ms cubic-bezier(0.23, 1, 0.32, 1) 50ms;
-		}
 	}
 	/* Keyboard parity: the same end state on any device, ungated; the focus ring
-	 * stays on the <a> (outside the clipped figure) so the zoom never covers it. */
+	 * stays on the <a>, outside the clipped figure. */
 	a.card--media:focus-visible .cap {
 		transform: none;
 	}
 	a.card--media:focus-visible .cap__m {
 		opacity: 1;
-	}
-	@media (prefers-reduced-motion: no-preference) {
-		:global(html:not([data-motion="paused"]))
-			a.card--media:focus-visible
-			[data-vt-frame]
-			> :global(*) {
-			transform: scale(1.05);
-		}
 	}
 	a.card--media:hover {
 		outline: none;

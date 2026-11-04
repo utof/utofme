@@ -17,7 +17,8 @@ test("≥1200 px: text left, gallery stacked right beside it", async ({ browser 
 	const b = await figs.nth(1).boundingBox();
 	if (!h1 || !a || !b) throw new Error("missing boxes");
 	expect(a.x).toBeGreaterThan(h1.x + 500);
-	expect(a.width).toBeGreaterThan(400);
+	// Why: the 1340 px page column leaves the gallery exactly its 400 px minimum at 1280 px.
+	expect(a.width).toBeGreaterThanOrEqual(400);
 	expect(Math.abs(a.x - b.x)).toBeLessThan(1);
 	expect(b.y).toBeGreaterThan(a.y + a.height);
 	expect(Math.abs(a.y - h1.y)).toBeLessThan(120);
