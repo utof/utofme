@@ -19,8 +19,9 @@ import {
 	nextIndex,
 	realLikenessLine,
 	seedLabel,
+	squaresPath,
 } from "../../src/lib/figures/roll-map";
-import { parseRows, siteRects, spawnTiles, wallPath } from "../../src/lib/grid";
+import { isWall, parseRows, siteRects, spawnTiles } from "../../src/lib/grid";
 
 const data: MapsGeneratedData = dataset.projected.parse(
 	JSON.parse(readFileSync("src/data/article/maps_generated.json", "utf8")),
@@ -92,7 +93,21 @@ describe("map shapes", () => {
 		if (!rows) throw new Error("no v3 map 1");
 		const s = mapShapes(rows);
 		const grid = parseRows(rows);
-		expect(s.walls).toBe(wallPath(grid, 1));
+		// the walls path covers exactly the wall squares, each once
+		const seen = new Set<number>();
+		for (const [, x, y, w, h] of s.walls.matchAll(/M(\d+) (\d+)h(\d+)v(\d+)h-\d+/g)) {
+			for (let r = 0; r < Number(h); r++) {
+				for (let i = 0; i < Number(w); i++) {
+					const k = (Number(y) + r) * 28 + Number(x) + i;
+					expect(seen.has(k)).toBe(false);
+					seen.add(k);
+				}
+			}
+		}
+		for (let r = 0; r < 28; r++) {
+			for (let c = 0; c < 28; c++)
+				expect(seen.has(r * 28 + c), `${r},${c}`).toBe(isWall(grid, r, c));
+		}
 		expect(s.sites).toEqual(
 			(["a", "b"] as const).flatMap((k) => siteRects(grid, k).map((r) => ({ k, r }))),
 		);
@@ -111,5 +126,17 @@ describe("map shapes", () => {
 				expect(s.t.length).toBeGreaterThan(0);
 			}
 		}
+	});
+});
+
+describe("squaresPath", () => {
+	it("is one unit rectangle per square", () => {
+		expect(
+			squaresPath([
+				[1, 2],
+				[3, 0],
+			]),
+		).toBe("M2 1h1v1h-1M0 3h1v1h-1");
+		expect(squaresPath([])).toBe("");
 	});
 });

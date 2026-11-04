@@ -3,7 +3,7 @@
 	 * MapStages.svelte: the interactive island of figure F5 (from a CS2 map to 28×28, stages 2 to 5).
 	 *
 	 * A map board that morphs, square by square, through the four steps of the project's
-	 * radar-to-grid translator: floor share per square, majority vote, corridor pass, final grid.
+	 * radar-to-grid translator: floor fraction per square, majority vote, corridor pass, final grid.
 	 * A "Stage" slider (four stops) and a strip of four thumbnails under it move between steps; a
 	 * map selector switches between the five maps (Mirage first). The stage name and its counted
 	 * value sit in a live region. The SSR keyframe (the `children` snippet) shows until the data is

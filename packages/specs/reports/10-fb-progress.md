@@ -4,13 +4,13 @@
 
 ## Done (SHA)
 - a6d58f9 `map_stages` dataset (module, fixture, test, real sync, sidecar; 2,567 B gzip of 4,096)
-- `maps_generated` dataset (module, fixture, test, real sync, sidecar; 3,706 B gzip of 6,144): see `git log`
+- c197872 `maps_generated` dataset (module, fixture, test, real sync, sidecar; 3,706 B gzip of 6,144)
+- 8603a41 F2 smoke sight: logic, keyframe, Block, island, e2e (14 pass locally on the lab page); CSS shared in `SmokeSight.css`
+- c904a4b F5 map stages: logic, keyframe, Block, island, e2e (11 pass locally); F2 CSS reserve now `calc(100cqw + 20rem)`; keyframe and island boxes equal at 320 to 1440 px
 
 ## Next
-1. F2 logic `src/lib/figures/smoke-sight.ts` (literal tokens + suggested smoke chosen by the AC6.1 rule), then keyframe, Block, island, e2e
-2. F5 logic + keyframe + Block + island + e2e
-3. F10 logic + keyframe + Block + island + e2e
-4. Budgets (`check:budgets`), GATE, report `10-fb.md`
+1. F10 logic + keyframe + Block + island + e2e
+3. Budgets (`check:budgets`), GATE, report `10-fb.md`
 
 ## Gotchas for a successor
 - Node >= 22.23 on `PATH` before every commit (the hook runs `astro check`, ~75 s per commit).

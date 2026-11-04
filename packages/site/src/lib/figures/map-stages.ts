@@ -38,13 +38,13 @@ export interface Stage {
 /**
  * The four stops, in order.
  *
- * Why: floor share per square, a majority vote, a corridor pass, then the final grid with sites
+ * Why: floor fraction per square, a majority vote, a corridor pass, then the final grid with sites
  * and spawns; the dataset keys are the ids.
  *
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-9
  */
 export const STAGES: readonly Stage[] = [
-	{ id: "frac_0_9", title: "Floor share", unit: "squares with any floor" },
+	{ id: "frac_0_9", title: "Floor fraction", unit: "squares with any floor" },
 	{ id: "majority", title: "Majority vote", unit: "floor squares" },
 	{ id: "corridors", title: "Corridor pass", unit: "floor squares" },
 	{ id: "final", title: "Final grid", unit: "floor squares" },
@@ -83,7 +83,7 @@ const tally = (rows: readonly string[], test: (ch: string) => boolean): number =
 	rows.reduce((n, row) => n + [...row].filter(test).length, 0);
 
 /**
- * The displayed count of a stop, counted from its rows: floor share = squares with any floor
+ * The displayed count of a stop, counted from its rows: floor fraction = squares with any floor
  * (digit 1 to 9); majority and corridors = `.` squares; final = non-wall squares.
  *
  * Why: the spec forbids typed-in counts; `checkCounts` ties them to the dataset's own.
@@ -188,7 +188,7 @@ export function mapTitle(name: string): string {
 }
 
 /**
- * Wall opacity of every square (row-major, 784 values) at a stop: floor share draws a square
+ * Wall opacity of every square (row-major, 784 values) at a stop: floor fraction draws a square
  * darker the less floor it holds (`1 - digit / 9`); the other stops are wall (1) or not (0).
  *
  * Why: one opacity per square lets the slider cross-fade each square between stops; sites and
@@ -220,31 +220,61 @@ export interface Layer {
 }
 
 /**
- * Layer paths of a stop in 1-unit squares (`M x y h w v1 h-w z` per run), grouped by opacity.
+ * SVG path data covering the squares for which `on(row, col)` holds, as rectangles `M x y h w v h
+ * h-w` (the fill closes each one): horizontal runs per row, merged with the identical run in the
+ * row above into one taller rectangle. Every square is covered exactly once.
  *
- * Why: see {@link Layer}; binary stops give one layer, floor share one per digit.
+ * Why: the SSR keyframes carry walls for up to a dozen maps; merging vertically roughly halves
+ * the path data compared with one rectangle per run (spec Risk 3: HTML size).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § Risks (3)
+ */
+export function mergedPath(
+	rows: number,
+	cols: number,
+	on: (row: number, col: number) => boolean,
+): string {
+	type Open = { c: number; len: number; r0: number };
+	let open = new Map<string, Open>();
+	let d = "";
+	for (let r = 0; r <= rows; r++) {
+		const next = new Map<string, Open>();
+		let c = 0;
+		while (r < rows && c < cols) {
+			if (!on(r, c)) {
+				c++;
+				continue;
+			}
+			const start = c;
+			while (c < cols && on(r, c)) c++;
+			const key = `${start}:${c - start}`;
+			const prev = open.get(key);
+			if (prev) open.delete(key);
+			next.set(key, prev ?? { c: start, len: c - start, r0: r });
+		}
+		// Runs still open that did not continue into this row end here.
+		for (const o of open.values()) d += `M${o.c} ${o.r0}h${o.len}v${r - o.r0}h-${o.len}`;
+		open = next;
+	}
+	return d;
+}
+
+/**
+ * Layer paths of a stop in 1-unit squares, grouped by opacity (see {@link mergedPath}).
+ *
+ * Why: see {@link Layer}; binary stops give one layer, floor fraction one per digit.
  *
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-9
  */
 export function stageLayers(m: StageMap, stage: number): Layer[] {
 	const w = wallness(m, stage);
-	const rows = stageRows(m, stage);
-	const width = rows[0]?.length ?? 0;
-	const groups = new Map<number, string>();
-	for (let r = 0; r < rows.length; r++) {
-		let c = 0;
-		while (c < width) {
-			const v = w[r * width + c] ?? 0;
-			if (v <= 0) {
-				c++;
-				continue;
-			}
-			const start = c;
-			while (c < width && w[r * width + c] === v) c++;
-			groups.set(v, `${groups.get(v) ?? ""}M${start} ${r}h${c - start}v1h-${c - start}z`);
-		}
-	}
-	return [...groups.entries()].sort((a, b) => b[0] - a[0]).map(([opacity, d]) => ({ opacity, d }));
+	const height = stageRows(m, stage).length;
+	const width = stageRows(m, stage)[0]?.length ?? 0;
+	const levels = [...new Set(w.filter((v) => v > 0))].sort((a, b) => b - a);
+	return levels.map((opacity) => ({
+		opacity,
+		d: mergedPath(height, width, (r, c) => w[r * width + c] === opacity),
+	}));
 }
 
 /**

@@ -10,7 +10,8 @@
  */
 import type { MapsGeneratedData } from "../article-data/maps_generated";
 import { formatNumber } from "../figure-scale";
-import { parseRows, type SiteRect, siteRects, spawnTiles, wallPath } from "../grid";
+import { isWall, parseRows, type SiteRect, siteRects, spawnTiles } from "../grid";
+import { mergedPath } from "./map-stages";
 
 /**
  * A map generator version shipped in the dataset.
@@ -127,7 +128,8 @@ export function realLikenessLine(data: MapsGeneratedData): string {
 }
 
 /**
- * What a map is drawn from: one walls path in 1-unit squares, the site boxes and the spawn squares.
+ * What a map is drawn from: one walls path in 1-unit squares (merged rectangles), the site boxes
+ * and the spawn squares.
  *
  * Why: the island and the SSR keyframe draw the same map the same way.
  *
@@ -150,9 +152,20 @@ export interface MapShapes {
 export function mapShapes(rows: readonly string[]): MapShapes {
 	const grid = parseRows(rows);
 	return {
-		walls: wallPath(grid, 1),
+		walls: mergedPath(grid.h, grid.w, (r, c) => isWall(grid, r, c)),
 		sites: (["a", "b"] as const).flatMap((k) => siteRects(grid, k).map((r) => ({ k, r }))),
 		ct: spawnTiles(grid, "ct"),
 		t: spawnTiles(grid, "t"),
 	};
+}
+
+/**
+ * SVG path data of whole squares `[row, col]`, one unit rectangle each.
+ *
+ * Why: spawn areas are a handful of squares; one path keeps the keyframe small.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-14
+ */
+export function squaresPath(squares: ReadonlyArray<readonly [number, number]>): string {
+	return squares.map(([r, c]) => `M${c} ${r}h1v1h-1`).join("");
 }

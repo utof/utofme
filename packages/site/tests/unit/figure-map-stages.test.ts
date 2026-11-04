@@ -5,6 +5,7 @@
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-9 (AC9.1, AC9.3)
  */
 import { readFileSync } from "node:fs";
+import { fc, test } from "@fast-check/vitest";
 import { describe, expect, it } from "vitest";
 import { dataset, type MapStagesData } from "../../src/lib/article-data/map_stages";
 import {
@@ -13,6 +14,7 @@ import {
 	closedTiles,
 	DEFAULT_MAP,
 	mapTitle,
+	mergedPath,
 	reopenedTiles,
 	STAGES,
 	type StageMap,
@@ -34,10 +36,10 @@ const count = (rows: readonly string[], re: RegExp) =>
 	rows.reduce((n, r) => n + (r.match(re)?.length ?? 0), 0);
 
 describe("stages", () => {
-	it("are four stops in order: floor share, majority vote, corridor pass, final grid", () => {
+	it("are four stops in order: floor fraction, majority vote, corridor pass, final grid", () => {
 		expect(STAGES.map((s) => s.id)).toEqual(["frac_0_9", "majority", "corridors", "final"]);
 		expect(STAGES.map((s) => s.title)).toEqual([
-			"Floor share",
+			"Floor fraction",
 			"Majority vote",
 			"Corridor pass",
 			"Final grid",
@@ -50,7 +52,7 @@ describe("stages", () => {
 });
 
 describe("counts computed from the rows (AC9.1)", () => {
-	it("floor share counts squares with any floor (digit 1 to 9)", () => {
+	it("floor fraction counts squares with any floor (digit 1 to 9)", () => {
 		for (const m of maps) expect(stageCount(m, 0), m.name).toBe(count(m.stages.frac_0_9, /[1-9]/g));
 	});
 	it("majority and corridors count '.' squares", () => {
@@ -94,7 +96,7 @@ describe("counts computed from the rows (AC9.1)", () => {
 describe("summaries", () => {
 	it("print the stage title and the counted value, with what changed", () => {
 		expect(stageSummary(mirage, 0)).toBe(
-			`Floor share: ${count(mirage.stages.frac_0_9, /[1-9]/g)} squares with any floor`,
+			`Floor fraction: ${count(mirage.stages.frac_0_9, /[1-9]/g)} squares with any floor`,
 		);
 		expect(stageSummary(mirage, 1)).toBe(
 			`Majority vote: ${mirage.counts.majority_floor} floor squares`,
@@ -130,7 +132,7 @@ describe("summaries", () => {
 });
 
 describe("wall opacity per square", () => {
-	it("floor share maps digit d to 1 - d/9; binary stages to 0 or 1", () => {
+	it("floor fraction maps digit d to 1 - d/9; binary stages to 0 or 1", () => {
 		const f = wallness(mirage, 0);
 		expect(f).toHaveLength(28 * 28);
 		mirage.stages.frac_0_9.forEach((row, r) => {
@@ -159,11 +161,13 @@ describe("wall opacity per square", () => {
 	});
 });
 
-/** Reads the squares a layer path covers: `M x y h w v1 h-w z` runs. */
+/** Reads the squares a path covers: `M x y h w v hh h-w` rectangles. */
 function covered(d: string): Set<number> {
 	const out = new Set<number>();
-	for (const [, x, y, w] of d.matchAll(/M(\d+) (\d+)h(\d+)v1h-\d+z/g)) {
-		for (let i = 0; i < Number(w); i++) out.add(Number(y) * 28 + Number(x) + i);
+	for (const [, x, y, w, h] of d.matchAll(/M(\d+) (\d+)h(\d+)v(\d+)h-\d+/g)) {
+		for (let r = 0; r < Number(h); r++) {
+			for (let i = 0; i < Number(w); i++) out.add((Number(y) + r) * 28 + Number(x) + i);
+		}
 	}
 	return out;
 }
@@ -207,4 +211,45 @@ describe("centroid", () => {
 		).toEqual([2.5, 1.5]);
 		expect(centroid([])).toEqual([0, 0]);
 	});
+});
+
+describe("mergedPath", () => {
+	it("covers exactly the squares that are on, each once, with fewer rectangles than runs", () => {
+		const rows = mirage.stages.majority;
+		const on = (r: number, c: number) => rows[r]?.[c] === "#";
+		const d = mergedPath(28, 28, on);
+		const rects = [...d.matchAll(/M(\d+) (\d+)h(\d+)v(\d+)h-\d+/g)];
+		let area = 0;
+		for (const [, , , w, h] of rects) area += Number(w) * Number(h);
+		const cells = covered(d);
+		expect(cells.size).toBe(area);
+		for (let r = 0; r < 28; r++) {
+			for (let c = 0; c < 28; c++) expect(cells.has(r * 28 + c), `${r},${c}`).toBe(on(r, c));
+		}
+		const runs = rows.reduce((n, row) => n + (row.match(/#+/g)?.length ?? 0), 0);
+		expect(rects.length).toBeLessThan(runs);
+	});
+	it("an empty selection is an empty path", () => {
+		expect(mergedPath(28, 28, () => false)).toBe("");
+	});
+	test.prop([fc.array(fc.boolean(), { minLength: 49, maxLength: 49 })])(
+		"covers any 7 by 7 pattern exactly",
+		(bits) => {
+			const d = mergedPath(7, 7, (r, c) => bits[r * 7 + c] === true);
+			const seen = new Set<number>();
+			for (const [, x, y, w, h] of d.matchAll(/M(\d+) (\d+)h(\d+)v(\d+)h-\d+/g)) {
+				for (let r = 0; r < Number(h); r++) {
+					for (let i = 0; i < Number(w); i++) {
+						const k = (Number(y) + r) * 7 + Number(x) + i;
+						expect(seen.has(k)).toBe(false);
+						seen.add(k);
+					}
+				}
+			}
+			expect(seen.size).toBe(bits.filter(Boolean).length);
+			bits.forEach((b, k) => {
+				expect(seen.has(k)).toBe(b);
+			});
+		},
+	);
 });

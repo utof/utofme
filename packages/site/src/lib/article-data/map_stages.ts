@@ -6,7 +6,7 @@
  * corridor_tiles_added, final_floor}}`. Stage 1 (`radar_floor_x4`, the 112×112 radar trace) is
  * never read into the projection, so it cannot ship (OD-5); neither can the radar hashes, pixel
  * sizes, transform names, leak-wall coordinates or the source's text fields. Legends of the rows:
- * `frac_0_9` one digit per tile (floor share × 9); `majority` and `corridors` `#` wall, `.` floor;
+ * `frac_0_9` one digit per tile (floor fraction × 9); `majority` and `corridors` `#` wall, `.` floor;
  * `final` additionally `A`/`B` site centre, `t`/`c` spawn tile.
  *
  * Why: the page shows how a floor plan becomes the grid, nothing about where the floor plan came

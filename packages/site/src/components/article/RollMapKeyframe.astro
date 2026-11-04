@@ -21,6 +21,7 @@ import {
 	mapShapes,
 	realLikenessLine,
 	seedLabel,
+	squaresPath,
 } from "../../lib/figures/roll-map";
 import { centroid } from "../../lib/figures/map-stages";
 
@@ -74,14 +75,10 @@ const label = `Generator ${DEFAULT_GENERATOR}, ${seedLabel(0, MAPS_PER_GENERATOR
 							/>
 						))}
 						<path class="rm-wall" d={m.walls} />
-						{m.ct.map(([row, c]) => (
-							<rect class="rm-spawn-ct" x={c} y={row} width="1" height="1" />
-						))}
-						{m.t.map(([row, c]) => (
-							<rect class="rm-spawn-t" x={c} y={row} width="1" height="1" />
-						))}
 						{i === 0 && (
 							<>
+								<path class="rm-spawn-ct" d={squaresPath(m.ct)} />
+								<path class="rm-spawn-t" d={squaresPath(m.t)} />
 								{m.sites.map(({ k, r }) => (
 									<text
 										class="rm-letter"

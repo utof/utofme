@@ -28,7 +28,7 @@ beforeAll(async () => {
 	const c = await AstroContainer.create({ renderers: await loadRenderers([getSvelteRenderer()]) });
 	html = await c.renderToString(MapStagesBlock, {
 		props: { number: 3 },
-		slots: { caption: "Caption words.", try: "slide back to the floor shares." },
+		slots: { caption: "Caption words.", try: "slide back to the floor fractions." },
 	});
 	doc = parseHTML(`<!doctype html><html><body>${html}</body></html>`).document;
 });
@@ -41,7 +41,7 @@ describe("MapStagesBlock", () => {
 		expect(doc.querySelector("figcaption")?.textContent).toContain("Figure 3.");
 		expect(doc.querySelector("figcaption")?.textContent).toContain("Caption words.");
 		expect(doc.querySelector("figcaption em")?.textContent).toMatch(
-			/Try:\s*slide back to the floor shares\./,
+			/Try:\s*slide back to the floor fractions\./,
 		);
 	});
 
