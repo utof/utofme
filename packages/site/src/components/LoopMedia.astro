@@ -175,4 +175,10 @@ const sizes =
 	.loop-frame video[data-ready] {
 		opacity: 1;
 	}
+	/* M3-02: the banner rendition resolves in over the card-size frame instead of popping. */
+	@media (prefers-reduced-motion: no-preference) {
+		.loop-frame video[data-upgrade] {
+			transition: opacity 180ms var(--ease-out, ease-out);
+		}
+	}
 </style>

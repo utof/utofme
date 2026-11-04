@@ -116,10 +116,11 @@ const {
 	<body data-minimal={minimal ? "" : undefined}>
 		<!-- Why: one header on every route (P-05/P-06): wordmark left, page controls right.
 		     The sound toggle joins the pages' own controls (Pause motion) in that slot, so both
-		     controls share one place and one look. -->
+		     controls share one place and one look. Why Sound first: Pause motion then keeps the
+		     right edge on every route that has it instead of shifting when Sound is added (M3-09). -->
 		<SiteHeader heading={wordmarkHeading}>
-			<slot name="controls" />
 			{!minimal && <SoundToggle />}
+			<slot name="controls" />
 		</SiteHeader>
 		<slot />
 		<!-- Why: HCard placed before SlashFooter so the indieweb identity block

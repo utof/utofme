@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	type LoopDeps,
+	mountLoops,
 	parseBannerSources,
 	upgradeBannerLoops,
 } from "../../../src/lib/loops/controller";
@@ -83,5 +84,50 @@ describe("upgradeBannerLoops", () => {
 		f.querySelector("video")?.setAttribute("data-loop-size", "banner");
 		upgradeBannerLoops(document, deps(false));
 		expect(f.querySelectorAll("video")).toHaveLength(1);
+	});
+});
+
+describe("upgradeBannerLoops reveal (M3-02)", () => {
+	it("marks the banner video data-upgrade so the generic playing-reveal skips it", () => {
+		const f = frame();
+		upgradeBannerLoops(document, deps(false));
+		const next = must(f.querySelectorAll("video")[1]);
+		expect(next.hasAttribute("data-upgrade")).toBe(true);
+		const off = mountLoops(document, { ...deps(false), createObserver: () => new FakeIo() });
+		next.dispatchEvent(new Event("playing"));
+		expect(next.hasAttribute("data-ready")).toBe(false);
+		off();
+	});
+});
+
+class FakeIo implements IntersectionObserver {
+	readonly root = null;
+	readonly rootMargin = "";
+	readonly scrollMargin = "";
+	readonly thresholds = [];
+	seen: Element[] = [];
+	observe(el: Element): void {
+		this.seen.push(el);
+	}
+	unobserve(): void {}
+	disconnect(): void {}
+	takeRecords(): IntersectionObserverEntry[] {
+		return [];
+	}
+}
+
+describe("mountLoops only (M3-10)", () => {
+	it("ignores videos the filter rejects", () => {
+		document.body.innerHTML = `<video data-loop id="a"></video><video data-loop id="b"></video>`;
+		const io = new FakeIo();
+		const off = mountLoops(
+			document,
+			{ ...deps(false), createObserver: () => io },
+			{
+				only: (v) => v.id === "a",
+			},
+		);
+		expect(io.seen.map((e) => e.id)).toEqual(["a"]);
+		off();
 	});
 });

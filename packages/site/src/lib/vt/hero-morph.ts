@@ -35,6 +35,9 @@ export const CAP_ATTR = "data-vt-cap";
 /** Set on `<html>` while a morph is in flight; hides the hover-overlay canvases. */
 const MORPH_ATTR = "data-vt-morph";
 
+/** Custom property on `<html>` carrying the banner's vertical focus for the snapshots' crop. */
+const FOCUS_PROP = "--vt-focus";
+
 const WORK_PATH = /^\/works\/([^/]+)\/?$/;
 
 /**
@@ -155,6 +158,20 @@ export function markNew(newDoc: Document, nav: NavLike, oldSlug: string | null):
 }
 
 /**
+ * Reads the banner's vertical focus (`--focus`, e.g. `8%`) from a document, else `null`.
+ *
+ * Why: the morph snapshots crop at `object-position: 50% var(--vt-focus)`; without it
+ * the crop jumps from 50 % to the banner's own focus at the ends of the morph.
+ *
+ * @see packages/specs/reports/ui3-fix-morph.md (M3-03)
+ */
+export function bannerFocus(doc: ParentNode): string | null {
+	const el = doc.querySelector<HTMLElement>(".banner");
+	const v = el?.style.getPropertyValue("--focus").trim();
+	return v ? v : null;
+}
+
+/**
  * Picks the element to focus after a swap.
  *
  * Why: forward → the `<h1 tabindex="-1">`; Back → the originating card link.
@@ -194,27 +211,43 @@ function isSwap(e: Event): e is SwapEvent {
 function installHeroMorph(doc: Document = document): void {
 	let oldSlug: string | null = null;
 	let nav: NavLike | null = null;
+	let focus: string | null = null;
+	let gen = 0;
 	const root = doc.documentElement;
 
 	const clearAll = () => {
 		clearMarks(doc);
 		root.removeAttribute(MORPH_ATTR);
+		root.style.removeProperty(FOCUS_PROP);
+		focus = null;
 	};
 
 	doc.addEventListener("astro:before-preparation", (e) => {
 		if (!isPrep(e)) return;
+		gen++;
 		nav = { from: e.from, to: e.to, direction: e.direction, sourceElement: e.sourceElement };
 		oldSlug = markOld(doc, nav);
-		if (oldSlug) root.setAttribute(MORPH_ATTR, "");
+		if (oldSlug) {
+			root.setAttribute(MORPH_ATTR, "");
+			// Back: the banner is on the live page now; forward reads it from the new document.
+			if (nav.direction === "back") focus = bannerFocus(doc);
+			if (focus) root.style.setProperty(FOCUS_PROP, focus);
+		}
 	});
 
 	doc.addEventListener("astro:before-swap", (e) => {
 		if (!isSwap(e)) return;
 		nav = { from: e.from, to: e.to, direction: e.direction, sourceElement: e.sourceElement };
-		markNew(e.newDocument, nav, oldSlug);
+		const newSlug = markNew(e.newDocument, nav, oldSlug);
+		if (newSlug && nav.direction !== "back") focus = bannerFocus(e.newDocument);
 		// Why: the new body carries its marks into the live document; clear them (and
 		// the old ones) once the animation ends. Rejection (skipped) also cleans up.
-		e.viewTransition.finished.then(clearAll, clearAll);
+		// A newer navigation (quick Back) owns the marks and focus now; only the latest cleans up.
+		const mine = gen;
+		const done = () => {
+			if (mine === gen) clearAll();
+		};
+		e.viewTransition.finished.then(done, done);
 	});
 
 	doc.addEventListener("astro:after-swap", () => {
@@ -223,7 +256,10 @@ function installHeroMorph(doc: Document = document): void {
 		target?.focus({ preventScroll: true });
 		// Why: the swap replaced <html>'s attributes, dropping the mark set before navigation;
 		// transitions.css scopes the root fade-through to it, so restore it for the animation.
-		if (oldSlug) root.setAttribute(MORPH_ATTR, "");
+		if (oldSlug) {
+			root.setAttribute(MORPH_ATTR, "");
+			if (focus) root.style.setProperty(FOCUS_PROP, focus);
+		}
 		// Why: without a view transition `finished` never fires from us; marks are
 		// harmless then (no names are applied) but must not leak into the next nav.
 		if (!oldSlug) clearAll();

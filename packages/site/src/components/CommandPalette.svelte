@@ -14,8 +14,10 @@
   @see packages/specs/plans/02-interactivity.md § Task 9
 -->
 <script lang="ts">
+	import { navigate } from "astro:transitions/client";
 	import { onMount } from "svelte";
 	import { bindGlobalChord } from "../lib/keymap";
+	import { isMotionPaused } from "../lib/motion";
 	import { type PaletteLink, matchesLabel } from "../lib/palette";
 
 	/** Build-time work / note / lab destinations (see PaletteMount.astro). */
@@ -73,6 +75,11 @@
 	// ---------------------------------------------------------------------------
 
 	let open = $state(false);
+	/** Rendered flag: stays true for the exit fade after `open` turns false (M3-13). */
+	let shown = $state(false);
+	let closeTimer: ReturnType<typeof setTimeout> | undefined;
+	/** Exit duration in ms; must match `--palette-out` in the style block. */
+	const EXIT_MS = 120;
 	let query = $state("");
 	let selectedIndex = $state(0);
 
@@ -116,6 +123,8 @@
 	 * @see packages/specs/plans/02-interactivity.md § Task 9
 	 */
 	function openPalette(): void {
+		clearTimeout(closeTimer);
+		shown = true;
 		open = true;
 		query = "";
 		selectedIndex = 0;
@@ -132,6 +141,11 @@
 	function closePalette(): void {
 		open = false;
 		query = "";
+		clearTimeout(closeTimer);
+		const instant =
+			isMotionPaused() || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		if (instant) shown = false;
+		else closeTimer = setTimeout(() => (shown = false), EXIT_MS);
 	}
 
 	/**
@@ -150,7 +164,7 @@
 			if (newTab) {
 				window.open(action.target, "_blank");
 			} else {
-				location.href = action.target;
+				void navigate(action.target);
 			}
 		} else if (action.kind === "action" && action.run) {
 			action.run();
@@ -226,10 +240,15 @@
 		// @see packages/specs/plans/02-interactivity.md § Task 9
 		document.documentElement.dataset["paletteReady"] = "true";
 
-		const teardown = bindGlobalChord("Mod+K", () => {
+		// Why: Firefox (and Chromium on Linux) bind Ctrl+K to the browser's search or
+		// address bar. The first press opens the palette and keeps the key from the
+		// browser; a second press while it is open closes it and lets the browser
+		// shortcut through, so the address bar stays one double-press away.
+		const teardown = bindGlobalChord("Mod+K", (e) => {
 			if (open) {
 				closePalette();
 			} else {
+				e.preventDefault();
 				openPalette();
 			}
 		});
@@ -237,6 +256,7 @@
 		document.addEventListener("keydown", handleKeydown);
 
 		return () => {
+			clearTimeout(closeTimer);
 			teardown();
 			document.removeEventListener("keydown", handleKeydown);
 		};
@@ -261,18 +281,19 @@
 	{#if open}Command menu open{/if}
 </div>
 
-{#if open}
+{#if shown}
 	<!--
 	  Why: backdrop div covers the viewport and triggers close on click,
 	  providing the "outside click closes" behaviour (test 6).
 	  data-palette-backdrop is the selector Playwright uses in test 6.
 	-->
 	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div data-palette-backdrop onclick={closePalette}></div>
+	<div data-palette-backdrop class:closing={!open} onclick={closePalette}></div>
 
 	<div
 		bind:this={dialogEl}
 		data-palette
+		class:closing={!open}
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="palette-title"
@@ -340,7 +361,40 @@
 		background: rgb(255 255 255 / 0.4);
 		backdrop-filter: blur(4px);
 		z-index: 200;
-		/* Why: backdrop must not intercept keyboard events — only pointer events. */
+		/* Why: the dim + blur fade in with the panel instead of popping (M3-13). */
+		animation: palette-fade-in var(--motion-base, 220ms) var(--ease-out, ease) both;
+	}
+
+	[data-palette-backdrop].closing,
+	[data-palette].closing {
+		pointer-events: none;
+	}
+
+	[data-palette-backdrop].closing {
+		animation: palette-fade-out 120ms ease-in forwards;
+	}
+
+	[data-palette].closing {
+		animation: palette-out 120ms ease-in forwards;
+	}
+
+	@keyframes palette-fade-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes palette-fade-out {
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes palette-out {
+		to {
+			opacity: 0;
+			scale: 0.98;
+		}
 	}
 
 	[data-palette] {
@@ -376,10 +430,16 @@
 
 	/* Why: honour prefers-reduced-motion — zero animation per spec test 8. */
 	@media (prefers-reduced-motion: reduce) {
-		[data-palette] {
-			animation: none;
+		[data-palette],
+		[data-palette-backdrop] {
+			animation: none !important;
 			transition: none;
 		}
+	}
+
+	:global(html[data-motion="paused"]) [data-palette],
+	:global(html[data-motion="paused"]) [data-palette-backdrop] {
+		animation: none !important;
 	}
 
 	[data-palette] input {
