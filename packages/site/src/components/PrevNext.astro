@@ -46,4 +46,11 @@ const { prev, next } = Astro.props;
 		border-top: 1px solid var(--color-border);
 		font-size: var(--font-size-ui);
 	}
+	/* 44 px tall hit area; negative margin keeps the visual rhythm unchanged (WCAG 2.5.8). */
+	.prevnext a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		margin-block: -12px;
+	}
 </style>
