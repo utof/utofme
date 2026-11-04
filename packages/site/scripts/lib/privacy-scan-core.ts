@@ -10,8 +10,15 @@
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-3 "Privacy scan"
  */
 
-/** Which rules run: `core` everywhere, `shipped` adds the notes-repo rules, `docs` is denylist + email only. */
-export type RuleSet = "core" | "shipped" | "docs";
+/**
+ * Which rules run: `core` everywhere, `shipped` adds the notes-repo rules, `docs` is denylist + email only,
+ * `bundle` (built JS/CSS in `dist/`) is denylist + `cgnat` + `home-path` + `token-like`.
+ *
+ * Why: `bundle` is a deliberate narrowing of the spec's "core on every other text file in dist":
+ * vendored bundles contain email regexes and loopback literals (127.0.0.1) that fail `email`/`ipv4`
+ * on a clean build. Recorded in ADR 0055 and the lane report.
+ */
+export type RuleSet = "core" | "shipped" | "docs" | "bundle";
 
 /** A scan hit. `where` is a JSON path (`$.a[0].b`) or a line marker; never the matched text. */
 export interface Finding {
@@ -137,8 +144,11 @@ function denyHit(text: string, denylist: readonly string[]): boolean {
 	return denylist.some((d) => cands.has(d));
 }
 
+const BUNDLE_RULES: ReadonlySet<string> = new Set(["cgnat", "home-path", "token-like"]);
+
 function applies(rule: Rule, set: RuleSet): boolean {
 	if (set === "docs") return false;
+	if (set === "bundle") return BUNDLE_RULES.has(rule.id);
 	return set === "shipped" || rule.set === "core";
 }
 
@@ -240,6 +250,7 @@ const EXCLUDED_PATHS: readonly RegExp[] = [
 export function classifyPath(rel: string): RuleSet | "excluded" | undefined {
 	if (EXCLUDED_PATHS.some((r) => r.test(rel))) return "excluded";
 	if (SHIPPED_PATHS.some((r) => r.test(rel))) return "shipped";
+	if (/^packages\/site\/dist\/.*\.(m?js|css)$/.test(rel)) return "bundle";
 	if (CORE_PATHS.some((r) => r.test(rel))) return "core";
 	if (DOCS_PATHS.some((r) => r.test(rel))) return "docs";
 	return undefined;

@@ -50,6 +50,18 @@ describe("rule sets", () => {
 	});
 });
 
+describe("bundle set", () => {
+	it("skips email and ipv4 but keeps cgnat, home-path, token-like and the denylist", () => {
+		const t = "a@b.co 127.0.0.1 100.64.0.1 /home/x zorblax";
+		expect(ids(scanText(t, "bundle", denylist)).sort()).toEqual(["cgnat", "denylist", "home-path"]);
+	});
+	it("classifies built js/css as bundle, but the article route stays shipped", () => {
+		expect(classifyPath("packages/site/dist/_astro/a.js")).toBe("bundle");
+		expect(classifyPath("packages/site/dist/pagefind/x.css")).toBe("bundle");
+		expect(classifyPath("packages/site/dist/works/tactical-arena/a.js")).toBe("shipped");
+	});
+});
+
 describe("denylist", () => {
 	it("hits in prose, a path, a hyphenated host-like token, a JSON key and a word pair", () => {
 		expect(ids(scanText("Some Zorblax prose", "core", denylist))).toContain("denylist");
