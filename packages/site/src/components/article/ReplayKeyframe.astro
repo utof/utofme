@@ -1,0 +1,282 @@
+---
+/**
+ * ReplayKeyframe.astro — the no-JS fallback of figure F1: the board at first contact (SVG,
+ * `role="img"`, first enemy sightline drawn) and a six-frame strip (ticks 0, first contact, first
+ * kill, plant, last kill, last tick) labelled in seconds. Walls are drawn once as a `<symbol>`
+ * and reused with `<use>`.
+ *
+ * Why: the island shows this until it hydrates and keeps it if its data fails to load; the
+ * caption's claim ("first contact at 7.2 s") must be visible without JavaScript (AC5.5). Its
+ * grid mirrors `Replay.svelte`'s `.rp-grid` so hydration moves nothing (CLS, spec common contract).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-5 (fallback)
+ */
+import type { ReplayMirageData } from "../../lib/article-data/replay_mirage";
+import { formatSeconds } from "../../lib/figure-scale";
+import { markPath } from "../../lib/figure-marks";
+import {
+	contactSight,
+	keyframeTicks,
+	markers,
+	type MarkerKind,
+	playerName,
+	poseAt,
+	smokeLanding,
+	statusLine,
+} from "../../lib/figures/replay";
+import { parseRows, siteRects, ticksToSeconds, wallPath } from "../../lib/grid";
+
+/** Props for ReplayKeyframe. */
+export interface Props {
+	/** The projected `replay_mirage` data (server side only; never passed to the island). */
+	data: ReplayMirageData;
+	/** Label of the pros' median first contact, e.g. "22.8 s"; printed under the board. */
+	prosText: string;
+}
+
+const { data, prosText } = Astro.props;
+const CELL = 10;
+const SIZE = CELL * 28;
+const map = parseRows(data.map.rows);
+const sides = data.players.map((p) => p.side);
+const n = (v: number): string => String(Math.round(v * 10) / 10);
+
+const sites = (["a", "b"] as const).flatMap((k) =>
+	siteRects(map, k).map((r) => ({
+		letter: k.toUpperCase(),
+		x: r.c0 * CELL,
+		y: r.r0 * CELL,
+		w: (r.c1 - r.c0 + 1) * CELL,
+		h: (r.r1 - r.r0 + 1) * CELL,
+	})),
+);
+const siteSvg = sites
+	.map(
+		(s) =>
+			`<rect class="rp-site" x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}"/><text class="rp-letter" x="${s.x + s.w / 2}" y="${s.y + s.h / 2}">${s.letter}</text>`,
+	)
+	.join("");
+
+/** Inner SVG of one frame: sites, walls (reused), smoke, fire, sightline, players. */
+function body(tick: number, sight: boolean): string {
+	const ct: string[] = [];
+	const t: string[] = [];
+	const lookCt: string[] = [];
+	const lookT: string[] = [];
+	data.players.forEach((p, pid) => {
+		if (p.alive[tick] !== 1) return;
+		const pose = poseAt(data, pid, tick);
+		const cx = (pose.c + 0.5) * CELL;
+		const cy = (pose.r + 0.5) * CELL;
+		(p.side === "T" ? t : ct).push(markPath(p.side === "T" ? "t" : "ct", cx, cy, CELL * 0.42));
+		const a = (pose.angle * Math.PI) / 180;
+		(p.side === "T" ? lookT : lookCt).push(
+			`M${n(cx)} ${n(cy)}l${n(Math.sin(a) * CELL * 0.95)} ${n(-Math.cos(a) * CELL * 0.95)}`,
+		);
+	});
+	let out = `${siteSvg}<use class="rp-wall" href="#rp-walls" width="${SIZE}" height="${SIZE}"/>`;
+	const smoke = data.smoke[tick] ?? [];
+	if (smoke.length > 0) {
+		const at = smokeLanding(data.map.rows, smoke);
+		if (at) {
+			out += `<circle class="rp-smoke" cx="${(at[1] + 0.5) * CELL}" cy="${(at[0] + 0.5) * CELL}" r="${2 * CELL}"/>`;
+		}
+	}
+	const fire = data.fire[tick] ?? [];
+	if (fire.length > 0) {
+		out += `<path class="rp-fire" d="${fire.map((i) => `M${(i % 28) * CELL} ${Math.floor(i / 28) * CELL}h${CELL}v${CELL}h-${CELL}z`).join("")}"/>`;
+	}
+	const pair = sight ? contactSight(data) : null;
+	if (pair) {
+		const [a, b] = pair.map((pid) => poseAt(data, pid, tick));
+		if (a && b) {
+			out += `<path class="rp-sight" d="M${n((a.c + 0.5) * CELL)} ${n((a.r + 0.5) * CELL)}L${n((b.c + 0.5) * CELL)} ${n((b.r + 0.5) * CELL)}"/>`;
+		}
+	}
+	out += `<path class="rp-look rp-look-ct" d="${lookCt.join("")}"/><path class="rp-look rp-look-t" d="${lookT.join("")}"/>`;
+	out += `<path class="rp-ct" d="${ct.join("")}"/><path class="rp-t" d="${t.join("")}"/>`;
+	return out;
+}
+
+const SHORT: Readonly<Record<MarkerKind, string>> = {
+	contact: "first contact",
+	kill: "kill",
+	smoke: "smoke",
+	fire: "molotov",
+	plant: "bomb planted",
+	defuse: "defuse",
+	end: "round end",
+};
+const all = markers(data);
+const word = (tick: number): string => {
+	if (tick === 0) return "start";
+	const m = all.find((x) => x.tick === tick);
+	return m ? SHORT[m.kind] : "midpoint";
+};
+
+const sight = contactSight(data);
+const who = sight ? `${playerName(sides, sight[0])} sees ${playerName(sides, sight[1])}.` : "";
+const boardLabel = `Mirage at ${formatSeconds(ticksToSeconds(data.firstContactTick))}, first contact. ${statusLine(data, data.firstContactTick)}. ${who}`;
+const board = body(data.firstContactTick, true);
+const strip = keyframeTicks(data).map((tick) => ({
+	tick,
+	text: `${formatSeconds(ticksToSeconds(tick))} · ${word(tick)}`,
+	label: `Mirage at ${formatSeconds(ticksToSeconds(tick))}: ${word(tick)}. ${statusLine(data, tick)}`,
+	svg: body(tick, false),
+}));
+const last = formatSeconds(ticksToSeconds(data.nTicks - 1));
+---
+
+<div class="rp-key rp-grid" data-keyframe>
+	<svg class="rp-defs" aria-hidden="true" focusable="false" width="0" height="0">
+		<symbol id="rp-walls" viewBox={`0 0 ${SIZE} ${SIZE}`}>
+			<path d={wallPath(map, CELL)}></path>
+		</symbol>
+	</svg>
+	<div class="rp-board">
+		<svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={boardLabel} data-board>
+			<Fragment set:html={board} />
+		</svg>
+	</div>
+	<div class="rp-side">
+		<ol class="rp-strip">
+			{strip.map((f) => (
+				<li>
+					<svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={f.label}>
+						<Fragment set:html={f.svg} />
+					</svg>
+					<span>{f.text}</span>
+				</li>
+			))}
+		</ol>
+	</div>
+	<p class="rp-bar rp-note">
+		Round length {last}. Pros' median first contact, about {prosText}.
+	</p>
+</div>
+
+<style>
+	/* Mirrors Replay.svelte's .rp-grid: same tracks, so hydration moves nothing. */
+	.rp-grid {
+		display: grid;
+		inline-size: 100%;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto 17rem 56px;
+		grid-template-areas: "board" "bar" "side";
+	}
+	@media (min-width: 701px) {
+		.rp-grid {
+			grid-template-columns: minmax(0, 1fr) 16rem;
+			grid-template-rows: auto 56px;
+			grid-template-areas: "board side" "bar bar";
+		}
+	}
+	.rp-defs {
+		position: absolute;
+		inline-size: 0;
+		block-size: 0;
+		overflow: hidden;
+	}
+	.rp-board {
+		grid-area: board;
+		aspect-ratio: 1;
+		min-inline-size: 0;
+	}
+	.rp-board svg {
+		display: block;
+		inline-size: 100%;
+		block-size: 100%;
+	}
+	.rp-side {
+		grid-area: side;
+		min-block-size: 0;
+		overflow: auto;
+		padding: var(--space-2);
+	}
+	.rp-strip {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--space-2);
+	}
+	@media (min-width: 701px) {
+		.rp-strip {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	.rp-strip li {
+		display: grid;
+		gap: 2px;
+		font-family: var(--font-mono);
+		font-size: var(--font-size-1);
+		line-height: 1.2;
+		color: var(--color-text-muted);
+	}
+	.rp-strip svg {
+		display: block;
+		inline-size: 100%;
+		aspect-ratio: 1;
+		border: 1px solid var(--color-border);
+	}
+	.rp-bar {
+		grid-area: bar;
+		margin: 0;
+		display: flex;
+		align-items: center;
+		padding-inline: var(--space-2);
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+		overflow: hidden;
+	}
+	.rp-key :global(.rp-wall) {
+		fill: var(--color-map-wall);
+	}
+	.rp-key :global(.rp-site) {
+		fill: var(--color-map-site);
+	}
+	.rp-key :global(.rp-letter) {
+		fill: var(--color-text-muted);
+		font-size: 9px;
+		font-weight: 600;
+		text-anchor: middle;
+		dominant-baseline: central;
+	}
+	.rp-key :global(.rp-smoke) {
+		fill: var(--color-smoke-fill);
+		stroke: var(--color-smoke);
+		stroke-width: 1.2;
+		stroke-dasharray: 3 2;
+	}
+	.rp-key :global(.rp-fire) {
+		fill: none;
+		stroke: var(--color-fire);
+		stroke-width: 1.4;
+	}
+	.rp-key :global(.rp-sight) {
+		fill: none;
+		stroke: var(--color-text);
+		stroke-width: 1.1;
+		stroke-dasharray: 2 1.5;
+	}
+	.rp-key :global(.rp-look) {
+		fill: none;
+		stroke-width: 1.4;
+		stroke-linecap: round;
+	}
+	.rp-key :global(.rp-look-ct),
+	.rp-key :global(.rp-ct) {
+		stroke: var(--color-ct);
+	}
+	.rp-key :global(.rp-look-t),
+	.rp-key :global(.rp-t) {
+		stroke: var(--color-t);
+	}
+	.rp-key :global(.rp-ct) {
+		fill: var(--color-ct);
+	}
+	.rp-key :global(.rp-t) {
+		fill: var(--color-t);
+	}
+</style>

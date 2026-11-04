@@ -10,7 +10,8 @@
  */
 
 import { formatSeconds } from "../figure-scale";
-import { TICK_S, ticksToSeconds, yawToScreen } from "../grid";
+import { parseRows, TICK_S, ticksToSeconds, yawToScreen } from "../grid";
+import { smokeTiles } from "../sight";
 
 /** A team: CT defend, T attack.
  *
@@ -276,6 +277,36 @@ export function markers(data: ReplayLike): ReplayMarker[] {
 		.map((m, i) => ({ m, i }))
 		.sort((a, b) => a.m.tick - b.m.tick || PRIORITY[a.m.kind] - PRIORITY[b.m.kind] || a.i - b.i)
 		.map(({ m }, n) => ({ ...m, id: `${m.kind}-${m.tick}-${n}` }));
+}
+
+/**
+ * The landing tile `[row, col]` of a smoke: the tile whose disc (`smokeTiles`) is exactly the
+ * given tile set on this map, or `null` when none is (the caller then falls back to the set's
+ * bounding box).
+ *
+ * Why: the replay lists covered tiles, not the landing point; drawing a true disc needs the
+ * centre, and the game's disc rule recovers it exactly.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-4 (Sight rule, 2)
+ */
+export function smokeLanding(
+	rows: readonly string[],
+	tiles: readonly number[],
+): [number, number] | null {
+	if (tiles.length === 0) return null;
+	const map = parseRows(rows);
+	const want = [...tiles].sort((a, b) => a - b).join(",");
+	for (let r = 0; r < map.h; r++) {
+		for (let c = 0; c < map.w; c++) {
+			if (
+				smokeTiles(map, [r, c])
+					.sort((a, b) => a - b)
+					.join(",") === want
+			)
+				return [r, c];
+		}
+	}
+	return null;
 }
 
 /** A drawn position: tile coordinates and a screen angle.

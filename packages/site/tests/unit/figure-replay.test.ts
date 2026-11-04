@@ -22,12 +22,17 @@ import {
 	type ReplayLike,
 	reducePlayback,
 	scrubFraction,
+	smokeLanding,
 	statusLine,
 	visiblePairs,
 } from "../../src/lib/figures/replay";
 
 const NBSP = " ";
-const real = JSON.parse(readFileSync("src/data/article/replay_mirage.json", "utf8")) as ReplayLike;
+const real = JSON.parse(
+	readFileSync("src/data/article/replay_mirage.json", "utf8"),
+) as ReplayLike & {
+	readonly map: { readonly rows: readonly string[] };
+};
 
 /** A tiny synthetic round: 4 players (CT 0,1; T 2,3). */
 function tiny(over: Partial<ReplayLike> = {}): ReplayLike {
@@ -251,6 +256,22 @@ describe("markers", () => {
 				.filter((x) => x.kind === "smoke")
 				.map((x) => x.tick),
 		).toEqual([1, 3]);
+	});
+});
+
+describe("smokeLanding", () => {
+	it("recovers the landing tile of the real round's smoke from its covered tiles", () => {
+		const tiles = real.smoke[28] ?? [];
+		expect(tiles.length).toBeGreaterThan(0);
+		const landing = smokeLanding(real.map.rows, tiles);
+		expect(landing).toEqual([6, 14]);
+		// The throw event is recorded at the thrower's cell, the same tile the disc is centred on.
+		const throwEvent = real.events.find((e) => e[1] === "throw");
+		expect(landing).toEqual([throwEvent?.[4], throwEvent?.[5]]);
+	});
+	it("is null for no smoke or for a set no landing produces", () => {
+		expect(smokeLanding(real.map.rows, [])).toBeNull();
+		expect(smokeLanding(real.map.rows, [0, 400])).toBeNull();
 	});
 });
 
