@@ -9,28 +9,16 @@
 	],
 	"shots": [
 		{
-			"src": "modified-maxwell-taichi/fdtd_2d.gif",
+			"src": "modified-maxwell-taichi/fdtd_2d@16x9.mkv",
 			"start": 1.6,
 			"duration": 1.5,
-			"fit": "cover",
-			"crop": {
-				"x": 0,
-				"y": 190,
-				"w": 800,
-				"h": 450
-			}
+			"fit": "cover"
 		},
 		{
-			"src": "modified-maxwell-taichi/fdtd_2d.gif",
+			"src": "modified-maxwell-taichi/fdtd_2d@16x9.mkv",
 			"start": 3.1,
 			"duration": 1.4,
-			"fit": "cover",
-			"crop": {
-				"x": 0,
-				"y": 190,
-				"w": 800,
-				"h": 450
-			}
+			"fit": "cover"
 		}
 	],
 	"poster": {
