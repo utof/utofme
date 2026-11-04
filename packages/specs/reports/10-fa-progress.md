@@ -6,7 +6,7 @@ Branch `p10/fa-replay`. A successor continues from the first unchecked step.
 
 1. [x] Dataset `replay_mirage` (b79d059; 1,890 B gzip of 10 KB; real sync idempotent)
 2. [x] Logic `src/lib/figures/replay.ts` (9be4497; 34 tests incl. fast-check fog/ghost properties, playback reducer)
-3. [ ] `ReplayKeyframe.astro` + `ReplayBlock.astro` + Container test
+3. [x] Keyframe + Block + Container test (6dc3e4d; island is still a SHELL in Replay.svelte, step 4 replaces it)
 4. [ ] `Replay.svelte` island + mount tests
 5. [ ] e2e `tests/e2e/p10-replay.spec.ts`
 6. [ ] Size: build + `check:budgets` (Replay <= 25 KB, data <= 10 KB)
