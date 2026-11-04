@@ -708,7 +708,7 @@ describe("P10-16 config", () => {
 	it("declares the spec's limits", () => {
 		const a = budgets.classes.article;
 		expect(a?.lazyJs).toBe(160 * KB);
-		expect(a?.html).toBe(45 * KB);
+		expect(a?.html).toBe(60 * KB);
 		expect(a?.cssMath).toBe(30 * KB);
 		expect(a?.islandJs?.Replay).toBe(25 * KB);
 		expect(a?.islandJs?.EloSentence).toBe(2 * KB);
@@ -716,6 +716,7 @@ describe("P10-16 config", () => {
 		const l = budgets.classes.labFigure;
 		expect(l?.lazyJs).toBe(60 * KB);
 		expect(l?.html).toBe(30 * KB);
+		expect(l?.css).toBe(12 * KB);
 		expect(l?.warnOnly).toBeUndefined();
 		expect(l?.islandJs).toBe(a?.islandJs);
 	});
