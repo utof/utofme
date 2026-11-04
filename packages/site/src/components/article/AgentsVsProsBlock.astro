@@ -1,13 +1,25 @@
 ---
 /**
- * AgentsVsProsBlock.astro — MDX-facing block for figure F11 (Agents vs pros).
+ * AgentsVsProsBlock.astro — MDX-facing block of figure F11 (Agents vs pros, side by side).
  *
- * Why: stub from the layout lane so every later lane has a lab page and an MDX
- * entry point; the owning figure lane replaces the placeholder with the keyframe
- * and the `client:visible` island.
+ * Imports the dataset twice, statically: the parsed JSON for the SSR keyframe and the details
+ * table (server only) and its hashed URL (`?url&no-inline`) for the island, which fetches it
+ * after `client:visible`.
  *
- * @see packages/specs/specs/10-tactical-arena-article.md § Figures: common contract
+ * Why: ADR 0054 keeps data out of the page; the island gets a URL, the shape and one literal
+ * (props stay far below 2 KB, AC16.3).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-15
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
  */
+import rawData from "../../data/article/agents_vs_pros.json";
+import url from "../../data/article/agents_vs_pros.json?url&no-inline";
+import { dataset } from "../../lib/article-data/agents_vs_pros";
+import { shapeOf } from "../../lib/article-data/types";
+import { formatFact } from "../../lib/facts";
+import { formatValue, intervalText, ROW_DEFS, stampOf } from "../../lib/figures/agents-vs-pros";
+import AgentsVsPros from "./AgentsVsPros.svelte";
+import AgentsVsProsKeyframe from "./AgentsVsProsKeyframe.astro";
 import Figure from "./Figure.astro";
 
 /** Props for AgentsVsProsBlock. */
@@ -17,10 +29,68 @@ export interface Props {
 }
 
 const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build, and so the keyframe
+// gets the typed value (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
+const prosMaps = formatFact("data.pros.maps");
 ---
 
-<Figure id="f11" number={number} width="wide" aspect="16 / 9" minBlock="18rem">
-	<p data-stub>Agents vs pros (placeholder)</p>
+<Figure id="f11" number={number} width="wide">
+	<AgentsVsPros
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		prosMaps={prosMaps}
+	>
+		<AgentsVsProsKeyframe data={data} prosMaps={prosMaps} />
+	</AgentsVsPros>
 	<slot name="caption" slot="caption" />
 	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			Each row compares the agent with {prosMaps} pro maps of 2026. Rows marked 5v5 are the block-28
+			agent in self-play; rows marked 3v3 come from the earlier three-against-three agent.
+		</p>
+		<table class="av-table">
+			<thead>
+				<tr>
+					<th scope="col">Behaviour</th>
+					<th scope="col">Measured on</th>
+					<th scope="col">Agent</th>
+					<th scope="col">Agent interval</th>
+					<th scope="col">Pros</th>
+					<th scope="col">Pros interval</th>
+				</tr>
+			</thead>
+			<tbody>
+				{data.rows.map((r) => (
+					<tr>
+						<th scope="row">{ROW_DEFS[r.id].label}</th>
+						<td>{stampOf(r)}</td>
+						<td>{formatValue(r, r.agent[0])}</td>
+						<td>{intervalText(r, "agent")}</td>
+						<td>{formatValue(r, r.pro[0])}</td>
+						<td>{intervalText(r, "pro")}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</Fragment>
 </Figure>
+
+<style>
+	.av-table {
+		border-collapse: collapse;
+		font-size: var(--font-size-ui);
+		font-variant-numeric: tabular-nums;
+		display: block;
+		overflow-x: auto;
+	}
+	.av-table th,
+	.av-table td {
+		padding: var(--space-1) var(--space-2);
+		text-align: start;
+		white-space: nowrap;
+		border-block-end: 1px solid var(--color-border);
+	}
+</style>
