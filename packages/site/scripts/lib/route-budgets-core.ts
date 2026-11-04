@@ -57,6 +57,14 @@ export interface RouteClassLimits {
 	readonly lazyJs?: number;
 	/** R10: exclusive lazy JS per island, keyed by the island's `opts.name`; a missing name is an error. */
 	readonly islandJs?: Readonly<Record<string, number>>;
+	/**
+	 * R10 skips these islands by `opts.name`.
+	 *
+	 * Why: the site chrome (`CustomCursor` is `client:media`, lazy) sits on every page but is
+	 * not a figure; AC16.3 requires it unchanged. Spec P10-16 does not name this case (recorded
+	 * in reports/10-b.md).
+	 */
+	readonly chromeIslands?: readonly string[];
 }
 
 /**
@@ -746,6 +754,7 @@ function checkR6(
 	}
 }
 
+const EAGER: ReadonlySet<string> = new Set(["load", "only", "idle"]);
 const R9_LIMIT = 20 * KB;
 const DATA_WARN = 120 * KB;
 
@@ -800,7 +809,10 @@ function checkIslandRules(
 		}
 	}
 	if (limits.islandJs === undefined) return;
-	for (const i of islands) {
+	// Why: eager (load/only/idle) islands are the chrome's; the first-view limit (R1) and R9 cover them,
+	// and the spec's AC16.3 keeps them unchanged. R10 bounds the lazy figure islands.
+	const chrome = new Set(limits.chromeIslands ?? []);
+	for (const i of islands.filter((x) => !EAGER.has(x.client) && !chrome.has(x.name))) {
 		if (i.limit === null)
 			out.push({
 				rule: "R10",
@@ -995,11 +1007,12 @@ export function renderMarkdown(
 		);
 	}
 	const withLimits = reports.filter((r) => r.islands.some((i) => i.limit !== null));
+	const lazyIsland = (i: IslandReport): boolean => !EAGER.has(i.client);
 	if (withLimits.length > 0) {
 		lines.push("", "### Per-island JS (R10, exclusive gzip)", "");
 		lines.push("| Route | Island | Client | Exclusive JS | Limit |", "|---|---|---|---:|---:|");
 		for (const r of withLimits)
-			for (const i of r.islands)
+			for (const i of r.islands.filter(lazyIsland))
 				lines.push(
 					`| \`${r.route}\` | ${i.name || "(unnamed)"} | ${i.client} | ${kbStr(i.exclusiveJs)} | ${i.limit === null ? "—" : kbStr(i.limit)} |`,
 				);

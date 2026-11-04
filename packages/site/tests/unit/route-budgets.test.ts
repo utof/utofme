@@ -610,6 +610,24 @@ describe("R10 per-island exclusive JS (AC16.1)", () => {
 		);
 		expect(errors(r, "R10")[0]).toContain("Ghost");
 	});
+	it("leaves the chrome's eager islands to R1/R9", () => {
+		const html = read("rules/r10-unknown-island.html").replace('client="visible"', 'client="idle"');
+		const r = analyzeRoute(
+			{ route: "/article/", html },
+			buildChunkGraph(new Map(Object.entries(sources))),
+			assetsFrom({}),
+			ISLAND_CLASS({ islandJs: { Alpha: 12 * KB } }),
+		);
+		expect(errors(r, "R10")).toEqual([]);
+	});
+	it("skips listed chrome islands even when lazy", () => {
+		const r = islandReport(
+			"r10-unknown-island.html",
+			sources,
+			ISLAND_CLASS({ islandJs: { Alpha: 12 * KB }, chromeIslands: ["Ghost"] }),
+		);
+		expect(errors(r, "R10")).toEqual([]);
+	});
 	it("excludes chunks already in the first view", () => {
 		const html = `<script type="module" src="/_astro/shared.js"></script>${read("rules/island-visible-two.html")}`;
 		const r = analyzeRoute(

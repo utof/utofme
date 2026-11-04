@@ -27,6 +27,9 @@ const listing: RouteClassLimits = {
 	posterTargetWidth: 640,
 };
 
+/** Site-chrome islands that R10 does not bound (AC16.3 keeps them unchanged). @see packages/specs/specs/10-tactical-arena-article.md § P10-16 */
+const chromeIslands: readonly string[] = ["CommandPalette", "LinkPreview", "CustomCursor"];
+
 /**
  * R10: exclusive lazy JS per island, keyed by the island's `opts.name`.
  *
@@ -83,6 +86,7 @@ export const budgets: BudgetsConfig = {
 			posterTargetWidth: 1280,
 			lazyJs: 160 * KB,
 			islandJs,
+			chromeIslands,
 		},
 		labFigure: {
 			firstViewJs: 40 * KB,
@@ -90,6 +94,7 @@ export const budgets: BudgetsConfig = {
 			css: 10 * KB,
 			lazyJs: 60 * KB,
 			islandJs,
+			chromeIslands,
 		},
 		search: { firstViewJs: 70 * KB, html: 25 * KB, css: 10 * KB },
 		graph: text,
