@@ -120,6 +120,7 @@ describe("elo dataset (AC3.1)", () => {
 			"EXAMPLE",
 			"g5line",
 			"v5a2",
+			"runlabel",
 			"structured",
 		])
 			expect(text, dropped).not.toContain(dropped);

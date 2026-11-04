@@ -1,19 +1,15 @@
 {
-	"about": "5v5 main line: Elo of each 2-block checkpoint relative to v5a2 (block 2), CS maps, 2 seeds, 4,000 rounds per pair",
+	"about": "Stand-in description of the source file (points relative to the block-2 anchor).",
 	"headline": {
-		"text": "after 28 blocks (5.6e9 env steps since the 5v5 widening) the head g5line28 is +96 (+94..+98) over v5a2 on the CS maps, +81 on 200 held-out generated maps",
+		"text": "stand-in headline: runlabel-28 over runlabel-2",
 		"src": "notes/EXAMPLE.md:1",
 		"confidence": "high (direct readout)"
 	},
-	"caveats": [
-		"each readout was played in the rules of its day; chained points have no interval",
-		"intervals are tournament noise only; seed noise is larger (~5 Elo per difference, noise.json)",
-		"after block 28 the game changes (snap, generator v3, crouch); segments are not on the same scale"
-	],
+	"caveats": ["stand-in caveat one", "stand-in caveat two", "stand-in caveat three"],
 	"points": [
 		{
 			"block": 2,
-			"run": "v5a2",
+			"run": "runlabel-2",
 			"env_steps": 400000000.0,
 			"elo": 0,
 			"elo_generated": 0,
@@ -23,7 +19,7 @@
 		},
 		{
 			"block": 4,
-			"run": "g5line4",
+			"run": "runlabel-4",
 			"env_steps": 800000000.0,
 			"elo": 17,
 			"lo": 14,
@@ -35,17 +31,17 @@
 		},
 		{
 			"block": 6,
-			"run": "g5line6",
+			"run": "runlabel-6",
 			"env_steps": 1200000000.0,
 			"elo": 32,
 			"elo_generated": 31,
-			"method": "chain: g5line8 - (g5line8 - g5line6) = 42 - 10; gen 36 - 5",
+			"method": "chain: stand-in arithmetic",
 			"src": ["notes/EXAMPLE.md:1"],
 			"readout": "2026-10-28"
 		},
 		{
 			"block": 8,
-			"run": "g5line8",
+			"run": "runlabel-8",
 			"env_steps": 1600000000.0,
 			"elo": 42,
 			"lo": 40,
@@ -57,7 +53,7 @@
 		},
 		{
 			"block": 10,
-			"run": "g5line10",
+			"run": "runlabel-10",
 			"env_steps": 2000000000.0,
 			"elo": 52,
 			"lo": 49,
@@ -69,27 +65,27 @@
 		},
 		{
 			"block": 12,
-			"run": "g5line12",
+			"run": "runlabel-12",
 			"env_steps": 2400000000.0,
 			"elo": 60,
 			"elo_generated": 50,
-			"method": "chain: (g5line20 - v5a2) - (g5line20 - g5line12) = 78 - 18; gen 69 - 19",
+			"method": "chain: stand-in arithmetic",
 			"src": ["notes/EXAMPLE.md:1"],
 			"readout": "2026-10-29"
 		},
 		{
 			"block": 16,
-			"run": "g5line16",
+			"run": "runlabel-16",
 			"env_steps": 3200000000.0,
 			"elo": 69,
 			"elo_generated": 62,
-			"method": "chain: (g5line24 - v5a2) - (g5line24 - g5line16) = 86 - 17; gen 76 - 14 (the other chain, g5line12 + 8, gives 68)",
+			"method": "chain: stand-in arithmetic",
 			"src": ["notes/EXAMPLE.md:1"],
 			"readout": "2026-11-01"
 		},
 		{
 			"block": 20,
-			"run": "g5line20",
+			"run": "runlabel-20",
 			"env_steps": 4000000000.0,
 			"elo": 78,
 			"lo": 76,
@@ -101,7 +97,7 @@
 		},
 		{
 			"block": 24,
-			"run": "g5line24",
+			"run": "runlabel-24",
 			"env_steps": 4800000000.0,
 			"elo": 86,
 			"lo": 84,
@@ -114,7 +110,7 @@
 		},
 		{
 			"block": 28,
-			"run": "g5line28",
+			"run": "runlabel-28",
 			"env_steps": 5600000000.0,
 			"elo": 96,
 			"lo": 94,
@@ -128,93 +124,93 @@
 	],
 	"steps": [
 		{
-			"pair": "g5line4 - v5a2",
+			"pair": "runlabel-4 - runlabel-2",
 			"blocks": "3-4",
-			"what": "plain 5v5 blocks",
+			"what": "stand-in step",
 			"cs": 17,
 			"lo": 14,
 			"hi": 19,
 			"gen": 20,
-			"src": "repo-snapshot/JOURNAL.md:5608"
+			"src": "notes/EXAMPLE.md:1"
 		},
 		{
-			"pair": "g5line6 - g5line4",
+			"pair": "runlabel-6 - runlabel-4",
 			"blocks": "5-6",
-			"what": "+ role personas as training bots, flash_arc",
+			"what": "stand-in step",
 			"cs": 15,
 			"lo": 13,
 			"hi": 17,
 			"gen": 11,
-			"src": "repo-snapshot/JOURNAL.md:5609"
+			"src": "notes/EXAMPLE.md:2"
 		}
 	],
 	"segments": [
 		{
 			"id": "widen",
-			"pair": "v5a2 - gline6w",
+			"pair": "runlabel-2 - runlabel-6",
 			"elo": 317,
 			"lo": 315,
 			"hi": 320,
-			"game": "5v5",
-			"note": "the 3v3 agent gline6 widened to 5v5 slots, then 2 blocks of 5v5 (block 1 +292, block 2 +25); the same v5a2 scores -94 (-97..-92) against the 3v3 line's own 2 blocks in the 3v3 game",
+			"game": "stand-in game on structured maps",
+			"note": "stand-in note",
 			"src": ["notes/EXAMPLE.md:1"]
 		},
 		{
 			"id": "b29-30",
-			"pair": "g5line30 - g5line28",
+			"pair": "runlabel-30 - runlabel-28",
 			"elo": 3.7,
 			"lo": 1.9,
 			"hi": 5.3,
-			"game": "5v5, structured2 maps",
-			"note": "the main line's own 2 blocks as the control of the generator-v3 A/B (2-seed mean)",
+			"game": "stand-in game on structured maps",
+			"note": "stand-in note",
 			"src": ["notes/EXAMPLE.md:1"]
 		},
 		{
 			"id": "b32-33",
-			"pair": "g5line33 - g5line31",
+			"pair": "runlabel-33 - runlabel-31",
 			"elo": 4,
-			"game": "today's game (snap off)",
+			"game": "stand-in game on structured maps",
 			"alt": { "snap_game": -3 },
-			"note": "control of the snap A/B",
+			"note": "stand-in note",
 			"src": ["notes/EXAMPLE.md:1"]
 		},
 		{
 			"id": "snap",
-			"pair": "snapb2 - g5line33",
+			"pair": "runlabel-snap - runlabel-33",
 			"elo": 29,
 			"lo": 27,
 			"hi": 31,
-			"game": "snap game",
+			"game": "stand-in game on structured maps",
 			"alt": { "today": -15 },
-			"note": "2 blocks with snap_fire from g5line31; snap adopted as a realism change, the v3 line starts from snapb2",
+			"note": "stand-in note",
 			"src": ["notes/EXAMPLE.md:1"]
 		},
 		{
 			"id": "g6",
-			"pair": "g6line4 - g6line2",
+			"pair": "runlabel-4 - runlabel-2",
 			"elo": 9,
 			"lo": 7,
 			"hi": 10,
-			"game": "v3 game (generator v3 + snap + table sight + diagonal bots)",
+			"game": "stand-in game on structured maps",
 			"alt": { "crouch_game": 11 },
-			"note": "first progress check of the v3 line, ~+4-5 per block",
+			"note": "stand-in note",
 			"src": ["notes/EXAMPLE.md:1"]
 		},
 		{
 			"id": "crouch",
-			"pair": "stb2 - g6line4",
+			"pair": "runlabel-st - runlabel-4",
 			"elo": 74,
 			"lo": 72,
 			"hi": 75,
-			"game": "crouch game",
+			"game": "stand-in game on structured maps",
 			"alt": { "today": 0 },
-			"note": "crouch A/B (2 blocks from g6line2); adopted, the main line continues as g7line1 from stb2",
+			"note": "stand-in note",
 			"src": ["notes/EXAMPLE.md:1"]
 		}
 	],
 	"other_reads": [
 		{
-			"read": "heads (g5line28_s1 / g5line27_s2) - v5a2 on the 5 compiled CS maps (Valve nav, k = 1)",
+			"read": "stand-in read: runlabel-28 vs runlabel-2",
 			"elo": 86,
 			"lo": 84,
 			"hi": 89,

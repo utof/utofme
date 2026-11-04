@@ -28,7 +28,7 @@
 			"src": "notes/EXAMPLE.md:1"
 		},
 		{
-			"who": "5v5 head g5line28 (self-play, CS maps)",
+			"who": "5v5 head (self-play, CS maps)",
 			"contact": 9.6,
 			"first_kill": 13.6,
 			"plant": 33.6,
@@ -48,7 +48,7 @@
 			"src": "notes/EXAMPLE.md:1"
 		},
 		{
-			"who": "3v3 agent genshot2_s1 (10-25)",
+			"who": "3v3 agent (10-25)",
 			"contact": 9.6,
 			"first_kill": 15.2,
 			"plant": 27.2,
@@ -56,7 +56,7 @@
 			"src": "notes/EXAMPLE.md:1"
 		},
 		{
-			"who": "snap arm snapb2 (snap game)",
+			"who": "snap arm (snap game)",
 			"contact": 9.6,
 			"first_kill": 12.8,
 			"plant": 31.2,
