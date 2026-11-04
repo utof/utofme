@@ -161,7 +161,7 @@ const last = formatSeconds(ticksToSeconds(data.nTicks - 1));
 		display: grid;
 		inline-size: 100%;
 		grid-template-columns: minmax(0, 1fr);
-		grid-template-rows: auto 17rem 56px;
+		grid-template-rows: auto 56px 17rem;
 		grid-template-areas: "board" "bar" "side";
 	}
 	@media (min-width: 701px) {
@@ -190,24 +190,31 @@ const last = formatSeconds(ticksToSeconds(data.nTicks - 1));
 	.rp-side {
 		grid-area: side;
 		min-block-size: 0;
-		overflow: auto;
+		/* Why: no scrolling here (a scroll region needs a focusable child, and this one has none);
+		   the strip is sized to fit instead. */
+		overflow: hidden;
 		padding: var(--space-2);
 	}
 	.rp-strip {
 		list-style: none;
 		margin: 0;
 		padding: 0;
+		block-size: 100%;
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-rows: repeat(2, minmax(0, 1fr));
 		gap: var(--space-2);
 	}
 	@media (min-width: 701px) {
 		.rp-strip {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+			grid-template-rows: repeat(3, minmax(0, 1fr));
 		}
 	}
 	.rp-strip li {
 		display: grid;
+		grid-template-rows: minmax(0, 1fr) auto;
+		min-block-size: 0;
 		gap: 2px;
 		font-family: var(--font-mono);
 		font-size: var(--font-size-1);
@@ -217,7 +224,8 @@ const last = formatSeconds(ticksToSeconds(data.nTicks - 1));
 	.rp-strip svg {
 		display: block;
 		inline-size: 100%;
-		aspect-ratio: 1;
+		block-size: 100%;
+		min-block-size: 0;
 		border: 1px solid var(--color-border);
 	}
 	.rp-bar {

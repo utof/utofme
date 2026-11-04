@@ -541,7 +541,9 @@
 						{/each}
 					</select>
 				</label>
-				<ol class="rp-events" aria-label="Events">
+				<!-- Why: the list scrolls inside the reserved box, so it must be reachable by keyboard. -->
+				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+				<ol class="rp-events" aria-label="Events" tabindex="0">
 					{#each events as m, i (m.id)}
 						<li
 							class:rp-past={i <= currentEvent}
@@ -621,7 +623,7 @@
 		display: grid;
 		inline-size: 100%;
 		grid-template-columns: minmax(0, 1fr);
-		grid-template-rows: auto 17rem 56px;
+		grid-template-rows: auto 56px 17rem;
 		grid-template-areas: "board" "bar" "side";
 	}
 	@media (min-width: 701px) {
@@ -679,12 +681,14 @@
 		flex: 1 1 auto;
 		min-block-size: 0;
 	}
+	/* Why: future events read in the muted text colour (4.81:1 on the surface), never through
+	   opacity, which would drop them under 4.5:1. */
 	.rp-events li {
 		padding-block: 2px;
-		opacity: 0.6;
+		color: var(--color-text-muted);
 	}
 	.rp-events li.rp-past {
-		opacity: 1;
+		color: var(--color-text-body);
 	}
 	.rp-events li[aria-current="step"] {
 		font-weight: 600;
