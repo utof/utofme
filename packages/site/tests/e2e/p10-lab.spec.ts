@@ -31,10 +31,11 @@ for (const id of FIGURES) {
 	});
 }
 
-// Why: F13 is an inline, unnumbered sentence, so its stub is a span, not a figure.
-test("lab/elo-sentence: renders the inline stub, Axe-clean", async ({ page }) => {
+// Why: F13 is an inline, unnumbered sentence, so it is a span island, not a figure (the stub is
+// replaced by the real sentence in lane FC).
+test("lab/elo-sentence: renders the inline sentence, Axe-clean", async ({ page }) => {
 	await page.goto("/lab/figures/elo-sentence/");
 	await expect(page.locator("figure[data-figure]")).toHaveCount(0);
-	await expect(page.locator("span[data-stub]")).toHaveCount(1);
+	await expect(page.locator("astro-island span.es")).toHaveCount(1);
 	expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });

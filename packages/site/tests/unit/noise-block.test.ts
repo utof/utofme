@@ -44,9 +44,9 @@ describe("NoiseBlock", () => {
 	});
 	it("AC13.3: the keyframe is the dot plot at 8,000 rounds with the default sentence", () => {
 		const island = doc.querySelector("astro-island");
-		expect(island?.querySelector(".nz-sentence")?.textContent).toBe(
-			"With 2 seeds, an effect smaller than ±9.3 Elo is noise.",
-		);
+		expect(
+			(island?.querySelector(".nz-sentence")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+		).toBe("With 2 seeds, an effect smaller than ±9.3 Elo is noise.");
 		const svgs = [...(island?.querySelectorAll("svg[role='img']") ?? [])];
 		expect(svgs).toHaveLength(2);
 		for (const svg of svgs) {
