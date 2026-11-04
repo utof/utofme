@@ -194,7 +194,7 @@ export interface ChunkGraph {
 	readonly json: ReadonlyMap<string, readonly string[]>;
 }
 
-const JSON_REF = /["'`]([^"'`\n\\]*?[\w.-]+\.json)["'`]/g;
+const JSON_REF = /["'`]([\w@./-]{1,200}\.json)["'`]/g;
 
 /**
  * `_astro/*.json` files a chunk names, as dist-relative paths.
