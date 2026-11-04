@@ -49,3 +49,17 @@ Thumbs.db
 
 # Local-only scratch (research, proposals, cloud briefs/logs)
 /_local/
+
+# Claude Code project state (local settings, skills, worktrees)
+/.claude/
+
+# playwright-cli page dumps
+.playwright-cli/
+
+# lockfiles of other package managers (this repo uses bun.lock)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# local design-kit export (reference only)
+/packages/specs/utofme_design/
