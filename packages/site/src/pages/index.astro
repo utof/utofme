@@ -58,13 +58,9 @@ const EAGER_CARDS = 4;
 const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 ---
 
-<BaseLayout title="utofme" minimal>
+<BaseLayout title="utofme" minimal wordmarkHeading>
+	<MotionToggle slot="controls" />
 	<main>
-		<header class="site-head">
-			<h1>utofme</h1>
-			<MotionToggle />
-		</header>
-
 		<ul class="masonry" data-test="works-grid">
 			{works.map((entry, i) => {
 				const Thumb = ThumbFor[entry.data.type];
@@ -204,25 +200,7 @@ const COVER_SIZES = "(min-width: 560px) 50vw, 100vw";
 	main {
 		width: var(--page-width);
 		margin-inline: auto;
-		padding-block: var(--space-6) var(--space-7);
-	}
-
-	.site-head {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--space-4);
-		margin-bottom: var(--space-6);
-	}
-
-	h1 {
-		/* v21: headings are Geist 600, tight tracking (ADR 0042). */
-		font-family: var(--font-sans);
-		font-size: var(--font-size-6);
-		font-weight: 600;
-		letter-spacing: var(--tracking-tight);
-		line-height: var(--leading-tight);
-		margin-block: 0;
+		padding-block: 0 var(--space-7);
 	}
 
 	/* Masonry: CSS multi-column. --masonry-gap (tokens.css) drives the column gap

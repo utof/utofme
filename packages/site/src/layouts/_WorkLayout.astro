@@ -43,9 +43,11 @@ export interface Props {
 	 * render it need no content-layer stub.
 	 */
 	neighbours?: Neighbours<{ id: string; title: string; date: Date }> | undefined;
+	/** 1200x630 `og:image` URL built by the route; falls back to the site card when absent. */
+	ogImage?: string | undefined;
 }
 
-const { entry, neighbours } = Astro.props;
+const { entry, neighbours, ogImage } = Astro.props;
 const data = projectFields(entry.data);
 
 // Why: secondary external-URL chain mirrors ADR 0011 priority order; kept as the
@@ -67,7 +69,13 @@ const stack = data.stack;
 const cover = data.cover;
 ---
 
-<BaseLayout title={`${data.title} · utofme`} {...(description ? { description } : {})}>
+<BaseLayout
+	title={data.title}
+	{...(description ? { description } : {})}
+	{...(ogImage ? { ogImage } : {})}
+>
+	{/* Why: project pages play a banner loop, so Pause motion lives in the shared site header (D16, P-02). */}
+	<MotionToggle slot="controls" />
 	<main>
 		<article class="h-entry">
 			{cover && (
@@ -93,12 +101,11 @@ const cover = data.cover;
 			)}
 			<div class="col">
 				<header>
+					{/* Why: the wordmark already leads home; the small "← All works" breadcrumb stays under the banner as the way back to the grid. */}
 					<div class="nav-row">
 						<a href="/" data-test="breadcrumb">
 							← All works
 						</a>
-						{/* Why: project pages play a banner loop, so they get the same Pause-motion toggle as `/` (D16). */}
-						<MotionToggle />
 					</div>
 					<h1 class="p-name" tabindex="-1">
 						{data.title}
@@ -137,7 +144,7 @@ const cover = data.cover;
 	main {
 		width: var(--page-width);
 		margin-inline: auto;
-		padding-block: var(--space-6) var(--space-8);
+		padding-block: 0 var(--space-8);
 		/* v21: body copy in --color-text-body (#444), headings in --color-text. */
 		color: var(--color-text-body);
 	}

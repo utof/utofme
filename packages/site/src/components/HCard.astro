@@ -1,7 +1,13 @@
 ---
 /**
  * Footer h-card. Declares the site's own identity for indieweb tools.
+ *
+ * Why: rendered as one quiet line ("utof.me — Personal site and portfolio. · GitHub
+ * @utof") instead of a three-line block; the mf2 classes (`h-card`, `u-url p-name`,
+ * `p-note`, `rel=me`) are unchanged.
+ *
  * @see packages/specs/specs/06-indieweb.md § Architecture (Microformats markup)
+ * @see packages/specs/reviews/ui/polish.md (P-04)
  */
 import { profiles } from "../lib/profiles.ts";
 ---
@@ -10,7 +16,10 @@ import { profiles } from "../lib/profiles.ts";
 	<a class="u-url p-name" href="/">
 		utof.me
 	</a>
-	<p class="p-note">Personal site and portfolio.</p>
+	<span class="sep" aria-hidden="true">
+		—
+	</span>
+	<span class="p-note">Personal site and portfolio.</span>
 	<ul>
 		{profiles.map((p) => (
 			<li>
@@ -24,11 +33,17 @@ import { profiles } from "../lib/profiles.ts";
 
 <style>
 	/* Why: `opacity: 0.7` washed the v21 link blue down to 3.26:1 on white. The
-	 * h-card now matches the footer meta row below it: muted text, links
-	 * inherit, hover restores the strong text colour (ADR 0042). */
+	 * h-card matches the footer meta row below it: muted text, links inherit,
+	 * hover restores the strong text colour (ADR 0042). */
 	.h-card {
-		font-size: 0.85em;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		column-gap: var(--space-2);
+		font-size: var(--font-size-ui);
 		color: var(--color-text-muted);
+		border-top: 1px solid var(--color-border);
+		padding-top: var(--space-2);
 	}
 	.h-card a {
 		color: inherit;
@@ -37,11 +52,21 @@ import { profiles } from "../lib/profiles.ts";
 	.h-card a:hover {
 		color: var(--color-text);
 		text-decoration: underline;
+		text-decoration-color: var(--color-focus);
 	}
 	.h-card ul {
 		display: flex;
-		gap: 1rem;
+		gap: var(--space-3);
 		list-style: none;
+		margin: 0;
 		padding: 0;
+	}
+	/* Link list joins the same line after a middle dot. */
+	.h-card ul::before {
+		content: "·";
+		margin-inline-end: var(--space-3);
+	}
+	.h-card .sep {
+		margin-inline-end: 0;
 	}
 </style>

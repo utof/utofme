@@ -121,7 +121,6 @@ function makeFakeButton(): FakeButton {
 	const attrs = new Map<string, string>([
 		["data-sound-toggle", ""],
 		["aria-pressed", "false"],
-		["aria-label", "Toggle UI sounds"],
 	]);
 	let onclick: (() => void) | null = null;
 	return {
@@ -188,10 +187,11 @@ describe("SoundToggle server render", () => {
 		expect(html).toContain("data-sound-toggle");
 	});
 
-	it("renders aria-label for accessibility", async () => {
+	it("renders a visible text label instead of an aria-label", async () => {
 		const html = await renderSoundToggle();
-		expect(html).toContain("aria-label=");
-		expect(html).toContain("Toggle UI sounds");
+		expect(html).not.toContain("aria-label=");
+		expect(html).toContain("Sound on");
+		expect(html).toContain("Sound off");
 	});
 
 	it("renders an SVG icon with aria-hidden", async () => {

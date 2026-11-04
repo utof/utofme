@@ -333,4 +333,28 @@ const caption = captionParts(data);
 		box-shadow: var(--shadow-focus);
 		border-radius: var(--radius-xs);
 	}
+
+	/* ─── Phone / touch: a slimmer bar ─────────────────────────────────────── */
+	/* Why: at 390 px the 3-line bar covered 44 % of each card. Touch has no hover to
+	 * reveal the meta line, so drop it (the project page shows it) and keep the
+	 * description to its single ellipsised line (`.cap > *` is nowrap); nothing slides,
+	 * so the reveal translate is 0. Declared last so it outranks the hover rules above. */
+	@media (pointer: coarse), (max-width: 639px) {
+		.card--media {
+			--cap-meta-h: 0px;
+		}
+		.card--media .cap__m {
+			display: none;
+		}
+		.card--media .cap__d {
+			margin-bottom: 0;
+		}
+		.card--media .cap {
+			padding-block-end: var(--cap-pad);
+		}
+		:global(html:not([data-motion="paused"])) .card--media .cap,
+		:global(html:not([data-motion="paused"])) a.card--media:hover .cap {
+			transform: none;
+		}
+	}
 </style>
