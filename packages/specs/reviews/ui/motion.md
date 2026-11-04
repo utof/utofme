@@ -16,7 +16,10 @@ Base: `origin/fix/ui-wave2-r` @ 4202c3a (main plus the ui2 project and chrome fi
 
 ## Findings
 
-(in progress)
+(in progress; confirmed so far)
+
+- M3-01 (BROKEN): forward morph, both hero snapshots overflow the morphing box. `::view-transition-old/new(hero)` use `object-fit: cover` without `overflow: clip`, and Chromium paints replaced-element overflow outside the box. At t=40 ms the group is 804x362 at (108,412); the 16:9 old snapshot paints 804x452 at y 367-819 and the 3:1 new snapshot paints 1086x362 at x -33..1053. Fix: `overflow: clip` on both pseudo-elements (transitions.css:37-46). Evidence: motion/m3-01-*.png.
+- M3-02 (MAJOR): card-to-banner video swap reveals the 1080p video on its first `playing`, then re-seeks it while visible: the banner freezes 205-226 ms on a frame 232-477 ms behind the card loop, then jumps (controller.ts:213-224).
 
 ## Checked and fine
 
