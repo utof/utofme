@@ -1,7 +1,7 @@
 /**
  * Project banner quality (D-02), short-viewport cap (M-05) and morph overlap (M-14), e2e.
  *
- * Why: the card → banner morph persists the 768 px card <video>; without the swap the
+ * Why: the card → banner morph persists the card <video> (at most 1024 px); without the swap the
  * banner plays an upscaled card loop while a direct load plays the 1920 px rendition.
  *
  * @see packages/specs/reports/ui-fix-banner.md

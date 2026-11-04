@@ -408,20 +408,20 @@ describe("R5 video[data-loop] markup", () => {
 });
 
 describe("R6 loop file sizes", () => {
-	it("card: ≤300 KB, warn above 150 KB", () => {
+	it("card: ≤540 KB, warn above 270 KB", () => {
 		const r = (kb: number) =>
 			rule("/works/x/", "r6-card.html", {
 				"loops/card.av1.mp4": kb * KB,
 				"loops/card.h264.mp4": 1,
 			});
 		expect(r(100).findings).toEqual([]);
-		expect(warns(r(200), "R6")).toHaveLength(1);
-		expect(errors(r(310), "R6")[0]).toContain("loops/card.av1.mp4");
+		expect(warns(r(400), "R6")).toHaveLength(1);
+		expect(errors(r(560), "R6")[0]).toContain("loops/card.av1.mp4");
 	});
 
 	it("gallery shares the card limit", () => {
 		const r = rule("/works/x/", "r6-gallery.html", {
-			"loops/gal.av1.mp4": 310 * KB,
+			"loops/gal.av1.mp4": 560 * KB,
 			"loops/gal.h264.mp4": 1,
 		});
 		expect(errors(r, "R6")).toHaveLength(1);
@@ -459,7 +459,7 @@ describe("end to end (AC2.4)", () => {
 	}
 
 	it("an oversized loop makes the run fail, naming the file and the rule", () => {
-		const { failed, markdown } = runBudgets(tmpDist(310 * KB), budgets);
+		const { failed, markdown } = runBudgets(tmpDist(560 * KB), budgets);
 		expect(failed).toBe(true);
 		expect(markdown).toContain("R6");
 		expect(markdown).toContain("loops/card.av1.mp4");

@@ -40,25 +40,26 @@ describe("posterPathFor", () => {
 });
 
 describe("cardPosterWidths", () => {
-	it("keeps today's [384, 768] ladder for a poster at least 768 px wide", () => {
-		expect(CARD_POSTER_WIDTHS).toEqual([384, 768]);
-		expect(cardPosterWidths(768)).toEqual([384, 768]);
-		expect(cardPosterWidths(1920)).toEqual([384, 768]);
+	it("offers the [384, 768, 1024] ladder for a poster at least 1024 px wide", () => {
+		expect(CARD_POSTER_WIDTHS).toEqual([384, 768, 1024]);
+		expect(cardPosterWidths(1024)).toEqual([384, 768, 1024]);
+		expect(cardPosterWidths(1920)).toEqual([384, 768, 1024]);
 	});
 	it("caps the top step at a narrower card poster instead of asking sharp to upscale", () => {
+		expect(cardPosterWidths(900)).toEqual([384, 768, 900]);
+		expect(cardPosterWidths(768)).toEqual([384, 768]);
+		expect(cardPosterWidths(680)).toEqual([384, 680]);
 		expect(cardPosterWidths(576)).toEqual([384, 576]);
-		expect(cardPosterWidths(512)).toEqual([384, 512]);
-		expect(cardPosterWidths(696)).toEqual([384, 696]);
 	});
 	it("never repeats a width when the poster is narrower than the first step", () => {
 		expect(cardPosterWidths(300)).toEqual([300]);
 	});
 	fcTest.prop([fc.integer({ min: 64, max: 4000 })])(
-		"ascending, unique, never above the poster width, ends at min(768, width)",
+		"ascending, unique, never above the poster width, ends at min(1024, width)",
 		(w) => {
 			const out = cardPosterWidths(w);
 			expect(out).toEqual([...new Set(out)].sort((a, b) => a - b));
-			expect(Math.max(...out)).toBe(Math.min(768, w));
+			expect(Math.max(...out)).toBe(Math.min(1024, w));
 			expect(out.every((x) => x <= w)).toBe(true);
 		},
 	);

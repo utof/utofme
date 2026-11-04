@@ -200,6 +200,44 @@ they read as flicker, and a still of the first screen is the legible picture. On
 **Consequences.** A slideshow card is only seen moving by a visitor with a mouse or a keyboard who asks for it. The card → banner morph needs no change: a differently framed card does not persist,
 and `eeg-ads1299-lab` (framed like its banner) persists its card video, which is playing at click time because the card was hovered or focused.
 
+## Addendum 4 2026-11-05 — card frames 4/3 larger on each side (soft square and portrait cards at two columns on DPR-2)
+
+**Status:** accepted. Amends Addendum 2 decision 2 (the frames), the card H.264 level and the card byte budgets. The banner (1920×1080, CRFs, level, budgets), the card CRFs, the AV1 level
+and the recipes are unchanged.
+
+**Diagnosis.** Addendum 2 kept the card at about 332 k px for every aspect, which at the 664 px column of a 1340 px page gives 1.16 (16:9), 1.11 (16:10), 1.05 (3:2), 0.87 (1:1) and
+0.77 (4:5) video px per CSS px; a DPR-2 screen wants 2.0. Square and portrait cards were upscaled even at 1×, linsae's slideshow text visibly so, and a slideshow card sits on its poster
+until it is hovered, so the poster was as soft as the video.
+
+**Decision.**
+
+1. **Frames** (`CARD_FRAMES`, `SIZE_SPECS.card`): every frame is scaled by 4/3 on each side (about 1.78× the area, 589,824 px for 16:9), exact aspect, even sides:
+   `1:1 768×768 · 4:5 680×850 · 3:4 672×896 · 4:3 896×672 · 3:2 924×616 · 16:10 976×610 · 16:9 1024×576`. All within ±5 % of 1024×576's area. Video px per CSS px at the 664 px column
+   are now 1.54 (16:9), 1.47 (16:10), 1.39 (3:2), 1.16 (1:1) and 1.02 (4:5). 680×850 and 976×610 are not multiples of the old 4 px lint cell (see 3); both encoders accepted every size.
+2. **H.264 level 3.1** for the card (`SIZE_SPECS.card.x264Level`). 1024×576 is 589,824 px, above level 3.0's 414,720; level 3.1 allows 921,600 px (3,600 macroblocks) and 108,000 MB/s,
+   and the largest frame here is 2,379 macroblocks (976×610) at 30 fps = 71,370 MB/s. Codecs string `avc1.64001F`, derived from `ffprobe` as before. AV1 stays `seq_level_idx` 4,
+   `av01.0.04M.08` (all frames are under level 3.0's 665,856 px). `ENCODER_VERSION` is 4, so every recipe hash changed and every loop was re-encoded (banner files came out byte-identical).
+3. **Flash lint keeps its CSS-px behaviour.** `renderWidthCss` stays 1200 for the 16:9 frame, which is now 1024 wide, so `renderWidthCssFor` (frame width × 1200 / 1024) assumes the same CSS
+   widths as before (900 for the square, 1200 for 16:9; the others differ by at most 6 CSS px, from the old frames not being exactly 3/4 of these). The card `cellPx` is 16/3 px (6.25 CSS px, as 4 px was at 768): the grid is still
+   192×108 for 16:9 and 144×144 for 1:1, so the field and area gates are the same fractions of the frame and a sharper encode does not move a verdict. `gridFor` now rounds the cell
+   count, because 850 and 610 are not whole numbers of cells; the lint reads the true cell size from `width / gridW`. Verdicts after the re-encode: all pass but tactical-arena (warn, as before).
+4. **Budgets** scale by the area ratio: card/gallery file fail > 540 KB, warn > 270 KB (were 300 / 150), in `SIZE_SPECS.card` and `route-budgets.config.ts` R6 (`loops.cardMax` / `cardWarn`).
+5. **Posters** follow the frame: the card poster (`card-poster.png`, or `poster.png` for a card-only loop) is cut from the card master, so it is now the larger frame; the card `srcset` ladder
+   (`CARD_POSTER_WIDTHS`) is `[384, 768, 1024]` (was `[384, 768]`), still capped at the poster's own width.
+
+**Measured** (card files, bytes, AV1 / H.264, before → after): eeg-ads1299-lab 50,956 / 66,731 → 69,148 / 86,383 · enth 97,329 / 156,012 → 127,767 / 233,262 ·
+fixture-testsrc 62,527 / 70,605 → 79,630 / 102,979 · godot-ctcs 111,619 / 210,840 → 162,508 / 313,783 · gr-demo-learn 49,816 / 71,006 → 76,400 / 113,487 ·
+linsae 98,995 / 148,955 → 160,933 / 235,153 · modified-maxwell-taichi 30,451 / 44,535 → 42,600 / 65,275 · modified-maxwell-taichi-pml 16,023 / 30,499 → 23,124 / 45,184 ·
+tactical-arena 48,168 / 59,364 → 63,768 / 81,849 · tactical-arena-smokes 22,357 / 30,291 → 28,726 / 37,789. All ten card renditions together: 1.48 MB → 2.15 MB (+46 %, less than the
+1.78× of the area). The eight card posters grow from 0.92 MB to 1.44 MB in the repo. `check:budgets` home: first-view JS, lazy JS and CSS unchanged, HTML 16.6 → 16.7 KB (the 1024 w candidate
+in each card `srcset`), R6 warns on one card file (godot-ctcs H.264, 313,783 B > 270 KB) where it warned on two before (enth and godot-ctcs, over 150 KB); `check:size` unchanged.
+
+**Consequences.**
+
+- The home page's card video bytes grow by about half, and only for a visitor who plays a card (`preload="none"`); the poster candidate a DPR-2 screen picks goes from 768 w to 1024 w.
+- The card → banner morph still grows a card snapshot to the banner (Addendum 2 follow-up c), now from a sharper start.
+- Follow-ups (a) and (b) of Addendum 2 stay open.
+
 ## Sources
 
 - WCAG 2.2 SC 2.3.1 — https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html

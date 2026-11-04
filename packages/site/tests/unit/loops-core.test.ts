@@ -147,44 +147,84 @@ describe("recipeSchema card aspect", () => {
 });
 
 describe("frameFor / CARD_FRAMES", () => {
-	it("the 16:9 card is today's 768x432 and the banner is 1920x1080 whatever the card aspect", () => {
+	it("the 16:9 card is 1024x576 and the banner is 1920x1080 whatever the card aspect", () => {
 		expect(CARD_FRAMES["16:9"]).toEqual({
 			width: SIZE_SPECS.card.width,
 			height: SIZE_SPECS.card.height,
 		});
-		expect(frameFor({}, "card")).toEqual({ width: 768, height: 432 });
+		expect(frameFor({}, "card")).toEqual({ width: 1024, height: 576 });
 		for (const cardAspect of CARD_ASPECTS)
 			expect(frameFor({ cardAspect }, "banner")).toEqual({ width: 1920, height: 1080 });
 	});
-	it.each(
-		CARD_ASPECTS,
-	)("%s frame has the named ratio, even sides on the lint grid, ~today's pixel area", (a) => {
+	it("every card frame is its pre-addendum-4 frame times 4/3 on each side (the 16:9 and 1:1 exactly)", () => {
+		const old = {
+			"1:1": [576, 576],
+			"4:5": [512, 640],
+			"3:4": [504, 672],
+			"4:3": [672, 504],
+			"3:2": [696, 464],
+			"16:10": [736, 460],
+			"16:9": [768, 432],
+		} as const;
+		for (const a of CARD_ASPECTS) {
+			const [w, h] = old[a];
+			const f = CARD_FRAMES[a];
+			expect(Math.abs(f.width / ((w * 4) / 3) - 1)).toBeLessThan(0.025);
+			expect(Math.abs(f.height / ((h * 4) / 3) - 1)).toBeLessThan(0.025);
+		}
+		expect(CARD_FRAMES["1:1"]).toEqual({ width: 768, height: 768 });
+		expect(CARD_FRAMES["16:9"]).toEqual({ width: 1024, height: 576 });
+	});
+	it.each(CARD_ASPECTS)("%s frame has the named ratio, even sides, ~1024x576's pixel area", (a) => {
 		const f = frameFor({ cardAspect: a }, "card");
 		expect(f).toBe(CARD_FRAMES[a]);
 		expect(Math.abs(f.width / f.height - aspectRatio(a))).toBeLessThan(1e-9);
-		// Encoders need even sides; the flash lint's 4 px cell grid needs multiples of cellPx.
-		expect(f.width % SIZE_SPECS.card.cellPx).toBe(0);
-		expect(f.height % SIZE_SPECS.card.cellPx).toBe(0);
-		// Keeps the byte budget: within ±5 % of 768x432 (331,776 px).
+		// Both encoders need even sides (4:2:0).
+		expect(f.width % 2).toBe(0);
+		expect(f.height % 2).toBe(0);
+		// Keeps the byte budget: within ±5 % of 1024x576 (589,824 px).
 		const area = f.width * f.height;
-		expect(Math.abs(area / (768 * 432) - 1)).toBeLessThan(0.05);
+		expect(Math.abs(area / (1024 * 576) - 1)).toBeLessThan(0.05);
 	});
-	it("the card lint keeps one magnification (1200 CSS px per 768 video px) whatever the aspect", () => {
+	it("every card frame fits H.264 level 3.1 (921,600 px, 3,600 macroblocks, 108,000 MB/s at 30 fps)", () => {
+		for (const a of CARD_ASPECTS) {
+			const f = CARD_FRAMES[a];
+			const mbs = Math.ceil(f.width / 16) * Math.ceil(f.height / 16);
+			expect(f.width * f.height).toBeLessThanOrEqual(921_600);
+			expect(mbs).toBeLessThanOrEqual(3600);
+			expect(mbs * 30).toBeLessThanOrEqual(108_000);
+		}
+		// ... and the 16:9 default is above level 3.0's 414,720 px, which is why the card level moved.
+		expect(1024 * 576).toBeGreaterThan(414_720);
+		expect(SIZE_SPECS.card.x264Level).toBe("3.1");
+	});
+	it("the card lint keeps one magnification (1200 CSS px per 1024 video px) whatever the aspect", () => {
 		expect(renderWidthCssFor("card", CARD_FRAMES["16:9"])).toBe(1200);
 		expect(renderWidthCssFor("banner", { width: 1920, height: 1080 })).toBe(1280);
 		for (const a of CARD_ASPECTS) {
 			const f = CARD_FRAMES[a];
 			const w = renderWidthCssFor("card", f);
 			expect(Number.isInteger(w)).toBe(true);
-			expect(Math.abs(w / f.width - 1200 / 768)).toBeLessThan(1 / f.width);
+			expect(Math.abs(w / f.width - 1200 / 1024)).toBeLessThan(1 / f.width);
 		}
+		// Same assumed CSS widths as the 4:3-smaller frames had (the lint verdict does not move with resolution).
 		expect(renderWidthCssFor("card", CARD_FRAMES["1:1"])).toBe(900);
-		expect(renderWidthCssFor("card", CARD_FRAMES["4:5"])).toBe(800);
+		expect(renderWidthCssFor("card", CARD_FRAMES["3:4"])).toBe(788);
+		expect(renderWidthCssFor("card", CARD_FRAMES["4:3"])).toBe(1050);
+		expect(renderWidthCssFor("card", CARD_FRAMES["4:5"])).toBe(797);
 	});
-	it("the flash-lint grid follows the frame", () => {
+	it("the flash-lint grid is the pre-addendum-4 one in CSS px and follows the frame", () => {
 		expect(gridFor("card")).toEqual({ gridW: 192, gridH: 108 });
 		expect(gridFor("card", CARD_FRAMES["1:1"])).toEqual({ gridW: 144, gridH: 144 });
 		expect(gridFor("banner")).toEqual({ gridW: 160, gridH: 90 });
+		// Frames that are not a whole number of cells round to the nearest count (cell stays within 1 % of 16/3 px).
+		for (const a of CARD_ASPECTS) {
+			const f = CARD_FRAMES[a];
+			const { gridW, gridH } = gridFor("card", f);
+			expect(Number.isInteger(gridW) && Number.isInteger(gridH)).toBe(true);
+			expect(Math.abs(f.width / gridW / SIZE_SPECS.card.cellPx - 1)).toBeLessThan(0.01);
+			expect(Math.abs(f.height / gridH / SIZE_SPECS.card.cellPx - 1)).toBeLessThan(0.01);
+		}
 	});
 });
 
@@ -206,15 +246,15 @@ describe("buildMasterGraph card aspect", () => {
 	});
 	it("scales the card master to the card frame and the banner master to 1920x1080", () => {
 		const card = buildMasterGraph(square, "card").filterComplex;
-		expect(card).toContain("scale=576:576:force_original_aspect_ratio=increase,crop=576:576");
-		expect(card).not.toContain("768:432");
+		expect(card).toContain("scale=768:768:force_original_aspect_ratio=increase,crop=768:768");
+		expect(card).not.toContain("1024:576");
 		const banner = buildMasterGraph(square, "banner").filterComplex;
 		expect(banner).toContain("scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080");
-		expect(banner).not.toContain("576");
+		expect(banner).not.toContain("768");
 	});
 	it("cardCrop replaces crop on the card master only", () => {
 		expect(buildMasterGraph(square, "card").filterComplex).toContain(
-			`[1:v]fps=30,trim=start=0:duration=1,setpts=PTS-STARTPTS,crop=2240:2240:0:0,scale=576:576:force_original_aspect_ratio=increase,crop=576:576,${tail}[v1]`,
+			`[1:v]fps=30,trim=start=0:duration=1,setpts=PTS-STARTPTS,crop=2240:2240:0:0,scale=768:768:force_original_aspect_ratio=increase,crop=768:768,${tail}[v1]`,
 		);
 		expect(buildMasterGraph(square, "banner").filterComplex).toContain(
 			`[1:v]fps=30,trim=start=0:duration=1,setpts=PTS-STARTPTS,crop=2240:1260:0:920,scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,${tail}[v1]`,
@@ -234,15 +274,15 @@ describe("buildMasterGraph card aspect", () => {
 		});
 		const card = buildMasterGraph(deck, "card").filterComplex;
 		expect(card).toContain(
-			"crop=720:900:360:0,scale=512:640:force_original_aspect_ratio=increase,crop=512:640",
+			"crop=720:900:360:0,scale=680:850:force_original_aspect_ratio=increase,crop=680:850",
 		);
 		const banner = buildMasterGraph(deck, "banner").filterComplex;
 		expect(banner).not.toContain("crop=720:900");
 		expect(banner).toContain("scale=1920:1080");
 	});
-	it("a recipe without cardAspect still builds the golden 768x432 graph", () => {
+	it("a recipe without cardAspect still builds the golden 1024x576 graph", () => {
 		const g = buildMasterGraph(recipeSchema.parse(montage), "card").filterComplex;
-		expect(g).toContain("scale=768:432:force_original_aspect_ratio=increase,crop=768:432");
+		expect(g).toContain("scale=1024:576:force_original_aspect_ratio=increase,crop=1024:576");
 	});
 });
 
@@ -276,9 +316,9 @@ describe("buildMasterGraph", () => {
 		const tail = "setsar=1,scale=out_color_matrix=bt709:out_range=tv,format=yuv420p";
 		expect(g.filterComplex).toBe(
 			[
-				`[0:v]fps=30,trim=start=0:duration=1.5,setpts=PTS-STARTPTS,scale=768:432:force_original_aspect_ratio=increase,crop=768:432,${tail}[v0]`,
-				`[1:v]fps=30,trim=start=2:duration=1,setpts=PTS-STARTPTS,scale=768:432:force_original_aspect_ratio=decrease,pad=768:432:(ow-iw)/2:(oh-ih)/2:color=black,${tail}[v1]`,
-				`[2:v]fps=30,trim=start=0:duration=2,setpts=PTS-STARTPTS,crop=640:360:10:20,scale=768:432:force_original_aspect_ratio=increase,crop=768:432,${tail}[v2]`,
+				`[0:v]fps=30,trim=start=0:duration=1.5,setpts=PTS-STARTPTS,scale=1024:576:force_original_aspect_ratio=increase,crop=1024:576,${tail}[v0]`,
+				`[1:v]fps=30,trim=start=2:duration=1,setpts=PTS-STARTPTS,scale=1024:576:force_original_aspect_ratio=decrease,pad=1024:576:(ow-iw)/2:(oh-ih)/2:color=black,${tail}[v1]`,
+				`[2:v]fps=30,trim=start=0:duration=2,setpts=PTS-STARTPTS,crop=640:360:10:20,scale=1024:576:force_original_aspect_ratio=increase,crop=1024:576,${tail}[v2]`,
 				"[v0][v1][v2]concat=n=3:v=1:a=0[v]",
 			].join(";"),
 		);
@@ -335,7 +375,7 @@ describe("encodeArgs", () => {
 		const av1 = encodeArgs("montage", "card", "av1", "in.mkv", "o.mp4");
 		expect(has(av1, "-c:v libsvtav1 -preset 4 -crf 38")).toBe(true);
 		const h = encodeArgs("montage", "card", "h264", "in.mkv", "o.mp4");
-		expect(has(h, "-c:v libx264 -preset veryslow -crf 26 -profile:v high -level:v 3.0")).toBe(true);
+		expect(has(h, "-c:v libx264 -preset veryslow -crf 26 -profile:v high -level:v 3.1")).toBe(true);
 		expect(h).not.toContain("stillimage");
 		for (const a of [av1, h]) {
 			expect(a).toContain("-an");
@@ -362,10 +402,24 @@ describe("encodeArgs", () => {
 describe("codecsFromProbe (probe fixtures measured on the real encodes)", () => {
 	it.each([
 		[{ codec_name: "h264", profile: "High", level: 30, width: 768, height: 432 }, "avc1.64001E"],
+		// Card at 1024x576 (above level 3.0's 414,720 px, so x264 is pinned to 3.1: level 31 = 0x1F).
+		[{ codec_name: "h264", profile: "High", level: 31, width: 1024, height: 576 }, "avc1.64001F"],
 		// Banner at 1920x1080 (ffprobe of the real encodes: H.264 level 40 = 4.0, AV1 seq_level_idx 8 = 4.0).
 		[{ codec_name: "h264", profile: "High", level: 40, width: 1920, height: 1080 }, "avc1.640028"],
 		[
 			{ codec_name: "av1", profile: "Main", level: 4, width: 768, height: 432, pix_fmt: "yuv420p" },
+			"av01.0.04M.08",
+		],
+		// Card at 1024x576 still probes seq_level_idx 4 (3.0: up to 665,856 px).
+		[
+			{
+				codec_name: "av1",
+				profile: "Main",
+				level: 4,
+				width: 1024,
+				height: 576,
+				pix_fmt: "yuv420p",
+			},
 			"av01.0.04M.08",
 		],
 		[
@@ -394,11 +448,11 @@ describe("codecsFromProbe (probe fixtures measured on the real encodes)", () => 
 });
 
 describe("budgetVerdict", () => {
-	it("card/gallery: warn > 150 KB, fail > 300 KB", () => {
-		expect(budgetVerdict("card", 150 * 1024)).toBe("ok");
-		expect(budgetVerdict("card", 150 * 1024 + 1)).toBe("warn");
-		expect(budgetVerdict("card", 300 * 1024)).toBe("warn");
-		expect(budgetVerdict("card", 300 * 1024 + 1)).toBe("fail");
+	it("card/gallery: warn > 270 KB, fail > 540 KB", () => {
+		expect(budgetVerdict("card", 270 * 1024)).toBe("ok");
+		expect(budgetVerdict("card", 270 * 1024 + 1)).toBe("warn");
+		expect(budgetVerdict("card", 540 * 1024)).toBe("warn");
+		expect(budgetVerdict("card", 540 * 1024 + 1)).toBe("fail");
 	});
 	it("banner (1080p): warn > 1.5 MB, fail > 2.5 MB", () => {
 		const MB = 1024 * 1024;
@@ -435,8 +489,8 @@ const entry = (hash: string): LoopsManifest[string] => ({
 	aspect: "16:9",
 	cardAspect: "16:9",
 	card: {
-		width: 768,
-		height: 432,
+		width: 1024,
+		height: 576,
 		sources: [
 			{
 				url: `/loops/demo/card.${hash}.av1.mp4`,

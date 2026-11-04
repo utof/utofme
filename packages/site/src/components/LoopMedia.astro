@@ -12,7 +12,7 @@
  *
  * `persistId` adds `transition:persist` so the same node survives a
  * ClientRouter morph (card → banner) and keeps playing, but only for a card framed like the banner (no
- * `cardPosterPath`): a card with its own framing does not persist. That node carries the ≤ 768 px
+ * `cardPosterPath`): a card with its own framing does not persist. That node carries the ≤ 1024 px
  * CARD rendition, so a banner frame also publishes its own sources in
  * `data-banner-sources` (the frame is not persisted); after the morph
  * `upgradeBannerLoops` (src/lib/loops/controller.ts) swaps in the 1920 px banner video.
