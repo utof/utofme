@@ -63,12 +63,12 @@
 			"out": "radar-dust2"
 		},
 		{
-			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/f_3d_inferno_mesh.png",
+			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/f_3d_inferno_mesh@3x.png",
 			"crop": {
-				"x": 470,
-				"y": 104,
-				"w": 661,
-				"h": 372
+				"x": 1410,
+				"y": 312,
+				"w": 1983,
+				"h": 1116
 			},
 			"out": "mesh-inferno"
 		}

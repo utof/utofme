@@ -5,7 +5,7 @@
 	"fps": 10,
 	"sizes": ["card", "banner"],
 	"slides": [
-		{ "src": "GR_demo_learn/artifacts/orbit.png", "hold": 1.6, "fit": "cover" },
+		{ "src": "GR_demo_learn/artifacts/orbit-16x9@3x.png", "hold": 1.6, "fit": "cover" },
 		{ "src": "GR_demo_learn/artifacts/compact-final.png", "hold": 1.4, "fit": "cover" },
 		{ "src": "GR_demo_learn/artifacts/controls-viewport.png", "hold": 1.4, "fit": "cover" }
 	],
