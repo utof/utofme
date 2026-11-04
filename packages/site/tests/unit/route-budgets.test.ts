@@ -664,6 +664,19 @@ describe("lazy data column", () => {
 		expect(warns(r, "DATA").length).toBe(1);
 		expect(errors(r, "DATA")).toEqual([]);
 	});
+	it("counts JSON assets passed to islands through props, once per file", () => {
+		const other = "_astro/other.def.json";
+		const r = analyzeRoute(
+			{ route: "/article/", html: read("rules/island-props-data.html") },
+			buildChunkGraph(new Map(Object.entries({ ...sources, "_astro/beta.js": "export{}" }))),
+			{
+				raw: (p) => (p === json ? 3 * KB : p === other ? 6 * KB : null),
+				gzip: (p) => (p === json ? KB : p === other ? 2 * KB : null),
+			},
+			ISLAND_CLASS({}),
+		);
+		expect(r.lazyData).toEqual({ raw: 9 * KB, gz: 3 * KB });
+	});
 });
 
 describe("P10-16 config", () => {
