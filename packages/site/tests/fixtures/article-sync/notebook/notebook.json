@@ -1,0 +1,92 @@
+{
+	"about": "stand-in notebook",
+	"entries": [
+		{
+			"id": "p1-aaa",
+			"date": "2026-10-11",
+			"time": null,
+			"title": "Stand-in kept entry",
+			"area": "learner",
+			"outcome": "kept",
+			"metric": "win rate",
+			"delta": 0.08,
+			"ci": [0.05, 0.12],
+			"summary": "A stand-in summary.",
+			"source": "notes/EXAMPLE.md:1"
+		},
+		{
+			"id": "p1-bbb",
+			"date": "2026-10-12",
+			"time": "06:50",
+			"title": "Stand-in reverted entry",
+			"area": "eval",
+			"outcome": "reverted",
+			"metric": "Elo vs control",
+			"delta": -9.5,
+			"ci": null,
+			"summary": "Another stand-in summary.",
+			"source": "notes/EXAMPLE.md:2"
+		},
+		{
+			"id": "p2-ccc",
+			"date": "2026-10-20",
+			"time": null,
+			"title": "Stand-in infra entry",
+			"area": "infra",
+			"outcome": "infra",
+			"metric": null,
+			"delta": null,
+			"ci": null,
+			"summary": "Built a tool.",
+			"source": "notes/EXAMPLE.md:3"
+		},
+		{
+			"id": "p3-ddd",
+			"date": "2026-11-04",
+			"time": null,
+			"title": "Stand-in parked entry",
+			"area": "speed",
+			"outcome": "parked",
+			"metric": "seconds",
+			"delta": 3,
+			"ci": [1, 5],
+			"summary": "Parked for later.",
+			"source": "notes/EXAMPLE.md:4"
+		},
+		{
+			"id": "p3-eee",
+			"date": "2026-11-04",
+			"time": null,
+			"title": "Stand-in inconclusive entry",
+			"area": "utility",
+			"outcome": "inconclusive",
+			"metric": "Elo",
+			"delta": 2,
+			"ci": [-4, 8],
+			"summary": "Could not tell.",
+			"source": "notes/EXAMPLE.md:5"
+		}
+	],
+	"parked": [
+		{
+			"id": "P1",
+			"title": "Stand-in parked item",
+			"kind": "parked",
+			"why": "It did not pay.",
+			"number": "stand-in number",
+			"reopen_if": "Something changes.",
+			"area": "utility",
+			"source": "notes/EXAMPLE.md:6"
+		},
+		{
+			"id": "R1",
+			"title": "Stand-in ruled-out item",
+			"kind": "ruled-out",
+			"why": "It was worse.",
+			"number": "stand-in number",
+			"reopen_if": "Never.",
+			"area": "learner",
+			"source": "notes/EXAMPLE.md:7"
+		}
+	]
+}

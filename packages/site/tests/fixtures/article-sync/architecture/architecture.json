@@ -1,0 +1,39 @@
+{
+	"title": "stand-in architecture",
+	"canvas": { "w": 1000, "h": 600 },
+	"note": "stand-in note, notes/EXAMPLE.md:1",
+	"groups": [{ "id": "g1", "label": "Group one" }, { "id": "g2", "label": "Group two" }],
+	"nodes": [
+		{
+			"id": "a",
+			"label": "Box A",
+			"group": "g1",
+			"blurb": "stand-in blurb A",
+			"files": ["example/EXAMPLE.py"],
+			"x": 90,
+			"y": 90
+		},
+		{
+			"id": "b",
+			"label": "Box B",
+			"group": "g1",
+			"blurb": "stand-in blurb B",
+			"files": ["example/EXAMPLE.py"],
+			"x": 290,
+			"y": 160
+		},
+		{
+			"id": "c",
+			"label": "Box C",
+			"group": "g2",
+			"blurb": "stand-in blurb C",
+			"files": ["example/EXAMPLE.py"],
+			"x": 490,
+			"y": 130
+		}
+	],
+	"edges": [
+		{ "from": "a", "to": "b", "label": "things", "data": "stand-in data for notes/EXAMPLE.md:1" },
+		{ "from": "b", "to": "c", "label": "more things", "data": "stand-in data" }
+	]
+}
