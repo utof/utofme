@@ -119,3 +119,11 @@ pre-commit:
             glob: "packages/site/{public/loops/**,src/data/loops.json,media/recipes/**}"
             root: "packages/site"
             run: bun run check:media
+
+          - name: check-privacy
+            # Why: article surfaces must stay free of private-repo detail; the denylist
+            # applies when the committer's env has PRIVACY_DENYLIST (else the scan warns).
+            # See: packages/specs/specs/10-tactical-arena-article.md § P10-3 "Privacy scan"
+            glob: "packages/site/{src/data/article/**,src/data/article-meta/**,src/content/works/tactical-arena.mdx,src/components/article/**,src/lib/figures/**,src/lib/article-data/**,tests/fixtures/article/**,tests/fixtures/article-sync/**}"
+            root: "packages/site"
+            run: bun run check:privacy

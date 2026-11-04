@@ -1,0 +1,45 @@
+{
+	"ipv4": { "set": "core", "pos": "host 192.0.2.7 is up", "neg": "version 1.2 of the thing" },
+	"cgnat": { "set": "core", "pos": "peer 100.64.0.1 joined", "neg": "peer 100.63.255.255 joined" },
+	"email": {
+		"set": "core",
+		"pos": "mail someone@example.invalid today",
+		"neg": "the at sign @ alone"
+	},
+	"home-path": { "set": "core", "pos": "see /home/example/notes", "neg": "see the home page" },
+	"tilde-path": { "set": "core", "pos": "run ~/example/bin", "neg": "about ~5 minutes" },
+	"token-like": {
+		"set": "core",
+		"pos": "key ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx here",
+		"neg": "key ghp_short here"
+	},
+	"credential-word": {
+		"set": "core",
+		"json": true,
+		"pos": "the rcon line",
+		"neg": "a player-token encoder"
+	},
+	"denylist": { "set": "core", "pos": "a Zorblax appears", "neg": "nothing listed here" },
+	"internal-path": {
+		"set": "shipped",
+		"pos": "see local-only/notes.md",
+		"neg": "a local-first design"
+	},
+	"transfer": {
+		"set": "shipped",
+		"pos": "attached to a GitHub release",
+		"neg": "a release candidate"
+	},
+	"lane-name": {
+		"set": "shipped",
+		"json": true,
+		"pos": "lane map-data-v2 finished",
+		"neg": "a lane of traffic"
+	},
+	"hex-rev": {
+		"set": "shipped",
+		"json": true,
+		"pos": "at rev 3fa9c1d2",
+		"neg": "plain 1234567 digits"
+	}
+}

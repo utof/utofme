@@ -1,0 +1,13 @@
+{
+	"raw": {
+		"src": "local-only/notes/EXAMPLE.md:1",
+		"transfer": "uploaded to a GitHub release",
+		"lane": "lane map-data-v2",
+		"rev": "3fa9c1d2",
+		"host": "100.64.0.1"
+	},
+	"projection": {
+		"schema": "example/1",
+		"maps": [{ "name": "de_example", "rows": [[1, 2], [3, 4]] }]
+	}
+}

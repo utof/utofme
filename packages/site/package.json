@@ -78,6 +78,7 @@
 		"check:knip": "knip",
 		"check:depcruise": "depcruise --validate .dependency-cruiser.cjs src",
 		"check:docs": "bun run scripts/check-docs.ts",
+		"check:privacy": "bun run scripts/check-privacy.ts",
 		"check:no-fixtures": "bun run scripts/check-no-fixtures.ts",
 		"check:size": "size-limit",
 		"media:encode": "bun run scripts/encode-loops.ts",
