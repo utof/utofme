@@ -55,9 +55,17 @@
 		// the Svelte component's script block in this version, so it still flags the
 		// dep as unused. Kept here so `bun run check:knip` stays clean.
 		// See: packages/specs/adrs/0026-force-graph-over-sigma.md
-		"force-graph"
-		// wrangler and lefthook were dropped from this list (#103): knip now reports them as
-		// used (wrangler.jsonc / lefthook.yml plugins), so the entries only produced hints.
+		"force-graph",
+		// Why: lefthook.yml lives at the MONOREPO ROOT (../../lefthook.yml), but
+		// knip is invoked with `--cwd packages/site` (see CI workflow + local
+		// `bun run check:knip` script). The lefthook plugin doesn't walk up to
+		// the workspace root, so the dep registers as unused in CI. Locally it
+		// can pass via cache state, but CI's frozen-lockfile install scrubs that.
+		// Remove only after migrating lefthook.yml to packages/site/ or wiring
+		// an explicit `entry: ["../../lefthook.yml"]`.
+		"lefthook"
+		// wrangler was dropped from this list (#103): knip reports it as used via the
+		// wrangler.jsonc plugin, so the entry only produced a hint.
 		// Removed in Phase 5 Task 12 (knip hints fired after Task 11 landed):
 		//   katex        — knip now traces the `katex/dist/katex.min.css?url`
 		//                  import in src/layouts/_NoteLayout.astro.
