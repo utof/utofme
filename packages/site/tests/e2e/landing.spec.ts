@@ -28,23 +28,16 @@ test("masonry home renders no FilterBar toolbar", async ({ page }) => {
 
 test("visual regression baseline /", async ({ page }) => {
 	await page.goto("/");
-	// Why: the masonry home's lazy covers change <main>'s height until loaded.
+	// Why: the masonry home's lazy covers change the layout until loaded.
 	await waitForImagesSettled(page);
-	// Mask the entire works-grid to absorb subpixel font-rendering drift in card
-	// titles and cover media across browser/OS patch cycles. The <h1> above the
-	// grid remains unmasked, so heading/font regressions on the page chrome are
-	// still caught (the Phase 0 typography sentinel was dropped by ADR 0040).
+	// Why: the chrome moved out of <main> into the shared site header; <main> is
+	// only the card grid, so a masked <main> shot guarded nothing and flaked.
 	// See: https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2
-	// See: packages/specs/plans/01-card-grid-mvp.md § Reviewer briefing point 5
-	// Clip to <main> so the footer (added in Task 4) does not affect
-	// this baseline — full-page snapshots would require re-baselining on
-	// every footer style change. Footer has its own footer.spec.ts coverage.
-	await expect(page.locator("main")).toHaveScreenshot("landing.png", {
+	await expect(page.locator('[data-test="site-header"]')).toHaveScreenshot("landing.png", {
 		// Why: CI ubuntu-latest renderer (Chromium, system fonts) produces ~0.01 pixel
 		// ratio drift vs local baseline in the header area. 0.02 headroom still catches
 		// real layout/font regressions (those affect >>2% of pixels) while absorbing
-		// cross-runner subpixel rendering variation. ADR candidate if this drifts again.
+		// cross-runner subpixel rendering variation.
 		maxDiffPixelRatio: 0.02,
-		mask: [page.locator('[data-test="works-grid"]')],
 	});
 });

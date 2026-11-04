@@ -65,4 +65,28 @@ describe("MetaHead.astro", () => {
 		const html = await container.renderToString(MetaHead, { props: { route: "/" } });
 		expect(html).toMatch(/<link\s+rel="me"\s+href="https:\/\/github\.com\/utof"/);
 	});
+
+	it("emits the share metadata set with the page title template", async () => {
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(MetaHead, {
+			props: { route: "/garden/", title: "Garden", description: "Notes." },
+		});
+		expect(html).toContain('<meta property="og:title" content="Garden · utofme"');
+		expect(html).toContain('<meta property="og:description" content="Notes."');
+		expect(html).toMatch(/<meta property="og:url" content="[^"]*\/garden\/"/);
+		expect(html).toContain('<meta property="og:type" content="website"');
+		expect(html).toMatch(/<meta property="og:image" content="[^"]*\/og-default\.png"/);
+		expect(html).toContain('<meta name="twitter:card" content="summary_large_image"');
+		expect(html).toMatch(/<link rel="canonical" href="[^"]*\/garden\/"/);
+		expect(html).toContain('<meta name="theme-color"');
+	});
+
+	it("uses the bare site name on the home page and a given project image", async () => {
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(MetaHead, {
+			props: { route: "/", title: "utofme", image: "/_astro/x.jpg" },
+		});
+		expect(html).toContain('<meta property="og:title" content="utofme"');
+		expect(html).toMatch(/<meta property="og:image" content="[^"]*\/_astro\/x\.jpg"/);
+	});
 });

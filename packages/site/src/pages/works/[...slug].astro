@@ -9,6 +9,7 @@ import { render } from "astro:content";
 import { getWorksCollection } from "../../lib/works-collection";
 import WorkLayout from "../../layouts/_WorkLayout.astro";
 import { prevNext } from "../../lib/prev-next";
+import { projectOgImage } from "../../lib/og-image";
 import { projectFields } from "../../lib/project-fields";
 
 /**
@@ -37,8 +38,9 @@ const neighbours = prevNext(
 	siblings.map((e) => ({ id: e.id, title: e.data.title, date: e.data.date })),
 	entry.id,
 );
+const ogImage = await projectOgImage(projectFields(entry.data).cover);
 ---
 
-<WorkLayout entry={entry} neighbours={neighbours}>
+<WorkLayout entry={entry} neighbours={neighbours} ogImage={ogImage}>
 	<Content />
 </WorkLayout>

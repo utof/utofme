@@ -38,13 +38,26 @@ const { prev, next } = Astro.props;
 
 <style>
 	.prevnext {
-		display: flex;
-		justify-content: space-between;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+		align-items: center;
 		gap: var(--space-4);
 		margin-block: var(--space-8) 0;
 		padding-top: var(--space-4);
 		border-top: 1px solid var(--color-border);
 		font-size: var(--font-size-ui);
+	}
+	/* Why: three fixed slots (empty ones kept) so "All projects" stays centred and
+	 * prev/next hug the edges when a neighbour is missing (P-07). */
+	.prevnext a[rel="prev"] {
+		justify-self: start;
+	}
+	.prevnext a[rel="next"] {
+		justify-self: end;
+		text-align: end;
+	}
+	.prevnext a[data-test="all-projects"] {
+		justify-self: center;
 	}
 	/* 44 px tall hit area; negative margin keeps the visual rhythm unchanged (WCAG 2.5.8). */
 	.prevnext a {

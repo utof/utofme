@@ -43,9 +43,11 @@ export interface Props {
 	 * render it need no content-layer stub.
 	 */
 	neighbours?: Neighbours<{ id: string; title: string; date: Date }> | undefined;
+	/** 1200x630 `og:image` URL built by the route; falls back to the site card when absent. */
+	ogImage?: string | undefined;
 }
 
-const { entry, neighbours } = Astro.props;
+const { entry, neighbours, ogImage } = Astro.props;
 const data = projectFields(entry.data);
 
 // Why: secondary external-URL chain mirrors ADR 0011 priority order; kept as the
@@ -67,7 +69,13 @@ const stack = data.stack;
 const cover = data.cover;
 ---
 
-<BaseLayout title={`${data.title} · utofme`} {...(description ? { description } : {})}>
+<BaseLayout
+	title={data.title}
+	{...(description ? { description } : {})}
+	{...(ogImage ? { ogImage } : {})}
+>
+	{/* Why: project pages play a banner loop, so Pause motion lives in the shared site header (D16, P-02). */}
+	<MotionToggle slot="controls" />
 	<main>
 		<article class="h-entry">
 			{cover && (
@@ -91,38 +99,43 @@ const cover = data.cover;
 					)}
 				</div>
 			)}
-			<div class="col">
-				<header>
-					<div class="nav-row">
-						<a href="/" data-test="breadcrumb">
-							← All works
-						</a>
-						{/* Why: project pages play a banner loop, so they get the same Pause-motion toggle as `/` (D16). */}
-						<MotionToggle />
+			<div class="work">
+				<div class="text">
+					<header>
+						{/* Why: the wordmark already leads home; the small "← All works" breadcrumb stays under the banner as the way back to the grid. */}
+						<div class="nav-row">
+							<a href="/" data-test="breadcrumb">
+								← All works
+							</a>
+						</div>
+						<h1 class="p-name" tabindex="-1">
+							{data.title}
+						</h1>
+						{lede && <p class="lede p-summary">{lede}</p>}
+						<ProjectMeta
+							date={data.date}
+							started={data.started}
+							status={data.status}
+							stack={stack}
+							links={data.links}
+							externalUrl={externalUrl}
+						/>
+					</header>
+					<a class="u-url" href={`/works/${entry.id}/`} aria-hidden="true" hidden></a>
+					<div class="e-content">
+						<slot />
 					</div>
-					<h1 class="p-name" tabindex="-1">
-						{data.title}
-					</h1>
-					{lede && <p class="lede p-summary">{lede}</p>}
-					<ProjectMeta
-						date={data.date}
-						started={data.started}
-						status={data.status}
-						stack={stack}
-						links={data.links}
-						externalUrl={externalUrl}
-					/>
-				</header>
-				<a class="u-url" href={`/works/${entry.id}/`} aria-hidden="true" hidden></a>
-				<div class="e-content">
-					<slot />
 				</div>
 				<Gallery items={data.gallery ?? []} />
+			</div>
+			<div class="col">
 				{Astro.slots.has("research") && (
 					<section class="research" data-test="research">
 						<slot name="research" />
 					</section>
 				)}
+			</div>
+			<div class="foot">
 				<PrevNext prev={neighbours?.prev ?? null} next={neighbours?.next ?? null} />
 			</div>
 		</article>
@@ -137,13 +150,41 @@ const cover = data.cover;
 	main {
 		width: var(--page-width);
 		margin-inline: auto;
-		padding-block: var(--space-6) var(--space-8);
+		padding-block: 0 var(--space-8);
 		/* v21: body copy in --color-text-body (#444), headings in --color-text. */
 		color: var(--color-text-body);
 	}
 
 	.col {
 		max-width: 80ch;
+	}
+
+	/* P-03: one column below 1200 px (gallery full width under the text); from
+	 * 1200 px text left (≈38rem), gallery as a single stack of large figures right. */
+	.text {
+		max-width: 80ch;
+	}
+	.work :global(.gallery) {
+		margin-block: var(--space-6) 0;
+	}
+	@media (min-width: 1200px) {
+		.work {
+			display: grid;
+			grid-template-columns: minmax(0, 38rem) minmax(0, 1fr);
+			column-gap: var(--space-7);
+			align-items: start;
+		}
+		.text {
+			max-width: 38rem;
+		}
+		.work :global(.gallery) {
+			margin-block: var(--space-2) 0;
+		}
+	}
+	.e-content :global(p),
+	.e-content :global(li) {
+		max-width: 65ch;
+		text-wrap: pretty;
 	}
 	/* Why: breadcrumb and Pause-motion share a wrapping row with a real gap
 	 * (they used to touch); the title sits below. */
@@ -197,7 +238,7 @@ const cover = data.cover;
 	h1 {
 		/* v21: headings are Geist 600, tight tracking (ADR 0042). */
 		font-family: var(--font-sans);
-		font-size: var(--font-size-6);
+		font-size: var(--font-size-7);
 		font-weight: 600;
 		letter-spacing: var(--tracking-tight);
 		line-height: var(--leading-tight);
@@ -208,8 +249,11 @@ const cover = data.cover;
 	}
 
 	.lede {
-		margin: var(--space-2) 0 0;
-		font-size: var(--font-size-4, 1.125rem);
+		margin: var(--space-3) 0 0;
+		max-width: 65ch;
+		font-size: var(--font-size-5);
+		line-height: var(--leading-snug);
+		text-wrap: pretty;
 		color: var(--color-text);
 	}
 

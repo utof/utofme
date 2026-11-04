@@ -22,9 +22,11 @@ import HCard from "../components/HCard.astro";
 import KonamiListener from "../components/KonamiListener.astro";
 import LinkPreview from "../components/LinkPreview.svelte";
 import MetaHead from "../components/MetaHead.astro";
+import SiteHeader from "../components/SiteHeader.astro";
 import SlashFooter from "../components/SlashFooter.astro";
 import SoundToggle from "../components/SoundToggle.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
+import { pageTitle } from "../lib/seo.ts";
 import { LIGHT_ONLY } from "../lib/theme.ts";
 import previews from "../data/note-previews.json";
 
@@ -53,6 +55,14 @@ interface Props {
 	 * @see packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
 	 */
 	noindex?: boolean | undefined;
+	/**
+	 * Render the wordmark as the page's `<h1>` (home only).
+	 *
+	 * Why: the masonry home has no other title; every other page keeps its own `<h1>`.
+	 */
+	wordmarkHeading?: boolean | undefined;
+	/** Absolute or site-relative `og:image`; defaults to the site card. */
+	ogImage?: string | undefined;
 }
 
 const {
@@ -60,6 +70,8 @@ const {
 	description = "utofme — personal site and portfolio.",
 	minimal = false,
 	noindex = false,
+	wordmarkHeading = false,
+	ogImage,
 } = Astro.props;
 ---
 
@@ -72,7 +84,7 @@ const {
 		     @see packages/specs/adrs/0040-light-only-masonry-home.md -->
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<MetaHead route={Astro.url.pathname} />
+		<MetaHead route={Astro.url.pathname} title={title} description={description} image={ogImage} />
 		<!-- Why: real favicon files (public/favicon.svg + favicon.ico) so browsers'
 		     implicit /favicon.ico request no longer 404s (console error). -->
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -81,7 +93,7 @@ const {
 		     fails the `meta-description` audit and is flagged in Lighthouse SEO. -->
 		<meta name="description" content={description} />
 		{noindex && <meta name="robots" content="noindex" />}
-		<title>{title}</title>
+		<title>{pageTitle(title)}</title>
 		<!-- Astro Fonts API: emits @font-face CSS + optional preload <link> for each
 		     registered font family. We preload ONLY the mono face — both variable
 		     Google fonts use `display: "optional"` (see astro.config.mjs); preloading
@@ -102,12 +114,17 @@ const {
 		<ClientRouter />
 	</head>
 	<body data-minimal={minimal ? "" : undefined}>
+		<!-- Why: one header on every route (P-05/P-06): wordmark left, page controls right.
+		     The sound toggle joins the pages' own controls (Pause motion) in that slot, so both
+		     controls share one place and one look. -->
+		<SiteHeader heading={wordmarkHeading}>
+			<slot name="controls" />
+			{!minimal && <SoundToggle />}
+		</SiteHeader>
 		<slot />
 		<!-- Why: HCard placed before SlashFooter so the indieweb identity block
 		     appears above the navigation links — keeps microformat-scoped markup
 		     separate from the nav list while staying inside the footer area.
-		     SoundToggle sits adjacent to HCard in the footer area — both are
-		     persistent UI controls that belong at page scope rather than per-route.
 		     @see packages/specs/specs/07-atmosphere.md § T2 -->
 		<!-- Why .footer-meta: HCard + SoundToggle were bare children of <body> and sat flush
 		     at x=0; the wrapper gives them the shared page column (--page-width) so
@@ -120,7 +137,6 @@ const {
 		) : (
 			<div class="footer-meta">
 				<HCard />
-				<SoundToggle />
 			</div>
 		)}
 		{!LIGHT_ONLY && <ThemeToggle />}
@@ -258,22 +274,84 @@ const {
 		}
 	}
 
-	/* Footer identity block: same column as <footer> (--page-width), h-card left,
-	 * sound toggle right. */
+	/* Page titles: one rule for every non-project page (P-06). 36 px, the same gap
+	 * below the site header everywhere. Project pages size their own h1 (scoped rule wins). */
+	main h1 {
+		font-size: var(--font-size-7);
+		line-height: var(--leading-tight);
+		margin-block: 0 var(--space-2);
+	}
+
+	/* Accent in prose links: the fixed v21 blue (--color-focus = #0d99ff; --color-accent shifts with the time of day) shows on hover / focus (P: accent).
+	 * Link text stays --color-link (AA); only the underline takes the accent. */
+	main :where(a):is(:hover, :focus-visible) {
+		text-decoration-color: var(--color-focus);
+		text-decoration-thickness: 2px;
+	}
+
+	/* Header controls (Pause motion, Sound): one control family — same border, radius,
+	 * 32 px height, mono 12 px label (P-04). The 44x44 hit zone is a ::before. */
+	.site-ctl {
+		position: relative;
+		box-sizing: border-box;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		block-size: 32px;
+		padding: 0 var(--space-3);
+		font: inherit;
+		font-family: var(--font-mono);
+		font-size: var(--font-size-1);
+		line-height: 1;
+		white-space: nowrap;
+		color: var(--color-text);
+		background: var(--color-bg);
+		border: 1px solid var(--color-border-strong);
+		border-radius: var(--radius-sm);
+		cursor: pointer;
+	}
+	.site-ctl:hover {
+		border-color: var(--color-text-muted);
+	}
+	.site-ctl:focus-visible {
+		outline: none;
+		box-shadow: var(--shadow-focus);
+	}
+
+	/* 44x44 hit area on small interactive elements without growing them visually
+	 * (WCAG 2.5.8). Fine pointers: a centred ::before; coarse pointers: a real 44 px
+	 * box, so neighbouring zones can never overlap (P-01). */
+	:where(.site-ctl, footer a, .h-card a, nav.cross-link a, [data-test="breadcrumb"]) {
+		position: relative;
+	}
+	:where(.site-ctl, footer a, .h-card a, nav.cross-link a, [data-test="breadcrumb"])::before {
+		content: "";
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: max(100%, 44px);
+		height: max(100%, 44px);
+		translate: -50% -50%;
+	}
+	@media (pointer: coarse) {
+		:where(footer a, .h-card a, nav.cross-link a, [data-test="breadcrumb"]) {
+			display: inline-flex;
+			align-items: center;
+			min-block-size: 44px;
+			min-inline-size: 44px;
+		}
+	}
+
+	/* Footer identity line: one quiet row above the footer, same column. */
 	.footer-meta {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: var(--space-3);
-		margin-top: var(--space-6);
 		width: var(--page-width);
 		margin-inline: auto;
+		margin-top: var(--space-6);
 	}
-	.footer-meta + footer {
-		margin-top: var(--space-3);
-	}
-	.footer-meta .h-card p {
-		margin-block: var(--space-1);
+	.footer-meta + footer[aria-label] {
+		margin-top: 0;
+		border-top: 0;
+		padding-top: var(--space-1);
 	}
 </style>

@@ -8,7 +8,7 @@ import { getAllNotes } from "../../lib/notes";
 const notes = await getAllNotes();
 ---
 
-<BaseLayout title="Garden — utofme" description="Index of digital garden notes.">
+<BaseLayout title="Garden" description="Index of digital garden notes.">
 	<main>
 		<header>
 			<h1>Garden</h1>
@@ -31,7 +31,7 @@ const notes = await getAllNotes();
 	main {
 		width: var(--page-width);
 		margin-inline: auto;
-		padding-block: var(--space-4);
+		padding-block: 0 var(--space-4);
 	}
 	main > :global(*) {
 		max-width: 70ch;
