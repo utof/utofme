@@ -41,6 +41,21 @@ function defaultDeps(): LoopDeps {
 }
 
 /**
+ * Options for `mountLoops`.
+ *
+ * Why: during a Back morph only the hero card's loop may decode (M3-10); the rest
+ * mount after the transition, staggered so seven decoders do not start in one frame.
+ *
+ * @see packages/specs/reports/ui3-fix-morph.md (M3-10)
+ */
+export interface MountOptions {
+	/** Only manage videos this returns true for. */
+	only?: (v: HTMLVideoElement) => boolean;
+	/** Delay each successive loop's first `play()` by this many ms. */
+	stagger?: number;
+}
+
+/**
  * Observe every `video[data-loop]` under `root`; returns a disposer.
  *
  * Why: policy `allowed = !paused && !saveData`; `play()` rejections (iOS Low
@@ -48,17 +63,35 @@ function defaultDeps(): LoopDeps {
  *
  * @see packages/specs/specs/09-project-view.md § P9-6
  */
-export function mountLoops(root: ParentNode, deps: LoopDeps = defaultDeps()): () => void {
-	const videos = [...root.querySelectorAll<HTMLVideoElement>("video[data-loop]")];
+export function mountLoops(
+	root: ParentNode,
+	deps: LoopDeps = defaultDeps(),
+	opts: MountOptions = {},
+): () => void {
+	const videos = [...root.querySelectorAll<HTMLVideoElement>("video[data-loop]")].filter(
+		(v) => opts.only?.(v) ?? true,
+	);
 	const visible = new Set<HTMLVideoElement>();
 	const cleanups: (() => void)[] = [];
 	let disposed = false;
 
 	const allowed = (): boolean => !deps.isPaused() && !deps.saveData();
-	const start = (v: HTMLVideoElement): void => {
+	let started = 0;
+	const play = (v: HTMLVideoElement): void => {
 		v.play().catch(() => {
 			/* NotAllowedError etc.: keep the poster */
 		});
+	};
+	const start = (v: HTMLVideoElement): void => {
+		const gap = opts.stagger ?? 0;
+		if (gap <= 0 || !v.paused) {
+			play(v);
+			return;
+		}
+		const delay = started++ * gap;
+		setTimeout(() => {
+			if (!disposed && visible.has(v) && allowed()) play(v);
+		}, delay);
 	};
 	const sync = (): void => {
 		const ok = allowed() && deps.doc.visibilityState !== "hidden";
@@ -69,7 +102,10 @@ export function mountLoops(root: ParentNode, deps: LoopDeps = defaultDeps()): ()
 	};
 
 	for (const v of videos) {
-		const reveal = (): void => v.setAttribute("data-ready", "");
+		// Why: the banner upgrade video reveals itself once re-aligned and painted (M3-02).
+		const reveal = (): void => {
+			if (!v.hasAttribute("data-upgrade")) v.setAttribute("data-ready", "");
+		};
 		v.addEventListener("playing", reveal, { once: true });
 		cleanups.push(() => v.removeEventListener("playing", reveal));
 	}
@@ -191,6 +227,7 @@ export function upgradeBannerLoops(root: ParentNode, deps: LoopDeps = defaultDep
 			el.setAttribute("type", s.type);
 			next.append(el);
 		}
+		next.setAttribute("data-upgrade", "");
 		const at = old.currentTime;
 		if (at > 0) next.currentTime = at;
 		frame.append(next);
@@ -204,25 +241,47 @@ export function upgradeBannerLoops(root: ParentNode, deps: LoopDeps = defaultDep
 			removed = true;
 			old.remove();
 		};
-		// Why: one frame after `playing` so the banner video has painted before the card one goes.
-		const settle = (): void => {
-			if (next.requestVideoFrameCallback) next.requestVideoFrameCallback(drop);
-			else setTimeout(drop, 100);
-			setTimeout(drop, 500);
+		// Why (M3-02): reveal only once the banner is on the card loop's frame and has painted,
+		// then fade over `--loop-resolve` so the 768 → 1920 px sharpness step reads as a resolve.
+		let revealed = false;
+		const reveal = (): void => {
+			if (revealed) return;
+			revealed = true;
+			next.setAttribute("data-ready", "");
+			setTimeout(drop, 220);
 		};
+		const painted = (): void => {
+			if (next.requestVideoFrameCallback) next.requestVideoFrameCallback(reveal);
+			else setTimeout(reveal, 50);
+		};
+		setTimeout(reveal, 900);
 		next.addEventListener(
 			"playing",
 			() => {
-				// Why: loading took a few hundred ms, so re-align with the card loop before it goes.
 				if (Math.abs(old.currentTime - next.currentTime) > 0.1) {
-					next.addEventListener("seeked", settle, { once: true });
-					next.currentTime = old.currentTime;
-					setTimeout(drop, 500);
-				} else settle();
+					next.addEventListener("seeked", painted, { once: true });
+					// Predictive: the card loop keeps advancing while the seek completes.
+					next.currentTime = old.currentTime + 0.12;
+				} else painted();
 			},
 			{ once: true },
 		);
 	}
+}
+
+/** Back-navigation resume point: the banner's time, applied to that card's loop. */
+let resume: { slug: string; t: number } | null = null;
+
+function applyResume(): HTMLVideoElement | null {
+	const r = resume;
+	resume = null;
+	if (!r) return null;
+	const v = document.querySelector<HTMLVideoElement>(
+		`[data-work-slug="${CSS.escape(r.slug)}"] video[data-loop]`,
+	);
+	if (!v) return null;
+	if (r.t > 0) v.currentTime = r.t;
+	return v;
 }
 
 let dispose: (() => void) | undefined;
@@ -231,6 +290,18 @@ let bound = false;
 function remount(): void {
 	upgradeBannerLoops(document);
 	dispose?.();
+	const hero = applyResume();
+	const vt = document.activeViewTransition;
+	if (hero && vt) {
+		// Back morph in flight (M3-10): only the hero loop decodes; the rest start afterwards.
+		dispose = mountLoops(document, defaultDeps(), { only: (v) => v === hero });
+		const later = (): void => {
+			dispose?.();
+			dispose = mountLoops(document, defaultDeps(), { stagger: 50 });
+		};
+		vt.finished.then(later, later);
+		return;
+	}
 	dispose = mountLoops(document);
 }
 
@@ -249,6 +320,15 @@ export function bindLoops(): void {
 	document.addEventListener("astro:before-swap", () => {
 		dispose?.();
 		dispose = undefined;
+	});
+	document.addEventListener("astro:before-preparation", (e) => {
+		// M3-08: remember where the banner was so Back resumes the card loop there.
+		const from = "from" in e && e.from instanceof URL ? e.from : null;
+		const dir = "direction" in e ? e.direction : null;
+		const slug = from ? /^\/works\/([^/]+)\/?$/.exec(from.pathname)?.[1] : undefined;
+		const v = document.querySelector<HTMLVideoElement>(".banner video[data-loop]");
+		resume =
+			dir === "back" && slug && v ? { slug: decodeURIComponent(slug), t: v.currentTime } : null;
 	});
 	document.addEventListener("astro:page-load", remount);
 	if (document.readyState === "complete") remount();

@@ -44,6 +44,8 @@ const Mark = heading ? "h1" : "p";
 		gap: var(--space-4);
 		/* Fixed row so the offset below is identical on every page. */
 		block-size: calc(var(--space-6) + 44px);
+		/* M3-04: own snapshot group so the header never fades during a morph. */
+		view-transition-name: site-header;
 	}
 	.mark {
 		margin: 0;

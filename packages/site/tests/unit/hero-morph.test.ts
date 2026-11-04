@@ -9,6 +9,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
+	bannerFocus,
 	CAP_ATTR,
 	clearMarks,
 	focusTarget,
@@ -133,5 +134,16 @@ describe("cleanup and focus", () => {
 		const p = project("a");
 		expect(focusTarget(p, nav("/", "/works/a/", "forward"))?.tagName).toBe("H1");
 		expect(focusTarget(p, nav("/", "/now/", "forward"))).toBeNull();
+	});
+});
+
+describe("bannerFocus (M3-03)", () => {
+	it("reads --focus from .banner, else null", () => {
+		document.body.innerHTML = '<div class="banner" style="--focus:8%"></div>';
+		expect(bannerFocus(document)).toBe("8%");
+		document.body.innerHTML = '<div class="banner"></div>';
+		expect(bannerFocus(document)).toBeNull();
+		document.body.innerHTML = "";
+		expect(bannerFocus(document)).toBeNull();
 	});
 });

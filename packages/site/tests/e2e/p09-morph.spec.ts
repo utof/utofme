@@ -13,6 +13,12 @@ import { expect, type Page, test } from "@playwright/test";
 
 const SLUG = "cover-fixture";
 
+interface SnapProbe {
+	oldClip: string;
+	newClip: string;
+	pos: string;
+	focus: string;
+}
 interface VtProbe {
 	/** Per navigation: for each element named `hero`, whether it is a `[data-vt-frame]`. */
 	marks: boolean[][];
@@ -22,6 +28,9 @@ interface VtProbe {
 declare global {
 	interface Window {
 		__vt?: VtProbe;
+		__names?: string[];
+		__snap?: SnapProbe[];
+		__rev?: number[];
 	}
 }
 async function armCard(page: Page) {
@@ -113,4 +122,108 @@ test("reduced motion: no view-transition animations run", async ({ page }) => {
 	await page.waitForURL(`**/works/${SLUG}/`);
 	await page.waitForTimeout(300);
 	expect(await page.evaluate(() => window.__vt?.anims)).toBe(0);
+});
+
+// ── Motion polish (ui3 morph) ─────────────────────────────────────────────
+
+const LOOP_SLUG = "enth";
+const loopCard = (page: Page) => page.locator(`a.card[href="/works/${LOOP_SLUG}/"]`);
+
+/** Records, once per `astro:before-swap` after the view transition is ready, either the running pseudo animations or the hero snapshot style. */
+async function onReady(page: Page, kind: "names" | "snap") {
+	await page.evaluate((k) => {
+		document.addEventListener("astro:before-swap", (e) => {
+			if (!("viewTransition" in e) || !(e.viewTransition instanceof ViewTransition)) return;
+			e.viewTransition.ready.then(
+				() => {
+					if (k === "names") {
+						window.__names = document
+							.getAnimations()
+							.map((a) =>
+								a.effect instanceof KeyframeEffect ? (a.effect.pseudoElement ?? "") : "",
+							);
+						return;
+					}
+					const cs = (pe: string) => getComputedStyle(document.documentElement, pe);
+					window.__snap = [
+						...(window.__snap ?? []),
+						{
+							oldClip: cs("::view-transition-old(hero)").overflow,
+							newClip: cs("::view-transition-new(hero)").overflow,
+							pos: cs("::view-transition-new(hero)").objectPosition,
+							focus: document.documentElement.style.getPropertyValue("--vt-focus"),
+						},
+					];
+				},
+				() => {},
+			);
+		});
+	}, kind);
+}
+
+test("M3-04: the site header has its own transition name and no animation", async ({ page }) => {
+	await page.goto("/");
+	const name = await page.evaluate(() => {
+		const h = document.querySelector(".site-header");
+		return h ? getComputedStyle(h).viewTransitionName : null;
+	});
+	expect(name).toBe("site-header");
+	await onReady(page, "names");
+	await loopCard(page).click();
+	await page.waitForURL(`**/works/${LOOP_SLUG}/`);
+	const readNames = () => page.evaluate(() => window.__names ?? []);
+	await expect.poll(async () => (await readNames()).length).toBeGreaterThan(0);
+	const names = await readNames();
+	expect(names).not.toContain("::view-transition-group(site-header)");
+	expect(names).toContain("::view-transition-group(hero)");
+});
+
+test("M3-01/M3-03: hero snapshots clip and crop at the banner focus, both directions", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await onReady(page, "snap");
+	await loopCard(page).click();
+	await page.waitForURL(`**/works/${LOOP_SLUG}/`);
+	await page.goBack();
+	await page.waitForURL("**/");
+	const read = () => page.evaluate(() => window.__snap ?? []);
+	await expect.poll(async () => (await read()).length).toBe(2);
+	for (const s of await read()) {
+		expect(s).toMatchObject({ oldClip: "clip", newClip: "clip" });
+		expect(s.pos).not.toBe("50% 50%");
+		expect(s.focus).not.toBe("");
+	}
+	await expect(page.locator("html")).not.toHaveAttribute("style", /--vt-focus/);
+});
+
+test("M3-02: the banner video is revealed only once it is on the card loop's frame", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await page.waitForTimeout(1000);
+	await page.evaluate(() => {
+		const w = window;
+		w.__rev = [];
+		const card = document.querySelector(`[data-work-slug="enth"] [data-loop-frame] video`);
+		new MutationObserver((muts) => {
+			for (const m of muts) {
+				const t = m.target;
+				if (
+					t instanceof HTMLVideoElement &&
+					card instanceof HTMLVideoElement &&
+					t.hasAttribute("data-upgrade") &&
+					t.hasAttribute("data-ready")
+				)
+					w.__rev?.push(Math.abs(t.currentTime - card.currentTime) + (t.seeking ? 100 : 0));
+			}
+		}).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-ready"] });
+	});
+	await loopCard(page).click();
+	await page.waitForURL(`**/works/${LOOP_SLUG}/`);
+	await expect.poll(() => page.evaluate(() => window.__rev?.length ?? 0)).toBe(1);
+	// Why: `card` is the persisted node (same element across the swap) and keeps playing until
+	// the banner has faded in; +100 marks a reveal while the banner was still seeking.
+	const [drift] = await page.evaluate(() => window.__rev ?? []);
+	expect(drift).toBeLessThan(0.2);
 });
