@@ -1,0 +1,77 @@
+---
+/**
+ * /lab/article-layout/ (file `[layout].astro`) — the research-article layout with a demo body.
+ *
+ * Renders `_ArticleLayout` with the tactical-arena entry, an inline `article`
+ * overlay and a body holding every figure width, an aside and one h2 per section.
+ * Noindexed; no page when `UTOFME_FIXTURES` is false.
+ *
+ * Why: layout geometry, Axe and the first-screen checks can be tested before the
+ * real article copy lands; the page never ships (`check:no-fixtures`).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § Figures: common contract (Lab pages)
+ */
+import { UTOFME_FIXTURES } from "astro:env/server";
+import Figure from "../../components/article/Figure.astro";
+import Note from "../../components/article/Note.astro";
+import SectionHeading from "../../components/article/SectionHeading.astro";
+import ArticleLayout from "../../layouts/_ArticleLayout.astro";
+import type { ArticleFields } from "../../lib/project-fields";
+import { getWorksCollection } from "../../lib/works-collection";
+
+/**
+ * The one lab page, `/lab/article-layout/`, and none when fixtures are off.
+ *
+ * Why: a static `article-layout.astro` cannot opt out of the build, and
+ * `getStaticPaths` only applies to dynamic routes, so the page is `[layout]`
+ * with a single path. Static `datamosh.astro` keeps precedence for its URL.
+ *
+ * @see https://docs.astro.build/en/guides/routing/#static-routes-take-priority
+ */
+export async function getStaticPaths() {
+	if (!UTOFME_FIXTURES) return [];
+	const entries = await getWorksCollection((e) => e.id === "tactical-arena");
+	return entries.map((entry) => ({ params: { layout: "article-layout" }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const article: ArticleFields = {
+	headline: "Layout lab: a research article",
+	dek: "A demo body with every figure width, an aside and one section each",
+	math: false,
+	sections: [
+		{ id: "intro", title: "Introduction" },
+		{ id: "widths", title: "Figure widths" },
+		{ id: "aside", title: "An aside" },
+	],
+};
+const para =
+	"Placeholder prose for the layout lab. It is long enough to wrap across a few lines so the measure of the text column can be checked against the figures around it.";
+---
+
+<ArticleLayout entry={entry} article={article}>
+	<SectionHeading id="intro">Introduction</SectionHeading>
+	<p>{para}</p>
+	<p>{para}</p>
+	<SectionHeading id="widths">Figure widths</SectionHeading>
+	<Figure id="lab-text" number={1} width="text" aspect="16 / 9" minBlock="10rem">
+		<p>text-width box</p>
+		<Fragment slot="caption">A text-width figure.</Fragment>
+	</Figure>
+	<Figure id="lab-wide" number={2} width="wide" aspect="16 / 9" minBlock="12rem">
+		<p>wide box</p>
+		<Fragment slot="caption">A wide figure.</Fragment>
+		<Fragment slot="try">resize the window.</Fragment>
+	</Figure>
+	<Figure id="lab-full" number={3} width="full" aspect="21 / 9" minBlock="12rem">
+		<p>full box</p>
+		<Fragment slot="caption">A full-width figure.</Fragment>
+	</Figure>
+	<p>{para} See Figure 2.</p>
+	<SectionHeading id="aside">An aside</SectionHeading>
+	<p>{para}</p>
+	<Note>
+		<p>A boxed note. At 1200 px and wider it sits in the aside column.</p>
+	</Note>
+	<p>{para}</p>
+</ArticleLayout>

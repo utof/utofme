@@ -1,0 +1,83 @@
+---
+/**
+ * ProjectBanner.astro — the clipping banner frame of a project page.
+ *
+ * Why: extracted verbatim from `_WorkLayout` so the research-article layout
+ * shares it. The frame is `[data-vt-frame][data-work-slug]` so hero-morph can
+ * pair it with the clicked card (ADR 0046); projects without a loop fall back to
+ * the still cover in the same frame; without any cover nothing renders.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-1 (banner extraction, AC1.2)
+ * @see packages/specs/specs/09-project-view.md § P9-9
+ */
+import type { ImageMetadata } from "astro";
+import LoopMedia from "./LoopMedia.astro";
+import ProjectStill from "./ProjectStill.astro";
+
+/** Props for ProjectBanner. */
+export interface Props {
+	/** Entry id; becomes `data-work-slug`. */
+	slug: string;
+	/** The entry's cover, or `undefined` (renders nothing). */
+	cover:
+		| { src: ImageMetadata; alt: string; loop?: string | undefined; focus?: number | undefined }
+		| undefined;
+}
+
+const { slug, cover } = Astro.props;
+---
+
+{cover && (
+	<div class="banner" data-vt-frame data-work-slug={slug} style={`--focus:${cover.focus ?? 50}%`}>
+		{cover.loop ? (
+			<LoopMedia
+				slug={cover.loop}
+				size="banner"
+				alt={cover.alt}
+				persistId={`loop-${cover.loop}`}
+				eager
+				priority
+			/>
+		) : (
+			<ProjectStill src={cover.src} alt={cover.alt} eager focus={cover.focus ?? 50} />
+		)}
+	</div>
+)}
+
+<style>
+	/* Banner: 16:9 below 700 px, 3:1 above; clipping frame for the morph. */
+	/* Why: the banner spans the shared page column so its edges line up with the
+	 * header, text and footer at every width. */
+	.banner {
+		position: relative;
+		width: 100%;
+		max-height: 60vh;
+		margin: 0 0 var(--space-4);
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+		border-radius: var(--radius-card);
+		background: var(--color-surface);
+	}
+	@media (min-width: 700px) {
+		.banner {
+			aspect-ratio: 3 / 1;
+		}
+	}
+	/* Short viewports (landscape phones): keep the title and the start of the lede
+	 * in the first screen instead of a 60vh banner (M-05). */
+	@media (max-height: 500px) {
+		.banner {
+			max-height: 38svh;
+		}
+	}
+	.banner :global(picture),
+	.banner :global(img),
+	.banner :global(video),
+	.banner :global(.loop-frame) {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: 50% var(--focus, 50%);
+	}
+</style>

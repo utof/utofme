@@ -1,0 +1,16 @@
+---
+/**
+ * Note.astro — the boxed aside of the article (`<aside class="note">`).
+ *
+ * Why: a bare `<aside>` inside `<main>` is a complementary landmark that Axe
+ * flags ("landmark-complementary-is-top-level"); `role="note"` keeps the aside
+ * semantics without the landmark. Mapped over `aside` in the MDX components.
+ *
+ * @see https://dequeuniversity.com/rules/axe/4.11/landmark-complementary-is-top-level
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-1 (Grid)
+ */
+---
+
+<aside class="note" role="note">
+	<slot />
+</aside>

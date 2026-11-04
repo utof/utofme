@@ -1,0 +1,55 @@
+---
+/**
+ * SectionHeading.astro — the article's `h2`: keeps the MDX-generated `id` and
+ * adds a hover/focus `#` link with `aria-label="Link to section {title}"`.
+ *
+ * Why: rendered on the server through the MDX `components` map, so the anchor
+ * costs no client JS and works with scripts off.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-1 (Grid)
+ */
+
+/** Props for SectionHeading (an `h2` as MDX passes it). */
+export interface Props {
+	/** Heading id from the MDX slugger; equals `article.sections[].id`. */
+	id?: string | undefined;
+}
+
+const { id } = Astro.props;
+const inner = await Astro.slots.render("default");
+const title = inner
+	.replace(/<[^>]*>/g, "")
+	.replace(/\s+/g, " ")
+	.trim();
+---
+
+<h2 id={id}>
+	<Fragment set:html={inner} />
+	{id && (
+		<a class="anchor" href={`#${id}`} aria-label={`Link to section ${title}`}>
+			#
+		</a>
+	)}
+</h2>
+
+<style>
+	h2 {
+		scroll-margin-top: var(--space-8);
+	}
+	.anchor {
+		margin-inline-start: var(--space-2);
+		color: var(--color-text-muted);
+		text-decoration: none;
+		opacity: 0;
+		transition: opacity var(--motion-base, 220ms);
+	}
+	h2:hover .anchor,
+	.anchor:focus-visible {
+		opacity: 1;
+	}
+	@media (hover: none) {
+		.anchor {
+			opacity: 1;
+		}
+	}
+</style>
