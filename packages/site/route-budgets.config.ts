@@ -80,8 +80,11 @@ export const budgets: BudgetsConfig = {
 		article: {
 			firstViewJs: 40 * KB, // unchanged: every figure island is lazy
 			html: 45 * KB,
-			css: 10 * KB,
-			cssMath: 15 * KB,
+			// Why: Astro links every island's CSS in <head>, so each of the 11 figures adds
+			// ~1-1.5 KB gzip on top of KaTeX (7.9 KB) and the layouts (~6.5 KB); 15 KB held
+			// only the stub figures. Lane I checks LCP/CLS against the real page.
+			css: 30 * KB,
+			cssMath: 30 * KB,
 			lcpPoster: 200 * KB,
 			posterTargetWidth: 1280,
 			lazyJs: 160 * KB,
