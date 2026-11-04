@@ -16,7 +16,7 @@
 
 import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
-import CommandPalette from "../components/CommandPalette.svelte";
+import PaletteMount from "../components/PaletteMount.astro";
 import CustomCursor from "../components/CustomCursor.svelte";
 import HCard from "../components/HCard.astro";
 import KonamiListener from "../components/KonamiListener.astro";
@@ -138,7 +138,7 @@ const {
 		     route, so bare form suffices.
 		     See: https://docs.astro.build/en/guides/view-transitions/#maintaining-state
 		     @see packages/specs/plans/02-interactivity.md § Task 10 -->
-		<CommandPalette client:idle transition:persist />
+		<PaletteMount />
 		<!-- Why: inline note-preview index so the LinkPreview island can read it
 		     synchronously (no fetch). The </script escape prevents an
 		     attacker-controlled summary/title from prematurely closing the

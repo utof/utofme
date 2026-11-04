@@ -361,6 +361,28 @@
 		}
 	}
 
+	/* Short viewports (phone landscape): a stuck panel taller than the screen hides its lower rows. */
+	@media (max-height: 600px) {
+		.panel {
+			position: static;
+			max-height: none;
+			overflow: visible;
+			padding-right: 0;
+		}
+	}
+
+	/* Coarse pointers: 16 px controls (iOS zooms the page on focus below that) and roomy slider hit areas. */
+	@media (pointer: coarse) {
+		button,
+		select,
+		input {
+			font-size: 16px;
+		}
+		input[type="range"] {
+			min-height: 32px;
+		}
+	}
+
 	fieldset {
 		margin: 0;
 		padding: var(--space-3);
