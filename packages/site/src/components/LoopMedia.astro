@@ -30,11 +30,17 @@
 import { Picture } from "astro:assets";
 import type { ImageMetadata } from "astro";
 import loopsJson from "../data/loops.json";
-import { cardPosterWidths, frameAspectValue, posterPathFor } from "../lib/loops/frame";
+import {
+	cardPosterWidths,
+	frameAspectValue,
+	loopPlayMode,
+	posterPathFor,
+} from "../lib/loops/frame";
 import { MASONRY_COLUMN_SIZES } from "../lib/masonry";
 
 /** Structural mirror of `LoopEntry` (src/lib/loops/manifest.ts, owned by the encode task). */
 export interface LoopEntryLike {
+	kind?: string | undefined;
 	posterPath: string;
 	cardPosterPath?: string | undefined;
 	card: LoopSizeLike;
@@ -89,6 +95,8 @@ const rendition = size === "banner" && entry.banner ? entry.banner : entry.card;
 // like the banner. A card with its own poster (another aspect or a cardCrop) would drag its tight, 3x
 // upscaled crop into the 3:1 frame and then cross-fade to a different framing; there the banner mounts its
 // own video over its own poster instead (ADR 0044 addendum 2).
+// Why: a slideshow card stays on its poster and plays only on hover / keyboard focus; see the controller.
+const playMode = loopPlayMode(entry.kind, size);
 const persistName = entry.cardPosterPath === undefined ? persistId : undefined;
 // Why: the banner poster is cut from the 1920x1080 banner master and spans the page column (up to
 // 1340 CSS px, more device px on DPR-2), so it offers every step up to the source width (sharp never upscales,
@@ -130,6 +138,7 @@ const sizes =
 		<video
 			data-loop
 			data-loop-size={size}
+			data-loop-play={playMode}
 			muted
 			loop
 			playsinline
@@ -147,6 +156,7 @@ const sizes =
 		<video
 			data-loop
 			data-loop-size={size}
+			data-loop-play={playMode}
 			muted
 			loop
 			playsinline

@@ -57,3 +57,21 @@ export const CARD_POSTER_WIDTHS: readonly number[] = [384, 768];
 export function cardPosterWidths(posterWidth: number): number[] {
 	return [...new Set(CARD_POSTER_WIDTHS.map((w) => Math.min(w, posterWidth)))];
 }
+
+/**
+ * How a loop frame plays: `hover` (a slideshow card stays on its poster and plays while hovered or
+ * keyboard-focused) or `view` (plays while in view).
+ *
+ * Why: a slideshow is a sequence of UI screenshots; moving unprompted it reads as noise, on a still it is
+ * legible. Real motion (montage, transcode) and every banner or gallery frame keep the in-view autoplay.
+ * An entry without a kind (the component test seam) plays in view. `kind` is a plain string because the
+ * component reads it from the JSON manifest, which TypeScript types as `string`.
+ *
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export function loopPlayMode(
+	kind: string | undefined,
+	size: "card" | "banner" | "gallery",
+): "hover" | "view" {
+	return kind === "slideshow" && size === "card" ? "hover" : "view";
+}

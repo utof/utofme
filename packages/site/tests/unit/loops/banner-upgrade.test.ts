@@ -27,6 +27,8 @@ function deps(paused: boolean): LoopDeps {
 		},
 		isPaused: () => paused,
 		saveData: () => false,
+		finePointer: () => true,
+		focusVisible: () => true,
 		doc: document,
 	};
 }
@@ -38,7 +40,7 @@ function must<T>(v: T | null | undefined): T {
 
 function frame(): HTMLElement {
 	document.body.innerHTML = `<div class="loop-frame" data-banner-sources='${JSON.stringify(BANNER)}'>
-		<video data-loop data-loop-size="card" data-ready data-astro-transition-persist="loop-x" width="768" height="432">
+		<video data-loop data-loop-size="card" data-loop-play="hover" data-ready data-astro-transition-persist="loop-x" width="768" height="432">
 			<source src="/loops/x/card.av1.mp4" type="video/mp4">
 		</video></div>`;
 	return must(document.querySelector<HTMLElement>(".loop-frame"));
@@ -67,6 +69,8 @@ describe("upgradeBannerLoops", () => {
 		expect(next.dataset.loopSize).toBe("banner");
 		expect(next.hasAttribute("data-ready")).toBe(false);
 		expect(next.hasAttribute("data-astro-transition-persist")).toBe(false);
+		// A hover-played card video must not hand its "play on hover" mode to the banner: that autoplays.
+		expect(next.hasAttribute("data-loop-play")).toBe(false);
 		expect(next.getAttribute("width")).toBe("1920");
 		expect([...next.querySelectorAll("source")].map((s) => s.getAttribute("src"))).toEqual(
 			BANNER.sources.map((s) => s.url),

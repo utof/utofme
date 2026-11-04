@@ -10,6 +10,7 @@ import {
 	CARD_POSTER_WIDTHS,
 	cardPosterWidths,
 	frameAspectValue,
+	loopPlayMode,
 	posterPathFor,
 } from "../../../src/lib/loops/frame";
 
@@ -61,4 +62,19 @@ describe("cardPosterWidths", () => {
 			expect(out.every((x) => x <= w)).toBe(true);
 		},
 	);
+});
+
+describe("loopPlayMode", () => {
+	it("a slideshow card plays on hover only; everything else plays in view", () => {
+		expect(loopPlayMode("slideshow", "card")).toBe("hover");
+		expect(loopPlayMode("montage", "card")).toBe("view");
+		expect(loopPlayMode("transcode", "card")).toBe("view");
+	});
+	it("the banner and gallery frames of a slideshow keep autoplaying in view", () => {
+		expect(loopPlayMode("slideshow", "banner")).toBe("view");
+		expect(loopPlayMode("slideshow", "gallery")).toBe("view");
+	});
+	it("an entry without a kind (test seam) plays in view", () => {
+		expect(loopPlayMode(undefined, "card")).toBe("view");
+	});
 });

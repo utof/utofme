@@ -156,6 +156,26 @@ describe("LoopMedia.astro markup contract", () => {
 		expect(html).toContain('sizes="(min-width: 560px) 50vw, 100vw"');
 	});
 
+	it("marks a slideshow card to play on hover, and every other frame to play in view", async () => {
+		const card = (html: string) => html.match(/<video\b[^>]*>/)?.[0] ?? "";
+		const slides = { ...entry, kind: "slideshow" as const };
+		expect(card(await render({ entry: slides }))).toContain('data-loop-play="hover"');
+		expect(card(await render({ entry: { ...entry, kind: "montage" as const } }))).toContain(
+			'data-loop-play="view"',
+		);
+		expect(card(await render({ entry: slides, persistId: "loop-demo" }))).toContain(
+			'data-loop-play="hover"',
+		);
+		const bannerEntry = { ...slides, banner: { ...entry.card, width: 1920, height: 1080 } };
+		expect(card(await render({ size: "banner", entry: bannerEntry }))).toContain(
+			'data-loop-play="view"',
+		);
+		expect(card(await render({ size: "gallery", entry: slides }))).toContain(
+			'data-loop-play="view"',
+		);
+		expect(card(await render({}))).toContain('data-loop-play="view"');
+	});
+
 	it("alt text lands on the poster image", async () => {
 		const html = await render({ alt: "A demo" });
 		expect(html).toMatch(/<img\b[^>]*alt="A demo"/);

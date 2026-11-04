@@ -4,8 +4,8 @@
  *
  * Why: looping media auto-plays for > 5 s, so a page-level control is required
  * and must come before the first loop in tab order (render it in the page
- * header). State lives in `src/lib/motion.ts`; pausing also disables the card
- * hover zoom through `html[data-motion="paused"]`. No island: a bundled module
+ * header). State lives in `src/lib/motion.ts`; pausing also stops hover-played
+ * slideshow cards and makes the card caption static through `html[data-motion="paused"]`. No island: a bundled module
  * script re-binds on `astro:page-load` (ClientRouter) and restores the `<html>`
  * attribute, which the router drops on swap.
  *
