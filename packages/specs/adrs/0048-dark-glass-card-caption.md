@@ -33,3 +33,8 @@ The masonry home shows media at its natural aspect ratio. Titles must stay legib
 - https://developer.chrome.com/blog/animated-blur/
 - packages/specs/specs/09-project-view.md § P9-7
 - packages/specs/reports/09-w4-card.md
+
+## Addendum 2026-11-04 — no zoom
+
+The hover and focus scale of the media (1.05) is removed (owner). The caption reveal, the keyboard parity and the focus ring are unchanged, and the media children never carry a transform now.
+A slideshow card plays on hover instead (ADR 0044, addendum 3). Wherever this ADR says "zoom + reveal" read "reveal".
