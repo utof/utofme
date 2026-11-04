@@ -9,8 +9,8 @@ Branch `p10/fa-replay`. A successor continues from the first unchecked step.
 3. [x] Keyframe + Block + Container test (6dc3e4d; island is still a SHELL in Replay.svelte, step 4 replaces it)
 4. [x] `Replay.svelte` island + 17 mount tests (84df718). SSR gotcha: `motionState()` touches `document`, so it is created in `onMount`
 5. [x] e2e `tests/e2e/p10-replay.spec.ts` 15 tests + p10-lab green (363f612). Gotchas: `astro preview` daemonizes (it stays up on 4321 after a run; stop it with `bun run astro preview stop` when done); getByLabel("Defenders") also matches the canvas label; Axe flags opacity-dimmed text and non-focusable scroll regions
-6. [ ] Size: build + `check:budgets` (Replay <= 25 KB, data <= 10 KB)
-7. [ ] GATE, `check:privacy`, report `10-fa.md`, final push
+6. [x] Size: Replay 8.1 KB of 25 (exclusive gzip), data 1,890 B of 10 KB, props 384 B
+7. [x] GATE green, report `10-fa.md` written; final push done
 
 ## Decisions
 
