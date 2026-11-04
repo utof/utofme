@@ -60,6 +60,6 @@ describe("NotebookBlock", () => {
 	});
 	it("ships no file name or private word in the markup", () => {
 		const html = doc.documentElement.outerHTML;
-		expect(html).not.toMatch(/\.(py|pkl|npz|sh)\b|journal|isaac|PARKED\.md/i);
+		expect(html).not.toMatch(/\.(py|pkl|npz|sh)\b|journal|PARKED\.md/i);
 	});
 });

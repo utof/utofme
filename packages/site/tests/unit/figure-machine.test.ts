@@ -70,9 +70,7 @@ describe("machine copy (AC10.3)", () => {
 			...Object.values(EDGE_COPY),
 			...STAGES.flatMap((s) => [s.title, s.text]),
 		].join("\n");
-		expect(all).not.toMatch(
-			/\.(py|pkl|npz|json|sh|md|tgz)\b|\w\/\w+\.|\\|release|github|journal|isaac|vboxuser/i,
-		);
+		expect(all).not.toMatch(/\.(py|pkl|npz|json|sh|md|tgz)\b|\w\/\w+\.|\\|release|github|journal/i);
 		expect(all).toContain("friend's RTX 2080 Ti");
 		expect(all).toContain("desktop GTX 1660 Ti");
 		expect(all).toContain("my laptop");

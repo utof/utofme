@@ -63,6 +63,6 @@ describe("MachineBlock", () => {
 	});
 	it("ships no file name, path or private word in the markup", () => {
 		const html = doc.documentElement.outerHTML;
-		expect(html).not.toMatch(/\.(py|pkl|npz|sh)\b|journal|isaac|release asset/i);
+		expect(html).not.toMatch(/\.(py|pkl|npz|sh)\b|journal|release asset/i);
 	});
 });

@@ -12,7 +12,7 @@
 # path so wrangler picks up the site's wrangler.jsonc from the workspace root.
 # Verified pattern: context7 /cloudflare/wrangler-action multi-project example.
 #
-# actionlint-clean: verified via /home/vboxuser/.local/bin/actionlint, exit 0.
+# actionlint-clean: verified with actionlint, exit 0.
 name: Deploy
 
 on:
