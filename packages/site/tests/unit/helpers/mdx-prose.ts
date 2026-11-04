@@ -4,7 +4,7 @@
  * Why: the lint rules of P10-1 (word count, section ids, figure numbers, `$` escaping) must run
  * without compiling MDX; a small line-and-regex reader is enough because the article uses a
  * closed set of constructs (imports, `{/* *\/}` comments, `*Block` figures, `<N/>`, `<Stamp/>`,
- * the inline `<EloSentenceBlock/>`).
+ * the inline `<EloSentenceBlock/>`, the `<Note>` aside whose children are prose).
  *
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-1 (structural content lint)
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-17 (provenance and claims lint)
@@ -49,6 +49,7 @@ export interface MdxProse {
 // prose token like `<N/>`, never a figure and never removed markup.
 const INLINE = "EloSentenceBlock";
 const TOKEN = new RegExp(`<(?:N|Stamp|${INLINE})\\b[^>]*\\/>`, "g");
+const CONTAINER = "Note";
 const FIG_MARK = /^\uE000(\d+)\uE000$/;
 
 function squash(s: string): string {
@@ -133,6 +134,9 @@ function scan(text: string): Scan {
 	const mathRe = /\$\$[\s\S]*?\$\$/g;
 	const hasMathBlock = mathRe.test(body);
 	body = body.replace(mathRe, "\n\n");
+
+	// Why: `Note` is the boxed aside (P10-1); its children are prose, so only its tags go.
+	body = body.replace(new RegExp(`<\\/?${CONTAINER}\\b[^>]*>`, "g"), "\n\n");
 
 	// Other components (paired then self-closing); N, Stamp and inline Blocks stay as tokens.
 	body = body.replace(
@@ -428,13 +432,17 @@ function nAttrs(tag: string): NAttrs {
 	return { key, ci: /\bci\b/.test(rest), alt: /\balt\b/.test(rest) };
 }
 
-/** Prose as read: a fact is the word "N"; stamps, inline Blocks, tags and link targets go. */
+/**
+ * Prose as read: a fact is the word "N"; stamps, inline Blocks, tags, link targets and code spans
+ * go. Why code spans: they hold identifiers (dataset ids, SPDX licences), never measurements.
+ */
 function plain(src: string): string {
 	return src
 		.replace(N_TAG, "N")
 		.replace(STAMP_TAG, "")
 		.replace(INLINE_TAG, "")
 		.replace(/\]\([^)]*\)/g, "]")
+		.replace(/`[^`\n]*`/g, "")
 		.replace(/<[^>]*>/g, "")
 		.replace(/[*[\]]/g, "")
 		.replace(/\s+/g, " ")
@@ -498,7 +506,7 @@ function count(text: string, re: RegExp): number {
  * empty means pass.
  *
  * Rules: no bare digits (after removing `<N/>`, `<Stamp/>`, tags with their attributes, link
- * targets and `$$` maths; {@link DIGIT_EXEMPTIONS} stay); banned claims per sentence with the
+ * targets, code spans and `$$` maths; {@link DIGIT_EXEMPTIONS} stay); banned claims per sentence with the
  * 6-word negation window and the "holder beats peeker" exemption; no 3v3 and 5v5 Elo keys in one
  * sentence without "different"; banned literals; a `<Stamp>` in every section that prints a
  * `measuredOn` fact; the honesty sentence in the first section's first 120 words and in

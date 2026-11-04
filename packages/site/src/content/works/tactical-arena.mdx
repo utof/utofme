@@ -2,36 +2,262 @@
 type: code
 title: "Tactical Arena"
 date: 2026-11-03
+updated: 2026-11-04
 started: 2026-10-11
 status: research
-lede: "Tactical Arena is a CS-like JAX shooter where 5v5 self-play agents gained +96 Elo."
-summary: "A Counter-Strike-like grid shooter in pure JAX for multi-agent RL. Self-play agents train on 2,048 generated maps and play 5 maps cut from CS2 radars. The 5v5 agent gained +96 Elo; first contact still comes at 9.6 s, pros take 22.8 s."
+lede: "Self-play agents learn a 28×28 Counter-Strike and keep getting stronger, but not more like the pros."
+summary: "A Counter-Strike-like game on a 28×28 grid, written in JAX, where agents learn by playing themselves on generated maps. They keep getting stronger on real maps they never trained on, and they still play nothing like pros."
 tags: ["reinforcement-learning", "multi-agent", "jax", "game-ai"]
 stack: ["JAX", "JaxMARL", "Flax", "three.js"]
 links:
   - label: "Code"
-    href: "https://github.com/utof/tactical-arena"
     private: true
 cover:
   src: "../../assets/loops/tactical-arena/poster.png"
   alt: "3D replay view: smoke fills a corridor below bomb site A while a grenade arcs toward it"
   loop: "tactical-arena"
   focus: 10
-gallery:
-  - src: "../../assets/loops/tactical-arena-smokes/poster.png"
-    alt: "Top-down replay on a CS map: smoke clouds block two corridors and a molotov burns near site A"
-    loop: "tactical-arena-smokes"
-    caption: "Best attack round: 3 smokes cut 71 enemy firing lines and only 7 of their own"
-  - src: "../../assets/works/tactical-arena/radar-dust2.png"
-    alt: "Dust2's CS2 radar with a 28 by 28 grid drawn over it, beside the game map compiled from it"
-    caption: "CS2 radars become 28×28 game maps; Mirage is held out for testing. CS2 map data © Valve"
-  - src: "../../assets/works/tactical-arena/mesh-inferno.png"
-    alt: "3D replay of Inferno with the translucent CS2 map mesh drawn over the game's block walls"
-    caption: "The grid leaks sight: 30% of player pairs see each other vs 19% on the mesh. CS2 map data © Valve"
+gallery: []
+article:
+  headline: "Stronger, Not More Human"
+  dek: "Teaching agents Counter-Strike on a 28×28 board"
+  math: true
+  sections:
+    - id: ten-seconds
+      title: "Ten seconds"
+    - id: a-board
+      title: "A board"
+    - id: learning
+      title: "Learning"
+    - id: practice-maps
+      title: "Practice maps"
+    - id: measured-honestly
+      title: "Measured honestly"
+    - id: stronger-not-more-cs
+      title: "Stronger, not more CS"
+    - id: notebook
+      title: "Notebook"
+    - id: toward-real-cs2
+      title: "Toward real CS2"
+    - id: methods
+      title: "Methods"
 ---
 
-{/* src paths are relative to RL_playground/tactical-arena/ under UTOFME_MEDIA_ROOT; the repo is private (D12). */}
+import { fact, measuredOnText } from "../../lib/facts";
+import N from "../../components/article/N.astro";
+import Stamp from "../../components/article/Stamp.astro";
+import Note from "../../components/article/Note.astro";
+import ReplayBlock from "../../components/article/ReplayBlock.astro";
+import SmokeSightBlock from "../../components/article/SmokeSightBlock.astro";
+import MapStagesBlock from "../../components/article/MapStagesBlock.astro";
+import MachineBlock from "../../components/article/MachineBlock.astro";
+import EloSentenceBlock from "../../components/article/EloSentenceBlock.astro";
+import RollMapBlock from "../../components/article/RollMapBlock.astro";
+import EloBlock from "../../components/article/EloBlock.astro";
+import NoiseBlock from "../../components/article/NoiseBlock.astro";
+import TempoBlock from "../../components/article/TempoBlock.astro";
+import AgentsVsProsBlock from "../../components/article/AgentsVsProsBlock.astro";
+import FreePeekBlock from "../../components/article/FreePeekBlock.astro";
+import NotebookBlock from "../../components/article/NotebookBlock.astro";
+export const on = (k) => measuredOnText(fact(k).measuredOn);
 
-A top-down grid shooter in pure JAX, modelled on Counter-Strike: 28×28 tiles, bomb defuse, fog of war, smokes and molotovs. Agents learn by PPO self-play on 2,048 generated maps and are scored on 5 maps cut from CS2 radars, with Mirage held out.
+## Ten seconds
 
-After 28 training blocks the 5v5 agent sits +96 Elo (+94..+98) above its starting point. It got stronger, not more CS-like: first contact still comes at 9.6 s, against 22.8 s for CS2 pros. Closing that gap needs game changes, not more training.
+Here is one round of a small Counter-Strike, played on a 28×28 copy of Mirage. Five attackers start on the left, five defenders on the right. Both teams are the same agent, playing itself, and it has never trained on Mirage or on any other real map. Press play: the attackers move out, a smoke goes down, the teams trade <N k="replay.kills" /> kills, and at <N k="replay.round.s" /> the bomb goes off.
+
+<ReplayBlock number={1}>
+  <span slot="caption">First contact comes at <N k="replay.contact.s" /> in this round; the pros' median is <N k="tempo.pros.contact.median" alt />.</span>
+  <span slot="try">Press play, then watch as the defenders.</span>
+</ReplayBlock>
+
+I started this project wanting agents that could hold their own against a professional team. That has not happened. No agent has played a human or a real CS2 match yet, and nothing here says otherwise.
+
+Now watch the clock instead of the players. In Figure 1 the two teams first see each other at <N k="replay.contact.s" />. That is typical: over many rounds, the median first contact is <N k="tempo.b28.contact.median" alt /> — <Stamp measuredOn={on("tempo.b28.contact.median")} /> — while professional players on the real maps take <N k="tempo.pros.contact.median" alt />.
+
+The agents are not standing still, though. They keep getting stronger against their own earlier selves: after block 28 of training, the agent is <N k="elo.head.block2" /> Elo over the agent at block 2, measured on five real maps it never saw in training. And they play about twice as fast as pros: they plant the bomb at a median of <N k="tempo.b28.plant.median" alt />, where pros take <N k="tempo.pros.plant.median" alt />.
+
+So the agents got stronger, and not more like Counter-Strike. The rest of this page takes that sentence apart: the game, how the agents learn, how I measure "stronger" without fooling myself, and why, on a board where time moves in steps of <N k="game.tick.s" />, rushing is simply the cheapest way to play.
+
+## A board
+
+Take a real map, look at it from above, and lay graph paper over it. Each square is <N k="game.tile.m" /> on a side and is either wall or floor. A player stands on one square, faces one of eight directions, and every <N k="game.tick.s" /> decides what to do next. A whole game fits in a few kilobytes, so one graphics card plays hundreds of them side by side: <N k="speed.env.sps" alt /> game steps a second on a friend's RTX 2080 Ti.
+
+Plenty is lost. There are no heights, no jumps, no shooting through walls. Sight is tested on squares, which is generous: the grid grants about <N k="sight.grid.extra" alt /> sightlines the real map blocks.
+
+But much of what makes Counter-Strike a game of information survives. There are two bomb sites to attack or hold, and chokepoints between them. There is fog of war: you see an enemy only inside a <N k="sight.fov.deg" />° cone and within <N k="sight.range.m" />, and your team shares a memory of where it last saw each one, like a radar. Running footsteps carry through walls; walking is silent. Every player carries a smoke, a molotov, a flash and an HE grenade, and money and weapons carry over from round to round.
+
+Sight is where the board gets interesting. To decide whether you can see me, the game samples points along the line between us; if any of them falls in a wall or in a smoke, the line is blocked. Figure 2 puts five defenders and five attackers on Mirage in the middle of a round and draws every pair of enemies that can see each other. One twist is worth testing: a player standing inside a smoke can still be seen from outside it, but cannot see anyone.
+
+<SmokeSightBlock number={2}>
+  <span slot="caption">Smokes cut sightlines; the grid grants about <N k="sight.grid.extra" alt /> sightlines the real map blocks.</span>
+  <span slot="try">Drop a smoke on the ghost and count the lines.</span>
+</SmokeSightBlock>
+
+Where does a 28×28 Mirage come from? I translated each of the five maps from CS2's overhead radar picture. Figure 3 shows the last four steps of that translation: how much of each square is floor; a majority vote that keeps a square as floor if at least half of it is; a corridor pass that reopens passages narrower than a square; and the final grid, with bomb sites and spawns. Later I wrote a compiler that builds the same grids from CS2's own navigation data, with no hand edits. The hand-made and compiled grids agree on <N k="maps.handcompiled.agree.low" /> to <N k="maps.handcompiled.agree.high" /> of their squares.
+
+<MapStagesBlock number={3}>
+  <span slot="caption">Four steps turn a map's floor plan into the 28×28 grid, at <N k="game.tile.m" /> a square.</span>
+  <span slot="try">Slide back to the floor fractions.</span>
+</MapStagesBlock>
+
+## Learning
+
+Now put an agent on the board. It is one neural network, copied into every player, and each copy sees only what its own player sees: the walls nearby, its teammates, what its team remembers about the enemy, the sounds it heard, its money. All of that arrives as <N k="obs.width" /> numbers, turned so that forward is always up.
+
+Every tick the network answers a few questions in a fixed order. First, where to step. Then, run or walk. Then, knowing those two answers, which way to turn, what to do with its hands (shoot, or throw one of its four grenades) and at what: an enemy, or a spot on the map. Asking one question at a time, instead of all at once, was the first change that made learning take off.
+
+Learning itself is trial, error and bookkeeping. The agent plays <N k="train.batch.games" /> games at once, <N k="train.batch.steps" /> decisions each, then looks back: which decisions came before rounds its team won? Proximal policy optimisation, PPO, nudges those decisions to be a little more likely, and never by much in one step. The reward is the plainest one I could think of: win the round, plus one; lose it, minus one. Nothing in between.
+
+<Note>
+
+**Two formulas.** PPO weighs each decision by its advantage *A*, how much better it went than expected, and by the ratio *r* of its new to its old probability, clipped so one update cannot move it far:
+
+$$
+L = \mathbb{E}\,\min\big(rA,\ \hat r A\big)
+$$
+
+$$
+\hat r = \operatorname{clip}(r,\ 1-\epsilon,\ 1+\epsilon)
+$$
+
+Here ε is <N k="ppo.clip" />. Ratings come from Bradley and Terry's model: the chance of winning a round depends only on the rating gap Δ.
+
+$$
+P(\text{win}) = \frac{1}{1 + 10^{-\Delta/400}}
+$$
+
+</Note>
+
+Who does it play against? Half the time, itself. Half the time, a pool of its own past versions, so it cannot forget how to handle an old trick. And in <N k="train.bots.share" alt />, scripted bots with simple plans, rush B and the like, so it never loses the knack of punishing them. Figure 4 shows the whole machine, from map generator to tournament, and the hardware under it.
+
+<MachineBlock number={4}>
+  <span slot="caption">Each update learns from <N k="train.batch.games" /> games × <N k="train.batch.steps" /> steps × ten players: <N k="train.decisions.update" /> decisions.</span>
+  <span slot="try">Press Next to follow one training block.</span>
+</MachineBlock>
+
+Some things I expected to matter did not. A memory of the round so far improved the agent's guesses about hidden enemies by about <N k="memory.gru.gain" />. Residual layers, which help deep networks elsewhere, did nothing here. What helped was a smaller learning rate.
+
+How do I know the agent improved at all? I let it play its past selves and count wins, and I report the result in Elo. The one thing to know about Elo is that it measures odds, not points. Drag the first number in this sentence: <EloSentenceBlock />.
+
+## Practice maps
+
+The biggest surprise of the project came in its first week. My best agents had learned on open, randomly generated arenas, and they were good there. Then I gave them the five real maps, and they fell apart: their attack win rate against simple scripted bots dropped to between <N k="maps.zeroshot.attack.low" /> and <N k="maps.zeroshot.attack.high" />.
+
+Half of their moves were failing, and the reason was one rule. Moves are relative to where a player faces, so an agent facing diagonally in a corridor one square wide could not step anywhere: every move ran into a wall. Real maps are full of such corridors. Letting a blocked step slide along the wall fixed it.
+
+Then the real question: should agents practise on the maps they will be tested on? I tried both. Against training on four real maps, training only on <N k="maps.generator.count" /> generated ones came out about <N k="maps.genvsreal.mirage" /> Elo ahead on Mirage, a real map neither had seen. The agents trained on real maps had memorised them. Since then my agents never train on a real map. All five are exams.
+
+So the generator matters. A generated map is a recipe: two bomb sites, a spawn for each team, long and short routes between them, a middle, chokepoints. Figure 5 rolls maps from three versions of it. The third adds narrow doors with an elbow, a site on each side of the map and two ways into each.
+
+<RollMapBlock number={5}>
+  <span slot="caption">Generator v3 misses the real maps' range on <N k="maps.v3.outside" /> key metrics per map; v2 on <N k="maps.v2.outside" />.</span>
+  <span slot="try">Press New seed, then compare with Mirage.</span>
+</RollMapBlock>
+
+How Counter-Strike-like is a map? I measured a long list of layout statistics on the real maps and counted, for each generated map, how many key ones fall outside the real range. On average a v3 map misses <N k="maps.v3.outside" />, a v2 map <N k="maps.v2.outside" />, and a real map, compared with the others, <N k="maps.real.outside" />. So v3 maps now look about as typical as real ones. Perhaps too typical: sitting below the real maps' own score hints that they vary less than real maps do.
+
+## Measured honestly
+
+"Stronger" needs a referee, and mine is a tournament. Every pair of agents plays <N k="eval.rounds.progress" /> rounds in each direction, attacking and defending, on all five real maps. When I test a change, it is <N k="eval.rounds.ab" />. A Bradley–Terry fit turns the wins into ratings. Every recipe is trained twice, from two independent seeds, and each run is compared only with its own ancestor.
+
+Figure 6 is the result for the five-against-five line. After block 28, the agent sits <N k="elo.head.block2" ci /> Elo over the agent at block 2, <N k="train.blocks.gain" /> training blocks earlier. The gains shrink: the first two blocks after block 2 added <N k="elo.gain.first2" />, recent ones about <N k="elo.gain.perblock.late" /> each. But the curve has not flattened yet.
+
+<EloBlock number={6}>
+  <span slot="caption">Block 28 sits <N k="elo.head.block2" ci /> Elo over block 2, and the curve is still rising.</span>
+  <span slot="try">Switch to compiled CS maps, then open the flash-kick marker.</span>
+</EloBlock>
+
+That interval covers the tournament's own noise and nothing else. The two training seeds land at <N k="elo.head.block2.seed1" /> and <N k="elo.head.block2.seed2" />, a gap of <N k="elo.head.seedgap" />, wider than the interval itself. On the <N k="maps.generator.heldout" /> generated test maps the same agent reads <N k="elo.head.generated" />, and on maps compiled from CS2's own navigation data, <N k="elo.head.compiled" />.
+
+Before the agents played five against five, they played three against three. That line peaked at <N k="elo.3v3.peak" /> Elo over its own start. It is tempting to add the two numbers. Don't. The game, the starting agent and the opponents were all different, and an Elo number only means something inside the tournament that produced it.
+
+How big must a difference be before I believe it? Training is noisy. The same recipe, started from two different seeds, lands about <N k="noise.seed.cs.low" /> to <N k="noise.seed.cs.high" /> Elo apart on the real maps; under an earlier, looser protocol, identical recipes came out <N k="noise.seed.aa.low" /> to <N k="noise.seed.aa.high" /> apart. Most changes I want to test are smaller than that. The tournament, by comparison, wobbles by about <N k="eval.noise.tournament" /> Elo, close to the <N k="eval.noise.binomial" /> that coin-flip arithmetic predicts.
+
+Figure 7 puts the differences between identical experiments next to the effects of changes I adopted, on one axis. Fewer rounds widen the tournament's band; fewer seeds raise the bar an effect must clear. With two seeds, when a change and its control share each seed, the bar is about <N k="noise.mde.same" /> Elo; when they do not, about <N k="noise.mde.indep" />.
+
+<NoiseBlock number={7}>
+  <span slot="caption">With two independent seeds, an effect smaller than ±<N k="noise.mde.indep" /> Elo is noise.</span>
+  <span slot="try">Drag the rounds all the way down, then pick one seed.</span>
+</NoiseBlock>
+
+## Stronger, not more CS
+
+Put the agents and the pros side by side, with the same definitions, and the agents are fast. You have already seen the pros' median first contact, as the dashed line in Figure 1. A median hides a shape, though. Figure 8 asks for your guess anyway, then shows every round.
+
+<TempoBlock number={8}>
+  <span slot="caption">Agents make first contact at a median of <N k="tempo.b28.contact.median" />. When do pros?</span>
+  <span slot="try">Drag the marker to your guess, then press Reveal.</span>
+</TempoBlock>
+
+The agents' rounds pile up early: <N k="tempo.contact.before12.agents" /> of them reach first contact within twelve seconds — <Stamp measuredOn={on("tempo.contact.before12.agents")} /> — and among pros, <N k="tempo.contact.before12.pros" />. Every other clock agrees. The agents plant at a median of <N k="tempo.b28.plant.median" />, the pros at <N k="tempo.pros.plant.median" ci />.
+
+Utility tells the same story, though my best numbers here come from the earlier three-against-three agent — <Stamp measuredOn={on("util.agent.grenades")} /> — which threw <N k="util.agent.grenades" /> grenades per player-round, against <N k="util.pros.grenades" /> for pros, and <N k="util.agent.selfblind" /> of its flashes blinded the thrower; for pros, <N k="util.pros.selfblind" />. Some things do match. <N k="match.smokekills.agent" /> of the agent's kills go through smoke, and <N k="match.smokekills.pros" /> of the pros'. A team saving money wins against a full buy in <N k="match.eco.agent" /> of rounds in my game and <N k="match.eco.pros" /> in pro matches.
+
+Figure 9 lines up every behaviour I could measure on both sides. Duels sit fairly close. The player holding an angle wins <N k="agents.b28.holder" /> of duels against the one who walks into it, where pros win <N k="pros.holder" />, and a player who dies has fired back <N k="agents.b28.fireback" /> of the time, against <N k="pros.fireback" /> for pros. The gaps open up in utility, in saving money and in how often the bomb gets planted.
+
+<AgentsVsProsBlock number={9}>
+  <span slot="caption">The 3v3 agent throws <N k="util.agent.grenades" /> grenades per player-round; pros throw <N k="util.pros.grenades" />.</span>
+  <span slot="try">Sort by gap and open the top row.</span>
+</AgentsVsProsBlock>
+
+Why so fast? The answer is a quirk of time, and my favourite thing in the project. The game moves in ticks of <N k="game.tick.s" />: everyone decides, then everything happens at once. To shoot at an enemy, a defender must have seen it at the end of a tick, and the shot lands on the next tick, after everyone has moved. So an attacker who steps into view and straight back is never there when the bullet arrives. The shot hits the empty square it just left. Figure 10 lets you step through it, one tick at a time.
+
+<FreePeekBlock number={10}>
+  <span slot="caption">A one-tick peek is hit <N k="peek.hit.nosnap" /> of the time; with snap fire, <N k="peek.hit.snap" />.</span>
+  <span slot="try">Step out, step back, then turn on snap fire.</span>
+</FreePeekBlock>
+
+Peeking is free, and the agents found it. When an attacker walks into the sight of a defender who is already aiming, the exposure lasts a single tick <N k="peek.onetick.share" /> of the time. In <N k="peek.stepback.agent" /> of the single-tick looks it survives, the attacker steps straight back to where it came from; scripted bots do that <N k="peek.stepback.bots" alt /> of the time. The defender hits only <N k="peek.hit.nosnap" /> of these one-tick peeks — <Stamp measuredOn={on("peek.onetick.share")} /> — so stepping out to look costs almost nothing.
+
+Defenders learned the same lesson from the other side. At the moment of first contact, <N k="holds.ct.moving.contact" /> of the agents' defenders are moving; scripted bots, <N k="holds.bots.ct.moving.contact" />. Fifteen seconds into a round, <N k="holds.ct.moving.15s" /> of agent defenders are still on the move. Among pros at that moment, only <N k="holds.pros.ct.moving.15s" /> are.
+
+Is it just the grid's generous sight? No. With sight computed on the real map geometry instead of on squares, first contact moves only to <N k="tempo.mesh.contact.median" />. Scripted bots on the very same grid wait until <N k="tempo.bots.contact.median" />. The rules invite the rush, and the agents accept.
+
+So I changed the rules. With snap fire, a defender who is set and aiming fires at whoever steps into its aim on that same tick. The same one-tick peek is now hit <N k="peek.hit.snap" /> of the time, and scripted bots with the rule win <N k="snap.bots.holder" /> of their duels as the player holding the angle, inside the pros' range: <N k="pros.holder" ci />. The agents trained with snap fire step back less often. They still make first contact just as early.
+
+Learning found the cheapest strategy the rules allow. That is not a bug in the learner; it is the most honest thing it could tell me about my game. If I want agents that play the way Counter-Strike is played, the game has to make Counter-Strike's choices the cheap ones.
+
+## Notebook
+
+Most of research is things that do not work. I kept a dated notebook from the first day. Figure 11 shows all <N k="notebook.entries" /> entries in <N k="notebook.areas" /> areas, marked by what became of them: <N k="notebook.outcome.kept" /> kept, <N k="notebook.outcome.reverted" /> reverted, <N k="notebook.outcome.inconclusive" /> inconclusive, <N k="notebook.outcome.parked" /> parked, and <N k="notebook.outcome.infra" /> that built tools rather than tested ideas. A drawer holds <N k="notebook.parked" /> more ideas I parked or ruled out, each with what would make me reopen it. Ten entries carry most of the story, and they are starred.
+
+<NotebookBlock number={11}>
+  <span slot="caption">Of <N k="notebook.entries" /> dated entries, <N k="notebook.outcome.kept" /> were kept and <N k="notebook.outcome.reverted" /> reverted.</span>
+  <span slot="try">Filter to reverted, then open a starred entry.</span>
+</NotebookBlock>
+
+The molotov taught me patience. Early molotovs flew wherever the agent happened to face and mostly burned the thrower, so the agents learned never to throw one. A two-stage lesson fixed that: aimed throws with no damage to the thrower first, then the real rules back on. Given a safe place to explore, the agents found the tool; given the real rules again, they kept what worked.
+
+The same trick failed for flashes. Agents learned to throw them and kept blinding themselves; nudged toward the bots' habits, they threw more and still blinded themselves. Flashes are parked.
+
+Once I trained a second learner beside the main one, with a single job: find holes. It never found one worth having. It sat at <N k="exploiter.winrate.low" /> to <N k="exploiter.winrate.high" /> against the main line. All <N k="exploiter.lives" /> of its lives ended on a timer, not on a breakthrough, and dropping it made training faster at no cost.
+
+The agents never save money, and for a while I blamed the economy. It was the discount. A learner values a reward less the further away it is. I had set the next round to count <N k="ppo.gamma.round" /> as much as this one, but each round's own win arrives dozens of ticks into it, so in practice the next round counted about <N k="econ.nextround.weight" />. A saved rifle is worth roughly as much in my game as in pro matches; the agent just could not see that far. Four attempts later, saving still has not stuck.
+
+And the one that stung: a fresh start from scratch stood at <N k="elo.restart.scratch" /> Elo against the line it was meant to replace when I stopped it.
+
+## Toward real CS2
+
+What would close the gap? Looking back, the square was doing four jobs at once: it was the player's body, the unit of every wall, the eye that tests sight, and the length of one step. Real Counter-Strike keeps those apart, and the next version of the game will too. The plan is one simulation core in CS2's own units with three clocks: decisions every <N k="game.tick.s" /> as today, fights and perception on a much faster clock, and movement at the server's <N k="cs2.tickrate" /> updates a second. That is how large game-playing agents already work: OpenAI Five, AlphaStar and GT Sophy all decide far less often than their games update. The square game stays as a baseline, and today's agents move over once, by distillation.
+
+Some first evidence is in. On maps compiled from CS2's own navigation data, the agent after block 28 keeps <N k="elo.head.compiled" /> of its <N k="elo.head.block2" /> Elo. On real CS floors, with their ramps and drops, today's agent's defence against scripted bots falls from <N k="zeroshot.floors.defend.before" /> to <N k="zeroshot.floors.defend.after" /> without any retraining. A real CS2 dedicated server now runs at <N k="referee.speedup" />× speed as a referee, about <N k="referee.rounds.perhour" /> bot rounds an hour, so agents can one day be checked inside the real game instead of my copy of it. And from <N k="data.pros.maps" /> pro maps I have extracted what the players actually did on every decision step: <N k="data.pros.labels" /> labelled decisions to learn from later.
+
+None of this is the goal yet. No agent has played a human or a real CS2 match yet. The goal has not changed: agents that can hold their own against a professional team. Until then, this page is a measurement of the distance.
+
+## Methods
+
+**Game.** A 28×28 grid of squares <N k="game.tile.m" /> wide; one decision every <N k="game.tick.s" />; rounds of up to <N k="game.round.s" /> (CS2: <N k="cs2.round.s" />). Planting takes <N k="game.plant.s" />, defusing <N k="game.defuse.s" />, and the bomb goes off after <N k="game.bomb.s" />. Sight: a <N k="sight.fov.deg" />° cone out to <N k="sight.range.m" />, blocked by walls and smoke. One smoke, molotov, flash and HE grenade per player per round; money, weapons and armour across the halves of a match.
+
+**Agent.** <N k="obs.width" /> observation numbers per player, turned to the player's facing. Five action heads, sampled in order: move (<N k="act.head.move" />), walk (<N k="act.head.walk" />), then turn (<N k="act.head.turn" />), hands (<N k="act.head.fire" />) and target (<N k="act.head.target" />). Two hidden layers of <N k="net.hidden.width" /> with LayerNorm, <N k="net.params" alt /> parameters, and a separate critic. Every player learns from its own view, with weights shared across players.
+
+**Learning.** PPO with clip <N k="ppo.clip" />, GAE λ <N k="ppo.gae" />, discount <N k="ppo.gamma" /> per tick within a round and <N k="ppo.gamma.round" /> between rounds; <N k="train.batch.games" /> games × <N k="train.batch.steps" /> steps per update. A training block is <N k="train.block.envsteps" alt /> game steps; the gain over block 2 took <N k="train.blocks.gain" /> blocks, <N k="train.envsteps.total" alt /> steps in all.
+
+**Evaluation.** Round-robin tournaments on Dust2, Mirage, Inferno, Ancient and Anubis, both sides, sampled actions: <N k="eval.rounds.progress" /> rounds per ordered pair for progress, <N k="eval.rounds.ab" /> for A/B tests. Bradley–Terry ratings on the Elo scale with bootstrap intervals; two independent seeds, each against its own ancestor. These are self-play ratings only: no human or real CS2 opponent has been rated.
+
+**Pros.** <N k="data.pros.maps" /> pro maps of 2026 (<N k="data.pros.tier1" /> tier-one LAN, <N k="data.pros.tier2" /> tier-two), <N k="data.pros.rounds" /> rounds, with intervals from resampling whole matches. Agent first contact is the first tick any agent sees an enemy. Pro first contact is the earliest of the first "spotted" flag, the first bullet aimed near a visible enemy and the first damage, counted from the end of freeze time. It can only err late, which is why I write "about".
+
+**Compute.** A first week on <N k="compute.cloud.usd" alt /> of cloud GPU; since then, a desktop GTX 1660 Ti, a friend's RTX 2080 Ti and my laptop. One five-against-five block takes about <N k="compute.block.minutes" /> per seed on a friend's RTX 2080 Ti; the blocks after block 2 took <N k="compute.gpuhours.total" alt /> in all.
+
+**Credits.** Pro match data: [`cs2povarchive/cs2-demos`](https://huggingface.co/datasets/cs2povarchive/cs2-demos) (`Apache-2.0`) and [`blanchon/opencs2_dataset_demo`](https://huggingface.co/datasets/blanchon/opencs2_dataset_demo) (`CC-BY-4.0`), public mirrors of professional match demos; only aggregates appear here, and no player is named. Built with [JAX](https://github.com/jax-ml/jax); the PPO trainer was first checked against [JaxMARL](https://github.com/FLAIROx/JaxMARL). Ideas from [PPO](https://arxiv.org/abs/1707.06347) (Schulman et al., 2017), [independent PPO for many agents](https://arxiv.org/abs/2011.09533) (de Witt et al., 2020), Bradley and Terry's [paired comparisons](https://doi.org/10.2307/2334029), the league of past selves in [AlphaStar](https://doi.org/10.1038/s41586-019-1724-z) (Vinyals et al., 2019), [OpenAI Five](https://arxiv.org/abs/1912.06680) (2019) and [GT Sophy](https://doi.org/10.1038/s41586-021-04357-7) (Wurman et al., 2022). The figures owe a lot to [Red Blob Games](https://www.redblobgames.com/), Nicky Case, Bret Victor and Grant Sanderson.
+
+Counter-Strike and CS2 are trademarks of Valve. Not affiliated with Valve. The code is private for now.

@@ -61,21 +61,5 @@
 	],
 	"poster": {
 		"at": 0.5
-	},
-	"stills": [
-		{
-			"src": "RL_playground/tactical-arena/runs/cs_maps/overlay/de_dust2_preview.png",
-			"out": "radar-dust2"
-		},
-		{
-			"src": "RL_playground/_local/sessions/2026-11-02-lanes/viewer-3d/screens/f_3d_inferno_mesh@3x.png",
-			"crop": {
-				"x": 1410,
-				"y": 312,
-				"w": 1983,
-				"h": 1116
-			},
-			"out": "mesh-inferno"
-		}
-	]
+	}
 }

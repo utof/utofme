@@ -9,6 +9,7 @@ article:
 
 import N from "../../../src/components/article/N.astro";
 import Stamp from "../../../src/components/article/Stamp.astro";
+import Note from "../../../src/components/article/Note.astro";
 export const on = (k) => k;
 
 ## Ten seconds
@@ -19,7 +20,7 @@ Agents make first contact at a median of <N k="tempo.b28.contact.median" />, <St
 
 The holder beats peeker in most duels, and the agents have not yet beaten pros. The 3v3 peak of <N k="elo.3v3.peak" /> sits on a different scale from the gain of <N k="elo.head.block2" ci /> at block 28.
 
-Maps from the v2 generator ran on a friend's RTX 2080 Ti and a desktop GTX 1660 Ti, after about <N k="compute.cloud.usd" alt /> of cloud GPU. The readout of 4 November 2026 is dated 2026-11-04; see [the paper](https://arxiv.org/abs/1707.06347) and Figure 1.
+Maps from the v2 generator ran on a friend's RTX 2080 Ti and a desktop GTX 1660 Ti, after about <N k="compute.cloud.usd" alt /> of cloud GPU. The readout of 4 November 2026 is dated 2026-11-04; see [the paper](https://arxiv.org/abs/1707.06347) and Figure 1. Data: [`cs2-demos`](https://huggingface.co/datasets/cs2povarchive/cs2-demos) (`Apache-2.0`).
 
 In one round, <EloSentenceBlock />.
 
@@ -28,7 +29,7 @@ In one round, <EloSentenceBlock />.
   <span slot="try">Press play, then watch as the defenders.</span>
 </ReplayBlock>
 
-<aside>
+<Note>
 
 The win chance is a function of the rating gap alone.
 
@@ -36,7 +37,7 @@ $$
 P = \frac{1}{1 + 10^{-\Delta/400}}
 $$
 
-</aside>
+</Note>
 
 ## Toward real CS2
 

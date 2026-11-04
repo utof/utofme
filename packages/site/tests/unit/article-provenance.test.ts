@@ -69,3 +69,51 @@ describe("provenance lint fixtures (AC17.1)", () => {
 		expect(() => formatFact("no.such.key")).toThrow(/unknown fact key/);
 	});
 });
+
+const site = join(import.meta.dirname, "../..");
+const entry = readFileSync(join(site, "src/content/works/tactical-arena.mdx"), "utf8");
+
+describe("the real article entry (AC17.1, AC17.3)", () => {
+	it("passes the provenance and claims lint", () => {
+		expect(lintProvenance(entry, facts)).toEqual([]);
+	});
+});
+
+describe("cleanup (AC17.4, AC17.5)", () => {
+	const stills = ["radar-dust2", "mesh-inferno"];
+
+	function walk(dir: string): string[] {
+		return readdirSync(dir, { withFileTypes: true }).flatMap((d) =>
+			d.isDirectory() ? walk(join(dir, d.name)) : [join(dir, d.name)],
+		);
+	}
+
+	it("no Valve still is left in the source tree, by file name or by reference", () => {
+		const files = ["src", "media", "public"].flatMap((d) => walk(join(site, d)));
+		for (const name of stills) {
+			expect(files.filter((f) => f.endsWith(`/${name}.png`))).toEqual([]);
+		}
+		const text = files.filter((f) => /\.(?:astro|mdx?|json|ts|svelte|css)$/.test(f));
+		for (const f of text) {
+			const body = readFileSync(f, "utf8");
+			for (const name of stills) expect(body.includes(name), `${f} names ${name}`).toBe(false);
+		}
+	});
+
+	it("the loop recipe has no stills", () => {
+		const recipe = JSON.parse(
+			readFileSync(join(site, "media/recipes/tactical-arena.json"), "utf8"),
+		) as Record<string, unknown>;
+		expect(Object.hasOwn(recipe, "stills")).toBe(false);
+	});
+
+	it("the MDX has no YAML comments, no MDX comments and no link URL", () => {
+		const fm = /^---\n([\s\S]*?)\n---\n/.exec(entry)?.[1] ?? "";
+		expect(fm).not.toBe("");
+		expect(fm.split("\n").filter((l) => /(?:^|\s)#/.test(l))).toEqual([]);
+		expect(entry).not.toMatch(/\{\/\*/);
+		const links = /^links:\n((?: {2}.*\n)+)/m.exec(`${fm}\n`)?.[1] ?? "";
+		expect(links).toMatch(/label: "Code"/);
+		expect(links).not.toMatch(/href|https?:/);
+	});
+});
