@@ -350,6 +350,76 @@ describe("SoundToggle inline script", () => {
 		}
 	});
 
+	it("reruns after SPA navigation bind the listeners once and honour toggle-off", async () => {
+		// Why: `data-astro-rerun` runs the script on every navigation; stale listeners kept
+		// playing sounds after toggle-off. @issue utof/utofme#147
+		mockAudioCtxInstance.decodeAudioData.mockResolvedValue({});
+		try {
+			const scriptBody = extractInlineScript(await renderSoundToggle());
+			const storage = makeFakeStorage();
+			const btn = makeFakeButton();
+			const added: string[] = [];
+			const handlers: Array<(e: { key: string; metaKey: boolean; ctrlKey: boolean }) => void> = [];
+			const fakeDocument = {
+				querySelector(sel: string) {
+					return sel === "[data-sound-toggle]" ? btn : null;
+				},
+				addEventListener(type: string, _: unknown) {
+					added.push(`document:${type}`);
+				},
+			};
+			const fakeWindow: Record<string, unknown> = {
+				AudioContext: audioCtxCtor,
+				webkitAudioContext: undefined,
+				addEventListener(
+					type: string,
+					handler: (e: { key: string; metaKey: boolean; ctrlKey: boolean }) => void,
+				) {
+					added.push(`window:${type}`);
+					handlers.push(handler);
+				},
+			};
+			const FakeAudio = class {
+				canPlayType(_mime: string) {
+					return "";
+				}
+			};
+			const fakeFetch = vi.fn().mockResolvedValue({
+				arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
+			});
+			const run = new Function(
+				"window",
+				"document",
+				"localStorage",
+				"AudioContext",
+				"fetch",
+				"Audio",
+				scriptBody,
+			);
+			for (let i = 0; i < 3; i++)
+				run(fakeWindow, fakeDocument, storage, audioCtxCtor, fakeFetch, FakeAudio);
+
+			expect(added.sort()).toEqual(["document:pointerover", "window:keydown"]);
+
+			btn.click(); // on
+			await new Promise((r) => setTimeout(r, 0));
+			const keydown = handlers[0];
+			if (!keydown) throw new Error("keydown listener not registered");
+			keydown({ key: "k", metaKey: true, ctrlKey: false });
+			await new Promise((r) => setTimeout(r, 0));
+			expect(mockBufferSource.start).toHaveBeenCalledTimes(1);
+
+			run(fakeWindow, fakeDocument, storage, audioCtxCtor, fakeFetch, FakeAudio);
+			btn.click(); // off, from the newest run's button handler
+			keydown({ key: "k", metaKey: true, ctrlKey: false });
+			await new Promise((r) => setTimeout(r, 0));
+			expect(mockBufferSource.start).toHaveBeenCalledTimes(1);
+			expect(audioCtxCtor).toHaveBeenCalledTimes(1);
+		} finally {
+			mockAudioCtxInstance.decodeAudioData.mockResolvedValue(null);
+		}
+	});
+
 	it("subsequent toggle off does not destroy AudioContext", async () => {
 		audioCtxCtor.mockClear();
 		const { btn } = await runInlineScript();
