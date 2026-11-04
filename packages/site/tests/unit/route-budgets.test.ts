@@ -111,6 +111,22 @@ describe("gzip measurement", () => {
 		expect(gzip9(s)).toBe(gzipSync(s, { level: 9 }).length);
 		expect(gzip9(s)).toBeLessThan(s.length / 10);
 	});
+	it("measureDist gzips the JSON data files a route names", () => {
+		const dist = mkdtempSync(join(tmpdir(), "budgets-json-"));
+		mkdirSync(join(dist, "_astro"));
+		const data = JSON.stringify({ rows: "#.".repeat(400) });
+		writeFileSync(join(dist, "_astro/data.abc.json"), data);
+		writeFileSync(join(dist, "_astro/alpha.js"), "export{}");
+		writeFileSync(join(dist, "_astro/beta.js"), "export{}");
+		writeFileSync(join(dist, "_astro/client.svelte.js"), "export{}");
+		writeFileSync(join(dist, "index.html"), read("rules/island-props-data.html"));
+		const r = measureDist(dist, {
+			...budgets,
+			excluded: [],
+			unreferencedChunks: [{ pattern: /./, reason: "fixture" }],
+		}).reports[0];
+		expect(r?.lazyData).toEqual({ raw: data.length, gz: gzip9(data) });
+	});
 });
 
 describe("buckets, closure de-duplication and self-check (Rollup fixture)", () => {
@@ -664,6 +680,19 @@ describe("lazy data column", () => {
 		expect(warns(r, "DATA").length).toBe(1);
 		expect(errors(r, "DATA")).toEqual([]);
 	});
+	it("counts JSON assets passed to islands through props, once per file", () => {
+		const other = "_astro/other.def.json";
+		const r = analyzeRoute(
+			{ route: "/article/", html: read("rules/island-props-data.html") },
+			buildChunkGraph(new Map(Object.entries({ ...sources, "_astro/beta.js": "export{}" }))),
+			{
+				raw: (p) => (p === json ? 3 * KB : p === other ? 6 * KB : null),
+				gzip: (p) => (p === json ? KB : p === other ? 2 * KB : null),
+			},
+			ISLAND_CLASS({}),
+		);
+		expect(r.lazyData).toEqual({ raw: 9 * KB, gz: 3 * KB });
+	});
 });
 
 describe("P10-16 config", () => {
@@ -679,7 +708,7 @@ describe("P10-16 config", () => {
 	it("declares the spec's limits", () => {
 		const a = budgets.classes.article;
 		expect(a?.lazyJs).toBe(160 * KB);
-		expect(a?.html).toBe(45 * KB);
+		expect(a?.html).toBe(60 * KB);
 		expect(a?.cssMath).toBe(30 * KB);
 		expect(a?.islandJs?.Replay).toBe(25 * KB);
 		expect(a?.islandJs?.EloSentence).toBe(2 * KB);
@@ -687,6 +716,7 @@ describe("P10-16 config", () => {
 		const l = budgets.classes.labFigure;
 		expect(l?.lazyJs).toBe(60 * KB);
 		expect(l?.html).toBe(30 * KB);
+		expect(l?.css).toBe(12 * KB);
 		expect(l?.warnOnly).toBeUndefined();
 		expect(l?.islandJs).toBe(a?.islandJs);
 	});

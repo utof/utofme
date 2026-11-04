@@ -256,7 +256,7 @@
 		"cs": [3.2, 2.0, 2.1, 1.8, 2.3],
 		"cs4": [4.5, 2.0, 2.2, 1.9, 2.4],
 		"generated": [2.5, 2.6, 2.6, 1.8, 1.5],
-		"src": "sessions/2026-10-21-eval-v2/EVAL_V2_REPORT.md:508-513"
+		"src": "notes/EXAMPLE.md:2"
 	},
 	"aa_tournament": { "text": "x", "src": "notes/EXAMPLE.md:1", "replays": {} },
 	"rules": {
@@ -278,6 +278,6 @@
 	},
 	"five_v_five": {
 		"text": "seed noise SD ~5-6 per difference on CS for a sampling-changing arm",
-		"src": "repo-snapshot/runs/m27/gen3_ab.out:1"
+		"src": "notes/EXAMPLE.md:3"
 	}
 }

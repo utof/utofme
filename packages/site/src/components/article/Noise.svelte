@@ -214,6 +214,8 @@
 	.nz-ctl input[type="range"] {
 		inline-size: 100%;
 		min-block-size: 24px;
+		/* Why: Chromium's default 2 px range margin pushed the slider past the column (AC1.7). */
+		margin-inline: 0;
 	}
 	.nz-ctl select {
 		min-block-size: 32px;

@@ -24,7 +24,7 @@
 	import type { Shape } from "../../lib/article-data/types";
 	import { FigureDataError, loadFigureData } from "../../lib/figure-data";
 	import { registerLive } from "../../lib/figure-live";
-	import { centroid } from "../../lib/figures/map-stages";
+	import { centroid } from "../../lib/figures/square-paths";
 	import {
 		DEFAULT_GENERATOR,
 		GENERATORS,

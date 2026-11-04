@@ -74,6 +74,15 @@ describe("denylist", () => {
 		expect(scanText("zorblax", "core", [])).toEqual([]);
 		expect(scanText("nothing", "core", denylist)).toEqual([]);
 	});
+	it("paths redact keys that hit a rule, for the key and everything under it", () => {
+		const f = scanJson({ zorblax_id: { b: "192.0.2.7" }, "192.0.2.8": 1 }, "core", denylist);
+		expect(f.length).toBeGreaterThanOrEqual(3);
+		for (const x of f) {
+			const s = JSON.stringify(x).toLowerCase();
+			for (const bad of ["zorblax", "192.0.2.8"]) expect(s).not.toContain(bad);
+		}
+		expect(f).toContainEqual({ rule: "ipv4", where: "$.<redacted>.b" });
+	});
 	it("messages never contain the matched text", () => {
 		const f = scanJson({ k: "zorblax 192.0.2.7 a@example.invalid" }, "shipped", denylist);
 		expect(f.length).toBeGreaterThan(0);
@@ -89,6 +98,20 @@ describe("denylist", () => {
 	});
 	it("parseDenylist drops blanks and comments and lower-cases", () => {
 		expect(parseDenylist("# c\n\n  Foo Bar \nBAZ\n")).toEqual(["foo bar", "baz"]);
+	});
+});
+
+describe("internal-path covers the notes repo's privacy checklist (PRIVACY.md § 1)", () => {
+	it.each([
+		"see repo-snapshot/scripts/run.sh",
+		"from to_try.md",
+		"docs/workers.md",
+		"docs/compute.md:12",
+	])("%s", (text) => {
+		expect(ids(scanText(text, "shipped", []))).toContain("internal-path");
+	});
+	it("leaves ordinary words alone", () => {
+		expect(scanText("a snapshot of the board; things to try", "shipped", [])).toEqual([]);
 	});
 });
 

@@ -67,8 +67,10 @@ pre-commit:
         piped: true
         jobs:
           - name: biome-format
+            # Why: --no-errors-on-unmatched lets a commit that stages only Biome-ignored files
+            # (the canonical article JSON under src/data/article*/, ADR 0054) pass this step.
             root: "packages/site"
-            run: bunx biome check --write {staged_files}
+            run: bunx biome check --write --no-errors-on-unmatched {staged_files}
             glob: "*.{ts,tsx,mts,cts,mjs,cjs,js,jsx,json,jsonc,css}"
             stage_fixed: true
 

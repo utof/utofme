@@ -159,7 +159,12 @@ const description = data.summary ?? data.lede;
 		flex-wrap: wrap;
 		gap: var(--space-1) var(--space-4);
 		margin: 0;
-		padding-inline-start: var(--space-5);
+		padding-inline-start: 0;
+	}
+	/* Why: in a wrapping flex row an outside marker sits in the gap, flush against the previous
+	 * item ("Ten seconds2. A board"); inside, it stays with its own link. */
+	nav[aria-label="Sections"] li {
+		list-style-position: inside;
 	}
 	nav[aria-label="Sections"] a {
 		display: inline-block;
@@ -208,8 +213,11 @@ const description = data.summary ?? data.lede;
 		.article-body > :global(*) {
 			grid-column: text;
 		}
+		/* Why: the note shares the row of the paragraph before it; spanning the next row too
+		 * lets the following paragraph flow beside it instead of below a ~280 px hole. */
 		.article-body > :global(aside.note) {
 			grid-column: aside;
+			grid-row: span 2;
 			max-inline-size: none;
 			margin-block: 0;
 		}

@@ -95,6 +95,26 @@ describe("canSee", () => {
 	});
 });
 
+describe("visiblePairs", () => {
+	// Why: with random half-wall maps the brute-force property rarely meets a visible pair, so
+	// Stryker found the loop's guards untested; this fixed scene pins them (lane I, mutation run).
+	it("lists living viewer-target pairs only, in i-then-j order", () => {
+		const open = parseRows(Array.from({ length: 12 }, () => ".".repeat(12)));
+		const players: Player[] = [
+			{ r: 5, c: 2, facing: 2, alive: true }, // east, toward 1
+			{ r: 5, c: 6, facing: 6, alive: true }, // west, toward 0
+			{ r: 5, c: 4, facing: 2, alive: false }, // dead, between them, facing 1
+		];
+		expect(visiblePairs(open, players, NONE)).toEqual([
+			[0, 1],
+			[1, 0],
+		]);
+		// A smoke whose rim covers player 0: 0 sees nobody, 1 still sees 0 (the legs rule).
+		const smoked = new Set(smokeTiles(open, [5, 0]));
+		expect(visiblePairs(open, players, smoked)).toEqual([[1, 0]]);
+	});
+});
+
 describe("properties (AC4.2)", () => {
 	test.prop([mapArb, tileArb, tileArb])("lineOfSight is symmetric without smoke", (map, a, b) => {
 		expect(lineOfSight(map, a, b, NONE)).toBe(lineOfSight(map, b, a, NONE));

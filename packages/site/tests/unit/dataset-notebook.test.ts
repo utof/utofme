@@ -143,6 +143,30 @@ describe("public wording of free text", () => {
 		);
 		expect(publicText("touches env.py during")).toBe("touches env code during");
 	});
+	it("turns the notes' run labels into words a reader can parse", () => {
+		expect(publicText("Elo g5line10 - v5a2, CS maps")).toBe("Elo block 10 vs block 2, CS maps");
+		expect(publicText("Elo gline6 - gline4, CS maps")).toBe(
+			"Elo 3v3 block 6 vs 3v3 block 4, CS maps",
+		);
+		expect(publicText("Elo g6line4 - g6line2, CS maps")).toBe(
+			"Elo v3-line block 4 vs v3-line block 2, CS maps",
+		);
+		expect(publicText("Elo head - v5a2, compiled maps")).toBe(
+			"Elo newest block vs block 2, compiled maps",
+		);
+		expect(publicText("exploiters vs g5line28 (v5a2: +0.066)")).toBe(
+			"exploiters vs block 28 (block 2: +0.066)",
+		);
+		expect(publicText("five action heads - each a choice")).toBe(
+			"five action heads - each a choice",
+		);
+	});
+	it("no committed dataset text carries a run label", () => {
+		for (const f of ["notebook", "notebook_parked"]) {
+			const text = readFileSync(`src/data/article/${f}.json`, "utf8");
+			expect(text, f).not.toMatch(/\b(g\d*line\d+w?|v5a\d)\b/);
+		}
+	});
 	it("no committed dataset text contains a file name or a journal reference", () => {
 		for (const f of ["notebook", "notebook_parked"]) {
 			const text = readFileSync(`src/data/article/${f}.json`, "utf8");

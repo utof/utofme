@@ -79,7 +79,10 @@ export const budgets: BudgetsConfig = {
 		text,
 		article: {
 			firstViewJs: 40 * KB, // unchanged: every figure island is lazy
-			html: 45 * KB,
+			// Why: eleven SSR keyframes with their no-JS tables measure ~47 KB before F6/F7 are
+			// drawn in full; Lighthouse mobile stays at 0.95-0.96 (CLS <= 0.0044), so the spec's
+			// 45 KB became 60 KB (ADR 0057, integration).
+			html: 60 * KB,
 			// Why: Astro links every island's CSS in <head>, so each of the 11 figures adds
 			// ~1-1.5 KB gzip on top of KaTeX (7.9 KB) and the layouts (~6.5 KB); 15 KB held
 			// only the stub figures. Lane I checks LCP/CLS against the real page.
@@ -94,7 +97,10 @@ export const budgets: BudgetsConfig = {
 		labFigure: {
 			firstViewJs: 40 * KB,
 			html: 30 * KB,
-			css: 10 * KB,
+			// Why: the lab pages are one dynamic route with an eager glob over every Block, so each
+			// links all twelve figures' CSS (10.8 KB once F6/F7 landed). Fixture builds only, never
+			// deployed (ADR 0057, integration).
+			css: 12 * KB,
 			lazyJs: 60 * KB,
 			islandJs,
 			chromeIslands,

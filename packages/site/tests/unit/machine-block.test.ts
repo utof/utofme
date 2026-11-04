@@ -43,10 +43,10 @@ describe("MachineBlock", () => {
 		expect(props).toContain("architecture/1");
 		expect(island?.querySelector(".fig-box")).not.toBeNull();
 	});
-	it("the keyframe draws all 18 boxes and 27 arrows, stage 4 highlighted, counter 4 / 9", () => {
+	it("the keyframe draws all 18 boxes and 27 arrows in both layouts, stage 4 highlighted, counter 4 / 9", () => {
 		const island = doc.querySelector("astro-island");
 		const svgs = [...(island?.querySelectorAll("svg[role='img']") ?? [])];
-		expect(svgs).toHaveLength(1);
+		expect(svgs).toHaveLength(2);
 		for (const svg of svgs) {
 			expect(svg.querySelectorAll(".mc-node")).toHaveLength(18);
 			expect(svg.querySelectorAll(".mc-edge")).toHaveLength(27);

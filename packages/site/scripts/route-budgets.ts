@@ -71,7 +71,10 @@ export function measureDist(distDir: string, config: BudgetsConfig): Measurement
 		try {
 			if (!statSync(full).isFile()) return null;
 			const raw = statSync(full).size;
-			const entry = { raw, gz: /\.(?:css|js|html)$/.test(p) ? gzip9(readFileSync(full)) : null };
+			const entry = {
+				raw,
+				gz: /\.(?:css|js|html|json)$/.test(p) ? gzip9(readFileSync(full)) : null,
+			};
 			cache.set(p, entry);
 			return entry;
 		} catch {

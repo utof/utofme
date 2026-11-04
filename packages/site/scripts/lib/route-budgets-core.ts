@@ -324,6 +324,8 @@ export interface RouteDoc {
 	readonly videos: readonly LoopVideoInfo[];
 	/** Every island on the page, in document order. */
 	readonly islands: readonly IslandInfo[];
+	/** Dist paths of the `_astro/*.json` files named in island `props` (figure datasets). */
+	readonly dataRefs: readonly string[];
 }
 
 /** Convert a URL attribute to a dist-relative path, or `null` when external. */
@@ -369,6 +371,9 @@ function posterOf(img: ImgLike): PosterInfo {
 	};
 }
 
+/** A root-relative `/_astro/*.json` URL inside a decoded island `props` attribute. */
+const PROPS_JSON_REF = /"(\/_astro\/[\w@.-]{1,200}\.json)"/g;
+
 /** `opts.name` from an island's JSON `opts` attribute; `""` when absent or malformed. */
 function islandName(opts: string | null): string {
 	if (opts === null) return "";
@@ -411,8 +416,13 @@ export function analyzeHtml(html: string, eagerCardCount: number): RouteDoc {
 	for (const l of document.querySelectorAll("link[rel~=modulepreload]"))
 		add(first, l.getAttribute("href"));
 	const islands: IslandInfo[] = [];
+	const dataRefs = new Set<string>();
 	for (const isl of document.querySelectorAll("astro-island")) {
 		const client = isl.getAttribute("client") ?? "";
+		// Why: a Block passes its dataset's hashed URL to the island as a prop (ADR 0054), so the
+		// JSON is named in the HTML, not in any chunk.
+		for (const m of (isl.getAttribute("props") ?? "").matchAll(PROPS_JSON_REF))
+			add(dataRefs, m[1] ?? null);
 		islands.push({
 			name: islandName(isl.getAttribute("opts")),
 			client,
@@ -474,6 +484,7 @@ export function analyzeHtml(html: string, eagerCardCount: number): RouteDoc {
 			null,
 		videos,
 		islands,
+		dataRefs: [...dataRefs],
 	};
 }
 
@@ -544,7 +555,7 @@ export interface RouteReport {
 	readonly buckets: JsBuckets;
 	/** R10 measurements, one per island. */
 	readonly islands: readonly IslandReport[];
-	/** Report-only: JSON assets the route's chunks name (raw / gzip bytes). */
+	/** Report-only: JSON assets the route's chunks or island props name (raw / gzip bytes). */
 	readonly lazyData: { readonly raw: number; readonly gz: number };
 	readonly findings: readonly Finding[];
 }
@@ -859,14 +870,14 @@ export function analyzeRoute(
 		else css += g;
 	}
 	const lazyData = { raw: 0, gz: 0 };
-	const seenJson = new Set<string>();
-	for (const c of [...buckets.first, ...buckets.lazy])
-		for (const j of graph.json.get(c) ?? []) {
-			if (seenJson.has(j)) continue;
-			seenJson.add(j);
-			lazyData.raw += assets.raw(j) ?? 0;
-			lazyData.gz += assets.gzip(j) ?? 0;
-		}
+	const seenJson = new Set<string>([
+		...doc.dataRefs,
+		...[...buckets.first, ...buckets.lazy].flatMap((c) => graph.json.get(c) ?? []),
+	]);
+	for (const j of seenJson) {
+		lazyData.raw += assets.raw(j) ?? 0;
+		lazyData.gz += assets.gzip(j) ?? 0;
+	}
 	const base: Omit<RouteReport, "findings"> = {
 		route: input.route,
 		className: className ?? "(unclassified)",

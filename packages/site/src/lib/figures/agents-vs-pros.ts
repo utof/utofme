@@ -177,9 +177,9 @@ export function intervalText(row: AvpRow, side: "agent" | "pro"): string {
 		: formatInterval(s[1], s[2], digits + (digits < 3 ? 1 : 0));
 }
 
-/** Track width in viewBox units.
+/** Track size in viewBox units (drawn at 1:1 on a phone; 32 px tall so marks and bars read).
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-8 */
-export const TRACK = { w: 320, h: 24, pad: 6 } as const;
+export const TRACK = { w: 320, h: 32, pad: 8 } as const;
 
 /** x position of a value on a row's track.
  * @see packages/specs/specs/10-tactical-arena-article.md § P10-8 */

@@ -64,10 +64,11 @@ function quads(text: string): number[][] {
 const isCgnat = (o: number[]): boolean => o[0] === 100 && (o[1] ?? 0) >= 64 && (o[1] ?? 0) <= 127;
 
 // Why: the internal-path list mirrors the notes repo's privacy checklist (snapshot, session,
-// local-only, run and job folders, the journal file, checkpoint files). Reconcile with
-// $UTOFME_NOTES/article/PRIVACY.md § 1 when that checkout is available (see lane report).
+// local-only, run and job folders, the journal file, checkpoint files, the snapshot folder,
+// the to-try list and the compute and worker docs), reconciled with PRIVACY.md § 1 in
+// integration.
 const INTERNAL_PATH =
-	/(^|[\s"'`(/\\])(snapshots?|sessions?|runs?|jobs?)\/|local-only|\bjournal\.(md|jsonl?)\b|\bcheckpoints?[\w.-]*\.(pt|pth|ckpt|safetensors|bin)\b/i;
+	/(^|[\s"'`(/\\])(snapshots?|sessions?|runs?|jobs?)\/|local-only|\bjournal\.(md|jsonl?)\b|\bcheckpoints?[\w.-]*\.(pt|pth|ckpt|safetensors|bin)\b|\brepo-snapshot\b|\bto_try\.md\b|\bdocs\/(workers|compute)\.md\b/i;
 
 const RULES: readonly Rule[] = [
 	{ id: "ipv4", set: "core", jsonOnly: false, test: (t) => quads(t).some((o) => !isCgnat(o)) },
@@ -199,8 +200,16 @@ export function scanJson(value: unknown, set: RuleSet, denylist: readonly string
 			for (const [i, x] of (v as unknown[]).entries()) walk(x, `${path}[${i}]`);
 		} else if (v !== null && typeof v === "object") {
 			for (const [k, x] of Object.entries(Object(v) as Record<string, unknown>)) {
-				const kp = /^[A-Za-z_]\w*$/.test(k) ? `${path}.${k}` : `${path}[${JSON.stringify(k)}]`;
-				out.push(...scanString(k, set, denylist, false, kp));
+				// Why: a key that hits a rule is matched text; it never appears in a path, its own or
+				// any path below it, so a log line cannot reproduce it.
+				const hits = scanString(k, set, denylist, false, undefined);
+				const kp =
+					hits.length > 0
+						? `${path}.<redacted>`
+						: /^[A-Za-z_]\w*$/.test(k)
+							? `${path}.${k}`
+							: `${path}[${JSON.stringify(k)}]`;
+				out.push(...hits.map((f) => ({ ...f, where: kp })));
 				walk(x, kp);
 			}
 		}

@@ -14,7 +14,6 @@ import "./MapStages.css";
 import type { MapStagesData } from "../../lib/article-data/map_stages";
 import { formatNumber } from "../../lib/figure-scale";
 import {
-	centroid,
 	closedTiles,
 	DEFAULT_MAP,
 	mapTitle,
@@ -24,6 +23,7 @@ import {
 	stageLayers,
 	stageSummary,
 } from "../../lib/figures/map-stages";
+import { centroid } from "../../lib/figures/square-paths";
 import { parseRows, siteRects, spawnTiles } from "../../lib/grid";
 
 /** Props for MapStagesKeyframe. */
