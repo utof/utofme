@@ -1,0 +1,30 @@
+{
+	"schema": "facts/1",
+	"facts": {
+		"tempo.pros.contact.median": {
+			"v": 22.8,
+			"digits": 1,
+			"unit": "s",
+			"alt": "about 23 s",
+			"lo": 22.14,
+			"hi": 23.63,
+			"src": "tempo.json:EXAMPLE"
+		},
+		"elo.head.block2": {
+			"v": 96,
+			"digits": 0,
+			"sign": true,
+			"lo": 94,
+			"hi": 98,
+			"src": "FACTS.md:1"
+		},
+		"agents.b28.holder": {
+			"v": 58.2,
+			"digits": 0,
+			"unit": "%",
+			"measuredOn": { "line": "5v5", "block": 28, "date": "2026-11-02" },
+			"src": "FACTS.md:2",
+			"extra": "unknown fields are dropped"
+		}
+	}
+}

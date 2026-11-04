@@ -16,6 +16,7 @@ import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { z } from "astro/zod";
 import type { Dataset } from "../../src/lib/article-data/types";
+import { factsSchema, factsSourceSchema } from "../../src/lib/facts";
 import { type Finding, scanJson, scanText } from "./privacy-scan-core";
 
 /**
@@ -379,5 +380,64 @@ export function checkDataset(ds: Dataset<{ schema: string }>, input: CheckInput)
 	problems.push(
 		...privacyProblems(file, scanJson(value, "shipped", input.denylist), input.denylist),
 	);
+	return problems;
+}
+
+/** A successful facts build: the file text (no sidecar). */
+export interface FactsOk {
+	readonly ok: true;
+	readonly output: string;
+}
+
+/**
+ * Builds `src/data/article-meta/facts.json` from the notes repo's `facts.json`: parse (every entry
+ * needs `src`), whitelist by dropping `src` and unknown fields, parse the strict shipped schema,
+ * serialise, privacy-scan (shipped set: facts are printed on the page).
+ *
+ * Why: the `src` citations point into the private notes and must never ship (P10-3); prose and
+ * figures read one keyed value, so the file is canonical and reproducible.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-3 (facts)
+ */
+export function buildFacts(source: unknown, denylist: readonly string[]): FactsOk | BuildFail {
+	const file = "facts.json";
+	const parsed = factsSourceSchema.safeParse(source);
+	if (!parsed.success) return { ok: false, problems: schemaProblems(file, parsed.error.issues) };
+	const facts: Record<string, unknown> = {};
+	for (const [key, entry] of Object.entries(parsed.data.facts)) {
+		const { src: _src, ...kept } = entry;
+		facts[key] = kept;
+	}
+	const projected = { schema: parsed.data.schema, facts };
+	const check = factsSchema.safeParse(projected);
+	if (!check.success) return { ok: false, problems: schemaProblems(file, check.error.issues) };
+	const hits = privacyProblems(file, scanJson(projected, "shipped", denylist), denylist);
+	if (hits.length > 0) return { ok: false, problems: hits };
+	return { ok: true, output: serialise(projected) };
+}
+
+/**
+ * `--check` for the committed `facts.json`: present (3), valid JSON and `facts/1` with no `src`
+ * (1), canonical (3), privacy-clean (2).
+ *
+ * Why: CI proves the committed file is what a sync would write, without the notes repo.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-3 (`--check`)
+ */
+export function checkFacts(text: string | undefined, denylist: readonly string[]): Problem[] {
+	const file = "facts.json";
+	if (text === undefined) return [{ code: 3, file, message: "committed facts are missing" }];
+	let value: unknown;
+	try {
+		value = JSON.parse(text);
+	} catch {
+		return [{ code: 1, file, message: "facts are not valid JSON" }];
+	}
+	const r = factsSchema.safeParse(value);
+	const problems: Problem[] = r.success ? [] : schemaProblems(file, r.error.issues);
+	if (r.success && serialise(value) !== text) {
+		problems.push({ code: 3, file, message: "facts are not in canonical (sorted, compact) form" });
+	}
+	problems.push(...privacyProblems(file, scanJson(value, "shipped", denylist), denylist));
 	return problems;
 }

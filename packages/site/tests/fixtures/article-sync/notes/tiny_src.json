@@ -1,0 +1,7 @@
+{
+	"note": "dropped by the projection",
+	"items": [
+		{ "id": "b", "v": 2, "src": "notes/EXAMPLE.md:2" },
+		{ "id": "a", "v": 1.5, "src": "notes/EXAMPLE.md:1" }
+	]
+}
