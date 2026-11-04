@@ -55,3 +55,24 @@ test("palette: typing a project name and Enter opens it", async ({ page }) => {
 	await page.keyboard.press("Enter");
 	await expect(page).toHaveURL(/\/works\/linsae\/$/);
 });
+
+test("palette Enter after a card visit and Back raises no page error (state_unsafe_mutation)", async ({
+	page,
+}) => {
+	// Why: LinkPreview's focusout handler wrote $state while Svelte removed the palette input.
+	const errors: string[] = [];
+	page.on("pageerror", (e) => errors.push(e.message));
+	await page.setViewportSize({ width: 1280, height: 800 });
+	await page.goto("/");
+	await expect(page.locator("html[data-palette-ready='true']")).toBeAttached();
+	await page.locator("a[href^='/works/']").first().click();
+	await expect(page).toHaveURL(/\/works\//);
+	await page.goBack();
+	await page.locator("[data-motion-toggle]").first().click();
+	await page.keyboard.press("Control+k");
+	await page.locator("[data-palette-input]").fill("search");
+	await page.keyboard.press("Enter");
+	await expect(page).toHaveURL(/\/search\/$/);
+	await page.waitForTimeout(300);
+	expect(errors).toEqual([]);
+});
