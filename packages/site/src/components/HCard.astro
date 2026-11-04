@@ -64,9 +64,24 @@ import { profiles } from "../lib/profiles.ts";
 	/* Link list joins the same line after a middle dot. */
 	.h-card ul::before {
 		content: "·";
-		margin-inline-end: var(--space-3);
+		margin-inline-end: var(--space-2);
 	}
-	.h-card .sep {
-		margin-inline-end: 0;
+	/* Phone: "utof.me · GitHub @utof" fits one row; the tagline stays in the DOM (mf2 p-note)
+	 * and for assistive tech, but is not drawn. */
+	@media (max-width: 480px) {
+		.h-card .sep {
+			display: none;
+		}
+		.h-card .p-note {
+			position: absolute;
+			inline-size: 1px;
+			block-size: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+		.h-card {
+			position: relative;
+		}
 	}
 </style>

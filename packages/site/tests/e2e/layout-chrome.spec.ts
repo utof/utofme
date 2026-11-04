@@ -57,7 +57,7 @@ test("favicon files exist and are linked", async ({ page, request }) => {
 
 test("search has a header with a home link", async ({ page }) => {
 	await page.goto("/search/");
-	await expect(page.locator('main a[href="/"]').first()).toBeVisible();
+	await expect(page.locator('[data-test="site-header"] a[href="/"]')).toBeVisible();
 });
 
 test("garden pages have a side gutter", async ({ page }) => {
