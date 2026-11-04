@@ -1,0 +1,102 @@
+---
+/**
+ * Figure.astro — the shared frame of every article figure.
+ *
+ * `<figure id data-figure aria-labelledby>` holding a reserved box (no layout
+ * shift when the island hydrates), then a `<figcaption>`: "Figure N." + the
+ * `caption` slot + an optional {@link Stamp} + the `try` slot as one italic line,
+ * and an optional `<details>` (only when the `details` slot is given). No JS.
+ *
+ * Why: one frame keeps numbering, reserved size, widths and the no-JS fallback
+ * identical across the eleven figures; the width classes (`fig--text|wide|full`)
+ * are laid out by `_ArticleLayout`'s grid.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § Figures: common contract
+ */
+import Stamp from "./Stamp.astro";
+
+/** Props for Figure. */
+export interface Props {
+	/** Element id and fragment target, e.g. `f2`. */
+	id: string;
+	/** Reading-order figure number, set in the MDX. */
+	number: number;
+	/** Column span in the article grid. */
+	width?: "text" | "wide" | "full";
+	/** CSS `aspect-ratio` of the reserved box, e.g. `1 / 1`. */
+	aspect?: string | undefined;
+	/** CSS `min-block-size` of the reserved box, e.g. `24rem`. */
+	minBlock?: string | undefined;
+	/** Block number or text for the "as measured on" stamp. */
+	measuredOn?: number | string | undefined;
+}
+
+const { id, number, width = "text", aspect, minBlock, measuredOn } = Astro.props;
+const capId = `${id}-cap`;
+const reserve = [aspect && `aspect-ratio:${aspect}`, minBlock && `min-block-size:${minBlock}`]
+	.filter(Boolean)
+	.join(";");
+const hasTry = Astro.slots.has("try");
+const hasDetails = Astro.slots.has("details");
+---
+
+<figure id={id} class={`fig fig--${width}`} data-figure aria-labelledby={capId}>
+	<div class="fig-reserve" style={reserve || undefined}>
+		<slot />
+	</div>
+	<figcaption id={capId}>
+		<span class="fig-num">Figure {number}.</span>
+		<slot name="caption" />
+		{measuredOn !== undefined && <Stamp measuredOn={measuredOn} />}
+		{hasTry && (
+			<p class="fig-try">
+				<em>
+					Try: <slot name="try" />
+				</em>
+			</p>
+		)}
+	</figcaption>
+	{hasDetails && (
+		<details class="fig-details">
+			<summary>Data and description</summary>
+			<slot name="details" />
+		</details>
+	)}
+</figure>
+
+<style>
+	.fig {
+		margin-block: var(--space-6);
+		margin-inline: 0;
+	}
+	.fig-reserve {
+		inline-size: 100%;
+		overflow: hidden;
+		background: var(--color-surface);
+	}
+	figcaption {
+		margin-block-start: var(--space-3);
+		font-size: var(--font-size-2);
+		line-height: var(--leading-snug);
+		color: var(--color-text-body);
+		max-width: 65ch;
+	}
+	.fig-num {
+		font-weight: 600;
+		color: var(--color-text);
+		margin-inline-end: var(--space-1);
+	}
+	.fig-try {
+		margin: var(--space-2) 0 0;
+	}
+	.fig-details {
+		margin-block-start: var(--space-3);
+		font-size: var(--font-size-2);
+	}
+	.fig-details summary {
+		cursor: pointer;
+		min-block-size: 44px;
+		display: flex;
+		align-items: center;
+	}
+</style>
