@@ -111,6 +111,22 @@ describe("gzip measurement", () => {
 		expect(gzip9(s)).toBe(gzipSync(s, { level: 9 }).length);
 		expect(gzip9(s)).toBeLessThan(s.length / 10);
 	});
+	it("measureDist gzips the JSON data files a route names", () => {
+		const dist = mkdtempSync(join(tmpdir(), "budgets-json-"));
+		mkdirSync(join(dist, "_astro"));
+		const data = JSON.stringify({ rows: "#.".repeat(400) });
+		writeFileSync(join(dist, "_astro/data.abc.json"), data);
+		writeFileSync(join(dist, "_astro/alpha.js"), "export{}");
+		writeFileSync(join(dist, "_astro/beta.js"), "export{}");
+		writeFileSync(join(dist, "_astro/client.svelte.js"), "export{}");
+		writeFileSync(join(dist, "index.html"), read("rules/island-props-data.html"));
+		const r = measureDist(dist, {
+			...budgets,
+			excluded: [],
+			unreferencedChunks: [{ pattern: /./, reason: "fixture" }],
+		}).reports[0];
+		expect(r?.lazyData).toEqual({ raw: data.length, gz: gzip9(data) });
+	});
 });
 
 describe("buckets, closure de-duplication and self-check (Rollup fixture)", () => {
