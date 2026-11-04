@@ -1,0 +1,77 @@
+---
+/**
+ * SiteHeader.astro — the one header every page shares.
+ *
+ * Wordmark link home on the left, a default slot for page controls (Pause motion,
+ * Sound) on the right. Mounted once by `_BaseLayout`, so the wordmark, its height
+ * and its offset are identical on every route.
+ *
+ * Why: slash pages started at the h1, project pages at the banner and only home /
+ * search / 404 had a wordmark, at three different tops (P-05/P-06). A fixed
+ * 44 px row keeps the wordmark link and the controls full-size tap targets.
+ *
+ * @see packages/specs/reviews/ui/polish.md (P-05, P-06)
+ */
+interface Props {
+	/** Wrap the wordmark in an `<h1>` (home has no other title). */
+	heading?: boolean | undefined;
+}
+const { heading = false } = Astro.props;
+const Mark = heading ? "h1" : "p";
+---
+
+<header class="site-header" data-test="site-header">
+	<Mark class="mark">
+		<a class="wordmark" href="/" data-test="wordmark">
+			utofme
+		</a>
+	</Mark>
+	<div class="controls" data-test="site-controls">
+		<slot />
+	</div>
+</header>
+
+<style>
+	.site-header {
+		box-sizing: border-box;
+		width: var(--page-width);
+		margin-inline: auto;
+		padding-block-start: var(--space-6);
+		margin-block-end: var(--space-5);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-4);
+		/* Fixed row so the offset below is identical on every page. */
+		block-size: calc(var(--space-6) + 44px);
+	}
+	.mark {
+		margin: 0;
+		font-size: var(--font-size-5);
+		line-height: 1;
+	}
+	.wordmark {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 44px;
+		font-family: var(--font-sans);
+		font-size: var(--font-size-5);
+		font-weight: 600;
+		letter-spacing: var(--tracking-tight);
+		color: var(--color-text);
+		text-decoration: none;
+	}
+	.wordmark:hover {
+		color: var(--color-text);
+		text-decoration: underline;
+		text-decoration-color: var(--color-focus);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 0.25em;
+	}
+	.controls {
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: center;
+		gap: var(--space-2);
+	}
+</style>

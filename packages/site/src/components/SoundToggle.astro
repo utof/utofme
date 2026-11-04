@@ -19,7 +19,7 @@
  */
 ---
 
-<button data-sound-toggle aria-pressed="false" aria-label="Toggle UI sounds">
+<button type="button" class="site-ctl" data-sound-toggle aria-pressed="false">
 	<svg
 		aria-hidden="true"
 		viewBox="0 0 16 16"
@@ -39,6 +39,10 @@
 		<!-- Muted cross (hidden via CSS when aria-pressed="true") -->
 		<path class="sound-off" d="M10.5 6l4 4M14.5 6l-4 4"></path>
 	</svg>
+	<!-- Why: a visible text label (no aria-label) so the accessible name matches what is shown;
+	     CSS swaps the two spans on aria-pressed. -->
+	<span class="lbl lbl-on">Sound on</span>
+	<span class="lbl lbl-off">Sound off</span>
 </button>
 
 <script is:inline data-astro-rerun>
@@ -114,38 +118,18 @@
 </script>
 
 <style>
-	[data-sound-toggle] {
-		background: transparent;
-		border: 1px solid var(--border, currentColor);
-		border-radius: 999px;
-		padding: 6px;
-		width: 32px;
-		height: 32px;
-		cursor: pointer;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		position: relative;
-	}
-
-	/* 44x44 hit zone around the 32 px visual circle (WCAG 2.5.8). */
-	[data-sound-toggle]::before {
-		content: "";
-		position: absolute;
-		inset: -7px; /* 1 px border: 30 + 14 = 44 */
-	}
-
+	/* Look, size and hit zone: shared `.site-ctl` rule in _BaseLayout. */
 	[data-sound-toggle][aria-pressed="true"] svg {
 		opacity: 1;
 	}
-
 	[data-sound-toggle][aria-pressed="false"] svg {
 		opacity: 0.6;
 	}
-
 	/* Waves show when sound is on, the cross when it is off */
 	[data-sound-toggle][aria-pressed="true"] .sound-off,
-	[data-sound-toggle][aria-pressed="false"] .sound-on {
+	[data-sound-toggle][aria-pressed="false"] .sound-on,
+	[data-sound-toggle][aria-pressed="true"] .lbl-off,
+	[data-sound-toggle][aria-pressed="false"] .lbl-on {
 		display: none;
 	}
 </style>
