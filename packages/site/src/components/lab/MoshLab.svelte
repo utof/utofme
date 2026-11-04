@@ -371,18 +371,6 @@
 		}
 	}
 
-	/* Coarse pointers: 16 px controls (iOS zooms the page on focus below that) and roomy slider hit areas. */
-	@media (pointer: coarse) {
-		button,
-		select,
-		input {
-			font-size: 16px;
-		}
-		input[type="range"] {
-			min-height: 32px;
-		}
-	}
-
 	fieldset {
 		margin: 0;
 		padding: var(--space-3);
@@ -486,5 +474,17 @@
 
 	.dim {
 		color: var(--color-text-muted);
+	}
+
+	/* Coarse pointers: 16 px controls (iOS zooms the page on focus below that) and roomy slider hit areas. */
+	@media (pointer: coarse) {
+		button,
+		select,
+		input {
+			font-size: 16px;
+		}
+		input[type="range"] {
+			min-height: 32px;
+		}
 	}
 </style>
