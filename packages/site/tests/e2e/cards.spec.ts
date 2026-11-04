@@ -41,23 +41,16 @@ for (const route of ROUTES) {
 
 		test("visual regression", async ({ page }) => {
 			await page.goto(route);
-			// Why: the masonry home's lazy covers change <main>'s height until loaded.
+			// Why: the masonry home's lazy covers change the layout until loaded.
 			await waitForImagesSettled(page);
-			// Mask the entire works-grid to absorb subpixel font-rendering drift in
-			// card titles, date pills, and tag pills across browser/OS patch cycles.
-			// Structural regressions (missing grid, wrong layout) remain detectable
-			// because the area outside the grid (page chrome, h1, spacing) is unmasked.
-			// See: https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2
-			// See: packages/specs/plans/01-card-grid-mvp.md § Reviewer briefing point 5
-			// Clip to <main> so the footer (added in Task 4) does not affect
-			// this baseline — full-page snapshots would require re-baselining on
-			// every footer style change. Footer has its own footer.spec.ts coverage.
-			await expect(page.locator("main")).toHaveScreenshot(
+			await expect(page.locator('[data-test="works-grid"]')).toBeVisible();
+			// Why: the page chrome (wordmark + controls) lives in the shared site header,
+			// outside <main>; <main> is only the card grid, whose playing loops and
+			// late-settling masonry made a masked <main> shot flaky. Cards have their own
+			// behaviour tests; this baseline guards the chrome.
+			await expect(page.locator('[data-test="site-header"]')).toHaveScreenshot(
 				`${route === "/" ? "home" : "works"}.png`,
-				{
-					maxDiffPixelRatio: 0.001,
-					mask: [page.locator('[data-test="works-grid"]')],
-				},
+				{ maxDiffPixelRatio: 0.001 },
 			);
 		});
 

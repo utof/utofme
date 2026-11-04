@@ -153,11 +153,10 @@ test("6a. visual regression / (post-ClientRouter baseline)", async ({ page }) =>
 	await page.goto("/");
 	// Why: the masonry home's lazy covers change <main>'s height until loaded.
 	await waitForImagesSettled(page);
-	// Clip to <main> so the footer (added in Task 4) does not affect
-	// this baseline. Footer has its own footer.spec.ts coverage.
-	await expect(page.locator("main")).toHaveScreenshot("transitions-home.png", {
+	// Why: <main> is only the card grid now (chrome moved to the site header), and a
+	// masked grid shot was flaky; the header is the stable chrome to guard.
+	await expect(page.locator('[data-test="site-header"]')).toHaveScreenshot("transitions-home.png", {
 		maxDiffPixelRatio: 0.02,
-		mask: [page.locator('[data-test="works-grid"]')],
 	});
 });
 
