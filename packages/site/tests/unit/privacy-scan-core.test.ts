@@ -101,6 +101,20 @@ describe("denylist", () => {
 	});
 });
 
+describe("internal-path covers the notes repo's privacy checklist (PRIVACY.md § 1)", () => {
+	it.each([
+		"see repo-snapshot/scripts/run.sh",
+		"from to_try.md",
+		"docs/workers.md",
+		"docs/compute.md:12",
+	])("%s", (text) => {
+		expect(ids(scanText(text, "shipped", []))).toContain("internal-path");
+	});
+	it("leaves ordinary words alone", () => {
+		expect(scanText("a snapshot of the board; things to try", "shipped", [])).toEqual([]);
+	});
+});
+
 describe("raw-like records", () => {
 	const rec = JSON.parse(fx("raw-records.json")) as { raw: unknown; projection: unknown };
 	it("raw hits and the projection is clean", () => {
