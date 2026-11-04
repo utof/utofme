@@ -95,6 +95,11 @@ jobs:
       - name: check:privacy
         run: bun run --cwd packages/site check:privacy
 
+      # ── Article data (P10-3): committed projections, sidecars and facts re-verified
+      #    without the notes repo (schema, canonical form, sha256, size caps, privacy). ──
+      - name: sync:article-data --check
+        run: bun run --cwd packages/site sync:article-data --check
+
       # ── Loop media consistency (committed outputs ↔ src/data/loops.json; needs no ffmpeg) ──
       - name: check:media
         run: bun run --cwd packages/site check:media
