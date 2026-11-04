@@ -1,0 +1,31 @@
+---
+/**
+ * AgentsVsProsKeyframe.astro — SSR fallback of figure F11: the eleven dumbbell rows sorted by
+ * relative gap, each with its stamp. Complete without JS (the table is in the Block's details).
+ *
+ * Why: the no-JS reader gets the same picture the island opens with; both share `AvpChart` and
+ * the controls bar height, so hydration moves nothing.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-15
+ */
+import type { AgentsVsProsData } from "../../lib/article-data/agents_vs_pros";
+import { orderRows } from "../../lib/figures/agents-vs-pros";
+import AvpChart from "./AvpChart.svelte";
+
+/** Props for AgentsVsProsKeyframe. */
+export interface Props {
+	data: AgentsVsProsData;
+	prosMaps: string;
+}
+
+const { data, prosMaps } = Astro.props;
+const rows = orderRows(data.rows, "gap");
+---
+
+<div
+	class="av-ssr"
+	role="img"
+	aria-label="Eleven behaviours, agent and pros side by side, sorted by relative gap. The table below lists every value."
+>
+	<AvpChart rows={rows} interactive={false} prosMaps={prosMaps} />
+</div>
