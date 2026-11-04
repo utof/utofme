@@ -77,6 +77,27 @@ test("exactly one element has fetchpriority=high; first cards are not lazy", asy
 	await expect(first).not.toHaveAttribute("loading", "lazy");
 });
 
+test("loop cards keep their rendition's aspect and the masonry packs without holes", async ({
+	page,
+}) => {
+	await page.goto("/");
+	const cards = await page.locator('[data-test="works-grid"] .loop-frame').evaluateAll((els) =>
+		els.map((el) => {
+			const v = el.querySelector("video");
+			const r = el.getBoundingClientRect();
+			return {
+				ratio: r.width / r.height,
+				video: Number(v?.getAttribute("width")) / Number(v?.getAttribute("height")),
+				x: Math.round(r.x),
+			};
+		}),
+	);
+	expect(cards.length).toBeGreaterThan(0);
+	for (const c of cards) expect(Math.abs(c.ratio / c.video - 1)).toBeLessThan(0.01);
+	// Desktop Chrome is 1280 wide (three columns): the loop cards must not all stack in one column.
+	expect(new Set(cards.map((c) => c.x)).size).toBeGreaterThanOrEqual(2);
+});
+
 test("home has no Axe violations with the caption bar", async ({ page }) => {
 	await page.goto("/");
 	await page.waitForLoadState("load");

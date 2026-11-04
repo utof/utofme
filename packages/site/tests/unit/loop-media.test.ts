@@ -85,6 +85,28 @@ describe("LoopMedia.astro markup contract", () => {
 		expect(html).toMatch(/<video\b[^>]*data-astro-transition-persist="loop-demo"/);
 	});
 
+	it("a card framed differently from the banner does not persist its video through the morph", async () => {
+		const bannerSize = { ...entry.card, width: 1920, height: 1080 };
+		const own = {
+			...entry,
+			banner: bannerSize,
+			cardPosterPath: "src/assets/loops/demo/card-poster.png",
+		};
+		const card = await render({ persistId: "loop-demo", entry: own });
+		expect(card).not.toContain("data-astro-transition-persist");
+		const banner = await render({ size: "banner", persistId: "loop-demo", entry: own });
+		expect(banner).not.toContain("data-astro-transition-persist");
+		expect(banner).not.toContain("data-banner-sources");
+		// Same framing (no card poster): unchanged, the card node persists and publishes the banner sources.
+		const same = { ...entry, banner: bannerSize };
+		expect(await render({ persistId: "loop-demo", entry: same })).toContain(
+			'data-astro-transition-persist="loop-demo"',
+		);
+		expect(await render({ size: "banner", persistId: "loop-demo", entry: same })).toContain(
+			"data-banner-sources",
+		);
+	});
+
 	it("banner poster offers srcset widths up to the 1920 px source, never above it", async () => {
 		const bannerEntry = { ...entry, banner: { ...entry.card, width: 1920, height: 1080 } };
 		const big = { src: "/poster.png", width: 1920, height: 1080, format: "png" } as const;
@@ -104,6 +126,36 @@ describe("LoopMedia.astro markup contract", () => {
 		const widths = [...html.matchAll(/\s(\d+)w[",]/g)].map((m) => Number(m[1]));
 		expect(Math.max(...widths)).toBe(768);
 		expect(widths).toContain(640);
+	});
+
+	it("the frame takes its aspect from the rendition, not a fixed 16:9", async () => {
+		const html = await render({});
+		expect(html).toMatch(/class="[^"]*loop-frame[^"]*"[^>]*style="--loop-ar:768 \/ 432"/);
+		const square = { ...entry, card: { ...entry.card, width: 576, height: 576 } };
+		const sq = await render({ entry: square });
+		expect(sq).toContain("--loop-ar:576 / 576");
+		expect(sq).toContain('width="576"');
+		expect(sq).toContain('height="576"');
+		const tall = { ...entry, card: { ...entry.card, width: 512, height: 640 } };
+		expect(await render({ entry: tall })).toContain("--loop-ar:512 / 640");
+		const bannerEntry = { ...entry, banner: { ...entry.card, width: 1920, height: 1080 } };
+		expect(await render({ size: "banner", entry: bannerEntry })).toContain("--loop-ar:1920 / 1080");
+	});
+
+	it("a narrower card poster offers [384, its own width], never a step above it", async () => {
+		const narrow = { src: "/poster.png", width: 576, height: 576, format: "png" } as const;
+		const html = await render({ poster: narrow });
+		const widths = [...html.matchAll(/\s(\d+)w[",]/g)].map((m) => Number(m[1]));
+		expect(Math.max(...widths)).toBe(576);
+		expect(widths).toContain(384);
+		expect(widths).not.toContain(768);
+	});
+
+	it("the card sizes hint is the masonry column, the banner's is its own", async () => {
+		const html = await render({});
+		expect(html).toContain(
+			'sizes="(min-width: 1635px) 439px, (min-width: 1100px) calc(26.7vw + 3px), (min-width: 560px) 50vw, 100vw"',
+		);
 	});
 
 	it("alt text lands on the poster image", async () => {
