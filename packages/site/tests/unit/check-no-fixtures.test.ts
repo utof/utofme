@@ -58,3 +58,29 @@ describe("run", () => {
 		vi.restoreAllMocks();
 	});
 });
+
+describe("run: article lab pages", () => {
+	const leakAt = (rel: string) => {
+		const root = mkdtempSync(join(tmpdir(), "nofix-lab-"));
+		const content = join(root, "content");
+		const dist = join(root, "dist");
+		mkdirSync(content);
+		mkdirSync(join(dist, rel), { recursive: true });
+		writeFileSync(join(dist, rel, "index.html"), "<p>lab</p>");
+		return { dist, content };
+	};
+	it.each(["lab/figures/x", "lab/article-layout"])("fails when dist/%s exists", (rel) => {
+		vi.spyOn(console, "log").mockImplementation(() => {});
+		const err = vi.spyOn(console, "error").mockImplementation(() => {});
+		const t = leakAt(rel);
+		expect(run(t.dist, t.content)).toBe(1);
+		expect(err).toHaveBeenCalled();
+		vi.restoreAllMocks();
+	});
+	it("passes without them", () => {
+		vi.spyOn(console, "log").mockImplementation(() => {});
+		const t = leakAt("works/real");
+		expect(run(t.dist, t.content)).toBe(0);
+		vi.restoreAllMocks();
+	});
+});
