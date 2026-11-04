@@ -12,7 +12,7 @@
  * Why: names are applied as attributes by src/lib/vt/hero-morph.ts at navigation
  * time so only the clicked card's clipping frame is ever named `hero` (a duplicate
  * name aborts the whole transition). `hero` sits on [data-vt-frame], never on the
- * scaled <video>/<img>, so the snapshot carries clip + hover zoom as seen.
+ * <video>/<img>, so the snapshot carries the clip (and any transform) as seen.
  * Astro's own reduced-motion kill switch (animation: none !important on every
  * ::view-transition-*) still applies; nothing here re-enables motion.
  * @see packages/specs/specs/09-project-view.md § P9-9 */

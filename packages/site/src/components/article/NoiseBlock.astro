@@ -1,0 +1,26 @@
+---
+/**
+ * NoiseBlock.astro — MDX-facing block for figure F9 (Same experiment, twice).
+ *
+ * Why: stub from the layout lane so every later lane has a lab page and an MDX
+ * entry point; the owning figure lane replaces the placeholder with the keyframe
+ * and the `client:visible` island.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § Figures: common contract
+ */
+import Figure from "./Figure.astro";
+
+/** Props for NoiseBlock. */
+export interface Props {
+	/** Reading-order figure number, set in the MDX. */
+	number: number;
+}
+
+const { number } = Astro.props;
+---
+
+<Figure id="f9" number={number} width="wide" aspect="16 / 9" minBlock="18rem">
+	<p data-stub>Same experiment, twice (placeholder)</p>
+	<slot name="caption" slot="caption" />
+	<slot name="try" slot="try" />
+</Figure>

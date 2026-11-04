@@ -16,7 +16,7 @@ The clips contain explosions, muzzle flashes and hard cuts, so photosensitivity 
    *(Banner values superseded by the Addendum below.)*
    Both `-an -pix_fmt yuv420p -movflags +faststart`, BT.709 tagged. **No GIF** (10–50× larger, 256 colours, no seek control).
 2. **Frames: 768×432 card/gallery, 1280×720 banner.** The spec's 720×405 has an odd height that neither encoder accepts.
-   *(Banner is now 1920×1080; see the Addendum.)*
+   *(Banner is now 1920×1080; see the Addendum. The card frame is per work since Addendum 2: 768×432 is only the 16:9 default.)*
 3. **Offline encode, committed outputs.** `bun run media:encode` (needs ffmpeg + media root) writes
    `public/loops/<slug>/<size>.<sha256-8>.<av1|h264>.mp4`, a poster PNG, gallery stills and `src/data/loops.json`.
    `bun run check:media` needs neither and verifies manifest ↔ files (missing, byte or hash mismatch, orphans); CI runs it before `build`.
@@ -111,6 +111,94 @@ so it covers up to 2560 device px, but two assets were far smaller than that:
 - The remaining softness is in the sources: the slideshow screenshots are 1200–1500 px wide and the tactical-arena crops are 560–764 px wide,
   so on a DPR-2 screen they are still magnified 1.7–3.3×. Anything sharper needs re-captured sources at 2× (≥ 2560 px wide).
 - Re-running `bun run media:encode --all --force` re-encodes the card-only loops too; their bytes are expected to be identical.
+
+## Addendum 2 2026-11-04 — card aspect is per work (owner: "where the gifs/videos are square, the card is square")
+
+**Status:** accepted. Amends decision 2 (card frame), the manifest `aspect` field, the poster rule of Addendum 1 (6) and the flash lint's card
+render width. The banner (1920×1080, shown 3:1 / 16:9), its crops, CRFs, budgets and codecs strings are unchanged. Numbering: new ADR numbers 0050 and 0051 are
+reserved by the phase 09 close report, so this is an addendum rather than a new number.
+
+**Diagnosis.** Every card was a 16:9 crop (`aspect: z.literal("16:9")`, 768×432, `.loop-frame { aspect-ratio: 16 / 9 }`), so the home
+masonry (CSS multi-column, ADR 0040; briefly three columns, two columns again since the same day) stacked equal-height tiles (3/3/1 at three columns);
+a square simulation was letterboxed and a phone-style UI cut to a band.
+
+**Decision.**
+
+1. **Recipe.** `cardAspect` (optional, default `16:9`), one of `1:1 · 4:5 · 3:4 · 4:3 · 3:2 · 16:10 · 16:9`; per shot / per slide an optional `cardCrop`
+   (source px), which **replaces** `crop` on the card master only. `aspect` stays the master (banner) aspect, `16:9`.
+2. **Frames** (`CARD_FRAMES`, `scripts/lib/loops-core.ts`): about the old pixel area (331,776 px, all within ±5 %), even sides, multiples of the 4 px flash-lint cell so
+   the lint grid stays whole: `1:1 576×576 · 4:5 512×640 · 3:4 504×672 · 4:3 672×504 · 3:2 696×464 · 16:10 736×460 · 16:9 768×432`. Every card encode probes to the
+   same codecs strings as before (`avc1.64001E`, `av01.0.04M.08`; H.264 level 3.0 holds: at most 40,320 macroblocks/s against the 40,500 limit at 30 fps).
+3. **Manifest.** `cardAspect` is required; the card rendition's width/height must match it (±1 %); `cardPosterPath` (`card-poster.png`, next to `posterPath`) is required for a
+   non-16:9 card that has a banner and forbidden for a card-only loop. The encoder also writes it for a 16:9 card with a `cardCrop`.
+   `posterPath` stays cut from the banner master; the card poster is cut from the card master at `poster.at`.
+4. **`LoopMedia`.** The frame's `aspect-ratio` is the rendition's own `width / height` (`--loop-ar`), cards and gallery use the card poster when there is one, the card
+   poster `srcset` is `[384, min(768, poster width)]`, and the card `sizes` hint is one masonry column (`MASONRY_COLUMN_SIZES` = `(min-width: 560px) 50vw, 100vw`: two columns from 560 px, a column is at most 50vw;
+   it over-states the 664 px column of a 1340 px page by up to 45 %, never under-states it). The gallery keeps its own looser hint.
+5. **No persisted card video for a differently framed card.** `transition:persist` hands the CARD video to the banner, which then cross-fades to the banner video.
+   With separate framings that is a visible jump (an up to 2.7× upscaled tight crop, then a different crop), so a card with a `cardPosterPath` does not persist; the banner mounts its own video
+   over its own poster. Cards framed like the banner (`eeg-ads1299-lab`, the gallery loops) are unchanged.
+6. **Flash lint render width.** `renderWidthCss` for a card is `frame width × 1200 / 768` (`renderWidthCssFor`), i.e. the lint keeps the 16:9 card's worst-case
+   magnification of 1.5625 CSS px per video px for every aspect (16:9 stays 1200; a 576 px square is assumed at 900, a 504 px portrait at 788). The 1200 was a magnification
+   cap, not a layout width, and it guarded the cases where a card is shown far wider than its column (the persisted card video in a 1340 px banner, the gallery). A card with its own
+   framing no longer persists (decision 5) and is not used in galleries, so its real maximum is the masonry column (at most 664 CSS px: 1.15 CSS px per video px for the 576 px square,
+   1.30 for the 512 px portrait), and the assumed 1.5625 still keeps a 1.2× to 1.4× margin over it. Applied as a *width* instead, 1200 CSS px would assume a 1200 px tall square tile that no layout can show.
+   **This changes two verdicts, measured on the final recipes with the old rule:** modified-maxwell-taichi (1:1) fails with 7 qualified events in a 1 s window
+   (limit 7) and passes with 2; tactical-arena (1:1) fails with 9 and warns with 5 (the same 5 as its 16:9 card). The rest are identical under both rules.
+   The alternative that keeps the old rule is a different framing for those two (4:3 or 16:9 with the old wide band crop); it was rejected because the owner asked for square tiles.
+   `eeg-ads1299-lab` still persists its 16:9 card into the banner, under the unchanged 1200 assumption.
+7. `ENCODER_VERSION` stays 3 (filtergraph, CRFs and colour tags are unchanged for 16:9; the recipe hash already covers `cardAspect` and `cardCrop`). The banner files of every re-encoded
+   work came out byte-identical.
+
+**Per work** (sources are under the media root; `cardCrop` only where noted):
+
+| work | card | frame | why | flash |
+|---|---|---|---|---|
+| tactical-arena | 1:1 | 576×576 | mixed 4800×2739 viewer screenshots (3D view is 3000×1500) and a 2240×2240 grid replay; square slices (`cardCrop`) of the 3D view and the lower middle of the grid (the full grid, with all its sweeping vision cones, fails the lint) | warn (5 events, as before) |
+| eeg-ads1299-lab | 16:9 | 768×432 | 1395×744 / 1550×713 plots are wide; unchanged | pass |
+| enth | 3:2 | 696×464 | 1200×800 UI snapshots, shown uncropped | pass |
+| godot-ctcs | 16:10 | 736×460 | 1440×900 screenshots, shown uncropped | pass |
+| gr-demo-learn | 16:10 | 736×460 | a 3200×1800 two-plot figure (`cardCrop` 2880×1800 keeps both plots) and 1440×1100 doc pages (900 px window) | pass |
+| linsae | 4:5 | 512×640 | 1440×900 window screenshots whose content is a 720 px feed column; per slide 720×900 `cardCrop` (the PDF slide: its 600×750 pane) | pass |
+| modified-maxwell-taichi | 1:1 | 576×576 | a square plot letterboxed in 2304×1296; the centre square (no `cardCrop`) drops only the two axis titles | pass |
+
+Measured (production build, `/`, two columns from 560 px): card frames are exactly these aspects; at 1920×1080 the two columns are 1931 / 1933 px tall with 4 / 3 cards
+(1280×800: 1526 / 1525); on a phone one column. A model of the balancer (the contiguous split with the shortest tallest column) picked the aspects: with the order
+by date (tactical-arena, eeg, enth, godot, gr, linsae, maxwell) the split `[tactical-arena 1:1, eeg 16:9, enth 3:2, godot 16:10] | [gr 16:10, linsae 4:5, maxwell 1:1]`
+differs by 2 px at 1920 wide, where three columns (the first cut of this change) could not get closer than 155 px.
+
+**Consequences.**
+
+- Card files stay within the 150 / 300 KB budget (largest: godot-ctcs H.264 210,840 B and enth 156,012 B, both warn; they warned before at 203,715 B and 178,058 B). Narrower cards are softer:
+  at the 664 px column of a 1340 px page a card has 1.16 (16:9), 1.11 (16:10), 1.05 (3:2), 0.87 (1:1) and 0.77 (4:5) video px per CSS px (a DPR-2 screen wants 2.0).
+  The 1:1 and 4:5 cards are therefore upscaled even on a 1× screen, linsae's text visibly so. Keeping the pixel area was the brief; a 768 px wide frame for every aspect would need
+  about 1.8× (1:1) and 2.2× (4:5) the pixels and push the linsae and godot H.264 files past the 300 KB fail line. Raising a frame costs bytes roughly linearly in area.
+- Six card posters (`card-poster.png`, 0.8 MB in all) are added; `check:media` also checks them.
+- **Follow-ups, not done here:** (a) with the 4 / 3 split the head of column 2 is DOM card 5, so `EAGER_CARDS` / `eagerCardCount` (4) leave a first-viewport card lazy; raising both to 5 needs the
+  `route-budgets` fixtures and tests updated. (b) R4 selects `.loop-media`, but `LoopMedia` renders `.loop-frame`, so R4 never sees a real home card; fix the selector together with (a).
+  (c) the card → banner morph grows a card snapshot (586 px wide at 1440) to the 1184 px banner, so the snapshots are upscaled for every aspect.
+
+## Addendum 3 2026-11-04 — slideshow cards play on hover or focus only
+
+**Status:** accepted. Amends the in-view autoplay of ADR 0044 decision (P9-6) for the home cards of slideshow loops; banners, galleries, montages and transcodes are unchanged.
+
+**Context.** Five of the seven home cards are slideshows (`eeg-ads1299-lab`, `enth`, `godot-ctcs`, `gr-demo-learn`, `linsae`): a few UI screenshots held 1-1.6 s each. Moving at rest
+they read as flicker, and a still of the first screen is the legible picture. Only `tactical-arena` and `modified-maxwell-taichi` are real motion.
+
+**Decision.**
+
+1. The manifest carries `kind` (`montage | slideshow | transcode`, required, from the recipe). `LoopMedia` marks the `<video>` of a **card** frame whose kind is `slideshow`
+   with `data-loop-play="hover"` (`loopPlayMode`); every other frame gets `data-loop-play="view"`.
+2. `mountLoops` (`src/lib/loops/controller.ts`) never observes a hover-mode video that sits in a `.card`. It plays while the card is hovered (`pointerenter`, non-touch) or keyboard-focused
+   (`focusin` with `:focus-visible`, so a mouse click does not count), only when `(hover: hover) and (pointer: fine)`, motion is not paused (the site toggle or
+   `prefers-reduced-motion`) and Save-Data is off. When both hover and focus are gone, or motion is paused, or the page is hidden, it pauses, rewinds to 0, drops `data-ready`
+   (the poster shows again) and a later hover plays from the first slide. The poster is cut at the loop's `poster.at`, inside the first slide, so rest and rewind look the same.
+3. Touch and coarse pointers never play these cards. A hover-mode video outside a `.card` (the card node persisted into a banner) is managed like any loop, and
+   `upgradeBannerLoops` strips `data-loop-play` from the banner video it clones, so a banner always autoplays.
+4. The first hover on a card fetches its video (`preload="none"`), so on a slow connection the poster stays until the first frame plays. Not prefetched, to keep the home page's bytes unchanged.
+
+**Consequences.** A slideshow card is only seen moving by a visitor with a mouse or a keyboard who asks for it. The card → banner morph needs no change: a differently framed card does not persist,
+and `eeg-ads1299-lab` (framed like its banner) persists its card video, which is playing at click time because the card was hovered or focused.
 
 ## Sources
 

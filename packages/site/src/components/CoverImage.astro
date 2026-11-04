@@ -45,8 +45,8 @@ export interface Props {
 	 * Load eagerly (not `loading="lazy"`).
 	 *
 	 * Why: the first cards on `/` are above the fold (masonry is column-major, so
-	 * the first four DOM cards cover the top of both columns); lazy-loading the
-	 * LCP image is an anti-pattern. `| undefined` for `exactOptionalPropertyTypes`.
+	 * the first four DOM cards cover the heads of the first two columns, see `EAGER_CARDS`
+	 * in `src/pages/index.astro`); lazy-loading the LCP image is an anti-pattern. `| undefined` for `exactOptionalPropertyTypes`.
 	 *
 	 * @see https://web.dev/articles/optimize-lcp
 	 */

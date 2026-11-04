@@ -11,10 +11,15 @@
  * read from the committed manifest `src/data/loops.json`.
  *
  * `persistId` adds `transition:persist` so the same node survives a
- * ClientRouter morph (card → banner) and keeps playing. That node carries the 768 px
+ * ClientRouter morph (card → banner) and keeps playing, but only for a card framed like the banner (no
+ * `cardPosterPath`): a card with its own framing does not persist. That node carries the ≤ 768 px
  * CARD rendition, so a banner frame also publishes its own sources in
  * `data-banner-sources` (the frame is not persisted); after the morph
  * `upgradeBannerLoops` (src/lib/loops/controller.ts) swaps in the 1920 px banner video.
+ *
+ * The frame takes its aspect from the rendition's own width / height (`--loop-ar`), so a square sim is a
+ * square tile and a phone-style UI a tall one (the masonry keeps natural aspects, ADR 0044 addendum 2).
+ * A card framed differently from the banner has its own poster (`cardPosterPath`); the banner keeps `posterPath`.
  *
  * The `entry` / `poster` props are test seams (the Container-API test passes a
  * fixture instead of reading the manifest); pages never set them.
@@ -25,10 +30,19 @@
 import { Picture } from "astro:assets";
 import type { ImageMetadata } from "astro";
 import loopsJson from "../data/loops.json";
+import {
+	cardPosterWidths,
+	frameAspectValue,
+	loopPlayMode,
+	posterPathFor,
+} from "../lib/loops/frame";
+import { MASONRY_COLUMN_SIZES } from "../lib/masonry";
 
 /** Structural mirror of `LoopEntry` (src/lib/loops/manifest.ts, owned by the encode task). */
 export interface LoopEntryLike {
+	kind?: string | undefined;
 	posterPath: string;
+	cardPosterPath?: string | undefined;
 	card: LoopSizeLike;
 	banner: LoopSizeLike | null;
 }
@@ -64,35 +78,51 @@ const {
 	poster: posterProp,
 } = Astro.props;
 
-const posters = import.meta.glob<{ default: ImageMetadata }>("../assets/loops/*/poster.png", {
-	eager: true,
-});
+const posters = import.meta.glob<{ default: ImageMetadata }>(
+	"../assets/loops/*/{poster,card-poster}.png",
+	{ eager: true },
+);
 const manifest: Record<string, LoopEntryLike> = loopsJson;
 const entry = entryProp ?? manifest[slug];
 if (!entry)
 	throw new Error(`LoopMedia: no loops.json entry for "${slug}" (run bun run media:encode)`);
-const poster = posterProp ?? posters[`../${entry.posterPath.replace(/^src\//, "")}`]?.default;
-if (!poster) throw new Error(`LoopMedia: poster not found for "${slug}" at ${entry.posterPath}`);
+const posterPath = posterPathFor(entry, size);
+const poster = posterProp ?? posters[`../${posterPath.replace(/^src\//, "")}`]?.default;
+if (!poster) throw new Error(`LoopMedia: poster not found for "${slug}" at ${posterPath}`);
 
 const rendition = size === "banner" && entry.banner ? entry.banner : entry.card;
+// Why: `transition:persist` carries the CARD video into the banner, so it only fits a card that is framed
+// like the banner. A card with its own poster (another aspect or a cardCrop) would drag its tight, 3x
+// upscaled crop into the 3:1 frame and then cross-fade to a different framing; there the banner mounts its
+// own video over its own poster instead (ADR 0044 addendum 2).
+// Why: a slideshow card stays on its poster and plays only on hover / keyboard focus; see the controller.
+const playMode = loopPlayMode(entry.kind, size);
+const persistName = entry.cardPosterPath === undefined ? persistId : undefined;
 // Why: the banner poster is cut from the 1920x1080 banner master and spans the page column (up to
-// ~1630 CSS px, more device px on DPR-2), so it offers every step up to the source width (sharp never upscales,
+// 1340 CSS px, more device px on DPR-2), so it offers every step up to the source width (sharp never upscales,
 // so a step above `poster.width` would only duplicate bytes). 1280 stays in the list: it is the
 // width `check:budgets` R4 measures the LCP poster at.
 const BANNER_POSTER_WIDTHS = [640, 960, 1280, 1920, 2560];
 const widths =
 	size === "banner"
 		? [...BANNER_POSTER_WIDTHS.filter((w) => w < poster.width), poster.width]
-		: [384, 768];
+		: cardPosterWidths(poster.width);
+// Why: a card fills one masonry column; a gallery figure is wider (up to ~half the project page), so it
+// keeps the looser hint.
 const sizes =
-	size === "banner" ? "(min-width: 700px) 85vw, 100vw" : "(min-width: 560px) 50vw, 100vw";
+	size === "banner"
+		? "(min-width: 1580px) 1340px, (min-width: 700px) 85vw, 100vw"
+		: size === "card"
+			? MASONRY_COLUMN_SIZES
+			: "(min-width: 1100px) 33vw, (min-width: 560px) 50vw, 100vw";
 ---
 
 <div
 	class:list={["loop-frame", className]}
 	data-loop-frame
 	data-slug={slug}
-	data-banner-sources={persistId && size === "banner" ? JSON.stringify(rendition) : undefined}
+	style={`--loop-ar:${frameAspectValue(rendition)}`}
+	data-banner-sources={persistName && size === "banner" ? JSON.stringify(rendition) : undefined}
 >
 	<Picture
 		src={poster}
@@ -104,10 +134,11 @@ const sizes =
 		decoding="async"
 		fetchpriority={priority ? "high" : undefined}
 	/>
-	{persistId ? (
+	{persistName ? (
 		<video
 			data-loop
 			data-loop-size={size}
+			data-loop-play={playMode}
 			muted
 			loop
 			playsinline
@@ -115,7 +146,7 @@ const sizes =
 			aria-hidden="true"
 			width={rendition.width}
 			height={rendition.height}
-			transition:persist={persistId}
+			transition:persist={persistName}
 		>
 			{rendition.sources.map((s) => (
 				<source src={s.url} type={s.type} />
@@ -125,6 +156,7 @@ const sizes =
 		<video
 			data-loop
 			data-loop-size={size}
+			data-loop-play={playMode}
 			muted
 			loop
 			playsinline
@@ -150,7 +182,7 @@ const sizes =
 		position: relative;
 		display: block;
 		width: 100%;
-		aspect-ratio: 16 / 9;
+		aspect-ratio: var(--loop-ar, 16 / 9);
 		overflow: hidden;
 		background-color: var(--color-surface);
 	}
