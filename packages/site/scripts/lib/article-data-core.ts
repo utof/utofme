@@ -291,7 +291,9 @@ export function buildDataset(
 			schema: ds.schemaId,
 			sources: names,
 			bytes,
-			gzipBytes: gz,
+			// Why: gzip output differs between zlib builds (cloud VM vs laptop vs CI) for the
+			// same bytes; an unchanged output keeps its recorded size so a re-sync elsewhere is a no-op.
+			gzipBytes: unchanged ? prev.gzipBytes : gz,
 			sha256: sha,
 			syncedAt: unchanged ? prev.syncedAt : ctx.today,
 		},
@@ -365,7 +367,8 @@ export function checkDataset(ds: Dataset<{ schema: string }>, input: CheckInput)
 		if (side.sha256 !== sha256Hex(text)) {
 			problems.push({ code: 3, file: sc, message: "sidecar sha256 differs from the output" });
 		}
-		if (side.bytes !== bytes || side.gzipBytes !== gzipBytes(text)) {
+		// Why: only the raw size is compared; gzip size depends on the zlib build (the cap below still applies).
+		if (side.bytes !== bytes) {
 			problems.push({ code: 3, file: sc, message: "sidecar sizes differ from the output" });
 		}
 	}

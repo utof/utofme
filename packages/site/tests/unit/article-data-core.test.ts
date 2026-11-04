@@ -243,6 +243,10 @@ describe("checkDataset (--check)", () => {
 		const wrongSchema = serialise({ ...built.sidecar, schema: "other/1" });
 		expect(run(built.output, wrongSchema)[0]).toMatchObject({ code: EXIT.mismatch });
 	});
+	it("a sidecar gzip size from another zlib build is not a mismatch", () => {
+		const other = serialise({ ...built.sidecar, gzipBytes: built.sidecar.gzipBytes + 45 });
+		expect(run(built.output, other)).toEqual([]);
+	});
 	it("an output over its cap is a mismatch (3)", () => {
 		const tight = makeDataset({ maxGzip: 10 });
 		const p = checkDataset(tight, { output: built.output, sidecar: sidecarText, denylist: [] });
