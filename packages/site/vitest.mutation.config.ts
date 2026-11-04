@@ -24,6 +24,8 @@ export default defineConfig({
 	},
 	test: {
 		environment: "node",
+		// Why: stable property-test names between Stryker's dry run and mutant runs (see the file).
+		setupFiles: ["tests/unit/helpers/mutation-seed.ts"],
 		include: [
 			"tests/unit/content-schema.test.ts",
 			"tests/unit/works-query.test.ts",
@@ -31,6 +33,13 @@ export default defineConfig({
 			"tests/unit/url-state.test.ts",
 			"tests/unit/filter.test.ts",
 			"tests/unit/keymap.test.ts",
+			// Phase 10 targets (spec 10 § Tests, Stryker row).
+			"tests/unit/grid.test.ts",
+			"tests/unit/sight.test.ts",
+			"tests/unit/sight-parity.test.ts",
+			"tests/unit/dataset-*.test.ts",
+			"tests/unit/article-data-core.test.ts",
+			"tests/unit/privacy-scan-core.test.ts",
 		],
 		typecheck: { enabled: false },
 		exclude: ["**/node_modules/**", "**/dist/**", "tests/e2e/**", ".stryker-tmp/**"],
