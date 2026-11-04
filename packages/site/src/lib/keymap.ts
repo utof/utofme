@@ -163,6 +163,9 @@ export function formatChord(parsed: ParsedChord): string {
  * no-op teardown) surfaces mis-usage in build logs where a silent failure
  * would be invisible.  Mirrors the SSR guard in `writeState` (url-state.ts).
  *
+ * `handler` receives the `KeyboardEvent`, so a caller can `preventDefault()` when a
+ * browser binds the same chord (Firefox focuses its search bar on Ctrl+K).
+ *
  * Returns a teardown function.  Call it to remove the listener — required to
  * avoid leaks in Svelte `onDestroy` / React `useEffect` cleanup.
  *
@@ -170,7 +173,7 @@ export function formatChord(parsed: ParsedChord): string {
  */
 export function bindGlobalChord(
 	spec: string,
-	handler: () => void,
+	handler: (e: KeyboardEvent) => void,
 	options?: ChordOptions,
 ): () => void {
 	if (typeof document === "undefined") {
@@ -183,7 +186,7 @@ export function bindGlobalChord(
 		const keyMatches = e.key.toLowerCase() === parsed.key;
 		const modMatches = parsed.mod ? isMod(e, platform) : true;
 		if (keyMatches && modMatches) {
-			handler();
+			handler(e);
 		}
 	};
 

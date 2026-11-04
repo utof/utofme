@@ -288,3 +288,25 @@ test.describe("CommandPalette — /", () => {
 		await expect(inputAfterNav).toHaveValue("now", { timeout: 500 });
 	});
 });
+
+test("Ctrl+K keeps the first press from the browser, lets the second through", async ({ page }) => {
+	// Why: Firefox binds Ctrl+K to its search bar; only the opening press is ours.
+	await page.goto("/");
+	await waitForPalette(page);
+	const press = () =>
+		page.evaluate(() => {
+			const e = new KeyboardEvent("keydown", {
+				key: "k",
+				ctrlKey: true,
+				metaKey: /Mac|iPhone|iPad/.test(navigator.platform),
+				bubbles: true,
+				cancelable: true,
+			});
+			document.body.dispatchEvent(e);
+			return e.defaultPrevented;
+		});
+	expect(await press()).toBe(true);
+	await expect(page.getByRole("dialog")).toBeVisible();
+	expect(await press()).toBe(false);
+	await expect(page.getByRole("dialog")).toBeHidden();
+});

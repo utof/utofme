@@ -240,10 +240,15 @@
 		// @see packages/specs/plans/02-interactivity.md § Task 9
 		document.documentElement.dataset["paletteReady"] = "true";
 
-		const teardown = bindGlobalChord("Mod+K", () => {
+		// Why: Firefox (and Chromium on Linux) bind Ctrl+K to the browser's search or
+		// address bar. The first press opens the palette and keeps the key from the
+		// browser; a second press while it is open closes it and lets the browser
+		// shortcut through, so the address bar stays one double-press away.
+		const teardown = bindGlobalChord("Mod+K", (e) => {
 			if (open) {
 				closePalette();
 			} else {
+				e.preventDefault();
 				openPalette();
 			}
 		});
