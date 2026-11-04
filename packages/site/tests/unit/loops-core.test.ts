@@ -32,6 +32,7 @@ import {
 	aspectRatio,
 	CARD_ASPECTS,
 	type CardAspect,
+	LOOP_KINDS,
 	type LoopsManifest,
 	loopsManifestSchema,
 } from "../../src/lib/loops/manifest";
@@ -430,6 +431,7 @@ const entry = (hash: string): LoopsManifest[string] => ({
 	recipe: "deadbeef",
 	durationS: 4,
 	fps: 30,
+	kind: "montage",
 	aspect: "16:9",
 	cardAspect: "16:9",
 	card: {
@@ -556,8 +558,8 @@ describe("loopsManifestSchema", () => {
 	});
 	const hex8 = fc.stringMatching(/^[0-9a-f]{8}$/);
 	const entryArb = fc
-		.tuple(hex8, fc.constantFrom(...CARD_ASPECTS), fc.boolean())
-		.map(([h, a, b]) => aspectEntry(h, a, b));
+		.tuple(hex8, fc.constantFrom(...CARD_ASPECTS), fc.boolean(), fc.constantFrom(...LOOP_KINDS))
+		.map(([h, a, b, kind]) => ({ ...aspectEntry(h, a, b), kind }));
 	fcTest.prop([fc.dictionary(fc.stringMatching(/^[a-z][a-z0-9]{0,6}$/), entryArb, { maxKeys: 4 })])(
 		"round-trips through JSON and the sorted serialiser",
 		(x) => {
@@ -579,6 +581,18 @@ describe("loopsManifestSchema", () => {
 		expect(loopsManifestSchema.safeParse({ demo: bad }).success).toBe(false);
 		const tall = { ...good, cardAspect: "4:5" as const };
 		expect(loopsManifestSchema.safeParse({ demo: tall }).success).toBe(false);
+	});
+	it.each(LOOP_KINDS)("accepts kind %s and nothing else", (kind) => {
+		expect(loopsManifestSchema.safeParse({ demo: { ...entry("11111111"), kind } }).success).toBe(
+			true,
+		);
+	});
+	it("requires a known kind (the controller plays slideshows on hover only)", () => {
+		const { kind: _drop, ...rest } = entry("11111111");
+		expect(loopsManifestSchema.safeParse({ demo: rest }).success).toBe(false);
+		expect(
+			loopsManifestSchema.safeParse({ demo: { ...entry("11111111"), kind: "gif" } }).success,
+		).toBe(false);
 	});
 	it("requires cardAspect", () => {
 		const { cardAspect: _drop, ...rest } = entry("11111111");

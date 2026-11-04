@@ -16,6 +16,19 @@ import { z } from "astro/zod";
 const slugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "slug must be kebab-case");
 
 /**
+ * What a loop is made of.
+ *
+ * Why: the card controller treats them differently: a `slideshow` (a sequence of UI screenshots) stays
+ * on its poster at rest and plays only while the card is hovered or keyboard-focused, whereas a `montage`
+ * or `transcode` (real motion) plays while in view (ADR 0044 addendum 3).
+ * @see packages/specs/adrs/0044-video-loops-pipeline.md
+ */
+export const LOOP_KINDS = ["montage", "slideshow", "transcode"] as const;
+
+/** One of {@link LOOP_KINDS}. @see LOOP_KINDS */
+export const loopKindSchema = z.enum(LOOP_KINDS);
+
+/**
  * Card aspect ratios a loop can be encoded at (`W:H`).
  *
  * Why: the home masonry keeps every tile's natural aspect (ADR 0044 addendum 2), so the card
@@ -97,6 +110,7 @@ const loopFlashSchema = z.strictObject({
  * `recipe` is the sha8 of the canonical recipe JSON plus the encoder settings; an unchanged hash means the
  * encode can be skipped. `posterPath` is relative to `packages/site/` (an Astro-processed asset).
  *
+ * `kind` is the recipe kind (it decides whether a card plays at rest or on hover).
  * `aspect` is the loop's master aspect (the banner, always 16:9). `cardAspect` is the card/gallery
  * rendition's aspect: the home masonry tile keeps it, so a square sim is a square tile.
  * `posterPath` is cut from the banner master when there is one; when the card is not 16:9 and a banner
@@ -111,6 +125,7 @@ export const loopEntrySchema = z
 		recipe: sha8Schema,
 		durationS: z.number().positive(),
 		fps: z.number().positive(),
+		kind: loopKindSchema,
 		aspect: z.literal("16:9"),
 		cardAspect: cardAspectSchema,
 		card: loopSizeSchema,

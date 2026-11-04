@@ -468,6 +468,7 @@ function encodeSlug(
 			recipe: hash,
 			durationS: totalDuration(r),
 			fps: effectiveFps(r),
+			kind: r.kind,
 			aspect: "16:9",
 			cardAspect: r.cardAspect ?? "16:9",
 			card: toSize(cardB),

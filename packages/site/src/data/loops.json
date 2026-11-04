@@ -45,6 +45,7 @@
 			"status": "pass"
 		},
 		"fps": 10,
+		"kind": "slideshow",
 		"posterPath": "src/assets/loops/eeg-ads1299-lab/poster.png",
 		"recipe": "7f198ff2"
 	},
@@ -95,6 +96,7 @@
 			"status": "pass"
 		},
 		"fps": 10,
+		"kind": "slideshow",
 		"posterPath": "src/assets/loops/enth/poster.png",
 		"recipe": "f8dc49c3"
 	},
@@ -144,6 +146,7 @@
 			"status": "pass"
 		},
 		"fps": 30,
+		"kind": "montage",
 		"posterPath": "src/assets/loops/fixture-testsrc/poster.png",
 		"recipe": "c2b7051e"
 	},
@@ -194,6 +197,7 @@
 			"status": "pass"
 		},
 		"fps": 10,
+		"kind": "slideshow",
 		"posterPath": "src/assets/loops/godot-ctcs/poster.png",
 		"recipe": "2012cbc5"
 	},
@@ -244,6 +248,7 @@
 			"status": "pass"
 		},
 		"fps": 10,
+		"kind": "slideshow",
 		"posterPath": "src/assets/loops/gr-demo-learn/poster.png",
 		"recipe": "1f997977"
 	},
@@ -294,6 +299,7 @@
 			"status": "pass"
 		},
 		"fps": 10,
+		"kind": "slideshow",
 		"posterPath": "src/assets/loops/linsae/poster.png",
 		"recipe": "7c7c90ac"
 	},
@@ -344,6 +350,7 @@
 			"status": "pass"
 		},
 		"fps": 30,
+		"kind": "montage",
 		"posterPath": "src/assets/loops/modified-maxwell-taichi/poster.png",
 		"recipe": "c6cfdb1f"
 	},
@@ -378,6 +385,7 @@
 			"status": "pass"
 		},
 		"fps": 30,
+		"kind": "transcode",
 		"posterPath": "src/assets/loops/modified-maxwell-taichi-pml/poster.png",
 		"recipe": "330b1aa3"
 	},
@@ -400,22 +408,22 @@
 			"width": 1920
 		},
 		"card": {
-			"height": 672,
+			"height": 576,
 			"sources": [
 				{
-					"bytes": 47918,
+					"bytes": 48168,
 					"type": "video/mp4; codecs=\"av01.0.04M.08\"",
-					"url": "/loops/tactical-arena/card.4272050d.av1.mp4"
+					"url": "/loops/tactical-arena/card.280beb6c.av1.mp4"
 				},
 				{
-					"bytes": 61259,
+					"bytes": 59364,
 					"type": "video/mp4; codecs=\"avc1.64001E\"",
-					"url": "/loops/tactical-arena/card.d3fcce58.h264.mp4"
+					"url": "/loops/tactical-arena/card.103e1d74.h264.mp4"
 				}
 			],
-			"width": 504
+			"width": 576
 		},
-		"cardAspect": "3:4",
+		"cardAspect": "1:1",
 		"cardPosterPath": "src/assets/loops/tactical-arena/card-poster.png",
 		"durationS": 5.4,
 		"flash": {
@@ -423,13 +431,14 @@
 			"maxPerSecond": 1.67,
 			"renderWidthCss": {
 				"banner": 1280,
-				"card": 788
+				"card": 900
 			},
 			"status": "warn"
 		},
 		"fps": 30,
+		"kind": "montage",
 		"posterPath": "src/assets/loops/tactical-arena/poster.png",
-		"recipe": "6d9f161c"
+		"recipe": "0121a2fa"
 	},
 	"tactical-arena-smokes": {
 		"aspect": "16:9",
@@ -462,6 +471,7 @@
 			"status": "pass"
 		},
 		"fps": 30,
+		"kind": "transcode",
 		"posterPath": "src/assets/loops/tactical-arena-smokes/poster.png",
 		"recipe": "626f7056"
 	}

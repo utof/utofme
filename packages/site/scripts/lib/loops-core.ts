@@ -16,6 +16,7 @@ import {
 	type CardAspect,
 	cardAspectSchema,
 	type LoopsManifest,
+	loopKindSchema,
 } from "../../src/lib/loops/manifest";
 
 /** Rendition names. */
@@ -164,7 +165,7 @@ const isIntegerFrames = (seconds: number, fps: number): boolean => {
 export const recipeSchema = z
 	.strictObject({
 		slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-		kind: z.enum(["montage", "slideshow", "transcode"]),
+		kind: loopKindSchema,
 		aspect: z.literal("16:9"),
 		cardAspect: cardAspectSchema.optional(),
 		fps: z.number().positive().optional(),
