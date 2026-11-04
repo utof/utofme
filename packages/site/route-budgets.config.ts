@@ -70,6 +70,11 @@ export const budgets: BudgetsConfig = {
 			route: "/works/code-sandbox/",
 			reason: "Sandpack mounts client:only; facade (P9-12) deferred by the spec review",
 		},
+		// Why: these fixture works keep a raw GIF cover (1.2–1.8 MB) to exercise the still
+		// fallback; they are built only with UTOFME_FIXTURES on and never deployed (ADR 0049).
+		...["code-1", "math-2", "music-2", "no-link", "video-2", "writing-2", "writing-mdx-island"].map(
+			(slug) => ({ route: `/works/${slug}/`, reason: "fixture with a GIF cover; not deployed" }),
+		),
 	],
 	// Why: with UTOFME_FIXTURES=false (the deploy) the fixture works are filtered from the
 	// collection but their island/EC/Sandpack chunks are still emitted by the bundler and
