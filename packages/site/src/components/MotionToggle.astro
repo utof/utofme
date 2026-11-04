@@ -14,7 +14,7 @@
  */
 ---
 
-<button type="button" class="motion-toggle" data-motion-toggle aria-pressed="false">
+<button type="button" class="motion-toggle site-ctl" data-motion-toggle aria-pressed="false">
 	<span data-motion-label>Pause motion</span>
 </button>
 
@@ -60,36 +60,5 @@
 	bind();
 </script>
 
-<style>
-	/* Why: quiet, mono, hairline — a control, not a CTA; focus ring matches the site. */
-	.motion-toggle {
-		font: inherit;
-		font-family: var(--font-mono);
-		font-size: var(--font-size-1);
-		padding: var(--space-1) var(--space-2);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		background: var(--color-bg);
-		color: var(--color-text);
-		cursor: pointer;
-		position: relative;
-	}
-	/* 44x44 minimum hit zone without changing the visual size (WCAG 2.5.8). */
-	.motion-toggle::before {
-		content: "";
-		position: absolute;
-		inset: 50% auto auto 50%;
-		translate: -50% -50%;
-		min-width: 44px;
-		min-height: 44px;
-		width: 100%;
-		height: 100%;
-	}
-	.motion-toggle:hover {
-		border-color: var(--color-text-muted);
-	}
-	.motion-toggle:focus-visible {
-		outline: none;
-		box-shadow: var(--shadow-focus);
-	}
-</style>
+<!-- Why: border, radius, height and hit zone come from the shared `.site-ctl` rule in
+     _BaseLayout so this and the Sound toggle read as one control family. -->

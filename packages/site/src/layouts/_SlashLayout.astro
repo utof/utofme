@@ -63,13 +63,10 @@ const updatedHuman = updated.toISOString().slice(0, 10);
 	main {
 		width: var(--page-width);
 		margin-inline: auto;
-		padding-block: var(--space-4);
+		padding-block: 0 var(--space-4);
 	}
 	main > :global(article) {
 		max-width: 70ch;
-	}
-	article header h1 {
-		margin-bottom: var(--space-1);
 	}
 	article header .updated {
 		color: var(--color-text-muted);
