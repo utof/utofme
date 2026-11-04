@@ -13,11 +13,13 @@
 }
 .ss {
 	display: grid;
+	align-content: start;
 	gap: var(--space-3) var(--space-5);
 	grid-template-areas: "readout" "board" "controls" "legend";
 	padding: var(--space-3);
-	/* Why: reserved height at narrow widths, equal for the keyframe and the island (CLS). */
-	min-block-size: 46rem;
+	/* Why: reserved height at narrow widths, equal for the keyframe and the island (CLS): a
+	 * square board plus a stack of fixed rows. */
+	min-block-size: calc(100cqw + 20rem);
 }
 @container ss (min-width: 44rem) {
 	.ss {
