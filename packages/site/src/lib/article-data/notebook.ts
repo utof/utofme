@@ -13,17 +13,10 @@
  * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
  */
 import { z } from "astro/zod";
+import { OUTCOMES } from "../figures/notebook";
 import { defineDataset } from "./types";
 
 const SRC = "notebook.json";
-
-/**
- * The five outcomes of a notebook entry, in legend order.
- *
- * Why: one list for the schema, the legend and the filter chips.
- * @see packages/specs/specs/10-tactical-arena-article.md § P10-11
- */
-const OUTCOMES = ["kept", "reverted", "inconclusive", "parked", "infra"] as const;
 /**
  * Rewrites the few private-repo file and journal names that appear in free text into public words.
  *

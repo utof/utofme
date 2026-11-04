@@ -1,0 +1,373 @@
+---
+/**
+ * NotebookKeyframe.astro — the no-JS fallback of figure F7: the legend with the outcome counts, the
+ * static timeline (every entry as a mark, the ten highlights ringed) and the ten starred entries
+ * as a list, with a count of the rest. On phones the timeline is replaced by the list alone.
+ *
+ * Why: the island shows this until it hydrates and keeps it if its data fails to load; the
+ * caption's claim ("kept 99, reverted 41…") must be visible without JavaScript. Its blocks and
+ * their sizes mirror the island's so hydration moves nothing (CLS, spec common contract).
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-11 (fallback)
+ */
+import type { NotebookData } from "../../lib/article-data/notebook";
+import { MARKS, markPath } from "../../lib/figure-marks";
+import {
+	buildTimeline,
+	countByOutcome,
+	HIGHLIGHT_IDS,
+	metricLine,
+	OUTCOME_LABEL,
+	OUTCOMES,
+	summary,
+} from "../../lib/figures/notebook";
+
+/** Props for NotebookKeyframe. */
+export interface Props {
+	/** The projected `notebook` data (server side only; never passed to the island). */
+	data: NotebookData;
+	/** Number of parked and ruled-out ideas (for the drawer stub). */
+	parkedCount: number;
+}
+
+const { data, parkedCount } = Astro.props;
+const entries = data.entries;
+const tl = buildTimeline(entries);
+const counts = countByOutcome(entries);
+const star = HIGHLIGHT_IDS.map((id) => entries.find((e) => e.id === id)).filter(
+	(e): e is (typeof entries)[number] => e !== undefined,
+);
+const byId = new Map(entries.map((e) => [e.id, e]));
+const starred = new Set(HIGHLIGHT_IDS);
+const label = summary(entries, entries.length);
+---
+
+<ul class="nb-legend">
+	{OUTCOMES.map((o) => (
+		<li style={`--c:var(${MARKS[o].token})`}>
+			<svg viewBox="-8 -8 16 16" width="16" height="16" aria-hidden="true">
+				<path
+					d={markPath(o, 0, 0, 5)}
+					fill={MARKS[o].filled ? "var(--c)" : "none"}
+					stroke="var(--c)"
+					stroke-width="1.6"
+				/>
+			</svg>
+			{OUTCOME_LABEL[o]} <b>{counts[o]}</b>
+		</li>
+	))}
+	<li class="nb-legend-star">
+		<svg viewBox="-8 -8 16 16" width="16" height="16" aria-hidden="true">
+			<circle r="6" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+		</svg>
+		starred <b>{HIGHLIGHT_IDS.length}</b>
+	</li>
+</ul>
+<div class="nb-chips nb-chips-static" aria-hidden="true"></div>
+<div class="nb-stage">
+	<svg class="nb-svg" viewBox={`0 0 ${tl.w} ${tl.h + 26}`} role="img" aria-label={label}>
+		{tl.rows.map((r) => (
+			<g>
+				<line class="nb-rowline" x1={tl.left} x2={tl.w} y1={r.top + r.h} y2={r.top + r.h} />
+				<text class="nb-rowlabel" x={tl.left - 8} y={r.top + r.h / 2 + 4} text-anchor="end">
+					{r.area}
+				</text>
+				{r.marks.map((m) => {
+					const e = byId.get(m.id);
+					return e ? (
+						<g class={`nb-mark nb-${e.outcome}`} style={`--c:var(${MARKS[e.outcome].token})`}>
+							{starred.has(e.id) && <circle class="nb-ring" cx={m.x} cy={m.y} r="6.5" />}
+							<path
+								d={markPath(e.outcome, m.x, m.y, 4)}
+								fill={MARKS[e.outcome].filled ? "var(--c)" : "none"}
+								stroke="var(--c)"
+								stroke-width="1.5"
+							/>
+						</g>
+					) : null;
+				})}
+			</g>
+		))}
+		{tl.ticks.map((t) => (
+			<text class="nb-tick" x={t.x} y={tl.h + 16} text-anchor="middle">
+				{t.label}
+			</text>
+		))}
+	</svg>
+</div>
+<div class="nb-bottom">
+	<div class="nb-hl">
+		<p class="nb-hl-title">The ten entries that carry the story</p>
+		<ol class="nb-hl-list">
+			{star.map((e) => (
+				<li>
+					<span class="nb-star" aria-hidden="true">
+						★
+					</span>
+					<span class="nb-hl-item">
+						{e.title}
+						<small>
+							{e.date} · {OUTCOME_LABEL[e.outcome]}
+							{metricLine(e) ? ` · ${metricLine(e)}` : ""}
+						</small>
+					</span>
+				</li>
+			))}
+		</ol>
+		<p class="nb-hl-more">
+			and {entries.length - star.length} more entries (the timeline needs JavaScript).
+		</p>
+	</div>
+</div>
+<div class="nb-drawer-stub" aria-hidden="true">
+	Parked and ruled out: {parkedCount} ideas
+</div>
+
+<style is:global>
+	.nb-legend {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-1) var(--space-4);
+		box-sizing: border-box;
+		block-size: 3.25rem;
+		margin: 0;
+		padding: var(--space-2) var(--space-3);
+		list-style: none;
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+		overflow: hidden;
+	}
+	.nb-legend li {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		font-variant-numeric: tabular-nums;
+	}
+	.nb-legend b {
+		color: var(--color-text);
+	}
+	.nb-chips {
+		box-sizing: border-box;
+		display: flex;
+		flex-wrap: wrap;
+		align-content: flex-start;
+		gap: var(--space-1) var(--space-2);
+		block-size: 9.5rem;
+		padding: var(--space-1) var(--space-3);
+		overflow: hidden;
+	}
+	.nb-chip-label {
+		flex-basis: 100%;
+		margin: 0;
+		font-size: var(--font-size-ui);
+		color: var(--color-text-muted);
+	}
+	.nb-chip {
+		min-block-size: 32px;
+		padding-inline: var(--space-3);
+		border: 1px solid var(--color-border-strong);
+		border-radius: var(--radius-pill);
+		background: var(--color-bg);
+		color: var(--color-text-body);
+		font: inherit;
+		font-size: var(--font-size-ui);
+		cursor: pointer;
+	}
+	.nb-chip[aria-pressed="true"] {
+		border-color: var(--color-text);
+		color: var(--color-text);
+		font-weight: 600;
+	}
+	.nb-chip:focus-visible,
+	.nb-btn:focus-visible,
+	.nb-item:focus-visible,
+	.nb-drawer summary:focus-visible,
+	.nb-retry:focus-visible,
+	.nb-bottom:focus-visible {
+		outline: none;
+		box-shadow: var(--shadow-focus);
+	}
+	.nb-svg {
+		display: block;
+		inline-size: 100%;
+		block-size: auto;
+		font-size: 11px;
+	}
+	.nb-rowline {
+		stroke: var(--color-border);
+	}
+	.nb-rowlabel,
+	.nb-tick {
+		fill: var(--color-text-muted);
+	}
+	.nb-ring {
+		fill: none;
+		stroke: var(--color-text);
+		stroke-width: 1.4;
+	}
+	.nb-mark[role="button"] {
+		cursor: pointer;
+	}
+	.nb-mark:focus {
+		outline: none;
+	}
+	.nb-mark:focus-visible .nb-halo,
+	.nb-mark.open .nb-halo {
+		stroke: var(--color-focus);
+		stroke-width: 2.5;
+	}
+	.nb-halo {
+		fill: transparent;
+		stroke: transparent;
+	}
+	.nb-bottom {
+		box-sizing: border-box;
+		min-block-size: 16rem;
+		padding: var(--space-2) var(--space-3);
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+	.nb-hl-title,
+	.nb-card-title {
+		margin: 0 0 var(--space-1);
+		font-weight: 600;
+		color: var(--color-text);
+	}
+	.nb-hl-list {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-1) var(--space-5);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.nb-hl-list li {
+		display: flex;
+		gap: var(--space-2);
+	}
+	.nb-item {
+		display: flex;
+		gap: var(--space-2);
+		inline-size: 100%;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		text-align: start;
+		color: inherit;
+		cursor: pointer;
+	}
+	.nb-item:hover .nb-hl-item {
+		text-decoration: underline;
+	}
+	.nb-hl-item {
+		display: block;
+		color: var(--color-text);
+	}
+	.nb-hl-item small {
+		display: block;
+		color: var(--color-text-muted);
+		font-size: 0.85em;
+	}
+	.nb-star {
+		color: var(--color-text);
+	}
+	.nb-hl-more {
+		margin: var(--space-2) 0 0;
+		color: var(--color-text-muted);
+	}
+	.nb-drawer-stub,
+	.nb-drawer summary {
+		box-sizing: border-box;
+		display: flex;
+		align-items: center;
+		min-block-size: 3rem;
+		padding-inline: var(--space-3);
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+	.nb-drawer summary {
+		cursor: pointer;
+	}
+	.nb-card {
+		margin: 0;
+	}
+	.nb-card-meta {
+		margin: 0 0 var(--space-1);
+		color: var(--color-text-muted);
+		font-size: 0.9em;
+	}
+	.nb-card-metric {
+		margin: 0 0 var(--space-1);
+		font-variant-numeric: tabular-nums;
+		color: var(--color-text);
+	}
+	.nb-card p {
+		margin: 0 0 var(--space-1);
+	}
+	.nb-btn {
+		min-block-size: 32px;
+		padding-inline: var(--space-3);
+		border: 1px solid var(--color-border-strong);
+		border-radius: var(--radius-pill);
+		background: var(--color-bg);
+		color: var(--color-text-body);
+		font: inherit;
+		cursor: pointer;
+	}
+	.nb-pk {
+		margin: 0;
+		padding: 0 var(--space-3) var(--space-3);
+		list-style: none;
+		font-size: var(--font-size-ui);
+	}
+	.nb-pk li {
+		margin-block-start: var(--space-2);
+		color: var(--color-text-body);
+	}
+	.nb-pk strong {
+		color: var(--color-text);
+	}
+	.nb-fail {
+		margin: var(--space-2);
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+	.nb-sr {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	.nb-mark,
+	.nb-ring {
+		transition: opacity var(--motion-base);
+	}
+	.calm .nb-mark,
+	.calm .nb-ring {
+		transition: none;
+	}
+	@media (max-width: 700px) {
+		.nb-stage,
+		.nb-hl-more {
+			display: none;
+		}
+		.nb-hl-list {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.nb-bottom {
+			min-block-size: 36rem;
+			max-block-size: 36rem;
+			overflow: hidden;
+		}
+		.nb-chips {
+			block-size: 13rem;
+		}
+		.nb-legend {
+			block-size: 5.5rem;
+		}
+	}
+</style>

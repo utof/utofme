@@ -57,6 +57,14 @@ const projected = z.strictObject({
 	),
 });
 
+/**
+ * The shipped `notebook_parked.json`.
+ *
+ * Why: inferred from the projected schema; islands import this type only, never Zod (ADR 0054).
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-3 (datasets table, `notebook_parked`)
+ */
+export type NotebookParkedData = z.infer<typeof projected>;
+
 function publicTitle(id: string, title: string): string {
 	const o = TITLE_OVERRIDES[id];
 	if (!o) return title;

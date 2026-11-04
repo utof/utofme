@@ -78,7 +78,7 @@
 			: [],
 	);
 	const groups = $derived(data && layout && !narrow ? groupBoxes(data, layout) : []);
-	const nodeEls: Record<string, SVGGElement | undefined> = {};
+	const nodeEls: Record<string, SVGGElement | undefined> = $state({});
 
 	const isSel = (kind: Selection["kind"], id: string): boolean =>
 		sel?.kind === kind && sel.id === id;
