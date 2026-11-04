@@ -66,7 +66,7 @@
 		"dev": "astro dev",
 		"build": "bun run prebuild:stats && bun run prebuild:garden && astro build",
 		"prebuild:stats": "bun run scripts/fetch-stats-snapshot.ts",
-		"prebuild:garden": "bun run scripts/build-garden-data.ts",
+		"prebuild:garden": "bun run scripts/build-garden-data.ts && biome format --write src/data/backlinks.json src/data/note-previews.json src/data/graph.json",
 		"sync:vault": "bun run scripts/sync-vault.ts",
 		"sync:webmentions": "bun run scripts/build-webmentions.ts",
 		"sync:article-data": "bun run scripts/sync-article-data.ts",
