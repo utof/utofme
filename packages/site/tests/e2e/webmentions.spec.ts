@@ -8,8 +8,9 @@ test("/garden/welcome/ shows webmentions when fixture present", async ({ page })
 	await page.goto("/garden/welcome/");
 	const aside = page.locator("aside.webmentions");
 	await expect(aside).toBeVisible();
-	// Avatar grid (likes / reposts)
-	await expect(aside.locator(".webmention-avatar").first()).toBeVisible();
+	// Avatar grid (likes / reposts). Attached, not visible: the fixture avatar URL is
+	// unreachable, and a failed avatar hides itself (the author name still shows).
+	await expect(aside.locator(".webmention-avatar").first()).toBeAttached();
 	// Reply h-cite
 	await expect(aside.locator(".h-cite").first()).toBeVisible();
 	// Axe clean
