@@ -1,13 +1,26 @@
 ---
 /**
- * EloBlock.astro — MDX-facing block for figure F3 (Elo over training, with its uncertainty).
+ * EloBlock.astro — MDX-facing block of figure F3 (Elo over training, with its uncertainty).
  *
- * Why: stub from the layout lane so every later lane has a lab page and an MDX
- * entry point; the owning figure lane replaces the placeholder with the keyframe
- * and the `client:visible` island.
+ * Imports the dataset twice, statically (parsed JSON for the keyframe, hashed URL for the
+ * island). Below the island, always visible and static: the "After block 28 the game changed"
+ * strip and the 3v3 panel with its own axis; the full data table sits in `<details>`.
  *
- * @see packages/specs/specs/10-tactical-arena-article.md § Figures: common contract
+ * Why: ADR 0054 keeps data out of the page; the island gets a URL, the shape and one label id
+ * (props far below 2 KB, AC16.3). The strip and the panel are plain markup so the extras never
+ * shift the layout on hydration.
+ *
+ * @see packages/specs/specs/10-tactical-arena-article.md § P10-7
+ * @see packages/specs/adrs/0054-article-data-whitelist-projections.md
  */
+import rawData from "../../data/article/elo.json";
+import url from "../../data/article/elo.json?url&no-inline";
+import { dataset } from "../../lib/article-data/elo";
+import { shapeOf } from "../../lib/article-data/types";
+import { afterRows, MAP_SETS, panelSvg, plotPoints, tableRows } from "../../lib/figures/elo-chart";
+import { PANEL } from "../../lib/figures/elo-chart";
+import Elo from "./Elo.svelte";
+import EloKeyframe from "./EloKeyframe.astro";
 import Figure from "./Figure.astro";
 
 /** Props for EloBlock. */
@@ -17,10 +30,129 @@ export interface Props {
 }
 
 const { number } = Astro.props;
+// Why: parse once on the server so a hand-edited file fails the build (Zod never reaches the client).
+const data = dataset.projected.parse(rawData);
+const after = afterRows(data);
+const panel = panelSvg(data);
+const sets = MAP_SETS.map((m) => ({
+	...m,
+	rows: tableRows(plotPoints(data, m.id)),
+}));
 ---
 
-<Figure id="f3" number={number} width="wide" aspect="16 / 9" minBlock="18rem">
-	<p data-stub>Elo over training, with its uncertainty (placeholder)</p>
+<Figure id="f3" number={number} width="wide">
+	<Elo
+		client:visible={{ rootMargin: "200px 0px" }}
+		src={url}
+		shape={shapeOf(dataset)}
+		labelId="f3-cap"
+	>
+		<EloKeyframe data={data} />
+	</Elo>
+	<div class="el-extras">
+		<section class="el-after" aria-labelledby="el-after-h">
+			<h3 id="el-after-h">After block 28 the game changed</h3>
+			<p class="el-hint">Each number is measured in its own game, not on the scale above.</p>
+			<ul>
+				{after.map((r) => (
+					<li>
+						<strong>{r.label}:</strong> {r.text}
+					</li>
+				))}
+			</ul>
+		</section>
+		<section class="el-panel" aria-labelledby="el-panel-h">
+			<h3 id="el-panel-h">3v3 era (different game; not on this scale)</h3>
+			<svg
+				viewBox={`0 0 ${PANEL.w} ${PANEL.h}`}
+				role="img"
+				aria-label={panel.summary}
+				set:html={panel.markup}
+			/>
+		</section>
+	</div>
 	<slot name="caption" slot="caption" />
 	<slot name="try" slot="try" />
+	<Fragment slot="details">
+		<p>
+			Elo over the agent at block 2, from round-robin tournaments. The interval is the tournament's
+			own 90 % noise, nothing else; chained points are sums of two readouts and have none. GPU-hours
+			are approximate: (block − 2) × 2 seeds × 32 minutes.
+		</p>
+		{sets.map((s) => (
+			<>
+				<h4>{s.label}</h4>
+				<table class="el-table">
+					<thead>
+						<tr>
+							<th scope="col">Block</th>
+							<th scope="col">GPU-hours</th>
+							<th scope="col">Elo over block 2</th>
+							<th scope="col">90 % interval</th>
+						</tr>
+					</thead>
+					<tbody>
+						{s.rows.map((r) => (
+							<tr>
+								<th scope="row">{r.block}</th>
+								<td>{r.gpu}</td>
+								<td>{r.elo}</td>
+								<td>{r.interval}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</>
+		))}
+	</Fragment>
 </Figure>
+
+<style>
+	.el-extras {
+		display: grid;
+		gap: var(--space-4);
+		grid-template-columns: minmax(0, 1fr);
+		margin-block-start: var(--space-4);
+		font-size: var(--font-size-ui);
+		color: var(--color-text-body);
+	}
+	@media (min-width: 701px) {
+		.el-extras {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+		}
+	}
+	h3 {
+		margin: 0 0 var(--space-1);
+		font-size: var(--font-size-2);
+		color: var(--color-text);
+	}
+	.el-hint {
+		margin: 0 0 var(--space-2);
+		color: var(--color-text-muted);
+	}
+	ul {
+		margin: 0;
+		padding-inline-start: var(--space-4);
+	}
+	.el-panel svg {
+		display: block;
+		inline-size: 100%;
+		block-size: auto;
+	}
+	.el-table {
+		border-collapse: collapse;
+		font-size: var(--font-size-ui);
+		font-variant-numeric: tabular-nums;
+		margin-block-end: var(--space-3);
+	}
+	.el-table th,
+	.el-table td {
+		padding: 2px var(--space-3);
+		text-align: start;
+		border-block-end: 1px solid var(--color-border);
+	}
+	h4 {
+		margin: var(--space-3) 0 var(--space-1);
+		font-size: var(--font-size-ui);
+	}
+</style>
