@@ -63,6 +63,26 @@ interface Props {
 	wordmarkHeading?: boolean | undefined;
 	/** Absolute or site-relative `og:image`; defaults to the site card. */
 	ogImage?: string | undefined;
+	/**
+	 * Class on `<body>`.
+	 *
+	 * Why: a home layout scopes its own palette and fonts to the page (custom
+	 * properties on `body.<class>`) without touching the site tokens. Other slots a
+	 * layout may fill: `head` (extra `<head>` tags, e.g. its `<Font>`s), `header`
+	 * (replaces the shared `SiteHeader`) and `footer` (replaces `SlashFooter`).
+	 *
+	 * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+	 */
+	bodyClass?: string | undefined;
+	/**
+	 * Preload the mono face (default `true`).
+	 *
+	 * Why: a page whose first viewport shows no mono text (the catalogue home
+	 * brings its own two faces) should not spend a high-priority request on it.
+	 *
+	 * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+	 */
+	preloadMono?: boolean | undefined;
 }
 
 const {
@@ -72,6 +92,8 @@ const {
 	noindex = false,
 	wordmarkHeading = false,
 	ogImage,
+	bodyClass,
+	preloadMono = true,
 } = Astro.props;
 ---
 
@@ -105,7 +127,8 @@ const {
 		     See: https://docs.astro.build/en/guides/fonts/ -->
 		<Font cssVariable="--font-serif" />
 		<Font cssVariable="--font-sans" />
-		<Font cssVariable="--font-mono" preload />
+		<Font cssVariable="--font-mono" preload={preloadMono} />
+		<slot name="head" />
 		<!-- Why: ClientRouter enables site-wide SPA navigation (view transitions).
 		     transition:persist on CommandPalette retains the Svelte island across
 		     route swaps. Verified API: import { ClientRouter } from "astro:transitions".
@@ -113,15 +136,19 @@ const {
 		     @see packages/specs/plans/02-interactivity.md § Task 12 -->
 		<ClientRouter />
 	</head>
-	<body data-minimal={minimal ? "" : undefined}>
+	<body class={bodyClass} data-minimal={minimal ? "" : undefined}>
 		<!-- Why: one header on every route (P-05/P-06): wordmark left, page controls right.
 		     The sound toggle joins the pages' own controls (Pause motion) in that slot, so both
 		     controls share one place and one look. Why Sound first: Pause motion then keeps the
 		     right edge on every route that has it instead of shifting when Sound is added (M3-09). -->
-		<SiteHeader heading={wordmarkHeading}>
-			{!minimal && <SoundToggle />}
-			<slot name="controls" />
-		</SiteHeader>
+		{Astro.slots.has("header") ? (
+			<slot name="header" />
+		) : (
+			<SiteHeader heading={wordmarkHeading}>
+				{!minimal && <SoundToggle />}
+				<slot name="controls" />
+			</SiteHeader>
+		)}
 		<slot />
 		<!-- Why: HCard placed before SlashFooter so the indieweb identity block
 		     appears above the navigation links — keeps microformat-scoped markup
@@ -141,7 +168,7 @@ const {
 			</div>
 		)}
 		{!LIGHT_ONLY && <ThemeToggle />}
-		<SlashFooter />
+		{Astro.slots.has("footer") ? <slot name="footer" /> : <SlashFooter />}
 		<!-- Why: CommandPalette mounted here (not per-page) so it is available on
 		     every route without re-mounting. transition:persist retains the Svelte
 		     island (DOM + state) across Astro ClientRouter SPA navigations once

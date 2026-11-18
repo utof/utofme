@@ -1,0 +1,58 @@
+---
+/**
+ * ObjectCanvas — the placeholder canvas of a project's spinning 3D object.
+ *
+ * Why: decorative (`aria-hidden`); the shared loop in
+ * `src/lib/home/objects/stage.ts` finds it by `data-home-obj` and draws the
+ * object named by `data-obj` (or the generic one for `data-seed`). The buffer is
+ * a third to a half of the CSS size and scaled up pixelated: the low-res look.
+ *
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ */
+interface Props {
+	/** Key of a named object; `undefined` → generic. */
+	icon: string | undefined;
+	seed: number;
+	/** `sm` 64 px (rows), `md` 120 px (highlights), `lg` 162 px (hero), `xl` 168 px (open row). */
+	size: "sm" | "md" | "lg" | "xl";
+	/** The big object of an open row: always lively, bounces when the row opens. */
+	big?: boolean | undefined;
+	class?: string | undefined;
+}
+const { icon, seed, size, big = false, class: className } = Astro.props;
+const BUFFER = { sm: 32, md: 40, lg: 54, xl: 56 } as const;
+const px = BUFFER[size];
+---
+
+<canvas
+	class:list={["ct-obj", `ct-obj--${size}`, className]}
+	data-home-obj
+	data-obj={icon}
+	data-seed={seed}
+	data-big={big ? "" : undefined}
+	width={px}
+	height={px}
+	aria-hidden="true"
+></canvas>
+
+<style>
+	.ct-obj {
+		display: block;
+		flex-shrink: 0;
+		image-rendering: pixelated;
+		inline-size: var(--ct-obj-size);
+		block-size: var(--ct-obj-size);
+	}
+	.ct-obj--sm {
+		--ct-obj-size: var(--ct-obj-sm);
+	}
+	.ct-obj--md {
+		--ct-obj-size: var(--ct-obj-md);
+	}
+	.ct-obj--lg {
+		--ct-obj-size: var(--ct-obj-lg);
+	}
+	.ct-obj--xl {
+		--ct-obj-size: var(--ct-obj-xl);
+	}
+</style>

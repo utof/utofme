@@ -1,8 +1,8 @@
 /**
  * Card → banner morph (spec P9-9), e2e.
  *
- * Why: the home cards carry their own `data-work-slug` / `data-vt-frame` / `data-cap`
- * hooks (Card.astro), so the router → hero-morph wiring is exercised end to end
+ * Why: the home's featured cards carry their own `data-work-slug` / `data-vt-frame`
+ * hooks (catalogue layout, ADR 0061), so the router → hero-morph wiring is exercised end to end
  * against the real markup. `ready` is captured from
  * `astro:before-swap`'s `viewTransition` (review finding 10):
  * `document.activeViewTransition` is still null at `astro:after-preparation`.
@@ -11,7 +11,9 @@
  */
 import { expect, type Page, test } from "@playwright/test";
 
-const SLUG = "cover-fixture";
+// Why a real work: the morph starts from a featured card (hero / highlighted), and the
+// curation features real works only; fixtures are listed as rows (ADR 0061).
+const SLUG = "linsae";
 
 interface SnapProbe {
 	oldClip: string;

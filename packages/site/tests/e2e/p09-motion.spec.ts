@@ -20,7 +20,7 @@ test("toggle pauses, persists across reload and a router navigation", async ({ p
 		"true",
 	);
 	// Client-side navigation away and back keeps the attribute (router drops <html> attrs).
-	await page.locator("a.card--media[href^='/works/']").first().click();
+	await page.locator("[data-test='home-hero'] a[href^='/works/']").first().click();
 	await page.waitForURL(/\/works\//);
 	await expect(page.locator("html")).toHaveAttribute("data-motion", "paused");
 	await page.goBack();

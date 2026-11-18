@@ -26,20 +26,20 @@ import { expect, test } from "@playwright/test";
 // ---------------------------------------------------------------------------
 
 /**
- * Count `<li>` items in the works-grid that are not hidden.
+ * Count project items (`[data-home-item]`: featured cards and topic rows) that are not hidden.
  *
- * Why: the inline filter script sets `hidden` on `<li>` wrappers; counting
- * non-hidden lis is simpler than counting visible descendants.
+ * Why: the inline filter script sets `hidden` on the `<li>` wrappers; counting
+ * non-hidden items is simpler than counting visible descendants.
  *
  * @see packages/specs/plans/02-interactivity.md § Task 5
  */
 async function visibleCardCount(page: import("@playwright/test").Page): Promise<number> {
-	return page.evaluate(() => {
-		const grid = document.querySelector('[data-test="works-grid"]');
-		if (!grid) return 0;
-		const items = Array.from(grid.querySelectorAll("li"));
-		return items.filter((li) => !li.hidden).length;
-	});
+	return page.evaluate(
+		() =>
+			Array.from(document.querySelectorAll<HTMLElement>("[data-home-item]")).filter(
+				(li) => !li.hidden,
+			).length,
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +71,10 @@ for (const route of ["/"] as const) {
 			// No user interaction — just check the DOM immediately after load
 			const count = await visibleCardCount(page);
 			expect(count).toBe(1);
+			// The one match is a row in a topic list; sections left empty are hidden with their items.
+			await expect(page.locator('[data-test="home-row"]:not([hidden])')).toHaveCount(1);
+			await expect(page.locator('[data-test="home-featured"]')).toBeHidden();
+			await expect(page.locator('[data-test="home-topic"]:not([hidden])')).toHaveCount(1);
 		});
 	});
 
@@ -100,7 +104,7 @@ for (const route of ["/"] as const) {
 			// are the 8th and 9th; code-1 (Task 8 fixture) is the 10th;
 			// writing-mdx-island (Task 9 fixture) is the 11th;
 			// code-sandbox (Task 10 fixture) is the 12th.
-			const grid = page.locator('[data-test="works-grid"] > li');
+			const grid = page.locator('[data-test="home-row"]');
 			const count = await grid.count();
 			// Why >=: the build includes the real works next to the 12 fixture cards.
 			expect(count).toBeGreaterThanOrEqual(12);

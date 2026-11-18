@@ -1,0 +1,300 @@
+---
+/**
+ * CatalogueHome — home layout "X · Catalogue": a sticky header with jump links,
+ * a featured block (one hero, a grid of highlights) and one dense list per topic.
+ *
+ * Why: a home layout is a folder under `src/components/home/` whose root
+ * component takes the `HomeModel` and renders the whole page through
+ * `_BaseLayout`. Every colour, font and size of the design is a custom property
+ * on `body.ct-home` below, so the look is changed in one block.
+ *
+ * Kept from the previous home: the "Pause motion" control, the `/?type=&tag=`
+ * deep-link filter and the flag-gated `?dither` / `?mosh` hover effects (they
+ * bind to `.card` elements inside `[data-test="works-grid"]`, the featured grid).
+ *
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ * @see packages/specs/adrs/0040-light-only-masonry-home.md
+ */
+import { Font } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+import BaseLayout from "../../../layouts/_BaseLayout.astro";
+import type { HomeModel } from "../../../lib/home/model";
+import Footer from "./Footer.astro";
+import Header from "./Header.astro";
+import Hero from "./Hero.astro";
+import HighlightCard from "./HighlightCard.astro";
+import TopicSection from "./TopicSection.astro";
+
+interface Props {
+	model: HomeModel<CollectionEntry<"works">>;
+}
+const { model } = Astro.props;
+
+/**
+ * Highlights whose cover loads eagerly, next to the hero (4 eager covers in all,
+ * the `eagerCardCount` of `route-budgets.config.ts`).
+ */
+const EAGER_HIGHLIGHTS = 3;
+---
+
+<BaseLayout title="utofme" minimal bodyClass="ct-home" preloadMono={false}>
+	<Fragment slot="head">
+		<Font cssVariable="--font-home-display" preload />
+		<Font cssVariable="--font-home-pixel" preload />
+	</Fragment>
+	<Header slot="header" model={model} />
+	<main class="ct ct-wrap" data-home-catalogue>
+		{model.counts.featured > 0 && (
+			<section
+				class="ct-featured"
+				id="featured"
+				aria-labelledby="featured-h"
+				data-test="home-featured"
+			>
+				<h2 class="ct-sr" id="featured-h">
+					{model.featuredLabel} projects
+				</h2>
+				<ul class="ct-featured__grid" data-test="works-grid">
+					{model.hero && <Hero item={model.hero} />}
+					{model.highlighted.map((item, i) => (
+						<HighlightCard item={item} eager={i < EAGER_HIGHLIGHTS} />
+					))}
+				</ul>
+			</section>
+		)}
+		{model.groups.map((group) => (
+			<TopicSection group={group} />
+		))}
+	</main>
+	<Footer slot="footer" />
+</BaseLayout>
+
+<!--
+  URL filter: `/?type=…&tag=…` hides the projects that do not match.
+
+  Why `is:inline`: runs synchronously before paint, so a deep link never flashes
+  the full list. It reads `data-type` / `data-tags` inside each `[data-home-item]`
+  and hides the item; a section whose items are all hidden is hidden too.
+
+  @see packages/specs/plans/02-interactivity.md § Task 5
+-->
+<script is:inline>
+	function applyHomeFilter() {
+		var params = new URLSearchParams(window.location.search);
+		var activeType = params.get("type");
+		var activeTags = params.getAll("tag");
+		var items = document.querySelectorAll("[data-home-item]");
+		for (var i = 0; i < items.length; i++) {
+			var item = items[i];
+			var el = item.querySelector("[data-type]");
+			if (!el) continue;
+			var tagsRaw = el.getAttribute("data-tags") || "";
+			var tags = tagsRaw ? tagsRaw.split(",") : [];
+			var typeMatch = !activeType || el.getAttribute("data-type") === activeType;
+			var tagMatch =
+				activeTags.length === 0 ||
+				activeTags.every(function (t) {
+					return tags.indexOf(t) !== -1;
+				});
+			item.hidden = !(typeMatch && tagMatch);
+		}
+		var sections = document.querySelectorAll("[data-home-catalogue] > section");
+		for (var s = 0; s < sections.length; s++) {
+			sections[s].hidden = !sections[s].querySelector("[data-home-item]:not([hidden])");
+		}
+	}
+	applyHomeFilter();
+	window.addEventListener("popstate", applyHomeFilter);
+	document.addEventListener("astro:page-load", applyHomeFilter);
+</script>
+
+<script>
+	import { browserStorage, resolveFlag } from "../../../lib/flags";
+	import { mountObjects } from "../../../lib/home/objects/stage";
+	import { bindExclusiveRows } from "../../../lib/home/rows";
+
+	let dispose: (() => void) | undefined;
+
+	function mount(): void {
+		dispose?.();
+		dispose = undefined;
+		if (!document.querySelector("[data-home-catalogue]")) return;
+		const stopObjects = mountObjects(document);
+		const stopRows = bindExclusiveRows(document);
+		dispose = () => {
+			stopObjects();
+			stopRows();
+		};
+	}
+
+	// Hover effects (experimental, off by default): `?dither` / `?mosh`, mutually
+	// exclusive, each a lazy chunk fetched only when its flag is on.
+	// @see packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
+	async function armHoverEffect(): Promise<void> {
+		const grid = document.querySelector<HTMLElement>('[data-test="works-grid"]');
+		if (!grid) return;
+		const search = window.location.search;
+		const storage = browserStorage();
+		// Resolve both so `?dither=0` / `?mosh=0` always update their persisted flags.
+		const mosh = resolveFlag("mosh", search, storage);
+		const dither = resolveFlag("dither", search, storage);
+		if (mosh) {
+			const { mountCardMosh } = await import("../../../lib/datamosh/card-mosh");
+			mountCardMosh(grid);
+		} else if (dither) {
+			const { mountCardDither } = await import("../../../lib/dither/card-dither");
+			mountCardDither(grid);
+		}
+	}
+
+	document.addEventListener("astro:page-load", () => {
+		mount();
+		void armHoverEffect();
+	});
+	document.addEventListener("astro:before-swap", () => {
+		dispose?.();
+		dispose = undefined;
+	});
+</script>
+
+<style is:global>
+	/* ─── Design tokens of the catalogue home. Change the look here. ───────── */
+	body.ct-home {
+		--ct-page: #e2e1dd;
+		--ct-ink: #24232a;
+		--ct-paper: #f3efe2;
+		--ct-muted: #56555e;
+		--ct-muted-strong: #3b3a42;
+		--ct-scanline: rgb(36 35 42 / 0.05);
+		--ct-scanline-step: 6px;
+
+		--ct-font-display: var(--font-home-display, "Arial Black", sans-serif);
+		--ct-font-pixel: var(--font-home-pixel, "Courier New", monospace);
+
+		--ct-frame-w: 3px;
+		--ct-max: 1360px;
+		--ct-gutter: clamp(16px, 3.2vw, 44px);
+		--ct-hero-ratio: 16 / 8.4;
+		--ct-highlight-ratio: 16 / 10;
+
+		--ct-obj-sm: 64px;
+		--ct-obj-md: 120px;
+		--ct-obj-lg: 162px;
+		--ct-obj-xl: 168px;
+
+		/* Sticky chrome: only the jump row on phones, both rows from 800 px. */
+		--ct-top-h: 54px;
+		--ct-jump-h: 48px;
+		--ct-sticky-h: var(--ct-jump-h);
+		--ct-anchor-offset: calc(var(--ct-sticky-h) + 8px);
+
+		color: var(--ct-ink);
+		background-color: var(--ct-page);
+		background-image: linear-gradient(var(--ct-scanline) 2px, transparent 2px);
+		background-size: 100% var(--ct-scanline-step);
+	}
+	@media (min-width: 800px) {
+		body.ct-home {
+			--ct-sticky-h: calc(var(--ct-top-h) + var(--ct-jump-h));
+		}
+	}
+	html:has(> body.ct-home) {
+		background-color: #e2e1dd;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		html:has(> body.ct-home):not([data-motion="paused"]) {
+			scroll-behavior: smooth;
+		}
+	}
+
+	/* ─── Shared rules of every catalogue part (`.ct` = header, jump row, main, footer). ─── */
+	.ct {
+		font-family: var(--ct-font-display);
+		color: var(--ct-ink);
+	}
+	.ct-wrap {
+		box-sizing: border-box;
+		inline-size: 100%;
+		max-inline-size: var(--ct-max);
+		margin-inline: auto;
+		padding-inline: var(--ct-gutter);
+	}
+	.ct ::selection {
+		background: var(--ct-ink);
+		color: var(--ct-paper);
+	}
+	.ct :focus-visible {
+		outline: 4px solid var(--ct-ink);
+		outline-offset: 2px;
+		box-shadow: none;
+	}
+	.ct a {
+		color: var(--ct-ink);
+		text-decoration: none;
+	}
+	.ct :is(h1, h2, h3) {
+		font-family: var(--ct-font-display);
+		font-weight: 400;
+		letter-spacing: normal;
+		color: inherit;
+	}
+	.ct .ct-n {
+		color: var(--ct-muted);
+	}
+	.ct-sr {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	/* ─── Main column and the featured grid. ─── */
+	main.ct {
+		padding-block-end: 56px;
+	}
+	.ct-featured {
+		scroll-margin-block-start: var(--ct-anchor-offset);
+		padding-block: 34px 46px;
+	}
+	.ct-featured__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr));
+		gap: 34px 24px;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.ct-featured__grid > li {
+		min-inline-size: 0;
+		/* Containing block of the flagged hover-effect canvas. */
+		position: relative;
+	}
+	.ct-featured__grid .ct-feat {
+		transition: transform 0.2s steps(2);
+	}
+	.ct-featured__grid .ct-feat img {
+		transition: transform 0.5s steps(5);
+	}
+	@media (hover: hover) {
+		.ct-featured__grid a.ct-feat:hover {
+			transform: translateY(-6px);
+		}
+		.ct-featured__grid a.ct-feat:hover img {
+			transform: scale(1.04);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.ct *,
+		.ct *::before,
+		.ct *::after {
+			transition-duration: 0.01ms !important;
+		}
+	}
+	html[data-motion="paused"] .ct-featured__grid .ct-feat,
+	html[data-motion="paused"] .ct-featured__grid .ct-feat img {
+		transition: none;
+		transform: none;
+	}
+</style>

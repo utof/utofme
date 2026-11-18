@@ -17,6 +17,8 @@
 import { defineCollection, type SchemaContext } from "astro:content";
 import { file, glob } from "astro/loaders";
 import { z } from "astro/zod";
+import { TOPIC_IDS } from "./data/topics";
+import { isObjectKey, OBJECT_KEYS } from "./lib/home/objects/registry";
 
 /** Kebab-case key into `src/data/loops.json` (P9-4). Why: loop slugs double as file names. */
 const loopSlug = z
@@ -79,6 +81,22 @@ export function worksSchema({ image }: SchemaContext) {
 			.max(5)
 			.default([]),
 		fixture: z.boolean().default(false),
+		/**
+		 * Home-page topic: an id from `src/data/topics.ts`. Missing → the "Other" group.
+		 * Why: the catalogue home groups projects by topic (ADR 0061).
+		 */
+		topic: z.enum(TOPIC_IDS).optional(),
+		/**
+		 * Home-page 3D object: a key of `src/lib/home/objects/named.ts`. Missing → a
+		 * generic object seeded from the slug.
+		 * Why: a typo must fail the build instead of silently showing the fallback.
+		 */
+		icon: z
+			.string()
+			.refine(isObjectKey, {
+				error: `icon must be one of: ${OBJECT_KEYS.join(", ")} (src/lib/home/objects/named.ts)`,
+			})
+			.optional(),
 		/**
 		 * Research-article variant (P10-1). Presence selects `_ArticleLayout`.
 		 * Why: the article page needs its own headline/dek/contents list without a second collection.

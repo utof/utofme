@@ -46,6 +46,8 @@ Thumbs.db
 !/packages/specs/**/*.md
 !/packages/site/src/content/works/**/*.md
 !/packages/site/tests/fixtures/**/*.md
+# Exception: the how-to for the home page lives next to the code it describes (ADR 0061).
+!/packages/site/src/components/home/README.md
 
 # Local-only scratch (research, proposals, cloud briefs/logs)
 /_local/

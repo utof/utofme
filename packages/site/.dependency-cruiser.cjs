@@ -51,7 +51,15 @@ module.exports = {
 			// them in. Svelte islands avoid false-positives by importing svelte/internal/*
 			// (not excluded), so they're non-orphan by graph structure. TSX islands must
 			// be exempted explicitly. See packages/specs/plans/03-content-pipeline.md § Task 10.
-			from: { orphan: true, pathNot: "^src/(env\\.d\\.ts|lib/)|\\.(tsx)$" },
+			//
+			// Why: src/data/*.ts (home curation) and src/components/**/*.ts (a component folder's
+			// link lists) are imported only from .astro files, which depcruise cannot parse, so
+			// they look like orphans. knip does follow .astro imports and still flags them when
+			// nothing uses them. See packages/specs/adrs/0061-catalogue-home-curated-model.md.
+			from: {
+				orphan: true,
+				pathNot: "^src/(env\\.d\\.ts|lib/|data/|components/.*\\.ts$)|\\.(tsx)$",
+			},
 			to: {},
 		},
 		// Why: warn (not error) — Node deprecates these on a slow timeline; warning

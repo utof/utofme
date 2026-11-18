@@ -65,7 +65,7 @@ test("cursor: no JS downloaded on coarse pointer", async ({ page }) => {
 // page that still mounts it. The home gets its own negative case below.
 const SOUND_ROUTE = "/now/";
 
-test("sound: the minimal masonry home does not mount the toggle", async ({ page }) => {
+test("sound: the minimal home does not mount the toggle", async ({ page }) => {
 	// @see packages/specs/adrs/0040-light-only-masonry-home.md
 	await page.goto("/");
 	await expect(page.locator("[data-sound-toggle]")).toHaveCount(0);
@@ -284,7 +284,7 @@ test("konami: dispatching the canonical sequence toggles [data-konami]", async (
  * @see packages/specs/specs/07-atmosphere.md § Success criteria #13
  * @see packages/specs/adrs/0040-light-only-masonry-home.md
  */
-test("click counter: the masonry home does not mount the island", async ({ page }) => {
+test("click counter: the home does not mount the island", async ({ page }) => {
 	await page.goto("/");
 	await expect(page.locator("h1")).toBeVisible();
 	await expect(page.locator(".click-zone")).toHaveCount(0);

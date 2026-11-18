@@ -107,16 +107,24 @@ test("palette backdrop fades in instead of popping (M3-13)", async ({ browser })
 	await ctx.close();
 });
 
-test("Pause motion keeps its x position on / and a project page (M3-09)", async ({ browser }) => {
+// Why per page: the catalogue home has its own, wider column (ADR 0061), so the toggle no
+// longer shares one x with project pages; on each page it ends the header's column instead.
+test("Pause motion ends the header column on / and a project page (M3-09)", async ({ browser }) => {
 	const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 	const page = await ctx.newPage();
-	const xs: number[] = [];
 	for (const path of ["/", "/works/enth/"]) {
 		await page.goto(path);
-		const box = await page.locator("[data-motion-toggle]").boundingBox();
-		if (!box) throw new Error("no toggle");
-		xs.push(box.x + box.width);
+		const gap = await page.evaluate(() => {
+			const toggle = document.querySelector("[data-motion-toggle]");
+			const controls = document.querySelector("[data-test='site-controls']");
+			const row = controls?.parentElement;
+			if (!toggle || !row) return 999;
+			const pad = Number.parseFloat(getComputedStyle(row).paddingRight) || 0;
+			return Math.abs(
+				row.getBoundingClientRect().right - pad - toggle.getBoundingClientRect().right,
+			);
+		});
+		expect(gap, path).toBeLessThan(1.5);
 	}
-	expect(Math.abs((xs[0] ?? 0) - (xs[1] ?? 99))).toBeLessThan(1.5);
 	await ctx.close();
 });

@@ -1,0 +1,30 @@
+---
+/**
+ * HomeLayout — renders the home layout named in the curation file.
+ *
+ * Why: the registry of home layouts. A layout is a folder under
+ * `src/components/home/` whose root component takes `{ model }`; registering it
+ * is one line in `LAYOUTS`. `layout` is typed as a key of the registry, so a
+ * curation file that names a layout that does not exist fails `astro check`.
+ *
+ * @see packages/site/src/components/home/README.md
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ */
+import type { CollectionEntry } from "astro:content";
+import type { HomeModel } from "../../lib/home/model";
+import CatalogueHome from "./catalogue/CatalogueHome.astro";
+
+/** Layout key → root component. Add a layout by adding one line. */
+const LAYOUTS = {
+	catalogue: CatalogueHome,
+} as const;
+
+interface Props {
+	layout: keyof typeof LAYOUTS;
+	model: HomeModel<CollectionEntry<"works">>;
+}
+const { layout, model } = Astro.props;
+const Layout = LAYOUTS[layout];
+---
+
+<Layout model={model} />

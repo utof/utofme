@@ -219,5 +219,34 @@ export default defineConfig({
 			display: "optional",
 			fallbacks: ["monospace"],
 		},
+		// Catalogue home (ADR 0061): two self-hosted OFL faces, latin subset, emitted only on
+		// pages that render their <Font> (the home layout). `swap`: they carry the page's look,
+		// and Astro's metric-matched fallbacks keep the swap from shifting the layout.
+		// Local provider shape verified against astro@7.4.5 dist/assets/fonts/providers/local.d.ts.
+		// See: https://docs.astro.build/en/reference/font-provider-reference/#local
+		{
+			provider: fontProviders.local(),
+			name: "Michroma",
+			cssVariable: "--font-home-display",
+			options: {
+				variants: [
+					{ src: ["./src/assets/fonts/Michroma-400-latin.woff2"], weight: 400, style: "normal" },
+				],
+			},
+			display: "swap",
+			fallbacks: ["Arial Black", "sans-serif"],
+		},
+		{
+			provider: fontProviders.local(),
+			name: "Jersey 15",
+			cssVariable: "--font-home-pixel",
+			options: {
+				variants: [
+					{ src: ["./src/assets/fonts/Jersey15-400-latin.woff2"], weight: 400, style: "normal" },
+				],
+			},
+			display: "swap",
+			fallbacks: ["Courier New", "monospace"],
+		},
 	],
 });

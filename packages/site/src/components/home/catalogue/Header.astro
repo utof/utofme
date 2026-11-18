@@ -1,0 +1,182 @@
+---
+/**
+ * Header of the catalogue home: wordmark (the page's `<h1>`), site nav, the
+ * "Pause motion" control, and a second row of jump links with counts.
+ *
+ * Why two elements: on wide screens both rows stick to the top; on phones only
+ * the jump row sticks (as one scrolling line), so the header never covers a
+ * third of the screen. Section anchors clear it through `--ct-sticky-h`.
+ *
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ */
+import type { HomeModel } from "../../../lib/home/model";
+import MotionToggle from "../../MotionToggle.astro";
+import { HEADER_LINKS } from "./links";
+
+interface Props {
+	model: HomeModel;
+}
+const { model } = Astro.props;
+---
+
+<header class="ct ct-top site-header" data-test="site-header">
+	<div class="ct-wrap ct-top__row">
+		<h1 class="ct-mark">
+			<a href="/" data-test="wordmark">
+				utofme
+			</a>
+		</h1>
+		<nav class="ct-nav" aria-label="Site">
+			{HEADER_LINKS.map((l) => (
+				<a href={l.href}>{l.label}</a>
+			))}
+		</nav>
+		<div class="ct-controls" data-test="site-controls">
+			<MotionToggle />
+		</div>
+	</div>
+</header>
+<nav class="ct ct-jump" aria-label="Jump to a topic" data-test="home-jump">
+	<div class="ct-wrap ct-jump__row">
+		{model.counts.featured > 0 && (
+			<a href="#featured">
+				{model.featuredLabel} <span class="ct-n">{model.counts.featured}</span>
+			</a>
+		)}
+		{model.groups.map((g) => (
+			<a href={`#topic-${g.topic.id}`}>
+				{g.topic.label} <span class="ct-n">{g.count}</span>
+			</a>
+		))}
+	</div>
+</nav>
+
+<style>
+	.ct-top,
+	.ct-jump {
+		background: var(--ct-page);
+		z-index: 10;
+	}
+	.ct-top {
+		/* Same snapshot group as the shared header, so it never fades during a morph. */
+		view-transition-name: site-header;
+	}
+	.ct-top__row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0 24px;
+		padding-block-start: 10px;
+	}
+	.ct-mark {
+		margin: 0;
+		margin-inline-end: auto;
+		font-size: 30px;
+		line-height: 1;
+		letter-spacing: 0.02em;
+	}
+	.ct-mark a,
+	.ct-nav a,
+	.ct-jump a {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 44px;
+	}
+	.ct-nav {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 22px;
+		font-family: var(--ct-font-display);
+		font-size: 13px;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+	}
+	.ct-controls {
+		display: flex;
+		align-items: center;
+	}
+	/* The shared control, in this page's voice: square, ink frame, pixel face. */
+	.ct-controls :global(.site-ctl) {
+		block-size: 32px;
+		padding: 0 10px;
+		font-family: var(--ct-font-pixel);
+		font-size: 20px;
+		color: var(--ct-ink);
+		background: transparent;
+		border: 2px solid var(--ct-ink);
+		border-radius: 0;
+	}
+	.ct-controls :global(.site-ctl:hover) {
+		background: var(--ct-paper);
+		border-color: var(--ct-ink);
+	}
+
+	.ct-jump {
+		position: sticky;
+		inset-block-start: 0;
+		box-shadow: 0 2px 0 var(--ct-ink);
+	}
+	.ct-jump__row {
+		display: flex;
+		gap: 0 22px;
+		overflow-x: auto;
+		scrollbar-width: none;
+		white-space: nowrap;
+		font-family: var(--ct-font-pixel);
+		font-size: 24px;
+		line-height: 1;
+		block-size: var(--ct-jump-h);
+		align-items: center;
+	}
+	.ct-jump a {
+		flex-shrink: 0;
+		gap: 0.3em;
+		color: var(--ct-muted);
+	}
+
+	@media (hover: hover) {
+		.ct-nav a:hover,
+		.ct-jump a:hover {
+			color: var(--ct-ink);
+			text-decoration: underline;
+			text-decoration-thickness: 1px;
+			text-underline-offset: 5px;
+		}
+	}
+
+	/* Narrow: wordmark and control on one line, the nav below it. */
+	@media (max-width: 799.98px) {
+		.ct-top__row {
+			gap: 0 16px;
+		}
+		.ct-nav {
+			order: 3;
+			flex-basis: 100%;
+			gap: 0 18px;
+			font-size: 12px;
+		}
+	}
+
+	/* Wide: both rows stick. The top row has a fixed height so the jump row's offset is exact. */
+	@media (min-width: 800px) {
+		.ct-top {
+			position: sticky;
+			inset-block-start: 0;
+		}
+		.ct-top__row {
+			flex-wrap: nowrap;
+			block-size: var(--ct-top-h);
+			box-sizing: border-box;
+		}
+		.ct-nav {
+			flex-wrap: nowrap;
+		}
+		.ct-jump {
+			inset-block-start: var(--ct-top-h);
+		}
+		.ct-jump__row {
+			flex-wrap: wrap;
+			overflow: hidden;
+		}
+	}
+</style>

@@ -1,0 +1,105 @@
+---
+/**
+ * Media — a project's cover inside a fixed-aspect, clipped frame.
+ *
+ * Why: reuses the site's media pipeline unchanged (`LoopMedia` for covers with a
+ * loop, `CoverImage` for stills, the type thumb when there is no cover), so
+ * responsive AVIF/WebP, loop videos, the motion toggle and the budgets keep
+ * working. The clip carries `data-vt-frame` for the card → banner morph.
+ *
+ * @see packages/site/src/lib/vt/hero-morph.ts
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ */
+import type { CollectionEntry } from "astro:content";
+import { coverLoop } from "../../../lib/card-caption";
+import CoverImage from "../../CoverImage.astro";
+import LoopMedia from "../../LoopMedia.astro";
+import CodeThumb from "../../thumbs/CodeThumb.astro";
+import MathThumb from "../../thumbs/MathThumb.astro";
+import MusicThumb from "../../thumbs/MusicThumb.astro";
+import VideoThumb from "../../thumbs/VideoThumb.astro";
+import WritingThumb from "../../thumbs/WritingThumb.astro";
+
+interface Props {
+	entry: CollectionEntry<"works">;
+	/** `sizes` of the responsive image. */
+	sizes: string;
+	eager?: boolean | undefined;
+	/** The page's LCP image: at most one per page. */
+	priority?: boolean | undefined;
+	/** `hero` is wider (16 / 8.4) than a highlight (16 / 10). */
+	shape: "hero" | "highlight";
+}
+const { entry, sizes, eager = false, priority = false, shape } = Astro.props;
+
+const ThumbFor = {
+	code: CodeThumb,
+	video: VideoThumb,
+	music: MusicThumb,
+	math: MathThumb,
+	writing: WritingThumb,
+} as const;
+const Thumb = ThumbFor[entry.data.type];
+const cover = entry.data.cover;
+const loop = coverLoop(cover);
+---
+
+<div
+	class:list={["ct-clip", `ct-clip--${shape}`]}
+	data-vt-frame
+	style={cover ? `--focus:${cover.focus}%` : undefined}
+>
+	{cover && loop ? (
+		<LoopMedia
+			slug={loop}
+			size="card"
+			alt=""
+			sizes={sizes}
+			eager={eager || priority}
+			priority={priority}
+			persistId={`loop-${entry.id}`}
+		/>
+	) : cover ? (
+		<CoverImage src={cover.src} alt={cover.alt} sizes={sizes} eager={eager} priority={priority} />
+	) : (
+		<Thumb />
+	)}
+</div>
+
+<style>
+	.ct-clip {
+		position: relative;
+		display: block;
+		overflow: hidden;
+		aspect-ratio: var(--ct-highlight-ratio);
+		background: var(--ct-page);
+	}
+	.ct-clip--hero {
+		aspect-ratio: var(--ct-hero-ratio);
+	}
+	/* Why !important: CoverImage sets natural-aspect sizing inline, and LoopMedia its own
+	 * aspect ratio; here every cover fills the frame and is cropped at the cover's focus. */
+	.ct-clip :global(.loop-frame) {
+		position: absolute;
+		inset: 0;
+		block-size: 100%;
+		aspect-ratio: auto;
+	}
+	.ct-clip :global(picture) {
+		position: absolute;
+		inset: 0;
+		display: block;
+	}
+	.ct-clip :global(img),
+	.ct-clip :global(svg) {
+		position: absolute;
+		inset: 0;
+		display: block;
+		inline-size: 100% !important;
+		block-size: 100% !important;
+		max-inline-size: none !important;
+		max-block-size: none !important;
+		object-fit: cover;
+		object-position: 50% var(--focus, 50%);
+	}
+</style>

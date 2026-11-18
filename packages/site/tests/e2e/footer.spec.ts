@@ -7,7 +7,9 @@ import { expect, test } from "@playwright/test";
 
 // Why: trailing slash required — astro.config.mjs sets trailingSlash: "always";
 // without it the preview server returns 404 instead of the page.
-const ROUTES = ["/", "/now/", "/search/", "/works/code-2/"];
+// Why no "/": the catalogue home fills `_BaseLayout`'s footer slot with its own footer
+// (ADR 0061); `home-catalogue.spec.ts` covers it.
+const ROUTES = ["/now/", "/search/", "/works/code-2/"];
 
 for (const route of ROUTES) {
 	test(`footer renders on ${route}`, async ({ page }) => {

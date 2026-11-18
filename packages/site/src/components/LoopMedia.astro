@@ -60,6 +60,11 @@ export interface Props {
 	priority?: boolean | undefined;
 	persistId?: string | undefined;
 	class?: string | undefined;
+	/**
+	 * `sizes` of the poster, when the frame is not a masonry column or a banner.
+	 * Why: the catalogue home shows card loops in its own grid (ADR 0061).
+	 */
+	sizes?: string | undefined;
 	/** Test seam: manifest entry override. */
 	entry?: LoopEntryLike | undefined;
 	/** Test seam: poster override. */
@@ -74,6 +79,7 @@ const {
 	priority = false,
 	persistId,
 	class: className,
+	sizes: sizesProp,
 	entry: entryProp,
 	poster: posterProp,
 } = Astro.props;
@@ -110,11 +116,12 @@ const widths =
 // Why: a card fills one masonry column; a gallery figure is wider (up to ~half the project page), so it
 // keeps the looser hint.
 const sizes =
-	size === "banner"
+	sizesProp ??
+	(size === "banner"
 		? "(min-width: 1580px) 1340px, (min-width: 700px) 85vw, 100vw"
 		: size === "card"
 			? MASONRY_COLUMN_SIZES
-			: "(min-width: 1100px) 33vw, (min-width: 560px) 50vw, 100vw";
+			: "(min-width: 1100px) 33vw, (min-width: 560px) 50vw, 100vw");
 ---
 
 <div

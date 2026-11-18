@@ -17,10 +17,10 @@ test("home page loads with no Axe violations", async ({ page }) => {
 	expect(results.violations).toEqual([]);
 });
 
-// Why: the light-only masonry home renders no FilterBar (ADR 0040) and the /works/
-// index that mounted it was deleted, so only the negative case remains.
-// @see packages/specs/adrs/0040-light-only-masonry-home.md
-test("masonry home renders no FilterBar toolbar", async ({ page }) => {
+// Why: the home renders no FilterBar (ADR 0040, kept by the catalogue layout, ADR 0061) and
+// the /works/ index that mounted it was deleted, so only the negative case remains.
+// @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+test("home renders the wordmark as h1 and no FilterBar toolbar", async ({ page }) => {
 	await page.goto("/");
 	await expect(page.getByRole("heading", { level: 1, name: "utofme" })).toBeVisible();
 	await expect(page.getByRole("toolbar", { name: "filter" })).toHaveCount(0);
@@ -28,7 +28,7 @@ test("masonry home renders no FilterBar toolbar", async ({ page }) => {
 
 test("visual regression baseline /", async ({ page }) => {
 	await page.goto("/");
-	// Why: the masonry home's lazy covers change the layout until loaded.
+	// Why: lazy covers and the web fonts change the layout until loaded.
 	await waitForImagesSettled(page);
 	// Why: the chrome moved out of <main> into the shared site header; <main> is
 	// only the card grid, so a masked <main> shot guarded nothing and flaked.
