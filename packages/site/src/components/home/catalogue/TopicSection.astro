@@ -1,0 +1,55 @@
+---
+/**
+ * TopicSection — one topic: heading with its count and a dense grid of rows.
+ *
+ * Why: the section's id (`topic-<id>`) is the target of the header's jump link.
+ *
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ */
+import type { CollectionEntry } from "astro:content";
+import type { HomeGroup } from "../../../lib/home/model";
+import Row from "./Row.astro";
+
+interface Props {
+	group: HomeGroup<CollectionEntry<"works">>;
+}
+const { group } = Astro.props;
+const id = `topic-${group.topic.id}`;
+---
+
+<section class="ct-topic" id={id} aria-labelledby={`${id}-h`} data-test="home-topic">
+	<h2 id={`${id}-h`}>
+		{group.topic.label} <span class="ct-n">{group.count}</span>
+	</h2>
+	<ul class="ct-rows">
+		{group.items.map((item) => (
+			<Row item={item} />
+		))}
+	</ul>
+</section>
+
+<style>
+	.ct-topic {
+		scroll-margin-block-start: var(--ct-anchor-offset);
+		padding-block: 26px 30px;
+		border-block-start: 2px solid var(--ct-ink);
+	}
+	h2 {
+		margin: 0 0 14px;
+		font-size: 26px;
+		line-height: 1.15;
+	}
+	h2 .ct-n {
+		font-family: var(--ct-font-pixel);
+		color: var(--ct-muted);
+	}
+	.ct-rows {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(390px, 100%), 1fr));
+		grid-auto-flow: dense;
+		gap: 2px 20px;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+</style>

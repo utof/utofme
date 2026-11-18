@@ -1,0 +1,106 @@
+---
+/**
+ * Hero — the one featured project, full width: big cover left, text right, a
+ * large spinning object above the text.
+ *
+ * Why: the whole block is one link (or a plain block when the project has no
+ * page); the title is a real heading.
+ *
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ */
+import { itemLink, type WorkItem } from "./card-props";
+import Media from "./Media.astro";
+import ObjectCanvas from "./ObjectCanvas.astro";
+
+interface Props {
+	item: WorkItem;
+}
+const { item } = Astro.props;
+const link = itemLink(item);
+const Tag = link.href ? "a" : "div";
+const meta = [item.entry.data.article ? "Research article" : undefined, ...item.stack.slice(0, 3)]
+	.filter((s) => s !== undefined)
+	.join(" · ");
+---
+
+<li class="ct-hero" data-test="home-hero" data-home-item>
+	<Tag
+		class="card ct-feat"
+		href={link.href}
+		data-work-slug={item.slug}
+		data-obj-host
+		{...link.data}
+	>
+		<div class="ct-frame">
+			<Media
+				entry={item.entry}
+				shape="hero"
+				sizes="(min-width: 1360px) 760px, (min-width: 900px) 56vw, 100vw"
+				priority
+			/>
+		</div>
+		<div class="ct-hero__text">
+			<ObjectCanvas icon={item.icon} seed={item.seed} size="lg" class="ct-hero__obj" />
+			<p class="ct-kicker">
+				{item.topic.label} · <time datetime={item.dateIso}>{item.dateLabel}</time>
+			</p>
+			<h3 class="ct-hero__title">{item.title}</h3>
+			{item.lede && <p class="ct-hero__lede">{item.lede}</p>}
+			{meta && <p class="ct-hero__meta">{meta}</p>}
+		</div>
+	</Tag>
+</li>
+
+<style>
+	.ct-hero {
+		grid-column: 1 / -1;
+	}
+	.ct-feat {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 20px 36px;
+	}
+	.ct-frame {
+		flex: 1.5 1 420px;
+		min-inline-size: 0;
+		padding: 10px;
+		background: var(--ct-paper);
+		box-shadow: 0 0 0 var(--ct-frame-w) var(--ct-ink);
+	}
+	.ct-hero__text {
+		flex: 1 1 340px;
+		min-inline-size: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+	}
+	.ct-hero__text :global(.ct-hero__obj) {
+		margin: -10px 0 -14px -12px;
+	}
+	p {
+		margin: 0;
+		font-family: var(--ct-font-pixel);
+		line-height: 1;
+	}
+	.ct-kicker {
+		font-size: 24px;
+		color: var(--ct-muted);
+	}
+	.ct-hero__title {
+		margin: 0;
+		font-size: clamp(28px, 3vw, 40px);
+		line-height: 1.1;
+	}
+	.ct-hero__lede {
+		max-inline-size: 34ch;
+		font-size: 30px;
+		text-wrap: pretty;
+	}
+	.ct-hero__meta {
+		font-size: 22px;
+		line-height: 1.1;
+		color: var(--ct-muted);
+	}
+</style>

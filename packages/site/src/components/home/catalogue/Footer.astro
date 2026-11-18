@@ -1,0 +1,71 @@
+---
+/**
+ * Footer of the catalogue home: copyright and a short row of links.
+ *
+ * Why: replaces the shared `SlashFooter` on `/` only (the `footer` slot of
+ * `_BaseLayout`), in the catalogue's own type and colours.
+ *
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ */
+import { FOOTER_LINKS } from "./links";
+
+const year = new Date().getFullYear();
+---
+
+<footer class="ct ct-foot" aria-label="Site footer">
+	<div class="ct-wrap ct-foot__row">
+		<p>© {year} utof</p>
+		<nav aria-label="More pages">
+			<ul>
+				{FOOTER_LINKS.map((l) => (
+					<li>
+						<a href={l.href}>{l.label}</a>
+					</li>
+				))}
+			</ul>
+		</nav>
+	</div>
+</footer>
+
+<style>
+	.ct-foot {
+		border-block-start: 2px solid var(--ct-ink);
+		font-family: var(--ct-font-pixel);
+		font-size: 23px;
+		line-height: 1;
+		color: var(--ct-muted);
+	}
+	.ct-foot__row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px 24px;
+		padding-block: 18px 30px;
+	}
+	p {
+		margin: 0;
+	}
+	ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 22px;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	a {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 44px;
+		color: var(--ct-muted);
+	}
+	@media (hover: hover) {
+		a:hover {
+			color: var(--ct-ink);
+			text-decoration: underline;
+			text-decoration-thickness: 1px;
+			text-underline-offset: 5px;
+		}
+	}
+</style>

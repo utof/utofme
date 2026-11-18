@@ -1,0 +1,90 @@
+---
+/**
+ * HighlightCard — a highlighted project: framed cover with a small object
+ * overlapping its corner, then topic · date, title and one-line lede.
+ *
+ * Why: one link per card (or a plain block when the project has no page).
+ *
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ */
+import { itemLink, type WorkItem } from "./card-props";
+import Media from "./Media.astro";
+import ObjectCanvas from "./ObjectCanvas.astro";
+
+interface Props {
+	item: WorkItem;
+	/** Load the cover eagerly (cards in or near the first viewport). */
+	eager?: boolean | undefined;
+}
+const { item, eager = false } = Astro.props;
+const link = itemLink(item);
+const Tag = link.href ? "a" : "div";
+---
+
+<li data-test="home-highlighted" data-home-item>
+	<Tag
+		class="card ct-feat"
+		href={link.href}
+		data-work-slug={item.slug}
+		data-obj-host
+		{...link.data}
+	>
+		<div class="ct-frame">
+			<Media
+				entry={item.entry}
+				shape="highlight"
+				sizes="(min-width: 1260px) 420px, (min-width: 840px) 46vw, 100vw"
+				eager={eager}
+			/>
+			<ObjectCanvas icon={item.icon} seed={item.seed} size="md" class="ct-corner" />
+		</div>
+		<p class="ct-kicker">
+			{item.topic.label} · <time datetime={item.dateIso}>{item.dateLabel}</time>
+		</p>
+		<h3 class="ct-hl__title">{item.title}</h3>
+		{item.lede && <p class="ct-hl__lede">{item.lede}</p>}
+	</Tag>
+</li>
+
+<style>
+	.ct-feat {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.ct-frame {
+		position: relative;
+		padding: 8px;
+		background: var(--ct-paper);
+		box-shadow: 0 0 0 var(--ct-frame-w) var(--ct-ink);
+	}
+	.ct-frame :global(.ct-corner) {
+		position: absolute;
+		inset-inline-end: -14px;
+		inset-block-end: -34px;
+		/* Above the loop video and the flagged hover canvas. */
+		z-index: 2;
+		pointer-events: none;
+	}
+	p {
+		margin: 0;
+		font-family: var(--ct-font-pixel);
+		line-height: 1;
+	}
+	.ct-kicker {
+		margin-block-start: 8px;
+		/* Keeps the text clear of the object that hangs over the frame's corner. */
+		padding-inline-end: 100px;
+		font-size: 22px;
+		color: var(--ct-muted);
+	}
+	.ct-hl__title {
+		margin: 0;
+		font-size: 22px;
+		line-height: 1.15;
+	}
+	.ct-hl__lede {
+		font-size: 25px;
+		text-wrap: pretty;
+	}
+</style>

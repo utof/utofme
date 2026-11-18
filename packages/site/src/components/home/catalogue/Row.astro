@@ -1,0 +1,209 @@
+---
+/**
+ * Row — one project in a topic list: a compact line (object, title, lede,
+ * date) that expands across the grid to a big object, the lede and a button
+ * that opens the project.
+ *
+ * Why `<details name>`: native expand/collapse with Enter/Space, exclusive
+ * ("one open at a time") in current browsers, and fully usable with no JS: the
+ * project link is ordinary content of the open row. The summary holds no links,
+ * so nothing interactive is nested. `src/lib/home/rows.ts` covers browsers
+ * without `name`.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/details#name
+ * @see packages/specs/adrs/0061-catalogue-home-curated-model.md
+ */
+import { itemLink, type WorkItem } from "./card-props";
+import ObjectCanvas from "./ObjectCanvas.astro";
+
+interface Props {
+	item: WorkItem;
+}
+const { item } = Astro.props;
+const link = itemLink(item);
+const stack = item.stack.slice(0, 4).join(" · ");
+---
+
+<li class="ct-row" data-test="home-row" data-home-item>
+	<details name="home-row" data-home-row data-slug={item.slug} data-obj-host {...link.data}>
+		<summary>
+			<ObjectCanvas icon={item.icon} seed={item.seed} size="sm" class="ct-row__obj" />
+			<h3 class="ct-row__title">{item.title}</h3>
+			{item.lede && <span class="ct-row__line ct-row__line--closed">{item.lede}</span>}
+			<span class="ct-row__line ct-row__line--open">{stack || item.topic.label}</span>
+			<time class="ct-row__when" datetime={item.dateIso}>
+				{item.dateLabel}
+			</time>
+		</summary>
+		<div class="ct-more" data-test="home-row-more">
+			<ObjectCanvas icon={item.icon} seed={item.seed} size="xl" big />
+			<div class="ct-more__text">
+				{item.lede && <p>{item.lede}</p>}
+				{link.href && (
+					<a class="ct-open" href={link.href} data-test="home-row-open">
+						{link.cta}
+						<span class="ct-sr">: {item.title}</span>
+					</a>
+				)}
+			</div>
+		</div>
+	</details>
+</li>
+
+<style>
+	.ct-row {
+		min-inline-size: 0;
+	}
+	/* The open row takes the whole grid line (`grid-auto-flow: dense` refills the gap). */
+	.ct-row:has(details[open]) {
+		grid-column: 1 / -1;
+	}
+	details {
+		box-sizing: border-box;
+	}
+	details[open] {
+		background: var(--ct-paper);
+		box-shadow: inset 0 0 0 var(--ct-frame-w) var(--ct-ink);
+	}
+	summary {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-areas:
+			"obj title when"
+			"obj line when";
+		align-content: center;
+		align-items: center;
+		gap: 4px 12px;
+		min-block-size: 72px;
+		padding: 6px 10px 6px 0;
+		cursor: pointer;
+		list-style: none;
+		transition: background 0.15s steps(2);
+	}
+	summary::-webkit-details-marker {
+		display: none;
+	}
+	details[open] > summary {
+		padding-inline: 14px 16px;
+	}
+	summary :global(.ct-row__obj) {
+		grid-area: obj;
+	}
+	.ct-row__title {
+		grid-area: title;
+		align-self: end;
+		margin: 0;
+		font-size: 15px;
+		line-height: 1.2;
+		overflow-wrap: anywhere;
+	}
+	.ct-row__line {
+		grid-area: line;
+		align-self: start;
+		font-family: var(--ct-font-pixel);
+		font-size: 22px;
+		line-height: 1;
+		color: var(--ct-muted-strong);
+	}
+	/* A row without a lede centres its title. */
+	.ct-row__title:has(+ .ct-row__line--open) {
+		grid-row: 1 / -1;
+		align-self: center;
+	}
+	.ct-row__line--open,
+	details[open] .ct-row__line--closed {
+		display: none;
+	}
+	details[open] .ct-row__line--open {
+		display: block;
+	}
+	details[open] .ct-row__title:has(+ .ct-row__line--open) {
+		grid-row: auto;
+		align-self: end;
+	}
+	.ct-row__when {
+		grid-area: when;
+		font-family: var(--ct-font-pixel);
+		font-size: 21px;
+		line-height: 1;
+		color: var(--ct-muted);
+		text-align: end;
+		white-space: nowrap;
+	}
+
+	.ct-more {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 12px 28px;
+		padding: 6px 16px 16px 14px;
+		transform-origin: 50% 0;
+	}
+	details[open] > .ct-more {
+		animation: ct-open 0.4s steps(1);
+	}
+	.ct-more__text {
+		flex: 1 1 320px;
+		min-inline-size: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+	}
+	.ct-more p {
+		margin: 0;
+		max-inline-size: 44ch;
+		font-family: var(--ct-font-pixel);
+		font-size: 28px;
+		line-height: 1;
+		text-wrap: pretty;
+	}
+	.ct-open {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 50px;
+		padding: 0 22px;
+		background: var(--ct-ink);
+		color: var(--ct-paper);
+		font-family: var(--ct-font-display);
+		font-size: 13px;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		transition: transform 0.2s steps(2);
+	}
+
+	@keyframes ct-open {
+		0% {
+			transform: scale(1, 0.7);
+			opacity: 0.3;
+		}
+		40% {
+			transform: scale(1.02, 1.06);
+		}
+		70% {
+			transform: scale(0.995, 0.98);
+		}
+		100% {
+			transform: none;
+			opacity: 1;
+		}
+	}
+
+	@media (hover: hover) {
+		summary:hover {
+			background: var(--ct-paper);
+		}
+		.ct-open:hover {
+			color: var(--ct-paper);
+			transform: translate(3px, -3px);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		details[open] > .ct-more {
+			animation: none;
+		}
+	}
+	:global(html[data-motion="paused"]) details[open] > .ct-more {
+		animation: none;
+	}
+</style>
