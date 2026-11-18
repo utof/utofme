@@ -78,3 +78,7 @@ ships none of it.
 - https://docs.astro.build/en/reference/errors/unsupported-image-format/
 - https://docs.astro.build/en/reference/modules/astro-assets/ (`<Picture>`)
 - `node_modules/astro/dist/assets/services/sharp.js` (`pages: -1`, GIF→WebP)
+
+## Addendum: the masonry is no longer the home page (ADR 0061)
+
+The home page is now the catalogue layout of ADR 0061: a curated hero and highlights plus one list per topic. What stays from this ADR: the site is light-only, the home renders no FilterBar, and the flagged hover effects and the `/?type=&tag=` deep links still work on `/`. The masonry markup and `Card.astro` remain in use on `/lab/datamosh/` only.
