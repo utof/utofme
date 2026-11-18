@@ -73,3 +73,60 @@ export function browserStorage(): FlagStorage | null {
 		return null;
 	}
 }
+
+/**
+ * A persisted three-way switch: explicitly on, explicitly off, or never chosen.
+ *
+ * Why: {@link resolveFlag} cannot express "on unless switched off" (an absent key
+ * is off). A default-on feature needs the third answer so the caller can apply
+ * its own default.
+ *
+ * @see packages/specs/specs/11-pet.md § "Not annoying: the rules" (8)
+ */
+export type SwitchState = "on" | "off" | "default";
+
+/**
+ * Resolve a three-way switch from the URL query, falling back to persisted state.
+ *
+ * `?name=0` → `"off"` and persists `"0"`; `?name` or any other value → `"on"` and
+ * persists `"1"`; no param → the persisted answer, or `"default"` when there is
+ * none. Storage errors are swallowed, as in {@link resolveFlag}.
+ *
+ * Why: the pet is shown unless the visitor sent it home, and both answers persist.
+ *
+ * @see packages/specs/specs/11-pet.md § "Not annoying: the rules" (8)
+ */
+export function resolveSwitch(
+	name: string,
+	search: string,
+	storage: FlagStorage | null,
+): SwitchState {
+	const params = new URLSearchParams(search);
+	if (params.has(name)) {
+		const on = params.get(name) !== "0";
+		writeSwitch(name, on, storage);
+		return on ? "on" : "off";
+	}
+	try {
+		const stored = storage?.getItem(`${KEY_PREFIX}${name}`);
+		return stored === "1" ? "on" : stored === "0" ? "off" : "default";
+	} catch {
+		return "default";
+	}
+}
+
+/**
+ * Persist an explicit answer for a three-way switch (`"1"` on, `"0"` off).
+ *
+ * Why: the on-page controls ("Send home" / "Call back") write the same key the
+ * URL param does, so the two never disagree.
+ *
+ * @see packages/specs/specs/11-pet.md § "Not annoying: the rules" (8)
+ */
+export function writeSwitch(name: string, on: boolean, storage: FlagStorage | null): void {
+	try {
+		storage?.setItem(`${KEY_PREFIX}${name}`, on ? "1" : "0");
+	} catch {
+		// Storage unavailable: the answer holds for this page only.
+	}
+}
