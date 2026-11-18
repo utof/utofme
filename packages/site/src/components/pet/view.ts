@@ -71,6 +71,8 @@ const NEAR_PX = 240;
 /** How long the pet stays out over content after the visitor's last act, ms. */
 const LINGER_MS = 4000;
 const SAVE_DELAY_MS = 300;
+/** Spacing of the points sampled under the pet when it looks for a free place, px. */
+const PROBE_PX = 12;
 const HEART = [".#.#.", "#####", ".###.", "..#.."];
 const ZED = ["####", "..#.", ".#..", "####"];
 const ZED_SMALL = ["##.", ".#.", ".##"];
@@ -211,6 +213,7 @@ export function mountPet(root: HTMLElement, store: PetStore, hooks: PetHooks): (
 	let awakeBound = false;
 	let disposed = false;
 	let placed = false;
+	let dirty = false;
 
 	const isOpen = (): boolean => !panel.hasAttribute("hidden");
 	const tz = (): number => new Date().getTimezoneOffset();
@@ -324,11 +327,16 @@ export function mountPet(root: HTMLElement, store: PetStore, hooks: PetHooks): (
 	const flush = (): void => {
 		window.clearTimeout(saveTimer);
 		saveTimer = 0;
-		if (state && saveable) void store.save(state);
+		// Why only when dirty: a page that is merely left must not rewrite (or resurrect) the saved blob.
+		if (state && saveable && dirty) {
+			dirty = false;
+			void store.save(state);
+		}
 	};
 	const act = (action: PetAction): void => {
 		const now = Date.now();
 		state = reduce(current(now), action, now, tz());
+		dirty = true;
 		reflect();
 		window.clearTimeout(saveTimer);
 		saveTimer = window.setTimeout(flush, SAVE_DELAY_MS);
@@ -384,11 +392,16 @@ export function mountPet(root: HTMLElement, store: PetStore, hooks: PetHooks): (
 	});
 	const isFree = (box: Box): boolean => {
 		if (box.w <= 0) return true;
-		const xs = box.w < 12 ? [0.5] : [0.08, 0.5, 0.92];
-		for (const fy of [0.06, 0.35, 0.65, 0.94]) {
-			for (const fx of xs) {
-				const stack = document.elementsFromPoint(box.x + box.w * fx, box.y + box.h * fy);
-				const top = stack.find((node) => !root.contains(node));
+		// Why a grid of at most 12 px: nothing a visitor can read or press is narrower than that.
+		const along = (start: number, length: number): number[] => {
+			const steps = Math.max(1, Math.ceil(length / PROBE_PX));
+			return Array.from({ length: steps + 1 }, (_, i) =>
+				Math.min(start + length - 1, start + 1 + (i * (length - 2)) / steps),
+			);
+		};
+		for (const y of along(box.y, box.h)) {
+			for (const x of along(box.x, box.w)) {
+				const top = document.elementsFromPoint(x, y).find((node) => !root.contains(node));
 				if (!top || top === document.body || top === document.documentElement) continue;
 				if (top.closest(OBSTACLES) || hasOwnText(top)) return false;
 			}
@@ -724,11 +737,13 @@ export function mountPet(root: HTMLElement, store: PetStore, hooks: PetHooks): (
 	const keepSelection = (event: PointerEvent): void => {
 		event.preventDefault();
 	};
+	/** Esc, wherever the focus is: closes the panel, else sends a called-out pet back to the edge. */
 	const onKey = (event: KeyboardEvent): void => {
 		if (event.key !== "Escape") return;
 		if (isOpen()) {
+			const inside = pet.contains(document.activeElement);
 			togglePanel(false);
-			aboutBtn.focus();
+			if (inside) aboutBtn.focus();
 		} else if (summoned) {
 			summoned = false;
 			probe(true);
@@ -789,7 +804,7 @@ export function mountPet(root: HTMLElement, store: PetStore, hooks: PetHooks): (
 	feedBtn.addEventListener("click", onFeed);
 	moveBtn.addEventListener("click", onMoveSide);
 	nameInput.addEventListener("change", onRename);
-	pet.addEventListener("keydown", onKey);
+	document.addEventListener("keydown", onKey);
 	pet.addEventListener("focusin", onFocusIn);
 	document.addEventListener("pointerdown", onOutside);
 	window.addEventListener("scroll", onScroll, { passive: true });
@@ -842,6 +857,7 @@ export function mountPet(root: HTMLElement, store: PetStore, hooks: PetHooks): (
 		for (const timer of [moodTimer, saveTimer, lingerTimer, scrollTimer])
 			window.clearTimeout(timer);
 		document.removeEventListener("pointerdown", onOutside);
+		document.removeEventListener("keydown", onKey);
 		window.removeEventListener("scroll", onScroll);
 		window.removeEventListener("resize", onResize);
 		document.removeEventListener("astro:page-load", onPage);

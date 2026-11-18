@@ -5,7 +5,8 @@
  * Why: an empty container (the lazy pet module fills it), the "call back" tab
  * shown while the pet is at home, and the loader. `transition:persist` keeps the
  * container, and the pet in it, across ClientRouter navigations. The container
- * is the last element of `<body>`, so the pet is the last tab stop.
+ * is the last element of `<body>`, so the pet is the last tab stop, and an
+ * `<aside>` with a name, so its controls sit inside a landmark.
  *
  * @see packages/specs/specs/11-pet.md
  * @see packages/specs/adrs/0062-site-pet-design-rules.md
@@ -13,7 +14,7 @@
  */
 ---
 
-<div id="pet-root" hidden transition:persist="pet">
+<aside id="pet-root" aria-label="Site pet" hidden transition:persist="pet">
 	<button
 		type="button"
 		class="pet-door"
@@ -21,7 +22,7 @@
 		hidden
 		aria-label="Call the pet back"
 	></button>
-</div>
+</aside>
 
 <script>
 	import { bootPet } from "./boot";

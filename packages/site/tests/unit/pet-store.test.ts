@@ -343,6 +343,13 @@ describe("encryptedLocalStore", () => {
 		expect(e.vault.key).toBe(key);
 	});
 
+	it("a load waits for a save that is still being encrypted", async () => {
+		const e = env();
+		const store = encryptedLocalStore(e.local);
+		void store.save(PET);
+		expect(await store.load()).toEqual({ state: PET, status: "ok" });
+	});
+
 	it("two tabs share one key and see each other's saves", async () => {
 		const shared = env();
 		const listeners: (() => void)[] = [];

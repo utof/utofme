@@ -106,8 +106,8 @@ The pet eats letters from the page. The page's own text is never touched: only c
 These are requirements, each with a test.
 
 1. **Still until invited.** Asleep on load; no animation frame is requested while asleep, hidden, or when the tab is hidden.
-2. **It never covers text or controls.** At rest the pet is either fully **out** (only where the space under it is empty) or **tucked**: slid past the screen edge so that only a sliver that fits the page's gutter shows (a feeler and one eye, peeking). `lib/pet/dock.ts` picks the widest of {out, 40, 28, 16, 10 px} whose box holds no text and no control (sampled with `elementsFromPoint`).
-3. **It only retreats on its own.** After a scroll or a resize it may tuck further. It comes out only when the visitor clicks, taps or focuses it. Coming out over content is the visitor's act; it tucks back 4 s after they stop, at once on scroll, Esc or a click elsewhere.
+2. **It never covers text or controls.** At rest the pet is either fully **out** (only where the space under it is empty) or **tucked**: slid past the screen edge so that only a sliver that fits the page's gutter shows (a feeler and one eye, peeking). `lib/pet/dock.ts` picks the widest of {out, 40, 28, 16, 10 px} whose box holds no text and no control (sampled with `elementsFromPoint` on a 12 px grid).
+3. **It only retreats on its own.** After a scroll or a resize it may tuck further. It comes out only when the visitor clicks, taps or focuses it. Coming out over content is the visitor's act; it tucks back 4 s after they stop, at once on scroll, Esc (wherever the focus is) or a click elsewhere.
 4. **It never takes focus, opens anything, or speaks first.** No dialog, no prompt, no tooltip without a pointer on the pet. One `role="status"` line reports the result of a control the visitor just used (a bite: "Nib ate N, I, B. Alphabet 7 of 26."; a pat: "Nib purrs.", at most once per 3 s). Nothing else is announced: mood changes, sleep and waking are silent.
 5. **No guilt.** No stat falls with absence except the belly, and an empty belly changes nothing. The pet cannot die, leave, get sick or look sad. After three or more days away the first wake is a longer `happy`.
 6. **No sound** unless the site's sound toggle is on.
@@ -120,7 +120,7 @@ These are requirements, each with a test.
 
 ## Accessibility
 
-- The pet canvas is `aria-hidden`. Its controls are real buttons in one container at the **end of `<body>`**, after the footer, so the pet is the last tab stop, never between the reader and the content: the pet button (`aria-label="Nib, your pet. Pat"`), **About** (opens the panel, `aria-expanded`), **Send home**.
+- The pet canvas is `aria-hidden`. Its controls are real buttons in one container, an `<aside aria-label="Site pet">` (a landmark, so nothing sits outside the page's regions) at the **end of `<body>`**, after the footer, so the pet is the last tab stop, never between the reader and the content: the pet button (`aria-label="Nib, your pet. Pat"`), **About** (opens the panel, `aria-expanded`), **Send home**.
 - The panel is a plain disclosure, not a dialog: no focus trap, Esc closes it and returns focus to **About**. It holds the name field (labelled), bond, belly, the alphabet (a list with a text summary "7 of 26 letters"), **Feed**, **Move to the other side**.
 - Sending the pet home moves focus to the "Call the pet back" tab; calling it back moves focus to the pet button.
 - Targets are at least 24 × 24 px (WCAG 2.5.8); the pet itself is 72–96 px.
@@ -186,13 +186,15 @@ The view receives a `PetStore` and knows nothing else. `MemoryStore` (tests, fal
 ## Loading and budgets
 
 - **Everyone** gets `PetMount.astro`: an empty, `transition:persist`ed container, the home tab, and a loader that resolves the switch and, when the pet is out, imports the pet module on `requestIdleCallback` (so never in the first view's critical path). A pet at home, and an automated browser, import nothing. The pet's CSS ships inside the lazy module.
-- **Budgets** (gzip):
+- **Budgets** (gzip; measured 2026-11-19):
 
-| What | Limit | Checked by |
-| --- | ---: | --- |
-| Loader + mount markup, per page | 1 KB | `tests/unit/pet-mount.test.ts` on the built HTML/JS |
-| Pet lazy JS (all chunks only the pet loads) | 26 KB | `size-limit` entry `pet (lazy)` |
-| First-view JS of every route | unchanged limits | `check:budgets` |
+| What | Limit | Measured | Checked by |
+| --- | ---: | ---: | --- |
+| Loader chunk, on every page | 1 KB | 0.65 KB | `size-limit` entry `pet loader (every page)` |
+| Pet lazy chunk (view, rules, creature, `zod/mini`, store, CSS) | 20 KB | 17.4 KB | `size-limit` entry `pet (lazy)` |
+| First-view JS of every route | unchanged limits | +1.8 KB | `check:budgets` |
+
+The first-view cost is the loader (0.65 KB) plus two small shared chunks it imports and that only the home page loaded before: `lib/flags` (0.3 KB) and Vite's dynamic-import preload helper (0.9 KB). Platform first-view JS goes from 30.9 KB to 32.7 KB of 40 KB. The lazy chunk also pulls the shared renderer chunk (`lib/home/objects/{mesh,render}`, 1.6 KB), which the home page has already loaded.
 
 ## Deliverables and acceptance
 
@@ -220,7 +222,7 @@ The view receives a `PetStore` and knows nothing else. `MemoryStore` (tests, fal
 - AC2.8 e2e: keyboard only: Tab to the pet, Enter pats, About opens the panel, Feed feeds a title letter, Esc closes, Send home works and focus lands on the tab.
 - AC2.9 e2e: Axe on `/` and on the article with the pet out and the panel open: no violations.
 - AC2.10 e2e: at 390 px and at 1360 px on the article, the pet's visible box at rest intersects no paragraph, heading, list item or figure of the article body, at the top of the page and after scrolling to the middle.
-- AC2.11 e2e: state survives a reload (`data-pats` is the same after touching and reloading); the stored blob does not contain the pet's name in clear text.
+- AC2.11 e2e: state survives a reload (`data-pats` is the same after touching and reloading); the stored blob does not contain the pet's name in clear text; the key in IndexedDB is a non-extractable AES-GCM `CryptoKey`; a blob with one character changed is a clean reset; two tabs see each other's pats.
 - AC2.12 e2e: without `?pet=1` under automation there is no pet and no tab; with `navigator.webdriver` forced to `false` the pet is there by default.
 - AC2.13 e2e: the pet survives a ClientRouter navigation (same canvas node, same `data-pats`).
 

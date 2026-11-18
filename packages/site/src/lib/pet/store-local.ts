@@ -284,6 +284,8 @@ export function encryptedLocalStore(env: LocalEnv): PetStore {
 	return {
 		async load() {
 			if (!subtle || !random || !vault || !storage) return { state: null, status: "unavailable" };
+			// Why: a save still being encrypted must land before the blob is read back.
+			await queue;
 			let blob: string | null;
 			try {
 				blob = storage.getItem(BLOB_KEY);
