@@ -55,7 +55,7 @@ const loop = coverLoop(cover);
 			size="card"
 			alt=""
 			sizes={sizes}
-			eager={eager}
+			eager={eager || priority}
 			priority={priority}
 			persistId={`loop-${entry.id}`}
 		/>
