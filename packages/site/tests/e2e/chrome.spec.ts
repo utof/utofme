@@ -26,7 +26,9 @@ test.describe("desktop chrome", () => {
 
 	test("the wordmark has the same box on every route", async ({ page }) => {
 		const boxes: string[] = [];
-		for (const route of ROUTES) {
+		// Why no "/": the catalogue home brings its own header (ADR 0061); its wordmark is
+		// checked in `home-catalogue.spec.ts`.
+		for (const route of ROUTES.filter((r) => r !== "/")) {
 			await page.goto(route);
 			const b = await page
 				.locator('[data-test="site-header"] [data-test="wordmark"]')
@@ -179,7 +181,8 @@ test.describe("phone footer", () => {
 	test("card caption bar is about a third of the card; meta hidden; no reveal shift", async ({
 		page,
 	}) => {
-		await page.goto("/");
+		// Why /lab/datamosh/: the remaining page that renders the media card (ADR 0061).
+		await page.goto("/lab/datamosh/");
 		const m = await page
 			.locator(".card--media")
 			.first()

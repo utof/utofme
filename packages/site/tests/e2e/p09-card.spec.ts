@@ -1,82 +1,78 @@
-// P9-7 card treatment on `/`: dark-glass caption, hover "reveal" (no zoom),
-// keyboard parity, home LCP, Axe. Desktop (fine pointer) context: the default
-// Pixel 5 project is touch-only, where the reveal is intentionally static.
+// Featured cards on `/` (catalogue home): framed covers, stepped hover lift, keyboard
+// focus, home LCP, loop playback rules (P9-6/P9-7), Axe. Desktop (fine pointer) context:
+// the default Pixel 5 project is touch-only, where hover does not apply.
+// @see packages/specs/adrs/0061-catalogue-home-curated-model.md
 // @see packages/specs/specs/09-project-view.md § P9-7
 import AxeBuilder from "@axe-core/playwright";
 import { devices, expect, test } from "@playwright/test";
 
 test.use({ ...devices["Desktop Chrome"], channel: "chromium" });
 
-const capTransform = (card: import("@playwright/test").Locator) =>
-	card.locator(".cap").evaluate((el) => getComputedStyle(el).transform);
+const hero = (page: import("@playwright/test").Page) =>
+	page.locator('[data-test="home-hero"] a.card');
+const transformOf = (el: import("@playwright/test").Locator) =>
+	el.evaluate((e) => getComputedStyle(e).transform);
 
-test("caption bar is dark glass with all-white text and no radius", async ({ page }) => {
+test("featured covers sit in a paper frame with a hard 3 px ink edge", async ({ page }) => {
 	await page.goto("/");
-	const cap = page.locator(".card--media .cap").first();
-	const s = await cap.evaluate((el) => {
-		const c = getComputedStyle(el);
-		return { bg: c.backgroundColor, radius: c.borderRadius, blur: c.backdropFilter };
-	});
-	expect(s.bg).toBe("rgba(16, 16, 16, 0.62)");
-	expect(s.radius).toBe("0px");
-	expect(s.blur).toBe("none");
-	for (const sel of [".cap__t", ".cap__d", ".cap__m"]) {
-		const el = cap.locator(sel).first();
-		if (await el.count()) {
-			expect(await el.evaluate((e) => getComputedStyle(e).color)).toBe("rgb(255, 255, 255)");
-		}
+	const frames = page.locator('[data-test="works-grid"] .ct-frame');
+	expect(await frames.count()).toBeGreaterThanOrEqual(2);
+	for (const frame of [frames.first(), frames.nth(1)]) {
+		const s = await frame.evaluate((el) => {
+			const c = getComputedStyle(el);
+			return { bg: c.backgroundColor, shadow: c.boxShadow, radius: c.borderRadius };
+		});
+		expect(s.bg).toBe("rgb(243, 239, 226)");
+		expect(s.shadow).toBe("rgb(36, 35, 42) 0px 0px 0px 3px");
+		expect(s.radius).toBe("0px");
 	}
 });
 
-test("hover reveals the meta line and does not zoom the media; leaving restores", async ({
-	page,
-}) => {
+test("hover lifts a featured card in steps; leaving restores", async ({ page }) => {
 	await page.goto("/");
-	const card = page.locator("a.card--media").first();
+	const card = hero(page);
 	await card.scrollIntoViewIfNeeded();
-	const meta = card.locator(".cap__m");
-	const media = card.locator("[data-vt-frame] > *").first();
-	await expect(meta).toHaveCSS("opacity", "0");
-	expect(await capTransform(card)).not.toBe("none");
+	expect(await transformOf(card)).toBe("none");
+	expect(await card.evaluate((el) => getComputedStyle(el).transitionTimingFunction)).toContain(
+		"steps(",
+	);
 	await card.hover();
-	await expect(meta).toHaveCSS("opacity", "1");
-	await expect.poll(() => capTransform(card)).toBe("none");
-	// No zoom: the media never carries a transform, hovered or not.
-	await page.waitForTimeout(700);
-	expect(await media.evaluate((el) => getComputedStyle(el).transform)).toBe("none");
+	await expect.poll(() => transformOf(card)).toBe("matrix(1, 0, 0, 1, 0, -6)");
 	await page.mouse.move(0, 0);
-	await expect(meta).toHaveCSS("opacity", "0");
+	await expect.poll(() => transformOf(card)).toBe("none");
 });
 
-test("keyboard focus-visible gives the same end state as hover", async ({ page }) => {
+test("keyboard focus shows a 4 px ink outline on a featured card", async ({ page }) => {
 	await page.goto("/");
-	await page.keyboard.press("Tab");
-	// Tab through until a media card is focused.
-	for (let i = 0; i < 12; i++) {
-		if (await page.locator("a.card--media:focus-visible").count()) break;
+	for (let i = 0; i < 20; i++) {
 		await page.keyboard.press("Tab");
+		if (await page.locator("a.card:focus-visible").count()) break;
 	}
-	const card = page.locator("a.card--media:focus-visible");
+	const card = page.locator("a.card:focus-visible");
 	await expect(card).toHaveCount(1);
-	await expect(card.locator(".cap__m")).toHaveCSS("opacity", "1");
-	expect(await capTransform(card)).toBe("none");
+	await expect(card).toHaveCSS("outline-width", "4px");
+	await expect(card).toHaveCSS("outline-color", "rgb(36, 35, 42)");
+	await expect(card).toHaveCSS("outline-style", "solid");
 });
 
-test("paused motion keeps the meta visible and the media untransformed", async ({ page }) => {
+test("paused motion: hover neither lifts the card nor zooms its cover", async ({ page }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: /pause motion/i }).click();
-	const card = page.locator("a.card--media").first();
-	await expect(card.locator(".cap__m")).toHaveCSS("opacity", "1");
+	const card = hero(page);
 	await card.hover();
-	const media = card.locator("[data-vt-frame] > *").first();
-	expect(await media.evaluate((el) => getComputedStyle(el).transform)).toBe("none");
+	await page.waitForTimeout(400);
+	expect(await transformOf(card)).toBe("none");
+	expect(await transformOf(card.locator("img").first())).toBe("none");
 });
 
 test("exactly one element has fetchpriority=high; first cards are not lazy", async ({ page }) => {
 	await page.goto("/");
 	await expect(page.locator('[fetchpriority="high"]')).toHaveCount(1);
-	const first = page.locator("a.card--media").first().locator("img").first();
-	await expect(first).not.toHaveAttribute("loading", "lazy");
+	const cards = page.locator('[data-test="works-grid"] .card');
+	await expect(cards.first().locator("img").first()).toHaveAttribute("fetchpriority", "high");
+	for (let i = 0; i < 4; i++) {
+		await expect(cards.nth(i).locator("img").first()).not.toHaveAttribute("loading", "lazy");
+	}
 });
 
 const loopCard = (page: import("@playwright/test").Page, slug: string) =>
@@ -148,28 +144,32 @@ test("a hovered slideshow card does not play while motion is paused", async ({ p
 	);
 });
 
-test("loop cards keep their rendition's aspect and the masonry packs without holes", async ({
-	page,
-}) => {
+test("covers fill their fixed-ratio frame and the highlights sit in columns", async ({ page }) => {
 	await page.goto("/");
-	const cards = await page.locator('[data-test="works-grid"] .loop-frame').evaluateAll((els) =>
+	const clips = await page.locator('[data-test="works-grid"] .ct-clip').evaluateAll((els) =>
 		els.map((el) => {
-			const v = el.querySelector("video");
 			const r = el.getBoundingClientRect();
+			const media = el.querySelector(".loop-frame, img")?.getBoundingClientRect();
 			return {
+				hero: el.classList.contains("ct-clip--hero"),
 				ratio: r.width / r.height,
-				video: Number(v?.getAttribute("width")) / Number(v?.getAttribute("height")),
+				fills: media
+					? Math.abs(media.width - r.width) < 1 && Math.abs(media.height - r.height) < 1
+					: false,
 				x: Math.round(r.x),
 			};
 		}),
 	);
-	expect(cards.length).toBeGreaterThan(0);
-	for (const c of cards) expect(Math.abs(c.ratio / c.video - 1)).toBeLessThan(0.01);
-	// Desktop Chrome is 1280 wide (three columns): the loop cards must not all stack in one column.
-	expect(new Set(cards.map((c) => c.x)).size).toBeGreaterThanOrEqual(2);
+	expect(clips.length).toBeGreaterThan(1);
+	for (const c of clips) {
+		expect(c.fills).toBe(true);
+		expect(Math.abs(c.ratio / (c.hero ? 16 / 8.4 : 16 / 10) - 1)).toBeLessThan(0.02);
+	}
+	// Desktop Chrome is 1280 wide: the highlight cards must not all stack in one column.
+	expect(new Set(clips.filter((c) => !c.hero).map((c) => c.x)).size).toBeGreaterThanOrEqual(2);
 });
 
-test("home has no Axe violations with the caption bar", async ({ page }) => {
+test("home has no Axe violations (desktop)", async ({ page }) => {
 	await page.goto("/");
 	await page.waitForLoadState("load");
 	const results = await new AxeBuilder({ page }).analyze();

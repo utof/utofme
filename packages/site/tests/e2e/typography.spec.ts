@@ -36,8 +36,9 @@ test("body font-family resolves to a Geist-prefixed family (--font-sans cascade)
 	expect(fontFamily).toMatch(/Geist/);
 });
 
+// Why /now/: the catalogue home sets its own display face on its headings (ADR 0061).
 test("h1 font-family resolves to Geist (v21: headings are sans, ADR 0042)", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/now/");
 	const h1FontFamily = await page
 		.locator("h1")
 		.evaluate((el) => window.getComputedStyle(el).fontFamily);

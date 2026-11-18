@@ -9,9 +9,7 @@
 // See: packages/specs/adrs/0040-light-only-masonry-home.md
 import { expect, test } from "@playwright/test";
 
-test("the masonry home renders no layout primitives and no typography specimen", async ({
-	page,
-}) => {
+test("the home renders no layout primitives and no typography specimen", async ({ page }) => {
 	await page.goto("/");
 	await expect(page.locator('[data-test="works-grid"]')).toBeVisible();
 	await expect(page.locator("[data-component]")).toHaveCount(0);

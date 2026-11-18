@@ -26,6 +26,12 @@ import { THEME_STORAGE_KEY } from "../../src/lib/theme.ts";
  * Computed canvas colour. `_BaseLayout` paints `--color-bg` on `<html>`; the `#FFFFFF`
  * canvas (ADR 0042) computes to `rgb(255, 255, 255)`.
  */
+/**
+ * The catalogue home's own light page colour (`--ct-page`, #e2e1dd).
+ * Why: every test below ends on `/`, which paints this instead of the site's white (ADR 0061).
+ */
+const HOME_BG = "rgb(226, 225, 221)";
+
 async function canvasBackground(page: Page): Promise<string> {
 	return page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor);
 }
@@ -59,7 +65,7 @@ test("a stored dark choice is ignored: stays light at first paint, no FOUC", asy
 		});
 	});
 	expect(themeAtFirstPaint).toBe("light");
-	expect(await canvasBackground(page)).toBe("rgb(255, 255, 255)");
+	expect(await canvasBackground(page)).toBe(HOME_BG);
 	// The stored value is left alone (the script never reads or writes it).
 	expect(await page.evaluate((k) => localStorage.getItem(k), THEME_STORAGE_KEY)).toBe("dark");
 });
@@ -70,7 +76,7 @@ test("an OS dark preference is ignored: data-theme stays light", async ({ browse
 	await page.goto("/");
 	expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe("light");
 	expect(await page.evaluate(() => document.documentElement.dataset.themeSource)).toBeUndefined();
-	expect(await canvasBackground(page)).toBe("rgb(255, 255, 255)");
+	expect(await canvasBackground(page)).toBe(HOME_BG);
 	// `color-scheme: light` on :root keeps UA widgets (scrollbars, form controls) light too.
 	expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(
 		"light",
@@ -96,5 +102,5 @@ test("stays light after SPA navigation (forced-light script has data-astro-rerun
 
 	await expect(page.locator("[data-theme-toggle]")).toHaveCount(0);
 	expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe("light");
-	expect(await canvasBackground(page)).toBe("rgb(255, 255, 255)");
+	expect(await canvasBackground(page)).toBe(HOME_BG);
 });

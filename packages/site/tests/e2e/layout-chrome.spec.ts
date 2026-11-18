@@ -7,8 +7,9 @@
  */
 import { expect, test } from "@playwright/test";
 
+// Why no "/": the catalogue home has its own column and gutter (ADR 0061);
+// `home-catalogue.spec.ts` checks that its header, main and footer share one left edge.
 const ROUTES = [
-	"/",
 	"/now/",
 	"/colophon/",
 	"/stats/",
