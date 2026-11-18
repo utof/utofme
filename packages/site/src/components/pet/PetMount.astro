@@ -1,0 +1,61 @@
+---
+/**
+ * PetMount — the site pet's mount point, on every page.
+ *
+ * Why: an empty container (the lazy pet module fills it), the "call back" tab
+ * shown while the pet is at home, and the loader. `transition:persist` keeps the
+ * container, and the pet in it, across ClientRouter navigations. The container
+ * is the last element of `<body>`, so the pet is the last tab stop.
+ *
+ * @see packages/specs/specs/11-pet.md
+ * @see packages/specs/adrs/0062-site-pet-design-rules.md
+ * @see https://docs.astro.build/en/guides/view-transitions/#maintaining-state
+ */
+---
+
+<div id="pet-root" hidden transition:persist="pet">
+	<button
+		type="button"
+		class="pet-door"
+		data-pet-door
+		hidden
+		aria-label="Call the pet back"
+	></button>
+</div>
+
+<script>
+	import { bootPet } from "./boot";
+	bootPet();
+</script>
+
+<style is:global>
+	#pet-root {
+		position: fixed;
+		inset: 0 auto auto 0;
+		z-index: 90;
+	}
+	/* The pet at home: a small static tab on the edge, inside the page gutter. */
+	.pet-door {
+		position: fixed;
+		inset: auto 0 28px auto;
+		box-sizing: border-box;
+		inline-size: 12px;
+		block-size: 30px;
+		padding: 0;
+		background: #f3efe2;
+		border: 2px solid #24232a;
+		border-inline-end: 0;
+		border-radius: 0;
+		cursor: pointer;
+	}
+	.pet-door:focus-visible {
+		outline: 3px solid #24232a;
+		outline-offset: 2px;
+		box-shadow: none;
+	}
+	@media print {
+		#pet-root {
+			display: none !important;
+		}
+	}
+</style>

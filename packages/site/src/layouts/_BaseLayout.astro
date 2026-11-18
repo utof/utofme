@@ -17,6 +17,7 @@
 import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
 import PaletteMount from "../components/PaletteMount.astro";
+import PetMount from "../components/pet/PetMount.astro";
 import CustomCursor from "../components/CustomCursor.svelte";
 import HCard from "../components/HCard.astro";
 import KonamiListener from "../components/KonamiListener.astro";
@@ -214,6 +215,9 @@ const {
 		<script>
 			import "../lib/vt/hero-morph.ts";
 		</script>
+		<!-- Why last: the site pet is the last tab stop; it loads its code lazily and only when out.
+		     @see packages/specs/adrs/0062-site-pet-design-rules.md -->
+		<PetMount />
 	</body>
 </html>
 
