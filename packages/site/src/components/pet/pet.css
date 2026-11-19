@@ -1,0 +1,196 @@
+/* The pet's own styles. Shipped inside the lazy pet module (imported `?inline`
+ * and injected into the pet's root), so a visitor without a pet pays nothing.
+ * Colours are the catalogue's ink and paper (ADR 0061), fixed: the pet looks
+ * the same on every page. See packages/specs/specs/11-pet.md. */
+.pet {
+	--pet-ink: #24232a;
+	--pet-paper: #f3efe2;
+	--pet-muted: #56555e;
+	position: fixed;
+	left: 0;
+	top: 0;
+	inline-size: var(--pet-size, 96px);
+	block-size: var(--pet-size, 96px);
+	transform: translate(var(--pet-x, 0), var(--pet-y, 0));
+	font-family: var(--font-home-pixel, var(--font-mono, monospace));
+	font-size: 14px;
+	line-height: 1.35;
+	color: var(--pet-ink);
+}
+.pet.is-stepping {
+	transition: transform 240ms steps(4, end);
+}
+.pet-btn {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	cursor: pointer;
+	touch-action: manipulation;
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-tap-highlight-color: transparent;
+}
+.pet[data-dock="out"] .pet-btn {
+	cursor: grab;
+	touch-action: none;
+}
+.pet.is-carried .pet-btn {
+	cursor: grabbing;
+}
+.pet-btn:focus-visible {
+	outline: 3px solid var(--pet-ink);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+.pet-btn canvas {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	image-rendering: pixelated;
+	pointer-events: none;
+}
+
+/* Controls: beside the pet, towards the page; shown while the visitor is on the pet. */
+.pet-ctl {
+	position: absolute;
+	inset-block-end: 0;
+	inset-inline-end: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding-inline-end: 6px;
+	visibility: hidden;
+}
+.pet[data-side="left"] .pet-ctl {
+	inset-inline: 100% auto;
+	padding-inline: 6px 0;
+}
+.pet[data-dock="out"].is-engaged .pet-ctl,
+.pet[data-dock="out"]:hover .pet-ctl,
+.pet[data-dock="out"]:focus-within .pet-ctl {
+	visibility: visible;
+}
+.pet button:not(.pet-btn) {
+	box-sizing: border-box;
+	min-block-size: 26px;
+	min-inline-size: 26px;
+	margin: 0;
+	padding: 2px 8px;
+	font: inherit;
+	line-height: 1;
+	white-space: nowrap;
+	color: var(--pet-ink);
+	background: var(--pet-paper);
+	border: 2px solid var(--pet-ink);
+	border-radius: 0;
+	cursor: pointer;
+}
+.pet button:not(.pet-btn):hover {
+	color: var(--pet-paper);
+	background: var(--pet-ink);
+}
+.pet button:not(.pet-btn):focus-visible,
+.pet input:focus-visible {
+	outline: 3px solid var(--pet-ink);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+/* Panel: a plain disclosure above (or below) the pet. */
+.pet-panel {
+	position: absolute;
+	inset-block-end: calc(100% + 10px);
+	inset-inline-end: 0;
+	box-sizing: border-box;
+	inline-size: 236px;
+	max-inline-size: calc(100vw - 24px);
+	padding: 10px 12px 12px;
+	background: var(--pet-paper);
+	border: 3px solid var(--pet-ink);
+	box-shadow: 4px 4px 0 rgb(36 35 42 / 0.25);
+}
+.pet[data-side="left"] .pet-panel {
+	inset-inline: 0 auto;
+}
+.pet-panel.is-below {
+	inset-block: calc(100% + 10px) auto;
+}
+.pet-panel[hidden] {
+	display: none;
+}
+.pet-panel p {
+	margin: 6px 0 0;
+}
+.pet-panel label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.pet-panel input {
+	box-sizing: border-box;
+	flex: 1;
+	min-inline-size: 0;
+	block-size: 26px;
+	padding: 0 6px;
+	font: inherit;
+	color: var(--pet-ink);
+	background: #fff;
+	border: 2px solid var(--pet-ink);
+	border-radius: 0;
+}
+.pet-abc {
+	display: grid;
+	grid-template-columns: repeat(13, 1fr);
+	gap: 2px;
+	margin: 6px 0 0;
+}
+.pet-abc span {
+	display: grid;
+	place-items: center;
+	aspect-ratio: 1;
+	font-size: 12px;
+	line-height: 1;
+	color: var(--pet-muted);
+	border: 1px solid var(--pet-muted);
+}
+.pet-abc span[data-on] {
+	color: var(--pet-paper);
+	background: var(--pet-ink);
+	border-color: var(--pet-ink);
+}
+.pet-acts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-block-start: 10px;
+}
+.pet-note {
+	color: var(--pet-muted);
+}
+
+/* Flying letters: copies only, never the page's own text. */
+.pet-fx {
+	position: fixed;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+.pet-fx span {
+	position: absolute;
+	line-height: 1;
+	white-space: pre;
+}
+.pet-sr {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

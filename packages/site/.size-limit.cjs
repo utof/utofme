@@ -61,6 +61,30 @@ module.exports = [
 		brotli: false,
 		disablePlugins: ["@size-limit/time"],
 	},
+	// Phase 11 site-pet budgets
+	{
+		// Why: the pet's loader is the only pet code every visitor downloads (it reads the
+		// home/out switch and lazily imports the pet). Measured 2026-11-19: 0.65 KB gzip.
+		// See: packages/specs/specs/11-pet.md § "Loading and budgets"
+		// See: packages/specs/adrs/0062-site-pet-design-rules.md
+		name: "pet loader (every page)",
+		path: ["dist/_astro/PetMount.astro_astro_type_script*.js"],
+		gzip: true,
+		limit: "1 KB",
+		disablePlugins: ["@size-limit/time"],
+	},
+	{
+		// Why: the pet itself (view, rules, creature, zod/mini schema, WebCrypto store, CSS)
+		// is one lazy chunk, imported on idle and only when the pet is out.
+		// Measured 2026-11-19: 17.7 KB gzip.
+		// See: packages/specs/specs/11-pet.md § "Loading and budgets"
+		// See: packages/specs/adrs/0063-pet-encrypted-local-store.md
+		name: "pet (lazy)",
+		path: ["dist/_astro/start.*.js"],
+		gzip: true,
+		limit: "20 KB",
+		disablePlugins: ["@size-limit/time"],
+	},
 	// Phase 7 atmosphere-island budgets
 	{
 		// Why: CustomCursor.svelte ships behind `client:media="(pointer:fine)"`,
