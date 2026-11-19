@@ -76,7 +76,7 @@ module.exports = [
 	{
 		// Why: the pet itself (view, rules, creature, zod/mini schema, WebCrypto store, CSS)
 		// is one lazy chunk, imported on idle and only when the pet is out.
-		// Measured 2026-11-19: 17.4 KB gzip.
+		// Measured 2026-11-19: 17.7 KB gzip.
 		// See: packages/specs/specs/11-pet.md § "Loading and budgets"
 		// See: packages/specs/adrs/0063-pet-encrypted-local-store.md
 		name: "pet (lazy)",

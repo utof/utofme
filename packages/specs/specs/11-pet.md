@@ -67,7 +67,7 @@ The pet is **asleep on every full page load**, and the animation loop does not r
 ### Pat
 
 - **Hit area**: the head zone, the top 46 % of the pet's box plus 8 px above it. The rest is the body zone.
-- **Gesture** (`lib/pet/gesture.ts`, pure): pressing the primary button (or a finger, or a pen) in the head zone is one pat. While the press is held, every further 18 px of pointer travel is another pat, so stroking back and forth pats repeatedly. A quick click on the head is therefore one pat. A press in the body zone that is released within 8 px is a **poke** (it blinks and looks at you; not a pat). A press in the body zone that moves more than 8 px, or a press in the head zone that leaves the pet's box by more than 24 px, is a **carry**, and yields no further pats.
+- **Gesture** (`lib/pet/gesture.ts`, pure): pressing the primary button (or a finger, or a pen) in the head zone is one pat. While the press is held, every further 18 px of pointer travel is another pat, so stroking back and forth pats repeatedly. A quick click on the head is therefore one pat. A press in the body zone that is released within 8 px is a **poke** (it wakes and pays attention; not a pat). A press in the body zone that moves more than 8 px, or a press in the head zone that leaves the pet's box by more than 24 px, is a **carry**, and yields no further pats.
 - **Feedback**: each pat squashes the body for one step, shuts its eyes and flattens the feelers; every fourth pat of a stroke sends a pixel heart up from its head. With the sound toggle on, a pat plays a 0.25 s low purr (generated, no file), at most one every 0.3 s.
 - **Touch**: the same pointer events; the pet has `touch-action: none` only while it is fully out, so a stroke does not scroll the page.
 - **Keyboard**: the pet is a `<button>`; Enter or Space is one pat.
@@ -79,7 +79,7 @@ The pet eats letters from the page. The page's own text is never touched: only c
 
 - **With a selection**: select text anywhere on the page, then click or tap the pet, or drag the selection onto it (desktop), or press **Feed** in its panel. It eats the first **8** letters (`\p{L}`) of the selection. While text is selected and the pet is awake, it looks at the selection with its mouth ajar; that glance is the only hint. The press that feeds it is `preventDefault`ed, so the selection stays and can still be copied.
 - **Without a selection**: **Feed** in the panel gives it one letter of the page's `<h1>`: the first letter it has not collected yet, else the next one in turn. This is the keyboard and phone path.
-- **What flies**: for each letter, an `aria-hidden` `<span>` inside the pet's own overlay (outside `<main>`, `pointer-events: none`), in the font and colour of the source text, moving in steps from the source to the mouth. It is removed on arrival. Under paused motion nothing flies: the pet shows the eating pose for a moment.
+- **What flies**: for each letter, an `aria-hidden` `<span>` inside the pet's own overlay (outside `<main>`, `pointer-events: none`), in the font and colour of the source text. Each copy starts exactly on its own letter, is invisible until its turn (so a waiting copy never sits on the page's text), moves in steps to the mouth and is removed on arrival. Under paused motion nothing flies: the pet shows the eating pose for a moment.
 - **Belly**: 24 letters fill it. It digests one letter every 15 minutes (6 h from full to empty), computed from timestamps. A bite takes only what fits; when nothing fits the pet refuses (`full`). An empty belly has no effect at all.
 - **Alphabet**: the panel shows 26 cells, A–Z, lit once that letter has been eaten (count kept). Letters outside a–z are eaten and counted in one "other" bucket. A first-time letter gets a longer happy reaction.
 - **Favourite letter**: one letter of 26, fixed by the pet's seed. The panel shows `?` until the pet has eaten it once; eating it is a 5 s `happy`.
@@ -122,8 +122,8 @@ These are requirements, each with a test.
 
 - The pet canvas is `aria-hidden`. Its controls are real buttons in one container, an `<aside aria-label="Site pet">` (a landmark, so nothing sits outside the page's regions) at the **end of `<body>`**, after the footer, so the pet is the last tab stop, never between the reader and the content: the pet button (`aria-label="Nib, your pet. Pat"`), **About** (opens the panel, `aria-expanded`), **Send home**.
 - The panel is a plain disclosure, not a dialog: no focus trap, Esc closes it and returns focus to **About**. It holds the name field (labelled), bond, belly, the alphabet (a list with a text summary "7 of 26 letters"), **Feed**, **Move to the other side**.
-- Sending the pet home moves focus to the "Call the pet back" tab; calling it back moves focus to the pet button.
-- Targets are at least 24 × 24 px (WCAG 2.5.8); the pet itself is 72–96 px.
+- Sending the pet home from the keyboard moves focus to the "Call the pet back" tab; calling it back moves focus to the pet button.
+- Targets are at least 24 × 24 px (WCAG 2.5.8); the pet itself is 72–96 px. The "call back" tab is 12 px wide on purpose (it must fit the gutter) and relies on that criterion's spacing exception: no other target is within 24 px of it.
 - Focus rings use the site's `--shadow-focus`. Text in the panel meets AA on paper.
 - Axe is clean on `/` and `/works/tactical-arena/` with the pet out and the panel open.
 
@@ -134,7 +134,7 @@ These are requirements, each with a test.
 ```ts
 PetState = {
   v: 1,                       // schema version
-  rev: int ≥ 0,               // bumps on every save; newer wins between tabs
+  rev: int ≥ 0,               // bumps on every change; newer wins between tabs
   name: string (1–16),
   seed: int 0 … 2³¹−1,        // favourite letter
   born: ms,                   // first touch
@@ -177,9 +177,9 @@ The view receives a `PetStore` and knows nothing else. `MemoryStore` (tests, fal
 - **Cases**:
   - *No WebCrypto or IndexedDB* (insecure context, some private modes): `status: "unavailable"`; the pet runs from memory for this page and nothing is written. Plaintext is never written as a fallback.
   - *Blob missing*: `"empty"` → the pet is new at first touch.
-  - *Blob unreadable* (edited, truncated, wrong key, key deleted, JSON or schema failure): `"reset"` → the blob is removed and the pet starts new. One quiet line in the panel: "Nib is new here."
+  - *Blob unreadable* (edited, truncated, wrong key, key deleted, JSON or schema failure): `"reset"` → the blob is removed and the pet starts new. One quiet line in the panel: "Its saved state could not be read, so it is new here."
   - *Older version*: migrated through `MIGRATIONS` (`{ from, up }` steps, pure) and saved. *Newer version* than this code knows: `"newer"` → never overwritten; this tab runs from memory.
-  - *Two tabs*: every save bumps `rev`; a `storage` event makes the other tab reload and adopt the saved state when its `rev` is not lower. Last writer wins; the worst case is a lost pat.
+  - *Two tabs*: every change bumps `rev`; a `storage` event makes the other tab reload and adopt the saved state when its `rev` is not lower. Last writer wins; the worst case is a lost pat.
   - *Site data cleared*: same as "missing".
 - **What it protects**: the blob cannot be read or edited by opening dev tools' storage tab or the profile's files, and the raw key cannot be exported by script. **What it does not**: any script on this origin, and the visitor in the console, can ask the browser to decrypt with that key; an old blob can be put back (no replay protection). It is tamper-evidence for a toy, and a store that already has the shape the account version needs. It is not secrecy.
 
@@ -191,7 +191,7 @@ The view receives a `PetStore` and knows nothing else. `MemoryStore` (tests, fal
 | What | Limit | Measured | Checked by |
 | --- | ---: | ---: | --- |
 | Loader chunk, on every page | 1 KB | 0.65 KB | `size-limit` entry `pet loader (every page)` |
-| Pet lazy chunk (view, rules, creature, `zod/mini`, store, CSS) | 20 KB | 17.4 KB | `size-limit` entry `pet (lazy)` |
+| Pet lazy chunk (view, rules, creature, `zod/mini`, store, CSS) | 20 KB | 17.7 KB | `size-limit` entry `pet (lazy)` |
 | First-view JS of every route | unchanged limits | +1.8 KB | `check:budgets` |
 
 The first-view cost is the loader (0.65 KB) plus two small shared chunks it imports and that only the home page loaded before: `lib/flags` (0.3 KB) and Vite's dynamic-import preload helper (0.9 KB). Platform first-view JS goes from 30.9 KB to 32.7 KB of 40 KB. The lazy chunk also pulls the shared renderer chunk (`lib/home/objects/{mesh,render}`, 1.6 KB), which the home page has already loaded.
@@ -202,7 +202,7 @@ The first-view cost is the loader (0.65 KB) plus two small shared chunks it impo
 
 - AC1.1 `PetStateSchema`: `safeParse(make(arb))` succeeds for every generated valid state; any single field pushed out of range fails; unknown keys fail; `parse` and `safeParse` agree.
 - AC1.2 Reducer properties, for any state, any action list and any timestamps: every stat stays in its range; `lastSeen` never decreases; `rev`-free fields never become `NaN`; `pats`, `meals`, `letters`, `days` and alphabet counts never decrease.
-- AC1.3 Absence: for any state and any gap (0 … 10 years), `mood` is `asleep` or `idle`-family, never anything else, and no stored counter is lower than before; a state "left" for a year equals the same state except belly and `lastSeen`.
+- AC1.3 Absence: a fresh page is `asleep` at any time, and hovering, selecting and waiting never change that; for any state and any gap (0 … 10 years) no stored counter is lower than before: a state "left" for years equals the same state except the belly, the clock and at most one more day.
 - AC1.4 Belly: full → empty in exactly 6 h; a bite never overfills; a full belly refuses.
 - AC1.5 Gesture: head press → 1 pat; head stroke of `d` px → `1 + floor(d / 18)` pats; body click → poke, 0 pats; body drag → carry, 0 pats; head press that leaves the box by > 24 px → carry and no pats after that; a cancelled press yields nothing.
 - AC1.6 Letters: `pickLetters` returns at most 8 letters, only `\p{L}`, in order, and never changes its input; `nibble` prefers uncollected letters.
@@ -245,7 +245,8 @@ Read as a returning reader, the first draft of this design had these problems; e
 7. *My screen reader narrated its feelings.* → Only results of controls the visitor used are announced, rate-limited.
 8. *It ate my selection when I wanted to copy it.* → It eats copies; the selection and clipboard are untouched.
 9. *It scolded me for being away.* → Nothing falls but the belly, and an empty belly does nothing. Away for days earns a longer greeting.
-10. *It made the page heavier.* → 1 KB for everyone; the rest loads on idle and only for a pet that is out.
+10. *It made the page heavier.* → under 2 KB of first-view JS for everyone; the rest loads on idle and only for a pet that is out.
+11. *The words I selected turned to mush while it ate.* (Found on the first frame strip of a bite: copies waiting for their turn sat on top of the text.) → Each copy starts on its own letter and is invisible until it moves.
 
 Left as open questions for the owner: whether the tab should also disappear completely (a "never show again" level), and whether the pet should be out by default on phones, where it can only peek.
 
