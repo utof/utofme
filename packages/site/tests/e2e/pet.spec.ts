@@ -127,6 +127,24 @@ test("AC2.4: feeding eats copies; the page's text, markup and selection are unto
 	const flying = root.locator(".pet-fx span");
 	expect(await flying.count()).toBe(Math.min(8, letters));
 	await expect(root.locator(".pet-fx")).toHaveAttribute("aria-hidden", "true");
+	// Each copy starts exactly on its own letter, and one that has not left yet is invisible,
+	// so the paragraph is never drawn over.
+	const starts = await page.evaluate(() => {
+		const range = window.getSelection()?.getRangeAt(0);
+		const first = range?.getClientRects()[0];
+		const spans = [...document.querySelectorAll<HTMLElement>("#pet-root .pet-fx span")];
+		const last = spans[spans.length - 1];
+		return {
+			dx: Math.abs(Number.parseFloat(spans[0]?.style.left ?? "0") - (first?.left ?? -99)),
+			dy: Math.abs(Number.parseFloat(spans[0]?.style.top ?? "0") - (first?.top ?? -99)),
+			lastOpacity: last ? getComputedStyle(last).opacity : "",
+			font: spans[0]?.style.fontFamily === "" ? "" : "set",
+		};
+	});
+	expect(starts.dx).toBeLessThanOrEqual(1);
+	expect(starts.dy).toBeLessThanOrEqual(1);
+	expect(starts.lastOpacity).toBe("0");
+	expect(starts.font).toBe("set");
 	expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(picked);
 	await expect(flying).toHaveCount(0, { timeout: 8000 });
 	expect(await snapshot()).toEqual(before);

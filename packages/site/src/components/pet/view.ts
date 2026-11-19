@@ -23,7 +23,7 @@ import {
 	visibleBox,
 } from "../../lib/pet/dock";
 import { type Box, GESTURE_IDLE, type GestureState, gestureStep } from "../../lib/pet/gesture";
-import { collected, letterSlot, nibbleIndex, pickLetters } from "../../lib/pet/letters";
+import { BITE_MAX, collected, letterSlot, nibbleIndex, pickLetters } from "../../lib/pet/letters";
 import {
 	CHEW_MS,
 	moodAt,
@@ -95,6 +95,36 @@ function hasOwnText(node: Element): boolean {
 		if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) return true;
 	}
 	return false;
+}
+
+interface Spot {
+	readonly x: number;
+	readonly y: number;
+}
+
+/** Where the first `max` letters of a range are drawn on screen. Reads layout; changes nothing. */
+function letterSpots(range: Range, max: number): Spot[] {
+	const spots: Spot[] = [];
+	const top = range.commonAncestorContainer;
+	const walker = document.createTreeWalker(top.parentNode ?? top, NodeFilter.SHOW_TEXT);
+	const probe = document.createRange();
+	for (let node = walker.nextNode(); node && spots.length < max; node = walker.nextNode()) {
+		if (!range.intersectsNode(node)) continue;
+		const text = node.textContent ?? "";
+		const to = node === range.endContainer ? range.endOffset : text.length;
+		let i = node === range.startContainer ? range.startOffset : 0;
+		while (i < to && spots.length < max) {
+			const ch = String.fromCodePoint(text.codePointAt(i) ?? 32);
+			if (pickLetters(ch, 1).length > 0) {
+				probe.setStart(node, i);
+				probe.setEnd(node, Math.min(text.length, i + ch.length));
+				const rect = probe.getBoundingClientRect();
+				spots.push({ x: rect.left, y: rect.top });
+			}
+			i += ch.length;
+		}
+	}
+	return spots;
 }
 
 function glyph(
@@ -449,6 +479,8 @@ export function mountPet(root: HTMLElement, store: PetStore, hooks: PetHooks): (
 		readonly x: number;
 		readonly y: number;
 		readonly like: Element | null;
+		/** Where each letter sits on screen, when known: a copy lifts off its own letter. */
+		readonly spots?: readonly Spot[];
 	}
 	const selected = (): Source | null => {
 		const sel = window.getSelection();
@@ -460,7 +492,7 @@ export function mountPet(root: HTMLElement, store: PetStore, hooks: PetHooks): (
 		const range = sel.getRangeAt(0);
 		const rect = range.getClientRects()[0] ?? range.getBoundingClientRect();
 		const like = anchor instanceof Element ? anchor : (anchor?.parentElement ?? null);
-		return { text, x: rect.left, y: rect.top, like };
+		return { text, x: rect.left, y: rect.top, like, spots: letterSpots(range, BITE_MAX) };
 	};
 	const readSelection = (): void => {
 		const source = selected();
@@ -501,20 +533,23 @@ export function mountPet(root: HTMLElement, store: PetStore, hooks: PetHooks): (
 			source.y >= 0 &&
 			source.y <= window.innerHeight;
 		letters.forEach((letter, i) => {
-			const x = onScreen ? source.x + i * fontPx * 0.62 : tx - 60 + i * 14;
-			const y = onScreen ? source.y : ty - 90;
+			const spot = source.spots?.[i];
+			const x = spot ? spot.x : onScreen ? source.x + i * fontPx * 0.62 : tx - 60 + i * 14;
+			const y = spot ? spot.y : onScreen ? source.y : ty - 90;
 			const span = el("span", {}, letter);
 			span.style.left = `${x}px`;
 			span.style.top = `${y}px`;
 			span.style.font = `${look?.fontWeight ?? "400"} ${fontPx}px ${look?.fontFamily ?? "monospace"}`;
 			span.style.color = look?.color ?? "#24232a";
+			// Why hidden until its turn: a waiting copy must not sit on the page's text.
+			span.style.opacity = "0";
 			fx.append(span);
 			const flight = span.animate(
 				[
-					{ transform: "translate(0, 0) scale(1)" },
-					{ transform: `translate(${tx - x}px, ${ty - y}px) scale(0.3)` },
+					{ opacity: 1, transform: "translate(0, 0) scale(1)" },
+					{ opacity: 1, transform: `translate(${tx - x}px, ${ty - y}px) scale(0.3)` },
 				],
-				{ duration: 420, delay: i * CHEW_MS, easing: "steps(7, end)", fill: "both" },
+				{ duration: 420, delay: i * CHEW_MS, easing: "steps(7, end)", fill: "forwards" },
 			);
 			const land = (): void => {
 				span.remove();
