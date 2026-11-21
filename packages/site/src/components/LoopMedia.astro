@@ -214,9 +214,9 @@ const sizes =
 	.loop-frame video[data-ready] {
 		opacity: 1;
 	}
-	/* M3-02: the banner rendition resolves in over the card-size frame instead of popping. */
+	/* Let the decoded banner video fade in over its poster or the persisted card loop. */
 	@media (prefers-reduced-motion: no-preference) {
-		.loop-frame video[data-upgrade] {
+		.loop-frame video[data-loop-size="banner"] {
 			transition: opacity 180ms var(--ease-out, ease-out);
 		}
 	}

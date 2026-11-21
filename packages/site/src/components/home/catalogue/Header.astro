@@ -11,6 +11,7 @@
  */
 import type { HomeModel } from "../../../lib/home/model";
 import MotionToggle from "../../MotionToggle.astro";
+import UtofWordmark from "../../UtofWordmark.astro";
 import { HEADER_LINKS } from "./links";
 
 interface Props {
@@ -22,9 +23,7 @@ const { model } = Astro.props;
 <header class="ct ct-top site-header" data-test="site-header">
 	<div class="ct-wrap ct-top__row">
 		<h1 class="ct-mark">
-			<a href="/" data-test="wordmark">
-				utofme
-			</a>
+			<UtofWordmark />
 		</h1>
 		<nav class="ct-nav" aria-label="Site">
 			{HEADER_LINKS.map((l) => (
@@ -58,7 +57,7 @@ const { model } = Astro.props;
 		z-index: 10;
 	}
 	.ct-top {
-		/* Same snapshot group as the shared header, so it never fades during a morph. */
+		/* Match the shared header on ordinary navigations. The cover morph fades this with the catalogue. */
 		view-transition-name: site-header;
 	}
 	.ct-top__row {
@@ -69,13 +68,11 @@ const { model } = Astro.props;
 		padding-block-start: 10px;
 	}
 	.ct-mark {
+		--utof-wordmark-size: var(--ct-wordmark-size);
 		margin: 0;
 		margin-inline-end: auto;
-		font-size: 30px;
 		line-height: 1;
-		letter-spacing: 0.02em;
 	}
-	.ct-mark a,
 	.ct-nav a,
 	.ct-jump a {
 		display: inline-flex;

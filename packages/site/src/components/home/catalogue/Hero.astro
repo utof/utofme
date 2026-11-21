@@ -31,22 +31,24 @@ const meta = [item.entry.data.article ? "Research article" : undefined, ...item.
 		data-obj-host
 		{...link.data}
 	>
-		<div class="ct-frame">
-			<Media
-				entry={item.entry}
-				shape="hero"
-				sizes="(min-width: 1360px) 760px, (min-width: 900px) 56vw, 100vw"
-				priority
-			/>
-		</div>
-		<div class="ct-hero__text">
-			<ObjectCanvas icon={item.icon} seed={item.seed} size="lg" class="ct-hero__obj" />
-			<p class="ct-kicker">
-				{item.topic.label} · <time datetime={item.dateIso}>{item.dateLabel}</time>
-			</p>
-			<h3 class="ct-hero__title">{item.title}</h3>
-			{item.lede && <p class="ct-hero__lede">{item.lede}</p>}
-			{meta && <p class="ct-hero__meta">{meta}</p>}
+		<div class="ct-feat__content">
+			<div class="ct-frame">
+				<Media
+					entry={item.entry}
+					shape="hero"
+					sizes="(min-width: 1360px) 760px, (min-width: 900px) 56vw, 100vw"
+					priority
+				/>
+			</div>
+			<div class="ct-hero__text">
+				<ObjectCanvas icon={item.icon} seed={item.seed} size="lg" class="ct-hero__obj" />
+				<p class="ct-kicker">
+					{item.topic.label} · <time datetime={item.dateIso}>{item.dateLabel}</time>
+				</p>
+				<h3 class="ct-hero__title">{item.title}</h3>
+				{item.lede && <p class="ct-hero__lede">{item.lede}</p>}
+				{meta && <p class="ct-hero__meta">{meta}</p>}
+			</div>
 		</div>
 	</Tag>
 </li>
@@ -55,7 +57,7 @@ const meta = [item.entry.data.article ? "Research article" : undefined, ...item.
 	.ct-hero {
 		grid-column: 1 / -1;
 	}
-	.ct-feat {
+	.ct-feat__content {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;

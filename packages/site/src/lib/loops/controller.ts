@@ -62,8 +62,7 @@ function defaultDeps(): LoopDeps {
 /**
  * Options for `mountLoops`.
  *
- * Why: during a Back morph only the hero card's loop may decode (M3-10); the rest
- * mount after the transition, staggered so seven decoders do not start in one frame.
+ * Why: after a Back morph the visible loops start in sequence to spread out decoding.
  *
  * @see packages/specs/reports/ui3-fix-morph.md (M3-10)
  */
@@ -320,6 +319,7 @@ export function upgradeBannerLoops(root: ParentNode, deps: LoopDeps = defaultDep
 		if (at > 0) next.currentTime = at;
 		frame.append(next);
 		if (deps.isPaused() || deps.saveData()) {
+			next.removeAttribute("data-upgrade");
 			old.remove();
 			continue;
 		}
@@ -342,7 +342,6 @@ export function upgradeBannerLoops(root: ParentNode, deps: LoopDeps = defaultDep
 			if (next.requestVideoFrameCallback) next.requestVideoFrameCallback(reveal);
 			else setTimeout(reveal, 50);
 		};
-		setTimeout(reveal, 900);
 		next.addEventListener(
 			"playing",
 			() => {
@@ -360,37 +359,37 @@ export function upgradeBannerLoops(root: ParentNode, deps: LoopDeps = defaultDep
 /** Back-navigation resume point: the banner's time, applied to that card's loop. */
 let resume: { slug: string; t: number } | null = null;
 
-function applyResume(): HTMLVideoElement | null {
+function applyResume(): void {
 	const r = resume;
 	resume = null;
-	if (!r) return null;
+	if (!r) return;
 	const v = document.querySelector<HTMLVideoElement>(
 		`[data-work-slug="${CSS.escape(r.slug)}"] video[data-loop]`,
 	);
-	if (!v) return null;
-	if (r.t > 0) v.currentTime = r.t;
-	return v;
+	if (v && r.t > 0) v.currentTime = r.t;
 }
 
 let dispose: (() => void) | undefined;
 let bound = false;
+let swapFinished: Promise<unknown> | undefined;
+let mountedBody: HTMLElement | undefined;
 
 function remount(): void {
-	upgradeBannerLoops(document);
-	dispose?.();
-	const hero = applyResume();
-	const vt = document.activeViewTransition;
-	if (hero && vt) {
-		// Back morph in flight (M3-10): only the hero loop decodes; the rest start afterwards.
-		dispose = mountLoops(document, defaultDeps(), { only: (v) => v === hero });
-		const later = (): void => {
-			dispose?.();
-			dispose = mountLoops(document, defaultDeps(), { stagger: 50 });
-		};
-		vt.finished.then(later, later);
-		return;
-	}
-	dispose = mountLoops(document);
+	const body = document.body;
+	const finished = swapFinished;
+	const morphing = document.documentElement.hasAttribute("data-vt-morph");
+	const mount = (): void => {
+		if (body !== document.body || body === mountedBody || finished !== swapFinished) return;
+		mountedBody = body;
+		const returning = resume !== null;
+		applyResume();
+		upgradeBannerLoops(document);
+		dispose = mountLoops(document, defaultDeps(), { stagger: returning ? 50 : 0 });
+	};
+	// The new snapshot stays live throughout the morph. Keep its poster or
+	// persisted video visible until starting another decoder can no longer flash.
+	if (morphing && finished) finished.then(mount, mount);
+	else mount();
 }
 
 /**
@@ -405,12 +404,18 @@ function remount(): void {
 export function bindLoops(): void {
 	if (bound) return;
 	bound = true;
-	document.addEventListener("astro:before-swap", () => {
+	document.addEventListener("astro:before-swap", (e) => {
 		dispose?.();
 		dispose = undefined;
-	});
-	document.addEventListener("astro:before-preparation", (e) => {
-		// M3-08: remember where the banner was so Back resumes the card loop there.
+		mountedBody = undefined;
+		swapFinished =
+			"viewTransition" in e &&
+			e.viewTransition instanceof Object &&
+			"finished" in e.viewTransition &&
+			e.viewTransition.finished instanceof Promise
+				? e.viewTransition.finished
+				: undefined;
+		// Tie the resume point to this swap so a finishing morph cannot consume it early.
 		const from = "from" in e && e.from instanceof URL ? e.from : null;
 		const dir = "direction" in e ? e.direction : null;
 		const slug = from ? /^\/works\/([^/]+)\/?$/.exec(from.pathname)?.[1] : undefined;

@@ -20,6 +20,9 @@ interface SnapProbe {
 	newClip: string;
 	pos: string;
 	focus: string;
+	posterReady: boolean;
+	videoPaused: boolean;
+	headerName: string;
 }
 interface VtProbe {
 	/** Per navigation: for each element named `hero`, whether it is a `[data-vt-frame]`. */
@@ -157,6 +160,14 @@ async function onReady(page: Page, kind: "names" | "snap") {
 							newClip: cs("::view-transition-new(hero)").overflow,
 							pos: cs("::view-transition-new(hero)").objectPosition,
 							focus: document.documentElement.style.getPropertyValue("--vt-focus"),
+							posterReady:
+								(document.querySelector<HTMLImageElement>("[data-vt-hero] img")?.naturalWidth ??
+									0) > 0,
+							videoPaused:
+								document.querySelector<HTMLVideoElement>("[data-vt-hero] video")?.paused ?? false,
+							headerName: getComputedStyle(
+								document.querySelector(".site-header") ?? document.documentElement,
+							).viewTransitionName,
 						},
 					];
 				},
@@ -166,7 +177,9 @@ async function onReady(page: Page, kind: "names" | "snap") {
 	}, kind);
 }
 
-test("M3-04: the site header has its own transition name and no animation", async ({ page }) => {
+test("M3-04: the catalogue header has no independent animation during the morph", async ({
+	page,
+}) => {
 	await page.goto("/");
 	const name = await page.evaluate(() => {
 		const h = document.querySelector(".site-header");
@@ -183,7 +196,7 @@ test("M3-04: the site header has its own transition name and no animation", asyn
 	expect(names).toContain("::view-transition-group(hero)");
 });
 
-test("M3-01/M3-03: hero snapshots clip and crop at the banner focus, both directions", async ({
+test("the hero starts with a loaded poster and crops at the banner focus in both directions", async ({
 	page,
 }) => {
 	await page.goto("/");
@@ -195,11 +208,33 @@ test("M3-01/M3-03: hero snapshots clip and crop at the banner focus, both direct
 	const read = () => page.evaluate(() => window.__snap ?? []);
 	await expect.poll(async () => (await read()).length).toBe(2);
 	for (const s of await read()) {
-		expect(s).toMatchObject({ oldClip: "clip", newClip: "clip" });
+		expect(s).toMatchObject({
+			oldClip: "clip",
+			newClip: "clip",
+			posterReady: true,
+			videoPaused: true,
+			headerName: "none",
+		});
 		expect(s.pos).not.toBe("50% 50%");
 		expect(s.focus).not.toBe("");
 	}
 	await expect(page.locator("html")).not.toHaveAttribute("style", /--vt-focus/);
+});
+
+test("a failed banner image still allows navigation without an empty hero snapshot", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await loopCard(page).locator("[data-vt-frame]").scrollIntoViewIfNeeded();
+	await armCard(page);
+	await page.route("**/*", (route) =>
+		route.request().resourceType() === "image" ? route.abort() : route.fallback(),
+	);
+	await loopCard(page).click();
+	await page.waitForURL(`**/works/${LOOP_SLUG}/`);
+	await expect(page.locator("h1")).toBeFocused();
+	expect(await page.evaluate(() => window.__vt?.marks)).toEqual([[]]);
+	await expect(page.locator("html")).not.toHaveAttribute("data-vt-morph", "");
 });
 
 test("a card framed differently from the banner mounts its own banner video (no persisted node)", async ({
