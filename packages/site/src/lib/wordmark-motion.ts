@@ -1,14 +1,19 @@
 import { isMotionPaused, MOTION_EVENT } from "./motion";
+import { outlinePath, stretchPath, wordmarkGlyphs } from "./wordmark-geometry";
 
-const MODES = ["block-flip", "pixel-assembly", "signal-sweep"] as const;
+const MODES = ["block-flip", "pixel-assembly", "signal-sweep", "outline", "stretch"] as const;
 type Mode = (typeof MODES)[number];
 type Point = { x: number; y: number };
 type Pixel = Point & { element: SVGRectElement };
 
 const GRID_SIZE = 11;
 const RADIUS = 4.2;
+const CHAR_SIZE = 5;
+const SHAPE_TRANSITION_MS = 120;
 const SWEEP_COLORS = ["#ffa746", "#ee7c30", "#b75527", "#74402b"] as const;
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+const smooth = (t: number) => t * t * (3 - 2 * t);
+const isShapeMode = (mode: Mode | undefined) => mode === "outline" || mode === "stretch";
 
 /** Why: computing pointer motion in the resting 11×11 grid keeps it proportional at any size. */
 export function bindWordmark(mark: HTMLAnchorElement): () => void {
@@ -16,39 +21,40 @@ export function bindWordmark(mark: HTMLAnchorElement): () => void {
 	const layer = svg?.querySelector<SVGGElement>("[data-wordmark-pixels]");
 	if (!svg || !layer) return () => {};
 
-	const tiles = Array.from(
-		svg.querySelectorAll<SVGPathElement>("[data-wordmark-tile]"),
-		(element) => ({
-			element,
-			x: Number(element.dataset["x"]),
-			y: Number(element.dataset["y"]),
-		}),
-	);
+	const tiles = wordmarkGlyphs.flatMap((glyph) => {
+		const element = svg.querySelector<SVGPathElement>(
+			`[data-wordmark-tile][data-x="${glyph.x}"][data-y="${glyph.y}"]`,
+		);
+		return element ? [{ ...glyph, element }] : [];
+	});
 	const pixels: Pixel[] = [];
 	let sweepEnd = 0;
 	const listeners = new AbortController();
 	const { signal } = listeners;
 	const hover = matchMedia("(any-hover: hover) and (any-pointer: fine)");
 	let frame = 0;
+	let lastPaint = 0;
+	let presence = 0;
+	let point: Point | undefined;
 	let mode: Mode | undefined;
 	let previousMode: Mode | undefined;
 	let pointer: PointerEvent | undefined;
 
 	function makePixels(): void {
 		for (const tile of tiles) {
-			const grid = tile.element.dataset["grid"] ?? "";
-			for (let index = 0; index < grid.length; index++) {
-				if (grid[index] !== "1") continue;
-				const x = tile.x + (index % 5);
-				const y = tile.y + Math.floor(index / 5);
-				const element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-				element.setAttribute("x", String(x));
-				element.setAttribute("y", String(y));
-				element.setAttribute("width", "1");
-				element.setAttribute("height", "1");
-				layer?.append(element);
-				pixels.push({ x, y, element });
-				sweepEnd = Math.max(sweepEnd, x + y);
+			for (let y = tile.y; y < tile.y + CHAR_SIZE; y++) {
+				for (let x = tile.x; x < tile.x + CHAR_SIZE; x++) {
+					// Sample the original silhouette, including the O's empty counter.
+					if (!tile.element.isPointInFill({ x: x + 0.5, y: y + 0.5 })) continue;
+					const element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+					element.setAttribute("x", String(x));
+					element.setAttribute("y", String(y));
+					element.setAttribute("width", "1");
+					element.setAttribute("height", "1");
+					layer?.append(element);
+					pixels.push({ x, y, element });
+					sweepEnd = Math.max(sweepEnd, x + y);
+				}
 			}
 		}
 	}
@@ -58,12 +64,15 @@ export function bindWordmark(mark: HTMLAnchorElement): () => void {
 		cancelAnimationFrame(frame);
 		frame = 0;
 		pointer = undefined;
-		mode = undefined;
+		point = undefined;
+		presence = 0;
 		delete mark.dataset["wordmarkMode"];
-		for (const { element } of tiles) {
+		for (const { element, path } of tiles) {
 			element.style.removeProperty("transform");
 			element.style.removeProperty("filter");
+			if (isShapeMode(mode)) element.setAttribute("d", path);
 		}
+		mode = undefined;
 		for (const { element } of pixels) {
 			element.style.removeProperty("transform");
 			element.style.removeProperty("fill");
@@ -105,18 +114,59 @@ export function bindWordmark(mark: HTMLAnchorElement): () => void {
 		}
 	}
 
-	function paint(): void {
+	function renderOutline(point: Point, amount: number): void {
+		for (const tile of tiles) {
+			const dx = point.x - clamp(point.x, tile.x, tile.x + CHAR_SIZE);
+			const dy = point.y - clamp(point.y, tile.y, tile.y + CHAR_SIZE);
+			const proximity = 1 - smooth(clamp(Math.hypot(dx, dy) / 2.3, 0, 1));
+			tile.element.setAttribute("d", outlinePath(tile, amount * proximity));
+		}
+	}
+
+	function renderStretch(point: Point, amount: number): void {
+		const center = GRID_SIZE / 2;
+		const dx = 1.8 * clamp((center - point.x) / center, -1, 1) * amount;
+		const dy = 1.8 * clamp((center - point.y) / center, -1, 1) * amount;
+		for (const tile of tiles) tile.element.setAttribute("d", stretchPath(tile, dx, dy));
+	}
+
+	function paint(now: number): void {
 		frame = 0;
-		if (!mode || !pointer || !svg) return;
-		const { left, top, width, height } = svg.getBoundingClientRect();
-		if (!width || !height) return;
-		const point = {
-			x: ((pointer.clientX - left) * GRID_SIZE) / width,
-			y: ((pointer.clientY - top) * GRID_SIZE) / height,
-		};
+		if (!mode || !svg) return;
+		if (pointer) {
+			const { left, top, width, height } = svg.getBoundingClientRect();
+			if (!width || !height) return;
+			point = {
+				x: ((pointer.clientX - left) * GRID_SIZE) / width,
+				y: ((pointer.clientY - top) * GRID_SIZE) / height,
+			};
+		}
+		if (!point) {
+			reset();
+			return;
+		}
+		if (isShapeMode(mode)) {
+			const step = Math.max(0, now - lastPaint) / SHAPE_TRANSITION_MS;
+			lastPaint = now;
+			presence = clamp(presence + (pointer ? step : -step), 0, 1);
+			if (!pointer && presence === 0) {
+				reset();
+				return;
+			}
+			const render = mode === "outline" ? renderOutline : renderStretch;
+			render(point, smooth(presence));
+			if (!pointer || presence < 1) frame = requestAnimationFrame(paint);
+			return;
+		}
 		if (mode === "block-flip") renderFlip(point);
 		else if (mode === "pixel-assembly") renderAssembly(point);
 		else renderSweep(point);
+	}
+
+	function schedulePaint(): void {
+		if (frame) return;
+		lastPaint = performance.now();
+		frame = requestAnimationFrame(paint);
 	}
 
 	function move(event: PointerEvent): void {
@@ -126,17 +176,27 @@ export function bindWordmark(mark: HTMLAnchorElement): () => void {
 			const options = MODES.filter((candidate) => candidate !== previousMode);
 			mode = options[Math.floor(Math.random() * options.length)] ?? MODES[0];
 			previousMode = mode;
-			if (mode !== "block-flip" && !pixels.length) makePixels();
+			const needsPixels = mode === "pixel-assembly" || mode === "signal-sweep";
+			if (needsPixels && !pixels.length) makePixels();
 			mark.dataset["wordmarkMode"] = mode;
-			mark.dataset["wordmarkRenderer"] = mode === "block-flip" ? "blocks" : "pixels";
+			mark.dataset["wordmarkRenderer"] = needsPixels ? "pixels" : "blocks";
 		}
 		pointer = event;
-		if (!frame) frame = requestAnimationFrame(paint);
+		schedulePaint();
+	}
+
+	function leave(): void {
+		if (!isShapeMode(mode)) {
+			reset();
+			return;
+		}
+		pointer = undefined;
+		schedulePaint();
 	}
 
 	mark.addEventListener("pointerenter", move, { passive: true, signal });
 	mark.addEventListener("pointermove", move, { passive: true, signal });
-	mark.addEventListener("pointerleave", reset, { signal });
+	mark.addEventListener("pointerleave", leave, { signal });
 	mark.addEventListener("pointercancel", reset, { signal });
 	window.addEventListener("blur", reset, { signal });
 	document.addEventListener(MOTION_EVENT, reset, { signal });

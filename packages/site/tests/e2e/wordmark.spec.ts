@@ -48,7 +48,7 @@ test("Block Flip follows the pointer and the next hover picks a different mode",
 });
 
 test("Pixel Assembly repels nearby squares and returns to the exact grid", async ({ page }) => {
-	await loadWithRoll(page, 0.5);
+	await loadWithRoll(page, 0.25);
 	const logo = mark(page);
 	const layer = logo.locator("[data-wordmark-pixels]");
 	const nearby = layer.locator('rect[x="0"][y="0"]');
@@ -70,7 +70,7 @@ test("Pixel Assembly repels nearby squares and returns to the exact grid", async
 test("Signal Sweep follows horizontal movement from the top left to the bottom right", async ({
 	page,
 }) => {
-	await loadWithRoll(page, 0.9);
+	await loadWithRoll(page, 0.45);
 	const logo = mark(page);
 	const layer = logo.locator("[data-wordmark-pixels]");
 	const first = layer.locator('rect[x="0"][y="0"]');
@@ -85,6 +85,70 @@ test("Signal Sweep follows horizontal movement from the top left to the bottom r
 	await pointAt(page, 0.97, 0.52);
 	await expect(last).toHaveCSS("fill", highlight);
 	await expect(first).not.toHaveCSS("fill", highlight);
+});
+
+test("Outline opens the nearby strokes and restores the solid mark on exit", async ({ page }) => {
+	await loadWithRoll(page, 0.65);
+	const logo = mark(page);
+	const u = logo.locator('[data-wordmark-tile][data-x="0"][data-y="0"]');
+	const f = logo.locator('[data-wordmark-tile][data-x="6"][data-y="6"]');
+	const solid = await u.getAttribute("d");
+	const distant = await f.getAttribute("d");
+
+	await pointAt(page, 0.08, 0.16);
+	await expect(logo).toHaveAttribute("data-wordmark-mode", "outline");
+	const filled = (x: number) =>
+		u.evaluate(
+			(path, at) => path instanceof SVGPathElement && path.isPointInFill({ x: at, y: 2.5 }),
+			x,
+		);
+	await expect.poll(() => filled(0.5)).toBe(false);
+	expect(await filled(0.1)).toBe(true);
+	expect(await f.getAttribute("d")).toBe(distant);
+
+	await pointAt(page, 0.83, 0.82);
+	await expect.poll(() => f.getAttribute("d")).not.toBe(distant);
+	await expect.poll(() => u.getAttribute("d")).toBe(solid);
+	await page.mouse.move(0, 0);
+	await expect(logo).not.toHaveAttribute("data-wordmark-mode", /.+/);
+	expect(await f.getAttribute("d")).toBe(distant);
+	await expect(logo.locator("[data-wordmark-pixels] rect")).toHaveCount(0);
+});
+
+test("Stretch follows the nearest corner and preserves the mark's frame and gutters", async ({
+	page,
+}) => {
+	await loadWithRoll(page, 0.85);
+	const logo = mark(page);
+	const tiles = logo.locator("[data-wordmark-tile]");
+	const paths = () => tiles.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("d")));
+	const boxes = () =>
+		tiles.evaluateAll((nodes) =>
+			nodes.map((node) => {
+				if (!(node instanceof SVGPathElement)) throw new Error("Expected a wordmark path");
+				const { x, y, width, height } = node.getBBox();
+				return { x, y, width, height };
+			}),
+		);
+	const atRest = await paths();
+	const bounds = await logo.boundingBox();
+
+	await pointAt(page, 0.08, 0.11);
+	await expect(logo).toHaveAttribute("data-wordmark-mode", "stretch");
+	await expect.poll(async () => (await boxes())[0]?.width).toBeGreaterThan(6);
+	const [u, t, o, f] = await boxes();
+	if (!u || !t || !o || !f) throw new Error("Missing wordmark glyphs");
+	expect(t.x - u.width).toBeCloseTo(1);
+	expect(o.y - u.height).toBeCloseTo(1);
+	expect(f.x + f.width).toBeCloseTo(11);
+	expect(f.y + f.height).toBeCloseTo(11);
+	expect(await logo.boundingBox()).toEqual(bounds);
+
+	await pointAt(page, 0.89, 0.9);
+	await expect.poll(async () => (await boxes())[3]?.width).toBeGreaterThan(6);
+	await page.mouse.move(0, 0);
+	await expect(logo).not.toHaveAttribute("data-wordmark-mode", /.+/);
+	expect(await paths()).toEqual(atRest);
 });
 
 test("motion controls stop the interaction and the logo still navigates home", async ({ page }) => {

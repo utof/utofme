@@ -1,10 +1,5 @@
 ---
-const letters = [
-	{ x: 0, y: 0, rows: ["10001", "10001", "10001", "10001", "11111"] },
-	{ x: 6, y: 0, rows: ["10000", "10000", "11100", "10000", "11111"] },
-	{ x: 0, y: 6, rows: ["11111", "10001", "10001", "10001", "11111"] },
-	{ x: 6, y: 6, rows: ["11111", "10000", "11100", "10000", "10000"] },
-];
+import { wordmarkGlyphs } from "../lib/wordmark-geometry";
 ---
 
 <a class="utof-mark" href="/" data-test="wordmark" aria-label="utofme">
@@ -13,25 +8,13 @@ const letters = [
 		height="33"
 		viewBox="0 0 11 11"
 		fill="currentColor"
+		fill-rule="evenodd"
 		aria-hidden="true"
 		focusable="false"
 	>
 		<g data-wordmark-blocks>
-			{letters.map(({ x, y, rows }) => (
-				<path
-					data-wordmark-tile
-					data-x={x}
-					data-y={y}
-					data-grid={rows.join("")}
-					d={rows
-						.flatMap((row, dy) =>
-							Array.from(
-								row.matchAll(/1+/g),
-								(match) => `M${x + match.index} ${y + dy}h${match[0].length}v1H${x + match.index}Z`,
-							),
-						)
-						.join("")}
-				/>
+			{wordmarkGlyphs.map(({ x, y, path }) => (
+				<path data-wordmark-tile data-x={x} data-y={y} d={path} />
 			))}
 		</g>
 		<g data-wordmark-pixels></g>
@@ -88,7 +71,12 @@ const letters = [
 	.utof-mark:not([data-wordmark-renderer="pixels"]) [data-wordmark-pixels] {
 		visibility: hidden;
 	}
-	.utof-mark[data-wordmark-mode="block-flip"] svg {
+	.utof-mark:is(
+			[data-wordmark-mode="block-flip"],
+			[data-wordmark-mode="outline"],
+			[data-wordmark-mode="stretch"]
+		)
+		svg {
 		shape-rendering: geometricPrecision;
 	}
 	:global(html[data-motion="paused"]) .utof-mark svg :global(*) {
