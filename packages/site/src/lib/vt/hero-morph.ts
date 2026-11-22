@@ -6,10 +6,8 @@
  * therefore set imperatively at navigation time, from the clicked card, instead
  * of statically per card via `transition:name`. This module keeps the naming
  * logic pure (document in, marks out) so it is unit-testable; `installHeroMorph`
- * wires it to Astro's ClientRouter events (verified against astro@7.4.5
- * `dist/transitions/router.js`: `astro:before-preparation` → loader →
- * `astro:after-preparation` → `startViewTransition(cb)` where `cb` dispatches
- * `astro:before-swap` → swap → `astro:after-swap`).
+ * wires it to Astro's ClientRouter. Preparation loads the incoming poster
+ * before the browser captures either frame.
  *
  * Marks are plain attributes; `transitions.css` maps them to names:
  * `[data-vt-hero]` → `hero`, `[data-vt-cap]` → `hero-cap`.
@@ -17,6 +15,7 @@
  * @see packages/specs/specs/09-project-view.md § P9-9
  * @see https://docs.astro.build/en/guides/view-transitions/#router-control
  */
+import { isMotionPaused } from "../motion";
 
 /**
  * Attribute naming the media clipping frame (`hero`).
@@ -37,6 +36,7 @@ const MORPH_ATTR = "data-vt-morph";
 
 /** Custom property on `<html>` carrying the banner's vertical focus for the snapshots' crop. */
 const FOCUS_PROP = "--vt-focus";
+const POSTER_WAIT_MS = 300;
 
 const WORK_PATH = /^\/works\/([^/]+)\/?$/;
 
@@ -90,14 +90,27 @@ export function clearMarks(root: ParentNode): void {
  * Why: `hero` goes on the clipping `[data-vt-frame]`, never on the scaled
  * child, so the snapshot carries the clip exactly as seen.
  */
-function markSlug(root: ParentNode, slug: string, withCap: boolean): boolean {
+function frameForSlug(root: ParentNode, slug: string): Element | null {
 	const host = root.querySelector(bySlug(slug));
-	if (!host) return false;
-	const frame = host.matches("[data-vt-frame]") ? host : host.querySelector("[data-vt-frame]");
+	if (!host) return null;
+	return host.matches("[data-vt-frame]") ? host : host.querySelector("[data-vt-frame]");
+}
+
+function markSlug(root: ParentNode, slug: string, withCap: boolean): boolean {
+	const frame = frameForSlug(root, slug);
 	if (!frame) return false;
 	frame.setAttribute(HERO_ATTR, "");
-	if (withCap) host.querySelector("[data-cap]")?.setAttribute(CAP_ATTR, "");
+	if (withCap) frame.closest(bySlug(slug))?.querySelector("[data-cap]")?.setAttribute(CAP_ATTR, "");
 	return true;
+}
+
+function sourceSlug(nav: NavLike): string | null {
+	if (nav.direction === "back") {
+		return isGridPath(nav.to.pathname) ? slugFromWorkPath(nav.from.pathname) : null;
+	}
+	const card = nav.sourceElement?.closest("[data-work-slug]");
+	const slug = card?.getAttribute("data-work-slug") ?? null;
+	return slugFromWorkPath(nav.to.pathname) === slug ? slug : null;
 }
 
 /**
@@ -114,7 +127,7 @@ export interface NavLike {
 }
 
 /**
- * Marks the OLD document for a navigation (`astro:before-preparation`).
+ * Marks the outgoing document after the incoming poster is ready.
  *
  * - Forward from a card to `/works/<same slug>/`: marks that card's frame + caption.
  * - Back from `/works/<slug>/` to a grid: marks the visible banner frame.
@@ -126,19 +139,12 @@ export interface NavLike {
  */
 export function markOld(doc: Document, nav: NavLike): string | null {
 	clearMarks(doc);
-	if (nav.direction === "back") {
-		const slug = slugFromWorkPath(nav.from.pathname);
-		if (slug && isGridPath(nav.to.pathname) && markSlug(doc, slug, false)) return slug;
-		return null;
-	}
-	const card = nav.sourceElement?.closest("[data-work-slug]");
-	const slug = card?.getAttribute("data-work-slug");
-	if (!slug || slugFromWorkPath(nav.to.pathname) !== slug) return null;
-	return markSlug(doc, slug, true) ? slug : null;
+	const slug = sourceSlug(nav);
+	return slug && markSlug(doc, slug, nav.direction !== "back") ? slug : null;
 }
 
 /**
- * Marks the NEW document (`astro:before-swap`, on `event.newDocument`).
+ * Marks the incoming document for the same navigation.
  *
  * - Forward to `/works/<slug>/`: marks the banner frame, only if the old
  *   document marked the same slug (`oldSlug`) so names always come in pairs.
@@ -187,16 +193,52 @@ export function focusTarget(doc: Document, nav: NavLike): HTMLElement | null {
 
 interface PrepEvent extends Event, NavLike {
 	newDocument: Document;
+	signal: AbortSignal;
+	loader: () => Promise<void>;
 }
-interface SwapEvent extends PrepEvent {
+interface SwapEvent extends Event, NavLike {
+	signal: AbortSignal;
 	viewTransition: { finished: Promise<unknown> };
 }
 
 function isPrep(e: Event): e is PrepEvent {
-	return "to" in e && "from" in e && "direction" in e;
+	return "loader" in e && typeof e.loader === "function";
 }
 function isSwap(e: Event): e is SwapEvent {
-	return isPrep(e) && "viewTransition" in e;
+	return "viewTransition" in e && "signal" in e;
+}
+
+/** Decode the candidate this viewport picks from the incoming picture. */
+async function preparePoster(doc: Document, frame: Element, signal: AbortSignal): Promise<boolean> {
+	const poster = frame.querySelector("img");
+	if (!poster) return true;
+
+	// Astro's parsed document is inert. Import the whole picture so the live
+	// browser can select the right format and resolution before the swap.
+	const media = doc.importNode(poster.closest("picture") ?? poster, true);
+	const image = media instanceof HTMLImageElement ? media : media.querySelector("img");
+	if (!image) return false;
+	image.loading = "eager";
+
+	// Keep navigation responsive even when image delivery stalls or fails.
+	const deadline = AbortSignal.any([signal, AbortSignal.timeout(POSTER_WAIT_MS)]);
+	if (deadline.aborted) return false;
+	return new Promise((resolve) => {
+		const done = (ready: boolean) => {
+			deadline.removeEventListener("abort", stop);
+			resolve(ready);
+		};
+		const stop = () => done(false);
+		deadline.addEventListener("abort", stop, { once: true });
+		image.decode().then(() => done(true), stop);
+	});
+}
+
+function isVisible(frame: Element): boolean {
+	const { top, bottom, left, right, width, height } = frame.getBoundingClientRect();
+	return (
+		width > 0 && height > 0 && bottom > 0 && top < innerHeight && right > 0 && left < innerWidth
+	);
 }
 
 /**
@@ -209,61 +251,81 @@ function isSwap(e: Event): e is SwapEvent {
  * @see packages/specs/specs/09-project-view.md § P9-9
  */
 function installHeroMorph(doc: Document = document): void {
-	let oldSlug: string | null = null;
-	let nav: NavLike | null = null;
-	let focus: string | null = null;
-	let gen = 0;
+	let activeMorph: AbortSignal | undefined;
+	let swapped: NavLike | undefined;
 	const root = doc.documentElement;
 
 	const clearAll = () => {
 		clearMarks(doc);
 		root.removeAttribute(MORPH_ATTR);
 		root.style.removeProperty(FOCUS_PROP);
-		focus = null;
+		activeMorph = undefined;
 	};
 
 	doc.addEventListener("astro:before-preparation", (e) => {
 		if (!isPrep(e)) return;
-		gen++;
-		nav = { from: e.from, to: e.to, direction: e.direction, sourceElement: e.sourceElement };
-		oldSlug = markOld(doc, nav);
-		if (oldSlug) {
-			root.setAttribute(MORPH_ATTR, "");
-			// Back: the banner is on the live page now; forward reads it from the new document.
-			if (nav.direction === "back") focus = bannerFocus(doc);
-			if (focus) root.style.setProperty(FOCUS_PROP, focus);
-		}
+		const slug = sourceSlug(e);
+		if (
+			!slug ||
+			!doc.startViewTransition ||
+			isMotionPaused() ||
+			matchMedia("(prefers-reduced-motion: reduce)").matches
+		)
+			return;
+
+		const load = e.loader;
+		e.loader = async () => {
+			await load();
+			if (e.defaultPrevented || e.signal.aborted) return;
+
+			const oldFrame = frameForSlug(doc, slug);
+			const newFrame = frameForSlug(e.newDocument, slug);
+			if (!oldFrame || !newFrame || !isVisible(oldFrame)) return;
+			if (!(await preparePoster(doc, newFrame, e.signal)) || e.signal.aborted) return;
+			if (!isVisible(oldFrame)) return;
+			if (
+				oldFrame.querySelector("img")?.naturalWidth === 0 &&
+				!oldFrame.querySelector("video[data-ready]")
+			)
+				return;
+
+			clearAll();
+			const oldSlug = markOld(doc, e);
+			if (!markNew(e.newDocument, e, oldSlug)) {
+				clearAll();
+				return;
+			}
+			activeMorph = e.signal;
+			const focus = bannerFocus(e.direction === "back" ? doc : e.newDocument);
+			for (const html of [root, e.newDocument.documentElement]) {
+				html.setAttribute(MORPH_ATTR, "");
+				if (focus) html.style.setProperty(FOCUS_PROP, focus);
+			}
+			const outgoingBody = doc.body;
+			e.signal.addEventListener(
+				"abort",
+				() => {
+					if (activeMorph === e.signal && doc.body === outgoingBody) clearAll();
+				},
+				{ once: true },
+			);
+		};
 	});
 
 	doc.addEventListener("astro:before-swap", (e) => {
 		if (!isSwap(e)) return;
-		nav = { from: e.from, to: e.to, direction: e.direction, sourceElement: e.sourceElement };
-		const newSlug = markNew(e.newDocument, nav, oldSlug);
-		if (newSlug && nav.direction !== "back") focus = bannerFocus(e.newDocument);
-		// Why: the new body carries its marks into the live document; clear them (and
-		// the old ones) once the animation ends. Rejection (skipped) also cleans up.
-		// A newer navigation (quick Back) owns the marks and focus now; only the latest cleans up.
-		const mine = gen;
+		swapped = e;
+		if (activeMorph !== e.signal) return;
+		// A newer morph can already own the marks when this animation settles.
 		const done = () => {
-			if (mine === gen) clearAll();
+			if (activeMorph === e.signal) clearAll();
 		};
 		e.viewTransition.finished.then(done, done);
 	});
 
 	doc.addEventListener("astro:after-swap", () => {
-		if (!nav) return;
-		const target = focusTarget(doc, nav);
-		target?.focus({ preventScroll: true });
-		// Why: the swap replaced <html>'s attributes, dropping the mark set before navigation;
-		// transitions.css scopes the root fade-through to it, so restore it for the animation.
-		if (oldSlug) {
-			root.setAttribute(MORPH_ATTR, "");
-			if (focus) root.style.setProperty(FOCUS_PROP, focus);
-		}
-		// Why: without a view transition `finished` never fires from us; marks are
-		// harmless then (no names are applied) but must not leak into the next nav.
-		if (!oldSlug) clearAll();
-		oldSlug = null;
+		if (swapped) focusTarget(doc, swapped)?.focus({ preventScroll: true });
+		swapped = undefined;
 	});
 }
 

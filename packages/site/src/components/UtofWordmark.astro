@@ -1,0 +1,85 @@
+---
+import { wordmarkGlyphs } from "../lib/wordmark-geometry";
+---
+
+<a class="utof-mark" href="/" data-test="wordmark" aria-label="utofme">
+	<svg
+		width="66"
+		height="66"
+		viewBox="0 0 11 11"
+		fill="currentColor"
+		fill-rule="evenodd"
+		aria-hidden="true"
+		focusable="false"
+	>
+		<g data-wordmark-blocks>
+			{wordmarkGlyphs.map(({ x, y, path }) => (
+				<path data-wordmark-tile data-x={x} data-y={y} d={path} />
+			))}
+		</g>
+		<g data-wordmark-pixels></g>
+	</svg>
+</a>
+
+<script>
+	import { bindWordmark } from "../lib/wordmark-motion";
+
+	let dispose: (() => void) | undefined;
+	function mount(): void {
+		const mark = document.querySelector<HTMLAnchorElement>('[data-test="wordmark"]');
+		if (dispose || !mark) return;
+		dispose = bindWordmark(mark);
+	}
+
+	mount();
+	document.addEventListener("astro:after-swap", mount);
+	document.addEventListener("astro:before-swap", () => {
+		dispose?.();
+		dispose = undefined;
+	});
+</script>
+
+<style>
+	.utof-mark {
+		display: inline-grid;
+		align-items: center;
+		min-inline-size: 44px;
+		min-block-size: 44px;
+		color: inherit;
+	}
+	svg {
+		display: block;
+		inline-size: var(--utof-wordmark-size);
+		block-size: var(--utof-wordmark-size);
+		overflow: visible;
+		pointer-events: none;
+		shape-rendering: crispEdges;
+	}
+	[data-wordmark-tile] {
+		transform-box: fill-box;
+		transform-origin: center;
+		transition:
+			transform 170ms cubic-bezier(0.16, 1, 0.3, 1),
+			filter 170ms ease-out;
+	}
+	[data-wordmark-pixels] > :global(rect) {
+		transition:
+			transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+			fill 130ms ease-out;
+	}
+	.utof-mark[data-wordmark-renderer="pixels"] [data-wordmark-blocks],
+	.utof-mark:not([data-wordmark-renderer="pixels"]) [data-wordmark-pixels] {
+		visibility: hidden;
+	}
+	.utof-mark:is(
+			[data-wordmark-mode="block-flip"],
+			[data-wordmark-mode="outline"],
+			[data-wordmark-mode="stretch"]
+		)
+		svg {
+		shape-rendering: geometricPrecision;
+	}
+	:global(html[data-motion="paused"]) .utof-mark svg :global(*) {
+		transition: none;
+	}
+</style>

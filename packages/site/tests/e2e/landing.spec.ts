@@ -7,7 +7,6 @@
 // See: packages/specs/plans/00-foundations.md § Task 5b, § Task 5c
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { waitForImagesSettled } from "./support";
 
 test("home page loads with no Axe violations", async ({ page }) => {
 	const response = await page.goto("/");
@@ -28,8 +27,8 @@ test("home renders the wordmark as h1 and no FilterBar toolbar", async ({ page }
 
 test("visual regression baseline /", async ({ page }) => {
 	await page.goto("/");
-	// Why: lazy covers and the web fonts change the layout until loaded.
-	await waitForImagesSettled(page);
+	// The header depends on fonts. Project covers can stay lazy below it.
+	await page.evaluate(() => document.fonts.ready);
 	// Why: the chrome moved out of <main> into the shared site header; <main> is
 	// only the card grid, so a masked <main> shot guarded nothing and flaked.
 	// See: https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2

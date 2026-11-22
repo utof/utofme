@@ -29,25 +29,27 @@ const Tag = link.href ? "a" : "div";
 		data-obj-host
 		{...link.data}
 	>
-		<div class="ct-frame">
-			<Media
-				entry={item.entry}
-				shape="highlight"
-				sizes="(min-width: 1260px) 420px, (min-width: 840px) 46vw, 100vw"
-				eager={eager}
-			/>
-			<ObjectCanvas icon={item.icon} seed={item.seed} size="md" class="ct-corner" />
+		<div class="ct-feat__content">
+			<div class="ct-frame">
+				<Media
+					entry={item.entry}
+					shape="highlight"
+					sizes="(min-width: 1260px) 420px, (min-width: 840px) 46vw, 100vw"
+					eager={eager}
+				/>
+				<ObjectCanvas icon={item.icon} seed={item.seed} size="md" class="ct-corner" />
+			</div>
+			<p class="ct-kicker">
+				{item.topic.label} · <time datetime={item.dateIso}>{item.dateLabel}</time>
+			</p>
+			<h3 class="ct-hl__title">{item.title}</h3>
+			{item.lede && <p class="ct-hl__lede">{item.lede}</p>}
 		</div>
-		<p class="ct-kicker">
-			{item.topic.label} · <time datetime={item.dateIso}>{item.dateLabel}</time>
-		</p>
-		<h3 class="ct-hl__title">{item.title}</h3>
-		{item.lede && <p class="ct-hl__lede">{item.lede}</p>}
 	</Tag>
 </li>
 
 <style>
-	.ct-feat {
+	.ct-feat__content {
 		display: flex;
 		flex-direction: column;
 		gap: 6px;

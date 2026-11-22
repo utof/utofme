@@ -178,6 +178,13 @@
 	/* Why: the one outer column every page, banner, header and footer shares;
 	 * text columns keep their own max-width (measure) inside it, left-aligned. */
 	--page-width: min(100% - 2 * var(--page-margin), 1340px);
+	--utof-wordmark-size: 55px;
+}
+
+@media (min-width: 800px) {
+	:root {
+		--utof-wordmark-size: 66px;
+	}
 }
 
 /* ─── Dark-mode overrides ─────────────────────────────────────────────────── */

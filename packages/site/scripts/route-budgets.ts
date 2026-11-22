@@ -86,10 +86,12 @@ export function measureDist(distDir: string, config: BudgetsConfig): Measurement
 		gzip: (p) => stat(p)?.gz ?? null,
 	};
 	const routes = files
-		.filter((f) => /(?:^|\/)index\.html$/.test(f) && !f.startsWith("pagefind/"))
+		.filter(
+			(f) => f === "404.html" || (/(?:^|\/)index\.html$/.test(f) && !f.startsWith("pagefind/")),
+		)
 		.sort();
 	const reports = routes.map((f) => {
-		const route = f === "index.html" ? "/" : `/${f.slice(0, -"index.html".length)}`;
+		const route = `/${f === "404.html" ? f : f.slice(0, -"index.html".length)}`;
 		return analyzeRoute(
 			{ route, html: readFileSync(join(distDir, f), "utf8") },
 			graph,

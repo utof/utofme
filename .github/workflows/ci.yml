@@ -23,7 +23,9 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # Playwright 1.59 can install browser dependencies on Ubuntu 24.04.
+    # ubuntu-latest can resolve to 26.04, which this version does not support.
+    runs-on: ubuntu-24.04
     # Why: the denylist is a secret; the script warns without it (no `if:` on secrets). ADR 0055.
     env:
       PRIVACY_DENYLIST: ${{ secrets.PRIVACY_DENYLIST }}

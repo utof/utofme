@@ -21,7 +21,7 @@ test.describe("structure", () => {
 	test("one h1 (the wordmark), topic h2s, project h3s", async ({ page }) => {
 		await page.goto("/");
 		await expect(page.locator("h1")).toHaveCount(1);
-		await expect(page.locator("h1")).toHaveText("utofme");
+		await expect(page.getByRole("heading", { level: 1, name: "utofme" })).toBeVisible();
 		await expect(page.locator('h1 a[data-test="wordmark"]')).toHaveAttribute("href", "/");
 		const topics = page.locator('[data-test="home-topic"]');
 		expect(await topics.count()).toBeGreaterThanOrEqual(5);
@@ -234,7 +234,7 @@ test.describe("without JavaScript", () => {
 
 	test("every project is reachable and rows still open", async ({ page }) => {
 		await page.goto("/");
-		await expect(page.locator("h1")).toHaveText("utofme");
+		await expect(page.getByRole("heading", { level: 1, name: "utofme" })).toBeVisible();
 		// Featured cards are plain links.
 		await expect(page.locator('[data-test="home-hero"] a.card')).toHaveAttribute(
 			"href",

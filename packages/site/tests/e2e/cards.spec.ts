@@ -9,7 +9,6 @@
 // data-test card-link-* assertions: see packages/specs/plans/03-content-pipeline.md § Task 6
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { waitForImagesSettled } from "./support";
 
 const ROUTES = ["/"] as const;
 
@@ -39,8 +38,7 @@ for (const route of ROUTES) {
 
 		test("visual regression", async ({ page }) => {
 			await page.goto(route);
-			// Why: lazy covers and the web fonts change the layout until loaded.
-			await waitForImagesSettled(page);
+			await page.evaluate(() => document.fonts.ready);
 			await expect(page.locator('[data-test="works-grid"]')).toBeVisible();
 			// Why: <main> holds playing loops and spinning object canvases, so a <main> shot
 			// would be flaky. Cards and rows have their own behaviour tests; this baseline
@@ -58,7 +56,7 @@ for (const route of ROUTES) {
 			await page.emulateMedia({ reducedMotion: "reduce" });
 			await page.goto(route);
 			const seconds = await page
-				.locator(".card")
+				.locator(".ct-feat__content")
 				.first()
 				.evaluate((el) =>
 					getComputedStyle(el)
@@ -67,6 +65,49 @@ for (const route of ROUTES) {
 				);
 			// The catalogue collapses every transition to 0.01 ms under reduced motion.
 			for (const s of seconds) expect(s).toBeLessThan(0.001);
+		});
+
+		test("featured cards follow the mouse and settle without moving their links", async ({
+			browser,
+			baseURL,
+		}) => {
+			const page = await browser.newPage({
+				viewport: { width: 1440, height: 900 },
+				hasTouch: false,
+				isMobile: false,
+				reducedMotion: "no-preference",
+			});
+			try {
+				await page.goto(new URL(route, baseURL).href);
+				await page.evaluate(() => document.fonts.ready);
+				const card = page.locator('[data-test="home-hero"] a.ct-feat');
+				const content = card.locator(".ct-feat__content");
+				const bounds = await card.boundingBox();
+				if (!bounds) throw new Error("Featured card is missing");
+				const { x, y, width, height } = bounds;
+				const offset = () =>
+					content.evaluate((el) => {
+						const transform = getComputedStyle(el).transform;
+						const { m41, m42 } = new DOMMatrix(transform === "none" ? undefined : transform);
+						return [Math.round(m41), Math.round(m42)];
+					});
+
+				await page.mouse.move(x + width * 0.15, y + height * 0.2);
+				await expect.poll(offset).toEqual([-4, -4]);
+				await page.mouse.move(x + width * 0.85, y + height * 0.8, { steps: 8 });
+				await expect.poll(offset).toEqual([4, 4]);
+				expect(await card.boundingBox()).toEqual(bounds);
+
+				await page.mouse.move(1, 1);
+				await expect(content).toHaveCSS("transform", "none");
+
+				await page.getByRole("button", { name: "Pause motion" }).click();
+				await page.mouse.move(x + width * 0.15, y + height * 0.2);
+				await expect(page.locator("html")).toHaveAttribute("data-motion", "paused");
+				await expect(content).toHaveCSS("transform", "none");
+			} finally {
+				await page.close();
+			}
 		});
 
 		test("every project element exposes data-type and data-tags for the URL filter", async ({
@@ -120,6 +161,7 @@ for (const route of ROUTES) {
 			// Still expandable: the row shows its lede without a button.
 			await details.locator("summary").click();
 			await expect(details).toHaveAttribute("open", "");
+			await expect(details.locator('[data-test="home-row-more"]')).toHaveCSS("opacity", "1");
 			const results = await new AxeBuilder({ page }).analyze();
 			expect(results.violations).toEqual([]);
 		});

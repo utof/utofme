@@ -8,7 +8,6 @@
 // @see packages/specs/plans/02-interactivity.md § Task 12
 
 import { expect, test } from "@playwright/test";
-import { waitForImagesSettled } from "./support";
 
 // Why: augment the browser Window type for test-injected properties so
 // page.evaluate callbacks are fully typed without `as unknown` casts.
@@ -151,8 +150,7 @@ test("5. view-transition CSS injected after SPA navigation (best-effort)", async
 
 test("6a. visual regression / (post-ClientRouter baseline)", async ({ page }) => {
 	await page.goto("/");
-	// Why: the masonry home's lazy covers change <main>'s height until loaded.
-	await waitForImagesSettled(page);
+	await page.evaluate(() => document.fonts.ready);
 	// Why: <main> is only the card grid now (chrome moved to the site header), and a
 	// masked grid shot was flaky; the header is the stable chrome to guard.
 	await expect(page.locator('[data-test="site-header"]')).toHaveScreenshot("transitions-home.png", {

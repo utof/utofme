@@ -110,6 +110,7 @@ const EAGER_HIGHLIGHTS = 3;
 
 <script>
 	import { browserStorage, resolveFlag } from "../../../lib/flags";
+	import { bindCardHover } from "../../../lib/home/card-hover";
 	import { mountObjects } from "../../../lib/home/objects/stage";
 	import { bindExclusiveRows } from "../../../lib/home/rows";
 
@@ -121,36 +122,39 @@ const EAGER_HIGHLIGHTS = 3;
 		if (!document.querySelector("[data-home-catalogue]")) return;
 		const stopObjects = mountObjects(document);
 		const stopRows = bindExclusiveRows(document);
+		const grid = document.querySelector<HTMLElement>('[data-test="works-grid"]');
+		const stopHover = grid ? mountHover(grid) : undefined;
 		dispose = () => {
 			stopObjects();
 			stopRows();
+			stopHover?.();
 		};
 	}
 
-	// Hover effects (experimental, off by default): `?dither` / `?mosh`, mutually
-	// exclusive, each a lazy chunk fetched only when its flag is on.
+	// The experimental overlays position their canvases against a stationary card.
+	// Mount one hover effect per grid so the canvas and cover stay aligned.
 	// @see packages/specs/adrs/0041-datamosh-cpu-canvas-hover.md
-	async function armHoverEffect(): Promise<void> {
-		const grid = document.querySelector<HTMLElement>('[data-test="works-grid"]');
-		if (!grid) return;
+	function mountHover(grid: HTMLElement): (() => void) | undefined {
 		const search = window.location.search;
 		const storage = browserStorage();
 		// Resolve both so `?dither=0` / `?mosh=0` always update their persisted flags.
 		const mosh = resolveFlag("mosh", search, storage);
 		const dither = resolveFlag("dither", search, storage);
 		if (mosh) {
-			const { mountCardMosh } = await import("../../../lib/datamosh/card-mosh");
-			mountCardMosh(grid);
+			void import("../../../lib/datamosh/card-mosh").then(({ mountCardMosh }) => {
+				if (grid.isConnected) mountCardMosh(grid);
+			});
 		} else if (dither) {
-			const { mountCardDither } = await import("../../../lib/dither/card-dither");
-			mountCardDither(grid);
+			void import("../../../lib/dither/card-dither").then(({ mountCardDither }) => {
+				if (grid.isConnected) mountCardDither(grid);
+			});
+		} else {
+			return bindCardHover(grid);
 		}
+		return undefined;
 	}
 
-	document.addEventListener("astro:page-load", () => {
-		mount();
-		void armHoverEffect();
-	});
+	document.addEventListener("astro:page-load", mount);
 	document.addEventListener("astro:before-swap", () => {
 		dispose?.();
 		dispose = undefined;
@@ -183,7 +187,7 @@ const EAGER_HIGHLIGHTS = 3;
 		--ct-obj-xl: 168px;
 
 		/* Sticky chrome: only the jump row on phones, both rows from 800 px. */
-		--ct-top-h: 54px;
+		--ct-top-h: calc(var(--utof-wordmark-size) + 20px);
 		--ct-jump-h: 48px;
 		--ct-sticky-h: var(--ct-jump-h);
 		--ct-anchor-offset: calc(var(--ct-sticky-h) + 8px);
@@ -272,17 +276,12 @@ const EAGER_HIGHLIGHTS = 3;
 		position: relative;
 	}
 	.ct-featured__grid .ct-feat {
-		transition: transform 0.2s steps(2);
+		display: block;
 	}
-	.ct-featured__grid .ct-feat img {
-		transition: transform 0.5s steps(5);
-	}
-	@media (hover: hover) {
-		.ct-featured__grid a.ct-feat:hover {
-			transform: translateY(-6px);
-		}
-		.ct-featured__grid a.ct-feat:hover img {
-			transform: scale(1.04);
+	@media (prefers-reduced-motion: no-preference) {
+		html:not([data-motion="paused"]) .ct-featured__grid a.ct-feat > .ct-feat__content {
+			transform: var(--card-hover-offset, none);
+			transition: transform 160ms cubic-bezier(0.2, 0.75, 0.25, 1);
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
@@ -291,10 +290,5 @@ const EAGER_HIGHLIGHTS = 3;
 		.ct *::after {
 			transition-duration: 0.01ms !important;
 		}
-	}
-	html[data-motion="paused"] .ct-featured__grid .ct-feat,
-	html[data-motion="paused"] .ct-featured__grid .ct-feat img {
-		transition: none;
-		transform: none;
 	}
 </style>
