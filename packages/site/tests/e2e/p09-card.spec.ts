@@ -1,4 +1,4 @@
-// Featured cards on `/` (catalogue home): framed covers, stepped hover lift, keyboard
+// Featured cards on `/` (catalogue home): framed covers, pointer motion, keyboard
 // focus, home LCP, loop playback rules (P9-6/P9-7), Axe. Desktop (fine pointer) context:
 // the default Pixel 5 project is touch-only, where hover does not apply.
 // @see packages/specs/adrs/0061-catalogue-home-curated-model.md
@@ -28,18 +28,28 @@ test("featured covers sit in a paper frame with a hard 3 px ink edge", async ({ 
 	}
 });
 
-test("hover lifts a featured card in steps; leaving restores", async ({ page }) => {
+test("featured artwork follows the pointer and returns on exit", async ({ page }) => {
 	await page.goto("/");
 	const card = hero(page);
 	await card.scrollIntoViewIfNeeded();
-	expect(await transformOf(card)).toBe("none");
-	expect(await card.evaluate((el) => getComputedStyle(el).transitionTimingFunction)).toContain(
-		"steps(",
-	);
-	await card.hover();
-	await expect.poll(() => transformOf(card)).toBe("matrix(1, 0, 0, 1, 0, -6)");
+	const bounds = await card.boundingBox();
+	if (!bounds) throw new Error("Expected a visible featured card");
+	const content = card.locator(".ct-feat__content");
+	const direction = () =>
+		content.evaluate((el) => {
+			const { transform } = getComputedStyle(el);
+			const matrix = new DOMMatrixReadOnly(transform === "none" ? undefined : transform);
+			return [Math.sign(matrix.m41), Math.sign(matrix.m42)];
+		});
+	await expect(content).toHaveCSS("transform", "none");
+	const { x, y, width, height } = bounds;
+	await page.mouse.move(x + width * 0.25, y + height * 0.25);
+	await expect.poll(direction).toEqual([-1, -1]);
+	await page.mouse.move(x + width * 0.75, y + height * 0.75);
+	await expect.poll(direction).toEqual([1, 1]);
+	await expect(card).toHaveCSS("transform", "none");
 	await page.mouse.move(0, 0);
-	await expect.poll(() => transformOf(card)).toBe("none");
+	await expect(content).toHaveCSS("transform", "none");
 });
 
 test("keyboard focus shows a 4 px ink outline on a featured card", async ({ page }) => {
@@ -55,13 +65,13 @@ test("keyboard focus shows a 4 px ink outline on a featured card", async ({ page
 	await expect(card).toHaveCSS("outline-style", "solid");
 });
 
-test("paused motion: hover neither lifts the card nor zooms its cover", async ({ page }) => {
+test("paused motion: hover leaves the artwork still", async ({ page }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: /pause motion/i }).click();
 	const card = hero(page);
-	await card.hover();
+	await card.hover({ position: { x: 24, y: 24 } });
 	await page.waitForTimeout(400);
-	expect(await transformOf(card)).toBe("none");
+	expect(await transformOf(card.locator(".ct-feat__content"))).toBe("none");
 	expect(await transformOf(card.locator("img").first())).toBe("none");
 });
 

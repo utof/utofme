@@ -59,6 +59,10 @@ const Mark = heading ? "h1" : "p";
 		margin: 0;
 		line-height: 1;
 	}
+	.site-header:not([data-catalogue]) .mark {
+		/* Keep font descenders from adding a line-box gap below the SVG. */
+		display: grid;
+	}
 	.controls {
 		display: flex;
 		flex-wrap: nowrap;

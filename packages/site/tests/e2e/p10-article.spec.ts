@@ -36,8 +36,13 @@ declare global {
 }
 
 /** Opens the article in a fresh desktop context (the project default is Pixel 5). */
-async function desktop(browser: Browser, width = 1440, height = 900): Promise<Page> {
-	const context = await browser.newContext({ baseURL: BASE, viewport: { width, height } });
+async function desktop(
+	browser: Browser,
+	width = 1440,
+	height = 900,
+	baseURL = BASE,
+): Promise<Page> {
+	const context = await browser.newContext({ baseURL, viewport: { width, height } });
 	const page = await context.newPage();
 	await page.goto(URL);
 	return page;
@@ -344,8 +349,8 @@ test("@visual article first screen (Pixel 5)", async ({ page }) => {
 	});
 });
 
-test("@visual article first screen (1440×900)", async ({ browser }) => {
-	const page = await desktop(browser);
+test("@visual article first screen (1440×900)", async ({ browser, baseURL }) => {
+	const page = await desktop(browser, 1440, 900, baseURL);
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.reload();
 	await page.waitForLoadState("load");

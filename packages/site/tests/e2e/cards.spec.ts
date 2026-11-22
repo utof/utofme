@@ -161,6 +161,7 @@ for (const route of ROUTES) {
 			// Still expandable: the row shows its lede without a button.
 			await details.locator("summary").click();
 			await expect(details).toHaveAttribute("open", "");
+			await expect(details.locator('[data-test="home-row-more"]')).toHaveCSS("opacity", "1");
 			const results = await new AxeBuilder({ page }).analyze();
 			expect(results.violations).toEqual([]);
 		});
