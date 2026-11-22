@@ -2,13 +2,8 @@
 /**
  * SiteHeader.astro — the one header every page shares.
  *
- * Wordmark link home on the left, a default slot for page controls (Pause motion,
- * Sound) on the right. Mounted once by `_BaseLayout`, so the wordmark, its height
- * and its offset are identical on every route.
- *
- * Why: slash pages started at the h1, project pages at the banner and only home /
- * search / 404 had a wordmark, at three different tops (P-05/P-06). A fixed
- * 44 px row keeps the wordmark link and the controls full-size tap targets.
+ * Why: the wordmark and header landmark stay consistent.
+ * The catalogue variant adds its sticky surface and an optional navigation slot.
  *
  * @see packages/specs/reviews/ui/polish.md (P-05, P-06)
  */
@@ -17,35 +12,48 @@ import UtofWordmark from "./UtofWordmark.astro";
 interface Props {
 	/** Wrap the wordmark in an `<h1>` (home has no other title). */
 	heading?: boolean | undefined;
+	catalogue?: boolean | undefined;
 }
-const { heading = false } = Astro.props;
+const { heading = false, catalogue = false } = Astro.props;
 const Mark = heading ? "h1" : "p";
 ---
 
-<header class="site-header" data-test="site-header">
-	<Mark class="mark">
-		<UtofWordmark />
-	</Mark>
-	<div class="controls" data-test="site-controls">
-		<slot />
+<header
+	class:list={["site-header", { ct: catalogue }]}
+	data-test="site-header"
+	data-catalogue={catalogue ? "" : undefined}
+>
+	<div class:list={["header-row", { "ct-wrap": catalogue }]}>
+		<Mark class="mark">
+			<UtofWordmark />
+		</Mark>
+		<slot name="navigation" />
+		<div class="controls" data-test="site-controls">
+			<slot />
+		</div>
 	</div>
 </header>
 
 <style>
 	.site-header {
-		box-sizing: border-box;
+		position: relative;
+		z-index: 1;
+	}
+	.site-header:not([data-catalogue]) {
 		width: var(--page-width);
 		margin-inline: auto;
-		padding-block-start: var(--space-6);
 		margin-block-end: var(--space-5);
+	}
+	.site-header:not([data-catalogue]) .header-row {
+		box-sizing: border-box;
+		padding-block-start: var(--space-6);
+		min-block-size: calc(var(--space-6) + var(--utof-wordmark-size));
+	}
+	.header-row {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-4);
-		/* Fixed row so the offset below is identical on every page. */
-		block-size: calc(var(--space-6) + 44px);
-		/* Keep the header in its own group across pages that share it. */
-		view-transition-name: site-header;
 	}
 	.mark {
 		margin: 0;
@@ -56,5 +64,43 @@ const Mark = heading ? "h1" : "p";
 		flex-wrap: nowrap;
 		align-items: center;
 		gap: var(--space-2);
+	}
+	[data-catalogue] {
+		background: var(--ct-page);
+		z-index: 10;
+	}
+	[data-catalogue] .header-row {
+		flex-wrap: wrap;
+		gap: 0 16px;
+		padding-block-start: 10px;
+	}
+	[data-catalogue] .mark {
+		margin-inline-end: auto;
+	}
+	[data-catalogue] .controls :global(.site-ctl) {
+		block-size: 32px;
+		padding: 0 10px;
+		font-family: var(--ct-font-pixel);
+		font-size: 20px;
+		color: var(--ct-ink);
+		background: transparent;
+		border: 2px solid var(--ct-ink);
+		border-radius: 0;
+	}
+	[data-catalogue] .controls :global(.site-ctl:hover) {
+		background: var(--ct-paper);
+		border-color: var(--ct-ink);
+	}
+	@media (min-width: 800px) {
+		[data-catalogue] {
+			position: sticky;
+			inset-block-start: 0;
+		}
+		[data-catalogue] .header-row {
+			flex-wrap: nowrap;
+			gap: 0 24px;
+			block-size: var(--ct-top-h);
+			box-sizing: border-box;
+		}
 	}
 </style>

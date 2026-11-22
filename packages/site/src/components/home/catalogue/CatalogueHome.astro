@@ -187,8 +187,7 @@ const EAGER_HIGHLIGHTS = 3;
 		--ct-obj-xl: 168px;
 
 		/* Sticky chrome: only the jump row on phones, both rows from 800 px. */
-		--ct-wordmark-size: 55px;
-		--ct-top-h: calc(var(--ct-wordmark-size) + 20px);
+		--ct-top-h: calc(var(--utof-wordmark-size) + 20px);
 		--ct-jump-h: 48px;
 		--ct-sticky-h: var(--ct-jump-h);
 		--ct-anchor-offset: calc(var(--ct-sticky-h) + 8px);
@@ -200,7 +199,6 @@ const EAGER_HIGHLIGHTS = 3;
 	}
 	@media (min-width: 800px) {
 		body.ct-home {
-			--ct-wordmark-size: 66px;
 			--ct-sticky-h: calc(var(--ct-top-h) + var(--ct-jump-h));
 		}
 	}

@@ -22,6 +22,9 @@ export interface Pose {
 	readonly yaw: number;
 	/** 1 → 0 while a just-opened object bounces; 0 = at rest. */
 	readonly pop: number;
+	/** Overrides for scenes that can tilt independently of the home-page camera. */
+	readonly pitch?: number;
+	readonly roll?: number;
 }
 
 /**
@@ -63,13 +66,15 @@ export function popBounce(pop: number): number {
  * @see https://en.wikipedia.org/wiki/Painter%27s_algorithm
  */
 export function shadeMesh(mesh: Mesh, pose: Pose, width: number, height: number): ShadedFace[] {
-	const { yaw, pop } = pose;
+	const { yaw, pop, pitch = PITCH, roll = 0 } = pose;
 	const bounce = popBounce(pop);
 	const squash = pop > 0 ? 1 + 0.2 * Math.sin(pop * 18) * pop : 1;
 	const cy = Math.cos(yaw);
 	const sy = Math.sin(yaw);
-	const cp = Math.cos(PITCH);
-	const sp = Math.sin(PITCH);
+	const cp = Math.cos(pitch);
+	const sp = Math.sin(pitch);
+	const cr = Math.cos(roll);
+	const sr = Math.sin(roll);
 	const scale = width * 0.35;
 
 	const projected = mesh.vertices.map(([px, py, pz]) => {
@@ -78,12 +83,14 @@ export function shadeMesh(mesh: Mesh, pose: Pose, width: number, height: number)
 		const y = py * squash + bounce * 0.5;
 		const y2 = y * cp - z * sp;
 		const z2 = y * sp + z * cp;
+		const x3 = x * cr - y2 * sr;
+		const y3 = x * sr + y2 * cr;
 		const d = CAMERA / (CAMERA + z2);
 		return {
-			sx: Math.round(width / 2 + x * d * scale),
-			sy: Math.round(height * 0.56 - y2 * d * scale),
-			x,
-			y: y2,
+			sx: Math.round(width / 2 + x3 * d * scale),
+			sy: Math.round(height * 0.56 - y3 * d * scale),
+			x: x3,
+			y: y3,
 			z: z2,
 		};
 	});
@@ -141,8 +148,16 @@ export function drawObject(canvas: HTMLCanvasElement, mesh: Mesh, pose: Pose): v
 		Math.PI * 2,
 	);
 	ctx.fill();
+	fillFaces(ctx, shadeMesh(mesh, pose, width, height));
+}
+
+/**
+ * Fills a projected mesh into a canvas, in the order supplied by `shadeMesh`.
+ * Why: the ASCII 404 samples the same solid faces into a grid, without the ground shadow.
+ */
+export function fillFaces(ctx: CanvasRenderingContext2D, faces: readonly ShadedFace[]): void {
 	ctx.lineWidth = 1;
-	for (const face of shadeMesh(mesh, pose, width, height)) {
+	for (const face of faces) {
 		const [x1, y1, x2, y2, x3, y3] = face.points;
 		ctx.fillStyle = face.fill;
 		ctx.strokeStyle = face.fill;

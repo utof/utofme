@@ -62,6 +62,8 @@ interface Props {
 	 * Why: the masonry home has no other title; every other page keeps its own `<h1>`.
 	 */
 	wordmarkHeading?: boolean | undefined;
+	/** Explicitly omit the header on a route with its own layout requirements. */
+	hideHeader?: boolean | undefined;
 	/** Absolute or site-relative `og:image`; defaults to the site card. */
 	ogImage?: string | undefined;
 	/**
@@ -92,6 +94,7 @@ const {
 	minimal = false,
 	noindex = false,
 	wordmarkHeading = false,
+	hideHeader = false,
 	ogImage,
 	bodyClass,
 	preloadMono = true,
@@ -142,14 +145,15 @@ const {
 		     The sound toggle joins the pages' own controls (Pause motion) in that slot, so both
 		     controls share one place and one look. Why Sound first: Pause motion then keeps the
 		     right edge on every route that has it instead of shifting when Sound is added (M3-09). -->
-		{Astro.slots.has("header") ? (
-			<slot name="header" />
-		) : (
-			<SiteHeader heading={wordmarkHeading}>
-				{!minimal && <SoundToggle />}
-				<slot name="controls" />
-			</SiteHeader>
-		)}
+		{!hideHeader &&
+			(Astro.slots.has("header") ? (
+				<slot name="header" />
+			) : (
+				<SiteHeader heading={wordmarkHeading}>
+					{!minimal && <SoundToggle />}
+					<slot name="controls" />
+				</SiteHeader>
+			))}
 		<slot />
 		<!-- Why: HCard placed before SlashFooter so the indieweb identity block
 		     appears above the navigation links — keeps microformat-scoped markup

@@ -41,14 +41,6 @@
 	/* M3-03: crop at the banner's focus (set on <html> by hero-morph.ts). */
 	object-position: 50% var(--vt-focus, 50%);
 }
-/* The catalogue and detail headers have different layouts. Each stays with
- * its own page snapshot during the morph. */
-html[data-vt-morph] .site-header {
-	view-transition-name: none;
-}
-::view-transition-group(site-header) {
-	animation: none;
-}
 /* Caption: its own group so it never stretches with the media. Forward: fades
  * out fast (old-only). Back: returns late (new-only). */
 ::view-transition-old(hero-cap) {
@@ -60,23 +52,27 @@ html[data-vt-morph] .site-header {
 	animation-delay: 220ms;
 	animation-fill-mode: backwards;
 }
-::view-transition-old(root),
-::view-transition-new(root) {
-	animation-duration: 200ms;
-}
-/* Keep the moving image visible while the surrounding page fades through
- * its background, so the two sets of text and controls never overlap. */
-html[data-vt-morph]::view-transition {
+/* Each header stays at its original position in its page snapshot. Fade
+ * through the background to avoid doubling headers with different layouts. */
+::view-transition {
 	background-color: var(--color-bg);
 }
+::view-transition-old(root) {
+	animation-duration: 80ms;
+	animation-fill-mode: forwards;
+}
+::view-transition-new(root) {
+	animation-duration: 120ms;
+	animation-delay: 80ms;
+	animation-fill-mode: backwards;
+}
+/* Give the moving hero more time to travel between the card and the banner. */
 html[data-vt-morph]::view-transition-old(root) {
 	animation-duration: 105ms;
-	animation-fill-mode: forwards;
 }
 html[data-vt-morph]::view-transition-new(root) {
 	animation-duration: 185ms;
 	animation-delay: 105ms;
-	animation-fill-mode: backwards;
 }
 /* Hover-overlay canvases (dither / mosh) sit outside the card and would freeze
  * into the snapshot; hidden immediately before capture and during the morph. */

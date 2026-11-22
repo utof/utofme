@@ -77,6 +77,8 @@ export const budgets: BudgetsConfig = {
 			posterTargetWidth: 1280,
 		},
 		text,
+		// The interactive ASCII artwork adds a small renderer to the usual chrome.
+		notFound: { ...text, firstViewJs: 42 * KB },
 		article: {
 			firstViewJs: 40 * KB, // unchanged: every figure island is lazy
 			// Why: eleven SSR keyframes with their no-JS tables measure ~47 KB before F6/F7 are
@@ -111,6 +113,7 @@ export const budgets: BudgetsConfig = {
 	},
 	routes: [
 		{ match: "/", class: "home" },
+		{ match: "/404.html", class: "notFound" },
 		{ match: "/search/", class: "search" },
 		{ match: "/garden/graph/", class: "graph" },
 		{ match: /^\/lab\/figures\//, class: "labFigure" },

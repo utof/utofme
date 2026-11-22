@@ -7,26 +7,153 @@
  * @see https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/
  * @see packages/specs/reviews/ui/breaker-desktop.md (B-03)
  */
+import { Font } from "astro:assets";
+import MotionToggle from "../components/MotionToggle.astro";
 import BaseLayout from "../layouts/_BaseLayout.astro";
+import { ERROR_ASCII } from "../lib/not-found-art";
 ---
 
-<BaseLayout title="Not found" description="This page does not exist." noindex>
-	<main>
-		<h1>Page not found</h1>
-		<p>
-			That address leads nowhere. <a href="/">Back to the home page →</a>
-		</p>
+<BaseLayout title="404 — Page not found" description="This page does not exist." minimal noindex>
+	<Font slot="head" cssVariable="--font-home-pixel" preload />
+	<MotionToggle slot="controls" />
+	<main class="not-found">
+		<div class="not-found__art" aria-hidden="true" data-404-slot>
+			<pre data-404-letters>{ERROR_ASCII}</pre>
+		</div>
+		<div class="not-found__plane" aria-hidden="true">
+			<canvas data-404-art hidden></canvas>
+		</div>
+		<h1>This page doesn’t exist!!</h1>
+		<a class="not-found__return" href="/" data-404-home>
+			Back to main page
+		</a>
+		<button class="not-found__return" type="button" data-404-back hidden>
+			Back to previous page
+		</button>
 	</main>
 </BaseLayout>
 
+<script>
+	import { mountNotFoundArt } from "../lib/not-found-motion";
+
+	function hasPreviousPage(): boolean {
+		// The Navigation API only sees same-origin entries. On a fresh navigation
+		// the History API can also show that we arrived from another origin.
+		if (window.navigation?.canGoBack) return true;
+		if (history.length <= 1 || window.navigation?.canGoForward) return false;
+		const visit = performance.getEntriesByType("navigation")[0];
+		if (!(visit instanceof PerformanceNavigationTiming) || visit.type === "back_forward") {
+			return false;
+		}
+		// Two entries alone can include an initial about:blank in Chromium.
+		const original = new URL(visit.name);
+		const routedHere =
+			original.pathname !== location.pathname || original.search !== location.search;
+		return Boolean(document.referrer) || history.length > 2 || routedHere;
+	}
+
+	function bindReturn(): void {
+		const back = document.querySelector<HTMLButtonElement>("[data-404-back]");
+		const home = document.querySelector<HTMLAnchorElement>("[data-404-home]");
+		if (!back || !home) return;
+		const canGoBack = hasPreviousPage();
+		back.hidden = !canGoBack;
+		home.hidden = canGoBack;
+		back.onclick = () => history.back();
+	}
+
+	let disposeArt: (() => void) | undefined;
+	function mount(): void {
+		bindReturn();
+		if (disposeArt) return;
+		const slot = document.querySelector<HTMLElement>("[data-404-slot]");
+		const canvas = document.querySelector<HTMLCanvasElement>("[data-404-art]");
+		if (slot && canvas) disposeArt = mountNotFoundArt(slot, canvas);
+	}
+	document.addEventListener("astro:page-load", mount);
+	document.addEventListener("astro:before-swap", () => {
+		disposeArt?.();
+		disposeArt = undefined;
+	});
+	window.addEventListener("pageshow", mount);
+	window.addEventListener("popstate", bindReturn);
+	mount();
+</script>
+
 <style>
-	main {
+	.not-found {
 		width: var(--page-width);
 		margin-inline: auto;
-		padding-block: 0 var(--space-6);
+		min-height: min(44rem, 74svh);
+		display: grid;
+		align-content: center;
+		justify-items: center;
+		padding-block: clamp(1rem, 3svh, 3rem) clamp(3rem, 10svh, 6rem);
+		text-align: center;
 	}
-	p {
-		color: var(--color-text-body);
+	.not-found__art {
+		width: min(100%, 61rem, 116svh);
+		aspect-ratio: 2;
+		display: grid;
+		place-items: center;
+		container-type: inline-size;
+	}
+	.not-found__art pre {
 		margin: 0;
+		padding: 0;
+		background: transparent;
+		color: #7a55db;
+		font: 700 3.1cqi / 0.77 var(--font-mono);
+	}
+	.not-found__plane {
+		position: fixed;
+		inset: 0;
+		z-index: 0;
+		overflow: clip;
+		pointer-events: none;
+	}
+	.not-found__plane canvas {
+		position: absolute;
+		inset: 0 auto auto 0;
+		height: auto;
+	}
+	h1,
+	.not-found__return {
+		position: relative;
+		z-index: 1;
+	}
+	h1 {
+		margin: clamp(0.6rem, 2svh, 1.1rem) 0 var(--space-4);
+		font: 400 clamp(2.35rem, 7.4vw, 5.4rem) / 0.95 var(--font-home-pixel);
+		text-wrap: balance;
+		-webkit-text-stroke: 3px var(--color-bg);
+		paint-order: stroke fill;
+	}
+	.not-found__return {
+		box-sizing: border-box;
+		min-height: 44px;
+		padding: 0.27em 0.7em;
+		border: 2px solid currentColor;
+		border-radius: 0;
+		background: var(--color-bg);
+		color: var(--color-text);
+		font: 400 clamp(1.35rem, 3vw, 1.75rem) / 1 var(--font-home-pixel);
+		display: inline-grid;
+		place-items: center;
+		text-decoration: none;
+		cursor: pointer;
+	}
+	.not-found__return:is(:hover, :focus-visible) {
+		background: #e6ddff;
+		color: var(--color-text);
+		text-decoration: none;
+	}
+	.not-found [hidden] {
+		display: none;
+	}
+	@media (max-width: 35rem) {
+		.not-found {
+			min-height: 68svh;
+		}
 	}
 </style>

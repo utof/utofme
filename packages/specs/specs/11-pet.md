@@ -112,7 +112,7 @@ These are requirements, each with a test.
 5. **No guilt.** No stat falls with absence except the belly, and an empty belly changes nothing. The pet cannot die, leave, get sick or look sad. After three or more days away the first wake is a longer `happy`.
 6. **No sound** unless the site's sound toggle is on.
 7. **No motion when motion is paused** (`isMotionPaused()`, which follows `prefers-reduced-motion` unless the visitor chose otherwise). The pet is then a still figure whose pose changes with its state: a pat swaps to the patted pose and back, nothing flies, tucking is instant.
-8. **One control sends it home, one calls it back.** Next to the pet, when the visitor is on it: a **home** button ("Send Nib home"). At home, all that remains is a 12 × 30 px static tab on the same edge ("Call the pet back"). The choice persists in `localStorage["utofme:pet"]` (`"0"` home, `"1"` out) and is set by `?pet=0` / `?pet=1` through `resolveSwitch` in `lib/flags.ts`. A pet at home loads no pet code.
+8. **One control sends it home, one calls it back.** Next to the pet, when the visitor is on it: a **home** button ("Send Nib home"). At home, all that remains is a static tab near the right edge ("Call the pet back"), inset to clear overlay scrollbars. The choice persists in `localStorage["utofme:pet"]` (`"0"` home, `"1"` out) and is set by `?pet=0` / `?pet=1` through `resolveSwitch` in `lib/flags.ts`. A pet at home loads no pet code.
 9. **Small screens** (≤ 600 px): the pet is 72 px instead of 96 px, and because a phone layout has no free margin it is tucked at rest (rule 2). **Print**: hidden.
 10. **Automated browsers get no pet by default** (`navigator.webdriver`): crawlers, link previews and the existing visual baselines see the page as it was. `?pet=1` or a stored choice overrides this.
 
@@ -123,7 +123,7 @@ These are requirements, each with a test.
 - The pet canvas is `aria-hidden`. Its controls are real buttons in one container, an `<aside aria-label="Site pet">` (a landmark, so nothing sits outside the page's regions) at the **end of `<body>`**, after the footer, so the pet is the last tab stop, never between the reader and the content: the pet button (`aria-label="Nib, your pet. Pat"`), **About** (opens the panel, `aria-expanded`), **Send home**.
 - The panel is a plain disclosure, not a dialog: no focus trap, Esc closes it and returns focus to **About**. It holds the name field (labelled), bond, belly, the alphabet (a list with a text summary "7 of 26 letters"), **Feed**, **Move to the other side**.
 - Sending the pet home from the keyboard moves focus to the "Call the pet back" tab; calling it back moves focus to the pet button.
-- Targets are at least 24 × 24 px (WCAG 2.5.8); the pet itself is 72–96 px. The "call back" tab is 12 px wide on purpose (it must fit the gutter) and relies on that criterion's spacing exception: no other target is within 24 px of it.
+- Targets are at least 24 × 24 px (WCAG 2.5.8). The pet itself is 72–96 px. The "call back" tab has a 36 × 44 px hit area.
 - Focus rings use the site's `--shadow-focus`. Text in the panel meets AA on paper.
 - Axe is clean on `/` and `/works/tactical-arena/` with the pet out and the panel open.
 
@@ -241,7 +241,7 @@ Read as a returning reader, the first draft of this design had these problems; e
 3. *It sat on a figure after I scrolled.* → It re-checks the space under it after every scroll and may only retreat.
 4. *I summoned it and it stayed on the text.* → It tucks back after 4 s, on scroll, on Esc, on a click elsewhere.
 5. *It blinked at me through a whole article.* → It sleeps after 45 s without attention, and sleep is zero frames.
-6. *I sent it home and a mascot-shaped hole kept reminding me.* → Home is a 12 px static tab in the gutter, no face, no motion.
+6. *I sent it home and a mascot-shaped hole kept reminding me.* → Home is a small static tab near the edge.
 7. *My screen reader narrated its feelings.* → Only results of controls the visitor used are announced, rate-limited.
 8. *It ate my selection when I wanted to copy it.* → It eats copies; the selection and clipboard are untouched.
 9. *It scolded me for being away.* → Nothing falls but the belly, and an empty belly does nothing. Away for days earns a longer greeting.

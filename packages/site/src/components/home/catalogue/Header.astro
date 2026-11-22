@@ -11,7 +11,7 @@
  */
 import type { HomeModel } from "../../../lib/home/model";
 import MotionToggle from "../../MotionToggle.astro";
-import UtofWordmark from "../../UtofWordmark.astro";
+import SiteHeader from "../../SiteHeader.astro";
 import { HEADER_LINKS } from "./links";
 
 interface Props {
@@ -20,21 +20,14 @@ interface Props {
 const { model } = Astro.props;
 ---
 
-<header class="ct ct-top site-header" data-test="site-header">
-	<div class="ct-wrap ct-top__row">
-		<h1 class="ct-mark">
-			<UtofWordmark />
-		</h1>
-		<nav class="ct-nav" aria-label="Site">
-			{HEADER_LINKS.map((l) => (
-				<a href={l.href}>{l.label}</a>
-			))}
-		</nav>
-		<div class="ct-controls" data-test="site-controls">
-			<MotionToggle />
-		</div>
-	</div>
-</header>
+<SiteHeader catalogue heading>
+	<nav slot="navigation" class="ct-nav" aria-label="Site">
+		{HEADER_LINKS.map((l) => (
+			<a href={l.href}>{l.label}</a>
+		))}
+	</nav>
+	<MotionToggle />
+</SiteHeader>
 <nav class="ct ct-jump" aria-label="Jump to a topic" data-test="home-jump">
 	<div class="ct-wrap ct-jump__row">
 		{model.counts.featured > 0 && (
@@ -51,28 +44,6 @@ const { model } = Astro.props;
 </nav>
 
 <style>
-	.ct-top,
-	.ct-jump {
-		background: var(--ct-page);
-		z-index: 10;
-	}
-	.ct-top {
-		/* Match the shared header on ordinary navigations. The cover morph fades this with the catalogue. */
-		view-transition-name: site-header;
-	}
-	.ct-top__row {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0 24px;
-		padding-block-start: 10px;
-	}
-	.ct-mark {
-		--utof-wordmark-size: var(--ct-wordmark-size);
-		margin: 0;
-		margin-inline-end: auto;
-		line-height: 1;
-	}
 	.ct-nav a,
 	.ct-jump a {
 		display: inline-flex;
@@ -88,27 +59,9 @@ const { model } = Astro.props;
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 	}
-	.ct-controls {
-		display: flex;
-		align-items: center;
-	}
-	/* The shared control, in this page's voice: square, ink frame, pixel face. */
-	.ct-controls :global(.site-ctl) {
-		block-size: 32px;
-		padding: 0 10px;
-		font-family: var(--ct-font-pixel);
-		font-size: 20px;
-		color: var(--ct-ink);
-		background: transparent;
-		border: 2px solid var(--ct-ink);
-		border-radius: 0;
-	}
-	.ct-controls :global(.site-ctl:hover) {
-		background: var(--ct-paper);
-		border-color: var(--ct-ink);
-	}
-
 	.ct-jump {
+		background: var(--ct-page);
+		z-index: 10;
 		position: sticky;
 		inset-block-start: 0;
 		box-shadow: 0 2px 0 var(--ct-ink);
@@ -143,9 +96,6 @@ const { model } = Astro.props;
 
 	/* Narrow: wordmark and control on one line, the nav below it. */
 	@media (max-width: 799.98px) {
-		.ct-top__row {
-			gap: 0 16px;
-		}
 		.ct-nav {
 			order: 3;
 			flex-basis: 100%;
@@ -156,15 +106,6 @@ const { model } = Astro.props;
 
 	/* Wide: both rows stick. The top row has a fixed height so the jump row's offset is exact. */
 	@media (min-width: 800px) {
-		.ct-top {
-			position: sticky;
-			inset-block-start: 0;
-		}
-		.ct-top__row {
-			flex-wrap: nowrap;
-			block-size: var(--ct-top-h);
-			box-sizing: border-box;
-		}
 		.ct-nav {
 			flex-wrap: nowrap;
 		}

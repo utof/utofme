@@ -181,11 +181,6 @@ test("M3-04: the catalogue header has no independent animation during the morph"
 	page,
 }) => {
 	await page.goto("/");
-	const name = await page.evaluate(() => {
-		const h = document.querySelector(".site-header");
-		return h ? getComputedStyle(h).viewTransitionName : null;
-	});
-	expect(name).toBe("site-header");
 	await onReady(page, "names");
 	await loopCard(page).click();
 	await page.waitForURL(`**/works/${LOOP_SLUG}/`);

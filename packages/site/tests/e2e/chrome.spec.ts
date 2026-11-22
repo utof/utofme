@@ -24,26 +24,28 @@ const ROUTES = [
 test.describe("desktop chrome", () => {
 	test.use({ viewport: { width: 1280, height: 800 }, hasTouch: false, isMobile: false });
 
-	test("the wordmark has the same box on every route", async ({ page }) => {
-		const boxes: string[] = [];
-		// Why no "/": the catalogue home brings its own header (ADR 0061); its wordmark is
-		// checked in `home-catalogue.spec.ts`.
-		for (const route of ROUTES.filter((r) => r !== "/")) {
+	test("the wordmark has the same size on every route", async ({ page }) => {
+		const extraPageOffsets: string[] = [];
+		for (const route of ROUTES) {
 			await page.goto(route);
 			const b = await page
-				.locator('[data-test="site-header"] [data-test="wordmark"]')
+				.locator('[data-test="site-header"] [data-test="wordmark"] svg')
 				.boundingBox();
-			expect(b, route).not.toBeNull();
-			boxes.push(`${Math.round(b?.x ?? 0)},${Math.round(b?.y ?? 0)},${Math.round(b?.height ?? 0)}`);
+			expect(b, route).toMatchObject({ width: 66, height: 66 });
+			if (route !== "/" && b) {
+				extraPageOffsets.push(`${Math.round(b.x)},${Math.round(b.y)}`);
+			}
 		}
-		expect(new Set(boxes).size, boxes.join(" | ")).toBe(1);
+		expect(new Set(extraPageOffsets).size, extraPageOffsets.join(" | ")).toBe(1);
 	});
 
 	test("page titles are 36 px at one offset on every non-project, non-home page", async ({
 		page,
 	}) => {
 		const tops: string[] = [];
-		for (const route of ROUTES.filter((r) => r !== "/" && !r.startsWith("/works/"))) {
+		for (const route of ROUTES.filter(
+			(r) => r !== "/" && !r.startsWith("/works/") && r !== "/this-page-does-not-exist-xyz/",
+		)) {
 			await page.goto(route);
 			const h = await page
 				.locator("main h1")

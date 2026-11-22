@@ -19,7 +19,7 @@ A pet ("Nib", a ringling: a ball with a face, two feelers and a planet's ring) t
 5. **It eats copies.** Feeding takes letters from the selection (or one letter of the page title): the letters are read as a string and drawn as `aria-hidden` copies inside the pet's own container. The page's DOM, the selection and the clipboard are not changed. Only counts per letter are saved, never the text.
 6. **Quiet.** Sound only when the site's sound toggle is on. One polite status line reports the result of a control the visitor just used; moods are not announced.
 7. **Still when motion is paused.** Under `isMotionPaused()` there is no frame loop and nothing flies; the figure changes pose when its state changes.
-8. **One switch.** "Send home" next to the pet, a 12 × 30 px static tab to call it back, `?pet=0` / `?pet=1`. The answer is a plain localStorage key read by a loader of a few hundred bytes; a pet at home loads no pet code.
+8. **One switch.** "Send home" next to the pet, a static tab with a 36 × 44 px hit area inset from the scrollbar to call it back, `?pet=0` / `?pet=1`. The answer is a plain localStorage key read by a loader of a few hundred bytes. A pet at home loads no pet code.
 9. **Automated browsers get no pet by default** (`navigator.webdriver`), unless `?pet=1` or a stored answer says otherwise.
 10. **Vanilla TypeScript, not an island.** The loader is a bundled `<script>`; the pet is one lazy module imported on `requestIdleCallback`. Its CSS ships inside that module.
 

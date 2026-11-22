@@ -185,9 +185,14 @@ test("AC2.5: send home, reload: still at home; the tab calls it back", async ({ 
 	await expect(door).toBeVisible();
 	await expect(root.locator("canvas")).toHaveCount(0);
 	expect(requests.filter((u) => /\/_astro\/start\./.test(u))).toEqual([]);
-	// The tab is small and static: inside the gutter, no animation.
+	// The static tab's button clears the overlay scrollbar and has a usable hit area.
 	const size = await door.boundingBox();
-	expect(size?.width).toBeLessThanOrEqual(12);
+	expect(size?.width).toBeGreaterThanOrEqual(24);
+	expect(size?.height).toBeGreaterThanOrEqual(44);
+	const scrollbarClearance = await door.evaluate(
+		(el) => document.documentElement.clientWidth - el.getBoundingClientRect().right,
+	);
+	expect(scrollbarClearance).toBeGreaterThanOrEqual(16);
 
 	await door.click();
 	await expect(root).toHaveAttribute("data-ready", /.+/);

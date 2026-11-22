@@ -35,19 +35,32 @@
 		inset: 0 auto auto 0;
 		z-index: 90;
 	}
-	/* The pet at home: a small static tab on the edge, inside the page gutter. */
+	/* Keep the hit area inside the overlay scrollbar and the tab itself small. */
 	.pet-door {
 		position: fixed;
-		inset: auto 0 28px auto;
+		inset-block-end: max(24px, env(safe-area-inset-bottom));
+		inset-inline-end: max(16px, env(safe-area-inset-right));
+		display: grid;
+		place-items: center;
 		box-sizing: border-box;
-		inline-size: 12px;
-		block-size: 30px;
+		inline-size: 36px;
+		block-size: 44px;
 		padding: 0;
-		background: #f3efe2;
-		border: 2px solid #24232a;
-		border-inline-end: 0;
+		background: transparent;
+		border: 0;
 		border-radius: 0;
 		cursor: pointer;
+	}
+	.pet-door[hidden] {
+		display: none;
+	}
+	.pet-door::before {
+		content: "";
+		inline-size: 16px;
+		block-size: 28px;
+		background: #f3efe2;
+		border: 2px solid #24232a;
+		box-sizing: border-box;
 	}
 	.pet-door:focus-visible {
 		outline: 3px solid #24232a;
